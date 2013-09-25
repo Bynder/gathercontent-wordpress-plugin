@@ -1,5 +1,5 @@
 === GatherContent Import ===
-Contributors: Mathew Chapman, Mark Young, Angus Edwardson
+Contributors: Mathew Chapman, Mark Young, namshee
 Tags: structured content, gather content, gathercontent, import, migrate, export, mapping, production, writing, collaboration, platform, connect, link, gather, client, word, production
 Requires at least: 3.5.0
 Tested up to: 3.6.0
