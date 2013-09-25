@@ -1,0 +1,125 @@
+@import url('bootstrap.min.css');
+
+.gc_container a { text-decoration: none; position: relative; }
+.gc_left {
+	float: left;
+	padding-top: 8px;
+}
+
+.gc_right {
+	float: right;
+}
+
+.gc_center { text-align: center; }
+.gc_logo {
+	background: url('../img/logo-big.png') 50% 50% no-repeat;
+	height: 29px;
+	width: 215px;
+	margin: 30px auto;
+}
+.gc_logo span{display: none}
+
+.gc_container { width: 414px; border: 1px solid #d5d5d5;-webkit-border-radius: 6px;-moz-border-radius: 6px;border-radius: 6px;margin:0 auto;box-shadow: 0px 2px 2px rgba(0, 0, 0, 0.4);}
+.gc_container-header { text-align: center; border-bottom: 1px solid #eee}
+.gc_container form, .gc_finished { padding: 0 20px 20px; position: relative; }
+#gc_media { padding:20px; position: relative; }
+.gc_finished { text-align: center; }
+.gc_container .gc_message {
+	font-size: 14px;
+	padding: 20px 0;
+	margin: 0;
+}
+#gc_importer_step_auth > div {
+	margin-top: 20px;
+}
+#gc_importer_step_auth label, #gc_media label {
+	color: #a97d13;
+	font-weight: bold;
+	font-size: 14px;
+	display: block;
+}
+#gc_media label {
+	padding-bottom: 6px;
+}
+#gc_importer_step_auth .gc_domain, #gc_importer_step_auth .gc_domainprefix {
+	position: absolute;
+	top: 29px;
+	right: 32px;
+	font-size: 12px;
+}
+#gc_importer_step_auth .gc_domainprefix {
+	left: 32px;
+	right: 0;
+	width: 35px;
+}
+
+#gc_importer_step_auth input[type="text"] {
+	margin-top: 7px;
+	border: 1px solid #BBB;
+	border-bottom: 1px solid #EAEAEA;
+	border-right: 1px solid #EAEAEA;
+	-webkit-box-shadow: 1px 1px 1px rgba(0, 0, 0, 0.1) inset;
+	-moz-box-shadow: 1px 1px 1px rgba(0, 0, 0, 0.1) inset;
+	box-shadow: 1px 1px 1px rgba(0, 0, 0, 0.1) inset;
+	display: block;
+	font-size: 12px;
+	padding: 5px 10px;
+	width: 374px;
+	-webkit-box-sizing: border-box;
+	-moz-box-sizing: border-box;
+	box-sizing: border-box;
+	border-radius: 0;
+}
+
+#gc_importer_step_auth #gc_api_url {
+	padding-right: 120px;
+	padding-left: 47px;
+}
+#gc_importer_step_auth .btn {
+	float: right;
+}
+
+.gc-ajax-tooltip {
+	display: inline-block;
+	width: 16px;
+	height: 16px;
+	background: url('../img/help.png') no-repeat;
+	position: relative;
+	top: 2px;
+	left: 10px;
+}
+
+.gc_error {
+	text-align: center;
+	color: #d90000;
+	font-size: 16px;
+}
+.gc_left a.gc_option, .gc_error a, .gc_blue_link {
+	border-bottom: 1px dotted #2591c3;
+	color: #2591c3;
+	text-decoration: none;
+}
+
+
+.progress {
+	background-color: #e9e9e9;
+	height: 10px;
+	margin-bottom: 20px;
+}
+.progress .bar {
+	height: 10px;
+	background-color: #5ab800;
+}
+.progress, .progress .bar {-webkit-border-radius:2px;-moz-border-radius:2px;border-radius:2px;}
+
+.gc_list span {
+	color: #999;
+}
+
+.gc_container-header h2 a.gc_blue_link {
+	font-size: 12px;
+	font-weight: normal;
+	margin-right: 20px;
+}
+#gc_page_title { font-weight: normal; color: #999;}
+#gc_media img { float: right; display: none }
