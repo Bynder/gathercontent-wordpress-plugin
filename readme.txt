@@ -3,7 +3,7 @@ Contributors: Mathew Chapman, Mark Young
 Tags: structured content, gather content, gathercontent, import, migrate, export, mapping, production, writing, collaboration, platform, connect, link, gather, client, word, production
 Requires at least: 3.5.0
 Tested up to: 3.6.0
-Stable tag: trunk
+Stable tag: 2.0.2
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -11,15 +11,15 @@ The GatherContent Import plugin allows you to quickly import structured content 
 
 == Description ==
 
-This plugin allows you to quickly import content from your GatherContent projects into your WordPress site.  
+This plugin allows you to quickly import content from your GatherContent projects into your WordPress site.
 
-GatherContent is an online platform for pulling together, editing, and reviewing website content with your clients and colleagues. It's a reliable alternative to emailing around Word documents and pasting content into your CMS. This plugin replaces that process of copying and pasting content and allows you to bulk import structured content, and then continue to update it in WordPress with a few clicks. 
+GatherContent is an online platform for pulling together, editing, and reviewing website content with your clients and colleagues. It's a reliable alternative to emailing around Word documents and pasting content into your CMS. This plugin replaces that process of copying and pasting content and allows you to bulk import structured content, and then continue to update it in WordPress with a few clicks.
 
-Connecting a powerful content production platform, to a powerful content publishing platform. 
+Connecting a powerful content production platform, to a powerful content publishing platform.
 
-Content can be imported as pages, posts, media or custom post types. And you can choose to create new pages etc. or overwrite existing entities. 
+Content can be imported as pages, posts, media or custom post types. And you can choose to create new pages etc. or overwrite existing entities.
 
-The plugin allows you to specifically map each field on your pages in GatherContent to various fields in WordPress, these include; title, body content, custom fields, tags, categories, Yoast fields, advanced custom fields, featured images … and many more. It also allows you to directly embed images and files. 
+The plugin allows you to specifically map each field on your pages in GatherContent to various fields in WordPress, these include; title, body content, custom fields, tags, categories, Yoast fields, advanced custom fields, featured images … and many more. It also allows you to directly embed images and files.
 
 == Installation ==
 
