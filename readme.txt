@@ -30,6 +30,12 @@ This section describes how to install the plugin and get it working.
 3. Click on the menu item "GatherContent"
 3. Link your accounts. You will need to enter your GatherContent account URL (e.g. http://mywebsite.gathercontent.com) and your personal GatherContent API key. You can find your API key in your Settings area within GatherContent, by opening the API tab.
 
+== Screenshots ==
+
+1. Quickly find your pages using filters and live search.
+2. Import GatherContent pages as Pages, Posts, Media and various Custom Post Types.
+3. Map individual fields to a huge range of places in WordPress.
+
 == Changelog ==
 
 = 2.0 =
