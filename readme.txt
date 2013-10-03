@@ -25,7 +25,7 @@ The plugin allows you to specifically map each field on your pages in GatherCont
 
 This section describes how to install the plugin and get it working.
 
-1. Upload `gathercontent` to the `/wp-content/plugins/` directory
+1. Upload `gathercontent-import` to the `/wp-content/plugins/` directory
 2. Activate the GatherContent plugin through the 'Plugins' menu in WordPress
 3. Click on the menu item "GatherContent"
 3. Link your accounts. You will need to enter your GatherContent account URL (e.g. http://mywebsite.gathercontent.com) and your personal GatherContent API key. You can find your API key in your Settings area within GatherContent, by opening the API tab.
