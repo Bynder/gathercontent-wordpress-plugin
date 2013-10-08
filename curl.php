@@ -479,74 +479,62 @@ class GatherContent_Curl extends GatherContent_Functions {
 
 			if($show_settings){
 				$out .= '<td class="gc_settings_col"><a href="#settings"><span>'.$this->__('Settings').'</span> <span class="caret"></span></a></td>';
-				$add = '
-				<tr class="gc_table_row">
-					<td colspan="4" class="gc_settings_container">
-						<div>
-							<div class="gc_settings_header gc_cf">
-								<div class="gc_setting gc_import_as">
-									<label>'.$this->__('Import as').' </label>
-									'.$this->dropdown_html('<span></span>',$this->data['post_types_dropdown'],'gc[post_type][]',$this->val($cur_settings,'post_type')).'
-								</div>
-								<div class="gc_setting gc_import_to">
-									<label>'.$this->__('Import to').' </label>
-									'.$this->dropdown_html('<span></span>',$this->data['overwrite_select'],'gc[overwrite][]',$this->val($cur_settings,'overwrite')).'
-								</div>
-								<div class="gc_setting gc_category">
-									<label>'.$this->__('Category').' </label>
-									'.$this->dropdown_html('<span></span>',$this->data['category_select'],'gc[category][]',$this->val($cur_settings,'category','-1')).'
-								</div>';
-								if($meta !== false){
+				if(count($fields) > 0 || ($meta !== false && count($meta) > 0)){
+					$add = '
+					<tr class="gc_table_row">
+						<td colspan="4" class="gc_settings_container">
+							<div>
+								<div class="gc_settings_header gc_cf">
+									<div class="gc_setting gc_import_as">
+										<label>'.$this->__('Import as').' </label>
+										'.$this->dropdown_html('<span></span>',$this->data['post_types_dropdown'],'gc[post_type][]',$this->val($cur_settings,'post_type')).'
+									</div>
+									<div class="gc_setting gc_import_to">
+										<label>'.$this->__('Import to').' </label>
+										'.$this->dropdown_html('<span></span>',$this->data['overwrite_select'],'gc[overwrite][]',$this->val($cur_settings,'overwrite')).'
+									</div>
+									<div class="gc_setting gc_category">
+										<label>'.$this->__('Category').' </label>
+										'.$this->dropdown_html('<span></span>',$this->data['category_select'],'gc[category][]',$this->val($cur_settings,'category','-1')).'
+									</div>';
+									if($meta !== false){
+										$add .= '
+									<div class="gc_setting gc_include_meta">
+										<label>'.$this->__('Include Meta tab content').' <input type="checkbox" name="gc[include_meta_'.$id.']" value="Y"';
+										$selected_meta = $this->val($cur_settings,'include_meta',false);
+										if($selected_meta === true){
+											$add .= ' checked="checked"';
+										}
+										$add .= ' /></label>
+									</div>';
+									}
 									$add .= '
-								<div class="gc_setting gc_include_meta">
-									<label>'.$this->__('Include Meta tab content').' <input type="checkbox" name="gc[include_meta_'.$id.']" value="Y"';
-									$selected_meta = $this->val($cur_settings,'include_meta',false);
-									if($selected_meta === true){
-										$add .= ' checked="checked"';
+								</div>
+								<div class="gc_settings_fields">';
+								$field_settings = $this->val($cur_settings,'fields',array());
+								if(count($field_settings) > 0){
+									foreach($field_settings as $name => $value){
+										list($tab,$field_name) = explode('_',$name,2);
+										$val = $acf = $acf_post = '';
+										if(is_array($value)){
+											$val = $value[0];
+											$acf = $value[1];
+											$acf_post = $value[2];
+										} else {
+											$val = $value;
+										}
+										if($tab == 'content' && isset($fields[$field_name])){
+											$add .= $this->field_settings($id,$fields[$field_name],$tab,'',$val,$acf,$acf_post);
+											unset($fields[$field_name]);
+										} elseif($tab == 'meta' && $meta !== false && isset($meta[$field_name])) {
+											$add .= $this->field_settings($id,$meta[$field_name],$tab,' (Meta)',$val,$acf,$acf_post);
+											unset($meta[$field_name]);
+										}
 									}
-									$add .= ' /></label>
-								</div>';
 								}
-								$add .= '
-							</div>
-							<div class="gc_settings_fields">';
-							$field_settings = $this->val($cur_settings,'fields',array());
-							if(count($field_settings) > 0){
-								foreach($field_settings as $name => $value){
-									list($tab,$field_name) = explode('_',$name,2);
+								foreach($fields as $field){
 									$val = $acf = $acf_post = '';
-									if(is_array($value)){
-										$val = $value[0];
-										$acf = $value[1];
-										$acf_post = $value[2];
-									} else {
-										$val = $value;
-									}
-									if($tab == 'content' && isset($fields[$field_name])){
-										$add .= $this->field_settings($id,$fields[$field_name],$tab,'',$val,$acf,$acf_post);
-										unset($fields[$field_name]);
-									} elseif($tab == 'meta' && $meta !== false && isset($meta[$field_name])) {
-										$add .= $this->field_settings($id,$meta[$field_name],$tab,' (Meta)',$val,$acf,$acf_post);
-										unset($meta[$field_name]);
-									}
-								}
-							}
-							foreach($fields as $field){
-								$val = $acf = $acf_post = '';
-								$cur = $this->val($field_settings,'content_'.$field['name']);
-								if(is_array($cur)){
-									$val = $cur[0];
-									$acf = $cur[1];
-									$acf_post = $cur[2];
-								} else {
-									$val = $cur;
-								}
-								$add .= $this->field_settings($id,$field,'content','',$val,$acf,$acf_post);
-							}
-							if($meta !== false){
-								foreach($meta as $field){
-									$val = $acf = $acf_post = '';
-									$cur = $this->val($field_settings,'meta_'.$field['name']);
+									$cur = $this->val($field_settings,'content_'.$field['name']);
 									if(is_array($cur)){
 										$val = $cur[0];
 										$acf = $cur[1];
@@ -554,14 +542,39 @@ class GatherContent_Curl extends GatherContent_Functions {
 									} else {
 										$val = $cur;
 									}
-									$add .= $this->field_settings($id,$field,'meta',' (Meta)',$val,$acf,$acf_post);
+									$add .= $this->field_settings($id,$field,'content','',$val,$acf,$acf_post);
 								}
-							}
-							$add .= '
+								if($meta !== false){
+									foreach($meta as $field){
+										$val = $acf = $acf_post = '';
+										$cur = $this->val($field_settings,'meta_'.$field['name']);
+										if(is_array($cur)){
+											$val = $cur[0];
+											$acf = $cur[1];
+											$acf_post = $cur[2];
+										} else {
+											$val = $cur;
+										}
+										$add .= $this->field_settings($id,$field,'meta',' (Meta)',$val,$acf,$acf_post);
+									}
+								}
+								$add .= '
+								</div>
 							</div>
-						</div>
-					</td>
-				</tr>';
+						</td>
+					</tr>';
+				} else {
+					$message = $this->__('This page is empty. You can %sadd some content to this page in GatherContent%s.');
+					$message = sprintf($message,
+						'<a href="https://'.$this->option('api_url').'.gathercontent.com/pages/view/'.$this->option('project_id').'/'.$id.'" target="_blank">',
+						'</a>');
+					$add = '
+					<tr class="gc_table_row">
+						<td colspan="4">
+							<div class="alert alert-info">'.$message.'</div>
+						</td>
+					</tr>';
+				}
 			}
 			$out .= '
 					<td class="gc_checkbox"><input type="checkbox" name="gc[import_'.$id.']" id="import_'.$id.'" value="'.$id.'"'.($checked?' checked="checked"':'').' /><input type="hidden" name="gc[page_id][]" value="'.$id.'" /></td>

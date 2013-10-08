@@ -519,6 +519,7 @@ class GatherContent extends GatherContent_Curl {
 				if(!is_array($cur_settings)){
 					$cur_settings = array();
 				}
+				$this->data['project_id'] = $this->option('project_id');
 				$data['page_count'] = $this->page_count;
 				$this->data['saved_settings'] = $this->val($cur_settings,$this->option('project_id'),array());
 				$data['page_settings'] = $this->generate_settings($this->pages,-1,true);
