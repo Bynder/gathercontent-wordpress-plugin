@@ -3,7 +3,7 @@ Contributors: Mathew Chapman, Mark Young, namshee
 Tags: structured content, gather content, gathercontent, import, migrate, export, mapping, production, writing, collaboration, platform, connect, link, gather, client, word, production
 Requires at least: 3.5.0
 Tested up to: 3.6.0
-Stable tag: 2.0.3
+Stable tag: 2.0.4
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -38,14 +38,17 @@ This section describes how to install the plugin and get it working.
 
 == Changelog ==
 
-= 2.0 =
-* Complete rewrite of old plugin
+= 2.0.4 =
+* Fixed a bug where tag strings weren't being separated by commas
 
-= 2.0.1 =
-* Fixed errors that were only displaying in WP_DEBUG mode
+= 2.0.3 =
+* Added an alert when pages have no fields to import
 
 = 2.0.2 =
 * Fixed line break issues
 
-= 2.0.3 =
-* Added an alert when pages have no fields to import
+= 2.0.1 =
+* Fixed errors that were only displaying in WP_DEBUG mode
+
+= 2.0 =
+* Complete rewrite of old plugin
