@@ -8,6 +8,7 @@ class GatherContent_Curl extends GatherContent_Functions {
 	var $taxonomies = array();
 	var $allows_tags = array();
 	var $error = '';
+	var $ids_used = array();
 
 	function get_field_config($obj,$files=array()){
 		$fields = $obj->custom_field_config;
@@ -481,37 +482,29 @@ class GatherContent_Curl extends GatherContent_Functions {
 				$out .= '<td class="gc_settings_col"><a href="#settings"><span>'.$this->__('Settings').'</span> <span class="caret"></span></a></td>';
 				if(count($fields) > 0 || ($meta !== false && count($meta) > 0)){
 					$add = '
-					<tr class="gc_table_row">
+					<tr class="gc_table_row" data-page-id="'.$id.'">
 						<td colspan="4" class="gc_settings_container">
 							<div>
 								<div class="gc_settings_header gc_cf">
-									<div class="gc_setting gc_import_as">
+									<div class="gc_setting gc_import_as" id="gc_import_as_'.$id.'">
 										<label>'.$this->__('Import as').' </label>
 										'.$this->dropdown_html('<span></span>',$this->data['post_types_dropdown'],'gc[post_type][]',$this->val($cur_settings,'post_type')).'
 									</div>
-									<div class="gc_setting gc_import_to">
+									<div class="gc_setting gc_import_to" id="gc_import_to_'.$id.'">
 										<label>'.$this->__('Import to').' </label>
 										'.$this->dropdown_html('<span></span>',$this->data['overwrite_select'],'gc[overwrite][]',$this->val($cur_settings,'overwrite')).'
 									</div>
-									<div class="gc_setting gc_category">
+									<div class="gc_setting gc_category" id="gc_category_'.$id.'">
 										<label>'.$this->__('Category').' </label>
 										'.$this->dropdown_html('<span></span>',$this->data['category_select'],'gc[category][]',$this->val($cur_settings,'category','-1')).'
-									</div>';
-									if($meta !== false){
-										$add .= '
-									<div class="gc_setting gc_include_meta">
-										<label>'.$this->__('Include Meta tab content').' <input type="checkbox" name="gc[include_meta_'.$id.']" value="Y"';
-										$selected_meta = $this->val($cur_settings,'include_meta',false);
-										if($selected_meta === true){
-											$add .= ' checked="checked"';
-										}
-										$add .= ' /></label>
-									</div>';
-									}
-									$add .= '
+									</div>
+									<div class="gc_setting repeat_config">
+										<label>'.$this->__('Repeat this configuration').' <input type="checkbox" name="gc[repeat_'.$id.']" value="Y" /></label>
+									</div>
 								</div>
-								<div class="gc_settings_fields">';
+								<div class="gc_settings_fields" id="gc_fields_'.$id.'">';
 								$field_settings = $this->val($cur_settings,'fields',array());
+								$idx = 0;
 								if(count($field_settings) > 0){
 									foreach($field_settings as $name => $value){
 										list($tab,$field_name) = explode('_',$name,2);
@@ -524,10 +517,10 @@ class GatherContent_Curl extends GatherContent_Functions {
 											$val = $value;
 										}
 										if($tab == 'content' && isset($fields[$field_name])){
-											$add .= $this->field_settings($id,$fields[$field_name],$tab,'',$val,$acf,$acf_post);
+											$add .= $this->field_settings($idx++,$id,$fields[$field_name],$tab,'',$val,$acf,$acf_post);
 											unset($fields[$field_name]);
 										} elseif($tab == 'meta' && $meta !== false && isset($meta[$field_name])) {
-											$add .= $this->field_settings($id,$meta[$field_name],$tab,' (Meta)',$val,$acf,$acf_post);
+											$add .= $this->field_settings($idx++,$id,$meta[$field_name],$tab,' (Meta)',$val,$acf,$acf_post);
 											unset($meta[$field_name]);
 										}
 									}
@@ -542,7 +535,7 @@ class GatherContent_Curl extends GatherContent_Functions {
 									} else {
 										$val = $cur;
 									}
-									$add .= $this->field_settings($id,$field,'content','',$val,$acf,$acf_post);
+									$add .= $this->field_settings($idx++,$id,$field,'content','',$val,$acf,$acf_post);
 								}
 								if($meta !== false){
 									foreach($meta as $field){
@@ -555,7 +548,7 @@ class GatherContent_Curl extends GatherContent_Functions {
 										} else {
 											$val = $cur;
 										}
-										$add .= $this->field_settings($id,$field,'meta',' (Meta)',$val,$acf,$acf_post);
+										$add .= $this->field_settings($idx++,$id,$field,'meta',' (Meta)',$val,$acf,$acf_post);
 									}
 								}
 								$add .= '
@@ -587,15 +580,21 @@ class GatherContent_Curl extends GatherContent_Functions {
 		return $out;
 	}
 
-	function field_settings($id,$field,$tab='content',$name_suffix='',$val='',$acf_val='',$acf_post=''){
+	function field_settings($idx,$id,$field,$tab='content',$name_suffix='',$val='',$acf_val='',$acf_post=''){
 		if($field['type'] == 'section'){
 			return '';
 		}
+		$fieldid = $id.'_'.md5($tab.'_'.$field['label']);
+		$counter = 0;
+		while(isset($this->ids_used[$fieldid])){
+			$fieldid = $fieldid.$counter++;
+		}
+		$this->ids_used[$fieldid] = true;
 		$html = '
-		<div class="gc_settings_field gc_cf" data-field-tab="'.$tab.'">
+		<div class="gc_settings_field gc_cf" data-field-tab="'.$tab.'" id="field_'.$fieldid.'">
 			<div class="gc_move_field"></div>
 			<div class="gc_field_name gc_left">'.$field['label'].$name_suffix.'</div>
-			<div class="gc_field_map gc_right">
+			<div class="gc_field_map gc_right" id="gc_field_map_'.$fieldid.'">
 				<span>'.$this->__('Map to').'</span>
 				'.$this->dropdown_html('<span></span>',$this->data['map_to_select'],'gc[map_to]['.$id.'][]',$val).'
 				<input type="hidden" name="gc[acf]['.$id.'][]" value="'.esc_attr($acf_val).'" class="acf-field" />
@@ -692,12 +691,17 @@ class GC_Walker_PageDropdown extends Walker {
 	function start_el( &$output, $page, $depth = 0, $args = array(), $id = 0, $base_name ) {
 		$pad = str_repeat('&nbsp;', $depth * 3);
 
-		$output .= "\t<li class=\"level-$depth\" data-post-type=\"$page->post_type\"><a href=\"#\" data-value=\"$page->ID\">";
 		$title = apply_filters( 'list_pages', $page->post_title, $page );
 		if(empty($title)){
 			$title = __('(no title)',$base_name);
 		}
-		$output .= $pad . esc_html( $title );
+		$title_text = $title;
+		if(strlen($title_text)){
+			$title_text = substr($title_text,0,30).'...';
+		}
+
+		$output .= "\t<li class=\"level-$depth\" data-post-type=\"$page->post_type\"><a href=\"#\" title=\"".esc_attr($title)."\" data-value=\"$page->ID\">";
+		$output .= $pad . esc_html( $title_text );
 		$output .= "</a></li>\n";
 	}
 }

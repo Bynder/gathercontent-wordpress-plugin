@@ -23,7 +23,7 @@ if($this->error != ''){
                     <?php $page_count > 0 && $this->get_submit_button($this->__('Import selected pages')) ?>
                 </div>
             </div>
-            <table class="gc_pages" cellspacing="0" cellpadding="0">
+            <table class="gc_pages" id="gc_pages" cellspacing="0" cellpadding="0">
                 <thead>
                     <tr>
                         <th></th>

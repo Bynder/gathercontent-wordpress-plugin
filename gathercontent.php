@@ -151,6 +151,7 @@ class GatherContent extends GatherContent_Curl {
 										$post['ID'] = $save_settings[$page_id]['overwrite'];
 									}
 									$post['ID'] = $func($post);
+									$save_settings[$page_id]['overwrite'] = $post['ID'];
 
 									$new_post_fields = array();
 									$new_meta_fields = array();
