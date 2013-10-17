@@ -696,7 +696,7 @@ class GC_Walker_PageDropdown extends Walker {
 			$title = __('(no title)',$base_name);
 		}
 		$title_text = $title;
-		if(strlen($title_text)){
+		if(strlen($title_text) > 30){
 			$title_text = substr($title_text,0,30).'...';
 		}
 

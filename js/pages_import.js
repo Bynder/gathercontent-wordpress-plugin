@@ -14,7 +14,7 @@
 					import_as = $('#gc_import_as_'+page_id+' input').val();
 				rows = rows.filter(':gt('+idx+')');
 				field_rows.each(function(){
-					var $t = $(this),
+					var $t = $(this).removeClass('not-moved'),
 						id = $t.attr('id').split('_')[2];
 					fields[field_rows.index($t)] = [$t.find('.gc_field_map input[name*="map_to"]').val(),id];
 				});
