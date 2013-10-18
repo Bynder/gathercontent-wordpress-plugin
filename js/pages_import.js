@@ -4,53 +4,10 @@
 		$('.repeat_config input').change(function(){
 			var $t = $(this);
 			if($t.is(':checked')){
-				var c = $t.closest('tr'),
-					page_id = c.attr('data-page-id'),
-					table = $('#gc_pages'),
-					rows = table.find('.gc_table_row'),
-					idx = rows.index(c),
-					field_rows = c.find('.gc_settings_field'),
-					fields = {},
-					import_as = $('#gc_import_as_'+page_id+' input').val();
-				rows = rows.filter(':gt('+idx+')');
-				field_rows.each(function(){
-					var $t = $(this).removeClass('not-moved'),
-						id = $t.attr('id').split('_')[2];
-					fields[field_rows.index($t)] = [$t.find('.gc_field_map input[name*="map_to"]').val(),id];
-				});
-
-				rows.each(function(){
-					var $t = $(this),
-						page_id = $t.attr('data-page-id'),
-						c = $('#gc_fields_'+page_id);
-					c.find('> .gc_settings_field').addClass('not-moved');
-					$('#gc_import_as_'+page_id+' a[data-value="'+import_as+'"]').trigger('click');
-					for(var i in fields){
-						if(fields.hasOwnProperty(i)){
-							$('#gc_field_map_'+page_id+'_'+fields[i][1]+' li:not(.hidden-item) a[data-value="'+fields[i][0]+'"]').trigger('click');
-							var field = $('#field_'+page_id+'_'+fields[i][1]).removeClass('not-moved');
-							if(i > 0){
-								c.find('> .gc_settings_field:eq('+(i-1)+')').after(field);
-							} else {
-								c.prepend(field);
-							}
-						}
-					};
-				});
-			}
-		});
-
-		$('.gc_settings_col a').click(function(e){
-			e.preventDefault();
-			var el = $(this).closest('tr').next().find('> td > div');
-			if(el.is(':visible')){
-				el.slideUp('fast').fadeOut('fast',function(){
-					el.parent().hide();
-				});
-				$(this).find('.caret').addClass('caret-up');
-			} else {
-				el.parent().show().end().slideDown('fast').fadeIn('fast');
-				$(this).find('.caret').removeClass('caret-up');
+				$('.gc_overlay,.gc_repeating_modal').show();
+				setTimeout(function(){
+					repeat_config($t);
+				},500);
 			}
 		});
 
@@ -76,12 +33,24 @@
 			parent.before('<li class="custom-field inputting"><input type="text" /></li>');
 			parent.prev().find('input').focus();
 		}).end().find('ul.dropdown-menu a:not([data-value="_new_custom_field_"])').click(function(){
-			var acf = '', acf_post = '';
-			if($(this).hasClass('acf-field')){
-				acf = $(this).attr('data-acf-field');
-				acf_post = $(this).attr('data-acf-post');
+			var $t = $(this), acf = '', acf_post = '';
+			if($t.hasClass('acf-field')){
+				acf = $t.attr('data-acf-field');
+				acf_post = $t.attr('data-acf-post');
 			}
-			$(this).closest('.gc_field_map').find('input.acf-field').val(acf).end().find('input.acf-post').val(acf_post);
+			var field = $t.closest('.gc_field_map').find('input.acf-field').val(acf).end().find('input.acf-post').val(acf_post).end(),
+				tr = field.closest('tr'),
+				page_id= tr.attr('data-page-id');
+			if($('#gc_repeat_'+page_id).is(':checked')){
+				var rows = tr.parent().find('tr.gc_table_row[data-page-id]'),
+					idx = rows.index(tr),
+					field_id = field.attr('id').split('_')[4],
+					val = $t.attr('data-value');
+				rows.filter(':gt('+idx+')').each(function(){
+					var page_id = $(this).attr('data-page-id');
+					$('#gc_field_map_'+page_id+'_'+field_id+' li:not(.hidden-item) a[data-value="'+val+'"]').trigger('click');
+				});
+			}
 		});
 
 		$('.gc_field_map').on('keydown','li.inputting input', function(e){
@@ -99,8 +68,6 @@
 				$(this).parent().attr('data-post-type','normal').removeClass('inputting').html('<a href="#" />').find('a').attr('data-value',v).text(v).trigger('click');
 			}
 		});
-
-		$('.gc_settings_fields > div.gc_settings_field[data-field-tab="meta"]').hide();
 
 		$('.gc_settings_container .has_input').on('click','ul a',function(e){
 			e.preventDefault();
@@ -127,7 +94,29 @@
 		});
 
 		$('.gc_settings_fields').sortable({
-			handle: '.gc_move_field'
+			handle: '.gc_move_field',
+			update: function(e, ui) {
+				var tr = ui.item.closest('tr'),
+					page_id = tr.attr('data-page-id');
+				if($('#gc_repeat_'+page_id).is(':checked')){
+					var rows = tr.parent().find('tr.gc_table_row[data-page-id]'),
+						idx = rows.index(tr),
+						new_index = ui.item.index();
+					rows.filter(':gt('+idx+')').each(function(){
+						var page_id = $(this).attr('data-page-id'),
+							field_id = ui.item.attr('id').split('_')[2],
+							item = $('#field_'+page_id+'_'+field_id);
+						if(item.length > 0){
+							if(new_index > 0){
+								item.parent().find('> .gc_settings_field:eq('+(new_index > item.index() ? new_index : (new_index-1))+')').after(item);
+							} else {
+								item.parent().prepend(item);
+							}
+						}
+					});
+
+				}
+			}
 		});
 		page_loaded = true;
 	});
@@ -175,6 +164,42 @@
 		}
 		el.trigger('click');
 	};
+	function repeat_config($t){
+		var c = $t.closest('tr'),
+			page_id = c.attr('data-page-id'),
+			table = $('#gc_pages'),
+			rows = table.find('.gc_table_row[data-page-id]'),
+			idx = rows.index(c),
+			field_rows = c.find('.gc_settings_field'),
+			fields = {},
+			import_as = $('#gc_import_as_'+page_id+' input').val();
+		rows = rows.filter(':gt('+idx+')');
+		field_rows.each(function(){
+			var $t = $(this).removeClass('not-moved'),
+				id = $t.attr('id').split('_')[2];
+			fields[field_rows.index($t)] = [$t.find('.gc_field_map input[name*="map_to"]').val(),id];
+		});
+
+		rows.each(function(){
+			var $t = $(this),
+				page_id = $t.attr('data-page-id'),
+				c = $('#gc_fields_'+page_id);
+			c.find('> .gc_settings_field').removeClass('moved').addClass('not-moved');
+			$('#gc_import_as_'+page_id+' a[data-value="'+import_as+'"]').trigger('click');
+			for(var i in fields){
+				if(fields.hasOwnProperty(i)){
+					$('#gc_field_map_'+page_id+'_'+fields[i][1]+' li:not(.hidden-item) a[data-value="'+fields[i][0]+'"]').trigger('click');
+					var field = $('#field_'+page_id+'_'+fields[i][1]).removeClass('not-moved').addClass('moved');
+					if(i > 0){
+						c.find('> .gc_settings_field:eq('+(i-1)+')').after(field);
+					} else {
+						c.prepend(field);
+					}
+				}
+			};
+		});
+		$('.gc_overlay,.gc_repeating_modal').hide();
+	}
     jQuery.expr[":"].icontains_searchable = jQuery.expr.createPseudo(function(arg) {
         return function( elem ) {
             return jQuery(elem).attr('data-search').toUpperCase().indexOf(arg.toUpperCase()) >= 0;

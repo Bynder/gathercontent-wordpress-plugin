@@ -120,20 +120,17 @@ class GatherContent extends GatherContent_Curl {
 									$save_settings[$page_id] = array(
 										'post_type' => $gc['post_type'][$key],
 										'overwrite' => $gc['overwrite'][$key],
-										'include_meta' => (isset($gc['include_meta_'.$page_id]) ? true : false),
 										'category' => $gc['category'][$key],
 										'fields' => array()
 									);
 
-									$include_meta = $save_settings[$page_id]['include_meta'];
 									$custom_fields = $this->get_field_config($page,$this->val($this->files,$page_id,array()));
-									if($include_meta){
-										$meta_id = 0;
-										$meta_fields = array();
-										if(isset($this->meta_pages[$page_id])){
-											$meta_id = $this->meta_pages[$page_id]->id;
-											$meta_fields = $this->get_field_config($this->meta_pages[$page_id],$this->val($this->files,$meta_id,array()));
-										}
+
+									$meta_id = 0;
+									$meta_fields = array();
+									if(isset($this->meta_pages[$page_id])){
+										$meta_id = $this->meta_pages[$page_id]->id;
+										$meta_fields = $this->get_field_config($this->meta_pages[$page_id],$this->val($this->files,$meta_id,array()));
 									}
 
 									$func = 'wp_insert_post';
@@ -167,10 +164,10 @@ class GatherContent extends GatherContent_Curl {
 											if($fieldname == '_dont_import_'){
 												$save_settings[$page_id]['fields'][$tab.'_'.$field_name[$page_id][$idx]] = $fieldname;
 												continue;
-											} elseif($tab != 'meta'){
-												$field = $custom_fields[$field_name[$page_id][$idx]];
-											} elseif($include_meta){
+											} elseif($tab == 'meta'){
 												$field = $meta_fields[$field_name[$page_id][$idx]];
+											} elseif($tab == 'content'){
+												$field = $custom_fields[$field_name[$page_id][$idx]];
 											} else {
 												continue;
 											}

@@ -479,11 +479,10 @@ class GatherContent_Curl extends GatherContent_Functions {
 			$out .= ' <label for="import_'.$id.'">'.$page->name.'</label></td>';
 
 			if($show_settings){
-				$out .= '<td class="gc_settings_col"><a href="#settings"><span>'.$this->__('Settings').'</span> <span class="caret"></span></a></td>';
 				if(count($fields) > 0 || ($meta !== false && count($meta) > 0)){
 					$add = '
 					<tr class="gc_table_row" data-page-id="'.$id.'">
-						<td colspan="4" class="gc_settings_container">
+						<td colspan="3" class="gc_settings_container">
 							<div>
 								<div class="gc_settings_header gc_cf">
 									<div class="gc_setting gc_import_as" id="gc_import_as_'.$id.'">
@@ -499,12 +498,11 @@ class GatherContent_Curl extends GatherContent_Functions {
 										'.$this->dropdown_html('<span></span>',$this->data['category_select'],'gc[category][]',$this->val($cur_settings,'category','-1')).'
 									</div>
 									<div class="gc_setting repeat_config">
-										<label>'.$this->__('Repeat this configuration').' <input type="checkbox" name="gc[repeat_'.$id.']" value="Y" /></label>
+										<label>'.$this->__('Repeat this configuration').' <input type="checkbox" id="gc_repeat_'.$id.'" name="gc[repeat_'.$id.']" value="Y" /></label>
 									</div>
 								</div>
 								<div class="gc_settings_fields" id="gc_fields_'.$id.'">';
 								$field_settings = $this->val($cur_settings,'fields',array());
-								$idx = 0;
 								if(count($field_settings) > 0){
 									foreach($field_settings as $name => $value){
 										list($tab,$field_name) = explode('_',$name,2);
@@ -517,10 +515,10 @@ class GatherContent_Curl extends GatherContent_Functions {
 											$val = $value;
 										}
 										if($tab == 'content' && isset($fields[$field_name])){
-											$add .= $this->field_settings($idx++,$id,$fields[$field_name],$tab,'',$val,$acf,$acf_post);
+											$add .= $this->field_settings($id,$fields[$field_name],$tab,'',$val,$acf,$acf_post);
 											unset($fields[$field_name]);
 										} elseif($tab == 'meta' && $meta !== false && isset($meta[$field_name])) {
-											$add .= $this->field_settings($idx++,$id,$meta[$field_name],$tab,' (Meta)',$val,$acf,$acf_post);
+											$add .= $this->field_settings($id,$meta[$field_name],$tab,' (Meta)',$val,$acf,$acf_post);
 											unset($meta[$field_name]);
 										}
 									}
@@ -535,7 +533,7 @@ class GatherContent_Curl extends GatherContent_Functions {
 									} else {
 										$val = $cur;
 									}
-									$add .= $this->field_settings($idx++,$id,$field,'content','',$val,$acf,$acf_post);
+									$add .= $this->field_settings($id,$field,'content','',$val,$acf,$acf_post);
 								}
 								if($meta !== false){
 									foreach($meta as $field){
@@ -548,7 +546,7 @@ class GatherContent_Curl extends GatherContent_Functions {
 										} else {
 											$val = $cur;
 										}
-										$add .= $this->field_settings($idx++,$id,$field,'meta',' (Meta)',$val,$acf,$acf_post);
+										$add .= $this->field_settings($id,$field,'meta',' (Meta)',$val,$acf,$acf_post);
 									}
 								}
 								$add .= '
@@ -580,7 +578,7 @@ class GatherContent_Curl extends GatherContent_Functions {
 		return $out;
 	}
 
-	function field_settings($idx,$id,$field,$tab='content',$name_suffix='',$val='',$acf_val='',$acf_post=''){
+	function field_settings($id,$field,$tab='content',$name_suffix='',$val='',$acf_val='',$acf_post=''){
 		if($field['type'] == 'section'){
 			return '';
 		}

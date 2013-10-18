@@ -6,8 +6,12 @@ if($this->error != ''){
 ?>
 <div class="gc_container gc_wide">
     <div class="gc_overlay"></div>
-    <div class="gc_container gc_modal">
+    <div class="gc_container gc_modal gc_importing_modal">
         <h2><?php $this->_e('Importing pages and text content...') ?></h2>
+        <img src="<?php echo $this->plugin_url ?>img/ajax_loader_blue.gif" alt="" />
+    </div>
+    <div class="gc_container gc_modal gc_repeating_modal">
+        <h2><?php $this->_e('Repeating configuration...') ?></h2>
         <img src="<?php echo $this->plugin_url ?>img/ajax_loader_blue.gif" alt="" />
     </div>
     <div class="gc_container-header gc_cf">
@@ -28,7 +32,6 @@ if($this->error != ''){
                     <tr>
                         <th></th>
                         <th class="gc_th_page_name"><?php echo $this->__('Pages'); ?></th>
-                        <th></th>
                         <th><input type="checkbox" id="toggle_all" checked="checked" /></th>
                     </tr>
                 </thead>

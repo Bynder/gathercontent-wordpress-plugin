@@ -3,7 +3,7 @@
 	$(document).ready(function() {
 		$('.gc_ajax_submit_button').click(function() {
 			$('.gc_ajax_submit_button').addClass('btn-wait').removeClass('btn-success').find('img').show().end().find('span').text('Please wait...');
-			$('.gc_overlay,.gc_modal').show();
+			$('.gc_overlay,.gc_importing_modal').show();
 		});
 	    $('.gc-ajax-tooltip').tooltip().click(function(e){
 	    	e.preventDefault();
