@@ -8,7 +8,10 @@ if($this->error != ''){
     <div class="gc_overlay"></div>
     <div class="gc_container gc_modal gc_importing_modal">
         <h2><?php $this->_e('Importing pages and text content...') ?></h2>
-        <img src="<?php echo $this->plugin_url ?>img/ajax_loader_blue.gif" alt="" />
+        <label><?php $this->_e('Page:') ?> <span id="gc_page_title"></span><img src="<?php echo $this->plugin_url ?>img/ajax-loader-grey.gif" alt="" /></label>
+        <div id="current_page" class="progress">
+            <div class="bar" style="width:0%"></div>
+        </div>
     </div>
     <div class="gc_container gc_modal gc_repeating_modal">
         <h2><?php $this->_e('Repeating configuration...') ?></h2>
@@ -48,3 +51,10 @@ if($this->error != ''){
         <?php wp_nonce_field($this->base_name) ?>
     </form>
 </div>
+<script type="text/javascript">
+var redirect_url = <?php
+echo json_encode(array(
+    'media' => $this->url('media',false),
+    'finished' => $this->url('finished',false),
+));?>;
+</script>

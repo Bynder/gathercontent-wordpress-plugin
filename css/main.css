@@ -32,14 +32,15 @@
 #gc_importer_step_auth > div {
 	margin-top: 20px;
 }
-#gc_importer_step_auth label, #gc_media label {
+#gc_importer_step_auth label, #gc_media label, .gc_modal label {
 	color: #a97d13;
 	font-weight: bold;
 	font-size: 14px;
 	display: block;
 }
-#gc_media label {
+#gc_media label, .gc_modal label {
 	padding-bottom: 6px;
+	text-align: left;
 }
 #gc_importer_step_auth .gc_domain, #gc_importer_step_auth .gc_domainprefix {
 	position: absolute;
@@ -122,4 +123,4 @@
 	margin-right: 20px;
 }
 #gc_page_title { font-weight: normal; color: #999;}
-#gc_media img { float: right; display: none }
+#gc_media img, .gc_importing_modal img { float: right; display: none }

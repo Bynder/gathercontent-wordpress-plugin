@@ -9,6 +9,7 @@ class GatherContent_Curl extends GatherContent_Functions {
 	var $allows_tags = array();
 	var $error = '';
 	var $ids_used = array();
+	var $files = array();
 
 	function get_field_config($obj,$files=array()){
 		$fields = $obj->custom_field_config;
@@ -51,19 +52,17 @@ class GatherContent_Curl extends GatherContent_Functions {
 		return $new_fields;
 	}
 
-	function get_files(){
-		$files = $this->get('get_files_by_project',array('id'=>$this->option('project_id')));
-		$new_files = array();
+	function get_files($page_id){
+		$files = $this->get('get_files_by_page',array('id'=>$page_id));
 		if($files && isset($files->files) && $this->foreach_safe($files->files)){
 			foreach($files->files as $file){
-				if(!isset($new_files[$file->page_id]))
-					$new_files[$file->page_id] = array();
-				if(!isset($new_files[$file->page_id][$file->field]))
-					$new_files[$file->page_id][$file->field] = array();
-				$new_files[$file->page_id][$file->field][] = $file;
+				if(!isset($this->files[$file->page_id]))
+					$this->files[$file->page_id] = array();
+				if(!isset($this->files[$file->page_id][$file->field]))
+					$this->files[$file->page_id][$file->field] = array();
+				$this->files[$file->page_id][$file->field][] = $file;
 			}
 		}
-		$this->files = $new_files;
 	}
 
 	function get_projects(){
@@ -173,31 +172,29 @@ class GatherContent_Curl extends GatherContent_Functions {
 		$this->default_post_type = $default;
 	}
 
-	function get_pages($selected=false){
-		$pages = $this->get('get_pages_by_project',array('id'=>$this->option('project_id')));
+	function get_pages($save_pages=false){
+		$project_id = $this->option('project_id');
+		$pages = $this->get('get_pages_by_project',array('id'=>$project_id));
 		$original = array();
 		$new_pages = array();
 		$parent_array = array();
 		$meta_pages = array();
-		$selected_pages = $this->option('selected_pages');
 		if($pages && is_array($pages->pages)){
 			foreach($pages->pages as $page){
 				if($page->state != 'meta'){
-					//if((!$selected || ($selected && in_array($page->id,$selected_pages)))){
-						$original[$page->id] = $page;
-						$parent_id = $page->parent_id;
-						if($page->repeatable_page_id > 0){
-							$parent_id = $page->repeatable_page_id;
-							if(isset($original[$parent_id])){
-								$page->custom_field_config = $original[$parent_id]->custom_field_config;
-							}
+					$original[$page->id] = $page;
+					$parent_id = $page->parent_id;
+					if($page->repeatable_page_id > 0){
+						$parent_id = $page->repeatable_page_id;
+						if(isset($original[$parent_id])){
+							$page->custom_field_config = $original[$parent_id]->custom_field_config;
 						}
-						if(!isset($parent_array[$parent_id])){
-							$parent_array[$parent_id] = array();
-						}
-						$parent_array[$parent_id][$page->id] = $page;
-						$this->page_count++;
-					//}
+					}
+					if(!isset($parent_array[$parent_id])){
+						$parent_array[$parent_id] = array();
+					}
+					$parent_array[$parent_id][$page->id] = $page;
+					$this->page_count++;
 				} else {
 					$meta_pages[$page->parent_id] = $page;
 				}
@@ -217,6 +214,14 @@ class GatherContent_Curl extends GatherContent_Functions {
 		$this->pages = $new_pages;
 		$this->original_array = $original;
 		$this->meta_pages = $meta_pages;
+		if($save_pages){
+			$saved_pages = $this->option('saved_pages');
+			if(!is_array($saved_pages)){
+				$saved_pages = array();
+			}
+			$saved_pages[$project_id] = array('pages' => $original, 'meta' => $meta_pages);
+			$this->update('saved_pages', $saved_pages);
+		}
 	}
 
 	function page_overwrite_dropdown(){
@@ -463,6 +468,10 @@ class GatherContent_Curl extends GatherContent_Functions {
 				$meta = $this->get_field_config($this->meta_pages[$id]);
 			}
 			$fields = $this->get_field_config($page);
+			$show_fields = true;
+			if($show_settings && !(count($fields) > 0 || ($meta !== false && count($meta) > 0))){
+				$show_fields = false;
+			}
 			$out .= '
 				<tr class="gc_page'.($checked?' checked':'').'" data-page-state="'.$page->custom_state_id.'">
 					<td class="gc_status"><span class="page-status page-state-color-'.$this->data['states'][$page->custom_state_id]->color_id.'"></span></td>
@@ -476,10 +485,12 @@ class GatherContent_Curl extends GatherContent_Functions {
 				$out .= '↳';
 			}
 
-			$out .= ' <label for="import_'.$id.'">'.$page->name.'</label></td>';
+			$out .= ' <label for="import_'.$id.'">'.$page->name.'</label></td>
+					<td class="gc_checkbox">'.($show_fields?'<input type="checkbox" name="gc[import_'.$id.']" id="import_'.$id.'" value="'.$id.'"'.($checked?' checked="checked"':'').' />':'').'<input type="hidden" name="gc[page_id][]" value="'.$id.'" /></td>
+			    </tr>';
 
 			if($show_settings){
-				if(count($fields) > 0 || ($meta !== false && count($meta) > 0)){
+				if($show_fields){
 					$add = '
 					<tr class="gc_table_row" data-page-id="'.$id.'">
 						<td colspan="3" class="gc_settings_container">
@@ -567,9 +578,7 @@ class GatherContent_Curl extends GatherContent_Functions {
 					</tr>';
 				}
 			}
-			$out .= '
-					<td class="gc_checkbox"><input type="checkbox" name="gc[import_'.$id.']" id="import_'.$id.'" value="'.$id.'"'.($checked?' checked="checked"':'').' /><input type="hidden" name="gc[page_id][]" value="'.$id.'" /></td>
-			    </tr>'.$add;
+			$out .= $add;
 			if(isset($page->children) && count($page->children) > 0){
 				$out .= $this->generate_settings($page->children,$index,$show_settings);
 			}
@@ -589,7 +598,7 @@ class GatherContent_Curl extends GatherContent_Functions {
 		}
 		$this->ids_used[$fieldid] = true;
 		$html = '
-		<div class="gc_settings_field gc_cf" data-field-tab="'.$tab.'" id="field_'.$fieldid.'">
+		<div class="gc_settings_field gc_cf" id="field_'.$fieldid.'">
 			<div class="gc_move_field"></div>
 			<div class="gc_field_name gc_left">'.$field['label'].$name_suffix.'</div>
 			<div class="gc_field_map gc_right" id="gc_field_map_'.$fieldid.'">

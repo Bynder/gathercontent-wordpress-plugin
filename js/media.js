@@ -14,7 +14,7 @@
 			url: ajaxurl,
 			data: {
 				'_wpnonce': $('#_wpnonce').val(),
-				'action': 'download_media',
+				'action': 'gathercontent_download_media',
 				'cur_num': cur_num,
 				'cur_total': cur_total,
 				'cur_retry': cur_retry

@@ -17,7 +17,8 @@ class GatherContent extends GatherContent_Curl {
 		parent::__construct();
 		add_action('admin_menu', array(&$this, 'admin_menu'));
 		add_action('init', array(&$this, 'init'));
-		add_action('wp_ajax_download_media', array(&$this, 'download_media'));
+		add_action('wp_ajax_gathercontent_download_media', array(&$this, 'download_media'));
+		add_action('wp_ajax_gathercontent_import_page', array(&$this, 'import_page'));
 	}
 
 	function init(){
@@ -87,263 +88,6 @@ class GatherContent extends GatherContent_Curl {
 								$step = 'pages_import';
 							}
 						}
-						break;
-					case 'pages_import':
-						$this->get_post_types();
-						$this->get_pages(true);
-						$this->get_files();
-						$new_pages = array();
-						$project_id = $this->option('project_id');
-						if(isset($gc['page_id'])){
-							$post_fields = array('post_title', 'post_content', 'post_excerpt');
-
-							/*   Field Mapping Data     */
-							$map_to = $this->val($gc,'map_to',array());
-							$field_tab = $this->val($gc,'field_tab',array());
-							$field_name = $this->val($gc,'field_name',array());
-							$field_acf = $this->val($gc,'acf',array());
-							$field_acf_post = $this->val($gc,'acf_post',array());
-
-							$files = array();
-							//$post_ids = array();
-							$file_counter = 0;
-							$total_file_counter = 0;
-
-							$save_settings = array();
-
-							foreach($gc['page_id'] as $key => $page_id){
-								if(isset($gc['import_'.$page_id])){
-									$cur_file_counter = 0;
-									$cur_total_counter = 0;
-									$page = $this->original_array[$page_id];
-
-									$save_settings[$page_id] = array(
-										'post_type' => $gc['post_type'][$key],
-										'overwrite' => $gc['overwrite'][$key],
-										'category' => $gc['category'][$key],
-										'fields' => array()
-									);
-
-									$custom_fields = $this->get_field_config($page,$this->val($this->files,$page_id,array()));
-
-									$meta_id = 0;
-									$meta_fields = array();
-									if(isset($this->meta_pages[$page_id])){
-										$meta_id = $this->meta_pages[$page_id]->id;
-										$meta_fields = $this->get_field_config($this->meta_pages[$page_id],$this->val($this->files,$meta_id,array()));
-									}
-
-									$func = 'wp_insert_post';
-									$post = array(
-										'post_title' => $page->name,
-										'post_type' => $save_settings[$page_id]['post_type'],
-										'post_status' => 'draft',
-										'post_category' => array()
-									);
-									if($save_settings[$page_id]['category'] > 0){
-										$post['post_category'][] = $save_settings[$page_id]['category'];
-									}
-									if($save_settings[$page_id]['overwrite'] > 0){
-										$func = 'wp_update_post';
-										$post['ID'] = $save_settings[$page_id]['overwrite'];
-									}
-									$post['ID'] = $func($post);
-									$save_settings[$page_id]['overwrite'] = $post['ID'];
-
-									$new_post_fields = array();
-									$new_meta_fields = array();
-									$new_acf_fields = array();
-									$new_special_fields = array();
-									$post_tags = array();
-									$post_cats = array();
-									if(isset($map_to[$page_id])){
-										foreach($map_to[$page_id] as $idx => $fieldname){
-											$acf = $field_acf[$page_id][$idx];
-											$acf_post = $field_acf_post[$page_id][$idx];
-											$tab = $field_tab[$page_id][$idx];
-											if($fieldname == '_dont_import_'){
-												$save_settings[$page_id]['fields'][$tab.'_'.$field_name[$page_id][$idx]] = $fieldname;
-												continue;
-											} elseif($tab == 'meta'){
-												$field = $meta_fields[$field_name[$page_id][$idx]];
-											} elseif($tab == 'content'){
-												$field = $custom_fields[$field_name[$page_id][$idx]];
-											} else {
-												continue;
-											}
-											$save_settings[$page_id]['fields'][$tab.'_'.$field_name[$page_id][$idx]] = $fieldname;
-
-											$special = ($fieldname == 'gc_featured_image_' || $fieldname == 'gc_media_file_') ? true : false;
-
-											if($fieldname == 'gc_post_cat_'){
-												if($field['type'] != 'attach'){
-													if(is_array($field['value'])){
-														foreach($field['value'] as $cat_name){
-															$post_cats[] = $cat_name;
-														}
-													} else {
-														$post_cats[] = $field['value'];
-													}
-												}
-												continue;
-											} elseif($fieldname == 'gc_post_tags_'){
-												if($field['type'] != 'attach'){
-													if(is_array($field['value'])){
-														$post_tags += $field['value'];
-													} else {
-														$tags = array_filter(explode(',', strip_tags($field['value'])));
-														foreach($tags as $tag){
-															$tag = trim($tag);
-															if(!empty($tag)){
-																$post_tags[] = $tag;
-															}
-														}
-													}
-												}
-												continue;
-											} elseif($field['type'] == 'attach'){
-												if(is_array($field['value']) && count($field['value']) > 0){
-													if(!isset($files[$post['ID']])){
-														$files[$post['ID']] = array(
-															'files' => array(),
-															'total_files' => 0
-														);
-													}
-
-													$new_files = array();
-													foreach($field['value'] as $file){
-														$file = (array) $file;
-														$file['post_id'] = $post['ID'];
-														$file['field'] = $fieldname;
-														$file['special_field'] = $special;
-														$file['counter'] = $file_counter;
-														if(!empty($acf)){
-															$file['acf'] = array(
-																'field_id' => $acf,
-																'post_id' => $acf_post
-															);
-														}
-														$new_files[] = $file;
-													}
-													$cur_total_counter += count($new_files);
-													$total_file_counter += count($new_files);
-													$files[$post['ID']]['files'][] = $new_files;
-													$files[$post['ID']]['total_files'] = $cur_total_counter;
-
-													//$post_ids[$post['ID']] = true;
-													$field['value'] = '#_gc_file_name_'.$file_counter.'#';
-													$file_counter++;
-													$cur_file_counter++;
-												} else {
-													$field['value'] = '';
-												}
-											}
-
-											if($special){
-											} elseif(empty($acf) && in_array($fieldname,$post_fields)){
-												if(!isset($new_post_fields[$fieldname])){
-													$new_post_fields[$fieldname] = array();
-												}
-												if($field['type'] == 'checkbox' && is_array($field['value'])){
-													$tmp .= '<ul>';
-													foreach($field['value'] as $value){
-														$tmp .= '<li>'.$value.'</li>';
-													}
-													$tmp .= "</ul>\n\n\n";
-													$field['value'] = $tmp;
-												}
-												$new_post_fields[$fieldname][] = $field;
-											} else {
-												if(!empty($acf)){
-													$save_settings[$page_id]['fields'][$tab.'_'.$field_name[$page_id][$idx]] = array($fieldname,$acf,$acf_post);
-													$new_acf_fields[$acf] = $field['value'];
-												} else {
-													if(!isset($new_meta_fields[$fieldname])){
-														$new_meta_fields[$fieldname] = '';
-													}
-													if($field['type'] != 'attach'){
-														$new_meta_fields[$fieldname][] = $field['value'];
-													}
-												}
-											}
-										}
-									}
-									foreach($new_post_fields as $name => $values){
-										if(count($values) > 1){
-											$post[$name] = '';
-											foreach($values as $value){
-												if($value['value'] != ''){
-													$post[$name] .= $value['value']."\n\n\n";
-												}
-											}
-										} else {
-											$post[$name] = $values[0]['value'];
-										}
-									}
-									if($cur_file_counter == 0){
-										$post['post_status'] = 'publish';
-									}
-									if(count($post_cats) > 0 && count($this->taxonomies[$post['post_type']]) > 0){
-										$taxonomy = $this->taxonomies[$post['post_type']][key($this->taxonomies[$post['post_type']])];
-										foreach($post_cats as $cat){
-											$exists = term_exists($cat,$taxonomy);
-											if($exists){
-												$post['post_category'][] = $exists['term_id'];
-											} else {
-												$term = wp_insert_term($cat,$taxonomy);
-												$post['post_category'][] = $term['term_id'];
-											}
-										}
-									}
-									if(count($post_tags) > 0 && isset($this->allows_tags[$post['post_type']])){
-										$post_tag = '';
-										foreach($post_tags as $tag){
-											$post_tag .= ($post_tag == ''?'':',').$tag;
-										}
-										$post['tax_input'] = array(
-											'post_tag' => $post_tag
-										);
-									}
-									wp_update_post($post);
-									foreach($new_meta_fields as $field => $values){
-										delete_post_meta($post['ID'],$field);
-										if(is_array($values)){
-											foreach($values as $value){
-												if(!empty($value)){
-													if(is_array($value)){
-														foreach($value as $value2){
-															add_post_meta($post['ID'],$field,maybe_serialize($value2));
-														}
-													} else {
-														add_post_meta($post['ID'],$field,maybe_serialize($value));
-													}
-												}
-											}
-										} elseif(!empty($values)) {
-											add_post_meta($post['ID'],$field,maybe_serialize($values));
-										}
-									}
-									foreach($new_acf_fields as $acf => $value){
-										update_field($acf,$value,$post['ID']);
-									}
-									if(count($post_tags) > 0){
-										wp_set_post_tags($post['ID'],$post_tags,true);
-									}
-								}
-							}
-
-							//$files['post_ids'] = array_keys($post_ids);
-							$files['total_files'] = $total_file_counter;
-
-							$cur_settings = $this->option('saved_settings');
-							if(!is_array($cur_settings)){
-								$cur_settings = array();
-							}
-							$cur_settings[$project_id] = $save_settings;
-							$this->update('saved_settings',$cur_settings);
-							$this->update('media_files',$files);
-						}
-						$step = 'media';
 						break;
 					default:
 						$url = $this->val($gc,'api_url');
@@ -513,6 +257,7 @@ class GatherContent extends GatherContent_Curl {
 				$data['page_settings'] = $this->generate_settings($this->pages);
 				break;
 			case 'pages_import':
+				$this->update('media_files', array());
 				$this->get_states();
 				$this->get_pages(true);
 				$this->get_post_types();
@@ -544,8 +289,285 @@ class GatherContent extends GatherContent_Curl {
 					'api_key' => $this->option('api_key')
 				);
 				break;
+			case 'finished':
+				$project_id = $this->option('project_id');
+				$saved_pages = $this->option('saved_pages');
+				if(is_array($saved_pages) && isset($saved_pages[$project_id])){
+					unset($saved_pages[$project_id]);
+					$this->update('saved_pages', $saved_pages);
+				}
+				break;
 		}
 		$this->view($this->step, $data);
+	}
+
+	function import_page(){
+		global $wpdb;
+		$out = array('error' => $this->__('Verification failed, please refreshing the page and try again.'));
+		if(isset($_POST['_wpnonce']) && wp_verify_nonce($_POST['_wpnonce'],$this->base_name)){
+			if(isset($_POST['gc']) && isset($_POST['gc']['page_id'])){
+				$gc = $_POST['gc'];
+				$page_id = $gc['page_id'];
+				$this->get_post_types();
+				$project_id = $this->option('project_id');
+				$pages = $this->option('saved_pages');
+				$file_counter = 0;
+				$total_files = 0;
+				$files = array(
+					'files' => array(),
+					'total_files' => 0,
+				);
+				$save_settings = array();
+				if(is_array($pages) && isset($pages[$project_id]) && isset($pages[$project_id]['pages'][$page_id])){
+					extract($pages[$project_id]);
+					$this->get_files($page_id);
+
+					$post_fields = array('post_title', 'post_content', 'post_excerpt');
+
+					$page = $pages[$page_id];
+					$custom_fields = $this->get_field_config($page,$this->val($this->files,$page_id,array()));
+					$meta_id = 0;
+					$meta_fields = array();
+					if(isset($meta[$page_id])){
+						$meta_id = $meta[$page_id]->id;
+						$this->get_files($meta_id);
+						$meta_fields = $this->get_field_config($meta[$page_id], $this->val($this->files,$meta_id,array()));
+					}
+					$fields = $this->val($gc,'fields',array());
+					$save_settings = array(
+						'post_type' => $gc['post_type'],
+						'overwrite' => $gc['overwrite'],
+						'category' => $gc['category'],
+						'fields' => array(),
+					);
+
+					$func = 'wp_insert_post';
+					$post = array(
+						'post_title' => $page->name,
+						'post_type' => $save_settings['post_type'],
+						'post_status' => 'draft',
+						'post_category' => array(),
+					);
+					if($save_settings['category'] > 0){
+						$post['post_category'][] = $save_settings['category'];
+					}
+					if($save_settings['overwrite'] > 0){
+						$func = 'wp_update_post';
+						$post['ID'] = $save_settings['overwrite'];
+					}
+					$post['ID'] = $func($post);
+					$save_settings['overwrite'] = $post['ID'];
+
+					$new_post_fields = array();
+					$new_meta_fields = array();
+					$new_acf_fields = array();
+					$post_tags = array();
+					$post_cats = array();
+
+					$chks = array(
+						'gc_post_cat_' => 'post_cats',
+						'gc_post_tags_' => 'post_tags',
+					);
+
+					foreach($fields as $info){
+						$acf = $info['acf'];
+						$acf_post = $info['acf_post'];
+						$tab = $info['field_tab'];
+						$map_to = $info['map_to'];
+						$field_name = $info['field_name'];
+
+						if($map_to == '_dont_import_'){
+							$save_settings['fields'][$tab.'_'.$field_name] = $map_to;
+							continue;
+						} elseif($tab == 'meta'){
+							$field = $meta_fields[$field_name];
+						} elseif($tab == 'content'){
+							$field = $custom_fields[$field_name];
+						} else {
+							continue;
+						}
+
+						$save_settings['fields'][$tab.'_'.$field_name] = $map_to;
+
+						$special = ($map_to == 'gc_featured_image_' || $map_to == 'gc_media_file_') ? true : false;
+
+						if(isset($chks[$map_to])){
+							if($field['type'] != 'attach'){
+								$values = $field['value'];
+								if(!is_array($values)){
+									$values = array_filter(explode(',', strip_tags($values)));
+								}
+								foreach($values as $val){
+									$val = trim($val);
+									if(!empty($val)){
+										array_push($$chks[$map_to], $val);
+									}
+								}
+							}
+							continue;
+						} elseif($field['type'] == 'attach'){
+							if(is_array($field['value']) && count($field['value']) > 0){
+								$new_files = array();
+								foreach($field['value'] as $file){
+									$file = (array) $file;
+									$file['post_id'] = $post['ID'];
+									$file['field'] = $map_to;
+									$file['special_field'] = $special;
+									$file['counter'] = $file_counter;
+									if(!empty($acf)){
+										$file['acf'] = array(
+											'field_id' => $acf,
+											'post_id' => $acf_post,
+										);
+									}
+									$new_files[] = $file;
+								}
+
+								$total_files += count($new_files);
+								$files['files'][] = $new_files;
+								$files['total_files'] = $total_files;
+
+								$field['value'] = '#_gc_file_name_'.$file_counter.'#';
+								$file_counter++;
+							} else {
+								$field['value'] = '';
+							}
+						}
+
+						if($special){
+						} elseif(empty($acf) && in_array($map_to, $post_fields)){
+							if(!isset($new_post_fields[$map_to])){
+								$new_post_fields[$map_to] = array();
+							}
+							if($field['type'] == 'checkbox' && is_array($field['value'])){
+								$tmp = '<ul>';
+								foreach($field['value'] as $value){
+									$tmp .= '<li>'.$value.'</li>';
+								}
+								$tmp .= "</ul>\n\n";
+								$field['value'] = $tmp;
+							}
+							$new_post_fields[$map_to][] = $field;
+						} else {
+							if(!empty($acf)){
+								$save_settings['fields'][$tab.'_'.$field_name] = array($map_to, $acf, $acf_post);
+								$new_acf_fields[$acf] = $field['value'];
+							} else {
+								if(!isset($new_meta_fields[$map_to])){
+									$new_meta_fields[$map_to] = '';
+								}
+								if($field['type'] != 'attach'){
+									$new_meta_fields[$map_to][] = $field['value'];
+								}
+							}
+						}
+
+					}
+
+					foreach($new_post_fields as $name => $values){
+						if(count($values) > 1){
+							$post[$name] = '';
+							foreach($values as $value){
+								if($value['value'] != ''){
+									$post[$name] .= $value['value']."\n\n";
+								}
+							}
+						} else {
+							$post[$name] = $values[0]['value'];
+						}
+					}
+
+					if($total_files == 0){
+						$post['post_status'] = 'publish';
+					}
+
+					if(count($post_cats) > 0 && count($this->taxonomies[$post['post_type']]) > 0){
+						$taxonomy = $this->taxonomies[$post['post_type']][key($this->taxonomies[$post['post_type']])];
+						foreach($post_cats as $cat){
+							$exists = term_exists($cat, $taxonomy);
+							if($exists){
+								$post['post_category'][] = $exists['term_id'];
+							} else {
+								$term = wp_insert_term($cat, $taxonomy);
+								$post['post_category'][] = $term['term_id'];
+							}
+						}
+					}
+
+					if(count($post_tags) > 0 && isset($this->allows_tags[$post['post_type']])){
+						$post_tag = '';
+						foreach($post_tags as $tag){
+							$post_tag .= ($post_tag == '' ? '':',').$tag;
+						}
+						$post['tax_input'] = array(
+							'post_tag' => $post_tag,
+						);
+					}
+
+					wp_update_post($post);
+
+					foreach($new_meta_fields as $field => $values){
+						delete_post_meta($post['ID'], $field);
+						if(is_array($values)){
+							foreach($values as $value){
+								if(!empty($value)){
+									if(is_array($value)){
+										foreach($value as $value2){
+											add_post_meta($post['ID'], $field, maybe_serialize($value2));
+										}
+									} else {
+										add_post_meta($post['ID'], $field, maybe_serialize($value));
+									}
+								}
+							}
+						} elseif(!empty($values)){
+							add_post_meta($post['ID'], $field, maybe_serialize($values));
+						}
+					}
+
+					foreach($new_acf_fields as $acf => $value){
+						update_field($acf, $value, $post['ID']);
+					}
+
+					/*
+					if(count($post_tags) > 0){
+						wp_set_post_tags($post['ID'], $post_tags, true);
+					}*/
+					$media = $this->option('media_files');
+					if(!isset($media['total_files'])){
+						$media['total_files'] = 0;
+					}
+					if($total_files > 0){
+						$media[$post['ID']] = $files;
+						if(!isset($media['total_files'])){
+							$media['total_files'] = 0;
+						}
+						$media['total_files'] += $total_files;
+						$this->update('media_files', $media);
+					}
+
+					$cur_settings = $this->option('saved_settings');
+					if(!is_array($cur_settings)){
+						$cur_settings = array();
+					}
+					if(!isset($cur_settings[$project_id])){
+						$cur_settings[$project_id] = array();
+					}
+
+					$cur_settings[$project_id][$page_id] = $save_settings;
+					$this->update('saved_settings', $cur_settings);
+
+					$out = array(
+						'success' => true,
+						'page_percent' => $this->percent(++$_POST['cur_counter'],$_POST['total']),
+						'redirect_url' => ($media['total_files'] > 0 ? 'media' : 'finished'),
+					);
+
+				}
+			}
+		}
+		echo json_encode($out);
+		exit;
 	}
 }
 if(is_admin()){

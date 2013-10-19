@@ -11,6 +11,8 @@
 			}
 		});
 
+		$('#gc_importer_step_pages_import').submit(submit_page_import);
+
 		$('.gc_field_map input.live_filter').click(function(e){
 			e.preventDefault();
 			e.stopImmediatePropagation();
@@ -48,7 +50,9 @@
 					val = $t.attr('data-value');
 				rows.filter(':gt('+idx+')').each(function(){
 					var page_id = $(this).attr('data-page-id');
-					$('#gc_field_map_'+page_id+'_'+field_id+' li:not(.hidden-item) a[data-value="'+val+'"]').trigger('click');
+					if(!$('#gc_repeat_'+page_id).is(':checked')){
+						$('#gc_field_map_'+page_id+'_'+field_id+' li:not(.hidden-item) a[data-value="'+val+'"]').trigger('click');
+					}
 				});
 			}
 		});
@@ -103,14 +107,16 @@
 						idx = rows.index(tr),
 						new_index = ui.item.index();
 					rows.filter(':gt('+idx+')').each(function(){
-						var page_id = $(this).attr('data-page-id'),
-							field_id = ui.item.attr('id').split('_')[2],
-							item = $('#field_'+page_id+'_'+field_id);
-						if(item.length > 0){
-							if(new_index > 0){
-								item.parent().find('> .gc_settings_field:eq('+(new_index > item.index() ? new_index : (new_index-1))+')').after(item);
-							} else {
-								item.parent().prepend(item);
+						var page_id = $(this).attr('data-page-id');
+						if(!$('#gc_repeat_'+page_id).is(':checked')){
+							var field_id = ui.item.attr('id').split('_')[2],
+								item = $('#field_'+page_id+'_'+field_id);
+							if(item.length > 0){
+								if(new_index > 0){
+									item.parent().find('> .gc_settings_field:eq('+(new_index > item.index() ? new_index : (new_index-1))+')').after(item);
+								} else {
+									item.parent().prepend(item);
+								}
 							}
 						}
 					});
@@ -170,7 +176,7 @@
 			table = $('#gc_pages'),
 			rows = table.find('.gc_table_row[data-page-id]'),
 			idx = rows.index(c),
-			field_rows = c.find('.gc_settings_field'),
+			field_rows = c.find('.gc_settings_field').removeClass('moved not-moved'),
 			fields = {},
 			import_as = $('#gc_import_as_'+page_id+' input').val();
 		rows = rows.filter(':gt('+idx+')');
@@ -184,22 +190,127 @@
 			var $t = $(this),
 				page_id = $t.attr('data-page-id'),
 				c = $('#gc_fields_'+page_id);
-			c.find('> .gc_settings_field').removeClass('moved').addClass('not-moved');
-			$('#gc_import_as_'+page_id+' a[data-value="'+import_as+'"]').trigger('click');
-			for(var i in fields){
-				if(fields.hasOwnProperty(i)){
-					$('#gc_field_map_'+page_id+'_'+fields[i][1]+' li:not(.hidden-item) a[data-value="'+fields[i][0]+'"]').trigger('click');
-					var field = $('#field_'+page_id+'_'+fields[i][1]).removeClass('not-moved').addClass('moved');
-					if(i > 0){
-						c.find('> .gc_settings_field:eq('+(i-1)+')').after(field);
-					} else {
-						c.prepend(field);
+
+			if(!$('#gc_repeat_'+page_id).is(':checked')){
+				c.find('> .gc_settings_field').removeClass('moved').addClass('not-moved');
+				$('#gc_import_as_'+page_id+' a[data-value="'+import_as+'"]').trigger('click');
+				for(var i in fields){
+					if(fields.hasOwnProperty(i)){
+						$('#gc_field_map_'+page_id+'_'+fields[i][1]+' li:not(.hidden-item) a[data-value="'+fields[i][0]+'"]').trigger('click');
+						var field = $('#field_'+page_id+'_'+fields[i][1]).removeClass('not-moved').addClass('moved');
+						if(i > 0){
+							c.find('> .gc_settings_field:eq('+(i-1)+')').after(field);
+						} else {
+							c.prepend(field);
+						}
 					}
-				}
-			};
+				};
+			}
 		});
 		$('.gc_overlay,.gc_repeating_modal').hide();
-	}
+	};
+
+	var save = {
+		"total": 0,
+		"cur_counter": 0,
+		"els": null,
+		"waiting": null,
+		"progressbar": null,
+		"title": null,
+		"cur_retry": 0
+	};
+	function submit_page_import(e){
+		e.preventDefault();
+		save.els = $('#gc_pages td.gc_checkbox :checkbox:checked');
+		save.total = save.els.length;
+		save.cur_counter = 0;
+		save.waiting = $('.gc_importing_modal img');
+		save.progressbar = $('#current_page .bar');
+		save.title = $('#gc_page_title');
+		if(save.total > 0){
+			$('.gc_overlay,.gc_importing_modal').show();
+			save_page();
+		}
+		return false;
+	};
+
+	function save_page(){
+		$.ajax({
+			url: ajaxurl,
+			data: get_page_data(save.els.filter(':eq('+save.cur_counter+')')),
+			dataType: 'json',
+			type: 'POST',
+			timeout: 120000,
+			beforeSend: function(){
+				save.waiting.show();
+			},
+			error: function(){
+				save.waiting.hide();
+				save_page();
+			},
+			success: function(data){
+				save.waiting.hide();
+				if(typeof data.error != 'undefined'){
+					alert(data.error);
+				}
+				if(typeof data.success != 'undefined'){
+					save.cur_retry = 0;
+					save.cur_counter++;
+					save.progressbar.css('width',data.page_percent+'%');
+					if(save.cur_counter == save.total){
+						setTimeout(function(){
+							window.location.href = redirect_url[data.redirect_url];
+						},1000);
+					} else {
+						setTimeout(save_page,1000);
+					}
+				}
+			}
+		});
+	};
+
+	function get_page_data($t){
+		var tr = $t.closest('tr'),
+			title = tr.find('td.gc_pagename label').text(),
+			page_id = $t.val(),
+			settings = $('#gc_fields_'+page_id),
+			data = {
+				"_wpnonce": $('#_wpnonce').val(),
+				"action": "gathercontent_import_page",
+				"cur_retry": save.cur_retry,
+				"cur_counter": save.cur_counter,
+				"total": save.total
+			},
+			title_text = title;
+		if(title_text.length > 30){
+			title_text = title_text.substring(0,27)+'...';
+		}
+		save.title.attr('title',title).text(title_text);
+		if(settings.length > 0){
+			data.gc = {
+				"page_id": page_id,
+				"post_type": $('#gc_import_as_'+page_id+' input').val(),
+				"overwrite": $('#gc_import_to_'+page_id+' input').val(),
+				"category": $('#gc_category_'+page_id+' input').val(),
+				"fields": []
+			};
+			settings.find('> .gc_settings_field').each(function(){
+				var $t = $(this),
+					input = $t.find('> input'),
+					map_to = $t.find('> .gc_field_map input'),
+					field = {
+						"field_tab": input.filter('[name^="gc[field_tab]"]').val(),
+						"field_name": input.filter('[name^="gc[field_name]"]').val(),
+						"map_to": map_to.filter('[name^="gc[map_to]"]').val(),
+						"acf": map_to.filter('.acf-field').val(),
+						"acf_post": map_to.filter('.acf-post').val()
+					};
+				data.gc.fields.push(field);
+			});
+		}
+		return data;
+	};
+
     jQuery.expr[":"].icontains_searchable = jQuery.expr.createPseudo(function(arg) {
         return function( elem ) {
             return jQuery(elem).attr('data-search').toUpperCase().indexOf(arg.toUpperCase()) >= 0;

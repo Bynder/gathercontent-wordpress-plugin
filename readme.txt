@@ -38,6 +38,12 @@ This section describes how to install the plugin and get it working.
 
 == Changelog ==
 
+= 2.2.0 =
+* Reworked pages importing to work via ajax. Should fix problems importing too many fields
+
+= 2.1.0 = 
+* Added repeatable field mapping
+
 = 2.0.4 =
 * Fixed a bug where tag strings weren't being separated by commas
 

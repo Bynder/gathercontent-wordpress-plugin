@@ -149,7 +149,18 @@ td.gc_pagename { text-align: left; }
 .gc_pagelist tr.checked td { background-color: #FFFDBF; }
 .gc_pagelist tr:hover td { background-color: #BFD9F5; }
 
-.gc_modal { text-align: center; padding-bottom: 20px; position: fixed; z-index: 100; background-color: #fff; left: 50%; margin-left:-128px;top:50%;margin-top:-40px; display: none;}
+.gc_modal {
+	text-align: center;
+	padding: 0 20px 20px;
+	position: fixed;
+	z-index: 100;
+	background-color: #fff;
+	left: 50%;
+	margin-left:-148px;
+	top:50%;
+	margin-top:-40px;
+	display: none;
+}
 .gc_overlay {
 	display: none;
 	bottom: 0;
