@@ -2,8 +2,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: GatherContent Importer\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2013-10-09 00:40-0000\n"
-"PO-Revision-Date: 2013-10-09 00:40-0000\n"
+"POT-Creation-Date: 2013-10-19 05:23-0000\n"
+"PO-Revision-Date: 2013-10-19 05:23-0000\n"
 "Last-Translator: Mathew Chapman <mat@gathercontent.com>\n"
 "Language-Team: GatherContent <support@gathercontent.com>\n"
 "MIME-Version: 1.0\n"
@@ -24,133 +24,130 @@ msgstr ""
 msgid "Advanced Custom Fields"
 msgstr ""
 
-#: curl.php:249
+#: curl.php:255
 msgid "New entry"
 msgstr ""
 
-#: curl.php:259
+#: curl.php:265
 #: view/pages.php:19
 msgid "Search..."
 msgstr ""
 
-#: curl.php:270
-#: curl.php:271
-msgid "Title"
-msgstr ""
-
-#: curl.php:273
-#: curl.php:274
-msgid "Caption"
-msgstr ""
-
 #: curl.php:276
 #: curl.php:277
-msgid "Description"
+msgid "Title"
 msgstr ""
 
 #: curl.php:279
 #: curl.php:280
+msgid "Caption"
+msgstr ""
+
+#: curl.php:282
+#: curl.php:283
+msgid "Description"
+msgstr ""
+
+#: curl.php:285
+#: curl.php:286
 msgid "Alt Text"
 msgstr ""
 
-#: curl.php:284
+#: curl.php:290
 #, php-format
 msgid "%s Title"
 msgstr ""
 
-#: curl.php:285
+#: curl.php:291
 #, php-format
 msgid "%s Content"
 msgstr ""
 
-#: curl.php:286
+#: curl.php:292
 #, php-format
 msgid "%s Excerpt"
 msgstr ""
 
-#: curl.php:287
+#: curl.php:293
 msgid "Featured Image"
 msgstr ""
 
-#: curl.php:288
+#: curl.php:294
 msgid "Tags"
 msgstr ""
 
-#: curl.php:289
-#: curl.php:497
+#: curl.php:295
+#: curl.php:508
 msgid "Category"
 msgstr ""
 
-#: curl.php:388
-#: curl.php:389
+#: curl.php:394
+#: curl.php:395
 msgid "New Custom Field"
 msgstr ""
 
-#: curl.php:392
-#: curl.php:393
+#: curl.php:398
+#: curl.php:399
 msgid "Do Not Import"
 msgstr ""
 
-#: curl.php:414
+#: curl.php:420
 msgid "Choose category"
 msgstr ""
 
-#: curl.php:481
-msgid "Settings"
-msgstr ""
-
-#: curl.php:489
+#: curl.php:500
 msgid "Import as"
 msgstr ""
 
-#: curl.php:493
+#: curl.php:504
 msgid "Import to"
 msgstr ""
 
-#: curl.php:503
-msgid "Include Meta tab content"
+#: curl.php:512
+msgid "Repeat this configuration"
 msgstr ""
 
-#: curl.php:567
+#: curl.php:569
 #, php-format
 msgid "This page is empty. You can %sadd some content to this page in GatherContent%s."
 msgstr ""
 
-#: curl.php:599
+#: curl.php:605
 msgid "Map to"
 msgstr ""
 
-#: curl.php:656
+#: curl.php:662
 msgid "There was a problem contacting the API. Please check your server allows it."
 msgstr ""
 
-#: curl.php:663
+#: curl.php:669
 #, php-format
 msgid "There was a problem contacting the API. Please check your API credentials. %sAuth Settings%s"
 msgstr ""
 
-#: curl.php:698
+#: curl.php:703
 msgid "(no title)"
 msgstr ""
 
-#: gathercontent.php:356
-#: gathercontent.php:363
-#: gathercontent.php:376
+#: gathercontent.php:104
+#: gathercontent.php:111
+#: gathercontent.php:124
+#: gathercontent.php:306
 msgid "Verification failed, please refreshing the page and try again."
 msgstr ""
 
-#: gathercontent.php:463
+#: gathercontent.php:211
 #, php-format
 msgid "There was an error with the file (%s)"
 msgstr ""
 
-#: gathercontent.php:468
-#: gathercontent.php:482
+#: gathercontent.php:216
+#: gathercontent.php:230
 #, php-format
 msgid "Retrying to download (%s)"
 msgstr ""
 
-#: gathercontent.php:477
+#: gathercontent.php:225
 #, php-format
 msgid "Failed to download the file (%s)"
 msgstr ""
@@ -196,6 +193,7 @@ msgid "<strong>Heads up!</strong> This process can take a while, it depends on h
 msgstr ""
 
 #: view/media.php:11
+#: view/pages_import.php:11
 msgid "Page:"
 msgstr ""
 
@@ -208,12 +206,12 @@ msgid "Cancel"
 msgstr ""
 
 #: view/pages.php:9
-#: view/pages_import.php:14
+#: view/pages_import.php:21
 msgid "Choose pages to import"
 msgstr ""
 
 #: view/pages.php:9
-#: view/pages_import.php:14
+#: view/pages_import.php:21
 msgid "Choose account"
 msgstr ""
 
@@ -223,7 +221,7 @@ msgid "Configure selected pages"
 msgstr ""
 
 #: view/pages.php:27
-#: view/pages_import.php:30
+#: view/pages_import.php:37
 msgid "Pages"
 msgstr ""
 
@@ -231,12 +229,16 @@ msgstr ""
 msgid "Importing pages and text content..."
 msgstr ""
 
-#: view/pages_import.php:20
+#: view/pages_import.php:17
+msgid "Repeating configuration..."
+msgstr ""
+
+#: view/pages_import.php:27
 msgid "Select different pages"
 msgstr ""
 
-#: view/pages_import.php:23
-#: view/pages_import.php:42
+#: view/pages_import.php:30
+#: view/pages_import.php:48
 msgid "Import selected pages"
 msgstr ""
 
