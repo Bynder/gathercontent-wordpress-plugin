@@ -3,7 +3,7 @@ Contributors: Mathew Chapman, Mark Young, namshee
 Tags: structured content, gather content, gathercontent, import, migrate, export, mapping, production, writing, collaboration, platform, connect, link, gather, client, word, production
 Requires at least: 3.5.0
 Tested up to: 3.6.0
-Stable tag: 2.0.4
+Stable tag: 2.2.0
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -39,9 +39,9 @@ This section describes how to install the plugin and get it working.
 == Changelog ==
 
 = 2.2.0 =
-* Reworked pages importing to work via ajax. Should fix problems importing too many fields
+* Reworked pages importing to work via ajax. Should fix problems importing too many fields (`max_input_vars`)
 
-= 2.1.0 = 
+= 2.1.0 =
 * Added repeatable field mapping
 
 = 2.0.4 =

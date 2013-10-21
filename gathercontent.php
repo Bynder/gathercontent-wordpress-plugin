@@ -3,7 +3,7 @@
 Plugin Name: GatherContent Importer
 Plugin URI: http://www.gathercontent.com
 Description: Imports pages from GatherContent to your wordpress blog
-Version: 2.0.4
+Version: 2.2.0
 Author: Mathew Chapman
 Author URI: http://www.gathercontent.com
 License: GPL2
@@ -11,7 +11,7 @@ License: GPL2
 require_once 'curl.php';
 class GatherContent extends GatherContent_Curl {
 
-	var $version = '2.0';
+	var $version = '2.0'; // used for javascript versioning
 
 	function __construct(){
 		parent::__construct();
@@ -563,7 +563,15 @@ class GatherContent extends GatherContent_Curl {
 						'redirect_url' => ($media['total_files'] > 0 ? 'media' : 'finished'),
 					);
 
+				} else {
+					$out = array(
+						'error' => $this->__('There was a problem importing the page, please refresh and try again.'),
+					);
 				}
+			} else {
+				$out = array(
+					'error' => $this->__('There was a problem importing the page, please refresh and try again.'),
+				);
 			}
 		}
 		echo json_encode($out);
