@@ -39,7 +39,7 @@
 	    pagelist = $('.gc_pagelist tr td');
 	    pagelist_c = $('#gc_pagelist_container');
 	    pagelist.click(function(e){
-	    	if(!$(e.target).is(':checkbox')){
+	    	if(!$(e.target).is(':checkbox,label')){
 		    	var el = $(this).closest('tr').find(':checkbox');
 		    	el.attr('checked',(el.is(':checked')?false:true)).trigger('change');
 		    }

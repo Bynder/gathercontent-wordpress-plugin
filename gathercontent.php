@@ -3,7 +3,7 @@
 Plugin Name: GatherContent Importer
 Plugin URI: http://www.gathercontent.com
 Description: Imports pages from GatherContent to your wordpress blog
-Version: 2.2.1
+Version: 2.3.0
 Author: Mathew Chapman
 Author URI: http://www.gathercontent.com
 License: GPL2
@@ -322,6 +322,10 @@ class GatherContent extends GatherContent_Curl {
 					'total_files' => 0,
 				);
 				$save_settings = array();
+
+				if($_POST['cur_counter'] == 0) {
+					$this->update('media_files', array());
+				}
 				if(is_array($pages) && isset($pages[$project_id]) && isset($pages[$project_id]['pages'][$page_id])){
 					extract($pages[$project_id]);
 					$this->get_files($page_id);
@@ -329,14 +333,11 @@ class GatherContent extends GatherContent_Curl {
 					$post_fields = array('post_title', 'post_content', 'post_excerpt');
 
 					$page = $pages[$page_id];
-					$custom_fields = $this->get_field_config($page,$this->val($this->files,$page_id,array()));
-					$meta_id = 0;
-					$meta_fields = array();
-					if(isset($meta[$page_id])){
-						$meta_id = $meta[$page_id]->id;
-						$this->get_files($meta_id);
-						$meta_fields = $this->get_field_config($meta[$page_id], $this->val($this->files,$meta_id,array()));
-					}
+
+					$config = $this->get_field_config($page, $this->val($this->files, $page_id, array()));
+
+					$custom_fields = $this->val($config, 'content', array());
+					$meta_fields = $this->val($config, 'meta', array());
 					$fields = $this->val($gc,'fields',array());
 					$save_settings = array(
 						'post_type' => $gc['post_type'],
@@ -396,7 +397,7 @@ class GatherContent extends GatherContent_Curl {
 						$special = ($map_to == 'gc_featured_image_' || $map_to == 'gc_media_file_') ? true : false;
 
 						if(isset($chks[$map_to])){
-							if($field['type'] != 'attach'){
+							if($field['type'] != 'files'){
 								$values = $field['value'];
 								if(!is_array($values)){
 									$values = array_filter(explode(',', strip_tags($values)));
@@ -409,7 +410,7 @@ class GatherContent extends GatherContent_Curl {
 								}
 							}
 							continue;
-						} elseif($field['type'] == 'attach'){
+						} elseif($field['type'] == 'files'){
 							if(is_array($field['value']) && count($field['value']) > 0){
 								$new_files = array();
 								foreach($field['value'] as $file){
@@ -443,7 +444,7 @@ class GatherContent extends GatherContent_Curl {
 							if(!isset($new_post_fields[$map_to])){
 								$new_post_fields[$map_to] = array();
 							}
-							if($field['type'] == 'checkbox' && is_array($field['value'])){
+							if($field['type'] == 'choice_checkbox' && is_array($field['value'])){
 								$tmp = '<ul>';
 								foreach($field['value'] as $value){
 									$tmp .= '<li>'.$value.'</li>';
@@ -460,7 +461,7 @@ class GatherContent extends GatherContent_Curl {
 								if(!isset($new_meta_fields[$map_to])){
 									$new_meta_fields[$map_to] = '';
 								}
-								if($field['type'] != 'attach'){
+								if($field['type'] != 'files'){
 									$new_meta_fields[$map_to][] = $field['value'];
 								}
 							}
@@ -473,14 +474,19 @@ class GatherContent extends GatherContent_Curl {
 							$post[$name] = '';
 							foreach($values as $value){
 								if($value['value'] != ''){
+									if($name == 'post_title') {
+										$value['value'] = strip_tags($value['value']);
+									}
 									$post[$name] .= $value['value']."\n\n";
 								}
 							}
 						} else {
+							if($name == 'post_title') {
+								$values[0]['value'] = strip_tags($values[0]['value']);
+							}
 							$post[$name] = $values[0]['value'];
 						}
 					}
-
 					if($total_files == 0){
 						$post['post_status'] = 'publish';
 					}
@@ -541,6 +547,7 @@ class GatherContent extends GatherContent_Curl {
 					if(!isset($media['total_files'])){
 						$media['total_files'] = 0;
 					}
+
 					if($total_files > 0){
 						$media[$post['ID']] = $files;
 						if(!isset($media['total_files'])){
@@ -562,6 +569,7 @@ class GatherContent extends GatherContent_Curl {
 					$this->update('saved_settings', $cur_settings);
 
 					$out = array(
+						'total_files' => $total_files,
 						'success' => true,
 						'page_percent' => $this->percent(++$_POST['cur_counter'],$_POST['total']),
 						'redirect_url' => ($media['total_files'] > 0 ? 'media' : 'finished'),

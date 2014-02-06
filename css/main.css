@@ -19,7 +19,7 @@
 }
 .gc_logo span{display: none}
 
-.gc_container { width: 414px; border: 1px solid #d5d5d5;-webkit-border-radius: 6px;-moz-border-radius: 6px;border-radius: 6px;margin:0 auto;box-shadow: 0px 2px 2px rgba(0, 0, 0, 0.4);}
+.gc_container { width: 414px; background-color: #fff; border: 1px solid #d5d5d5;-webkit-border-radius: 6px;-moz-border-radius: 6px;border-radius: 6px;margin:0 auto;box-shadow: 0px 2px 2px rgba(0, 0, 0, 0.4);}
 .gc_container-header { text-align: center; border-bottom: 1px solid #eee}
 .gc_container form, .gc_finished { padding: 0 20px 20px; position: relative; }
 .gc_container .curl_error { padding: 0 20px; }
@@ -76,6 +76,9 @@
 #gc_importer_step_auth #gc_api_url {
 	padding-right: 120px;
 	padding-left: 47px;
+}
+.branch-3-8 #gc_importer_step_auth #gc_api_url {
+	padding: 3px 120px 5px 47px;
 }
 #gc_importer_step_auth .btn {
 	float: right;

@@ -159,9 +159,9 @@ class GatherContent_Functions {
 			$tag = '#_gc_file_name_'.$file['counter'].'#';
 			$post = get_post($post_id);
 			if($image_file){
-				$html = '<a href="'.$file['url'].'"><img src="'.$file['url'].'" alt="'.esc_attr($file['title']).'" /></a>';
+				$html = '<a href="'.$file['url'].'"><img src="'.$file['url'].'" alt="'.esc_attr($file['title']).'" /></a>'."\n";
 			} else {
-				$html = '<a href="'.$file['url'].'">'.$file['title'].'</a>';
+				$html = '<a href="'.$file['url'].'">'.$file['title'].'</a>'."\n";
 			}
 			if($more_than_1){
 				$html .= $tag;
@@ -210,6 +210,10 @@ class GatherContent_Functions {
 		$cur_total++;
 
 		$data = $this->get_page_title_array($next_id);
+
+		if($overall_percent == 100) {
+			$this->update('media_files', array());
+		}
 
 		$out = array(
 			'page_percent' => $page_percent,

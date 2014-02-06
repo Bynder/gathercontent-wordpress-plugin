@@ -12,44 +12,83 @@ class GatherContent_Curl extends GatherContent_Functions {
 	var $files = array();
 
 	function get_field_config($obj,$files=array()){
-		$fields = $obj->custom_field_config;
-		$new_fields = array();
-		$values = (array) $obj->custom_field_values;
-		if($this->foreach_safe($fields)){
-			foreach($fields as $field){
-				if($field->type == 'section'){
-					continue;
-				}
-				$val = $this->val($values,$field->name);
-				if($field->type == 'paragraph') {
-					$val = preg_replace_callback('#\<p\>(.+?)\<\/p\>#s',
-						create_function(
-							'$matches',
-							'return "<p>".str_replace(array("\n","\r\n","\r"), " ", $matches[1])."</p>";'
-						), $val);
-					$val = str_replace('</ul><',"</ul>\n<", $val);
-					$val = preg_replace('/\s*<\//m', '</', $val);
-					$val = preg_replace('/<\/p>\s*<p>/m', "</p>\n<p>", $val);
-					$val = preg_replace('/<\/p>\s*</m', "</p>\n<", $val);
-					$val = preg_replace('/<p>\s*<\/p>/m','<p>&nbsp;</p>',$val);
-					$val = str_replace(array('<ul><li','</li><li>', '</li></ul>'), array("<ul>\n\t<li","</li>\n\t<li>", "</li>\n</ul>"), $val);
-				}
-				$new_fields[$field->name] = array(
-					'name' => $field->name,
-					'label' => $field->label,
-					'type' => $field->type,
-					'value' => $val
-				);
-				if($field->type == 'attach'){
-					$new_fields[$field->name]['value'] = $this->val($files,$field->name,array());
-				} elseif($field->type == 'drop'){
-					if($new_fields[$field->name]['value'] == -1){
-						$new_fields[$field->name]['value'] = '';
+		if($obj->config != '') {
+			$config = json_decode(base64_decode($obj->config));
+			$new_config = array();
+			if($this->foreach_safe($config)) {
+
+				foreach($config as $tab_pane) {
+
+					$new_fields = array();
+
+					if($this->foreach_safe($tab_pane->elements)) {
+						foreach($tab_pane->elements as $element) {
+
+							switch($element->type) {
+								case 'text':
+									$val = $element->value;
+									if(!$element->plain_text) {
+										$val = preg_replace_callback('#\<p\>(.+?)\<\/p\>#s',
+											create_function(
+												'$matches',
+												'return "<p>".str_replace(array("\n","\r\n","\r"), " ", $matches[1])."</p>";'
+											), $val);
+										$val = str_replace('</ul><',"</ul>\n<", $val);
+										$val = preg_replace('/\s*<\//m', '</', $val);
+										$val = preg_replace('/<\/p>\s*<p>/m', "</p>\n<p>", $val);
+										$val = preg_replace('/<\/p>\s*</m', "</p>\n<", $val);
+										$val = preg_replace('/<p>\s*<\/p>/m','<p>&nbsp;</p>',$val);
+										$val = str_replace(array('<ul><li','</li><li>', '</li></ul>'), array("<ul>\n\t<li","</li>\n\t<li>", "</li>\n</ul>"), $val);
+									}
+									break;
+
+								case 'choice_radio':
+									$val = '';
+									foreach($element->options as $idx => $option) {
+										if($option->selected) {
+											if(isset($option->value)) {
+												$val = $option->value;
+											}
+											else {
+												$val = $option->label;
+											}
+										}
+									}
+									break;
+
+								case 'choice_checkbox':
+									$val = array();
+									foreach($element->options as $option) {
+										if($option->selected) {
+											$val[] = $option->label;
+										}
+									}
+									break;
+
+								case 'files':
+									$val = $this->val($files, $element->name, array());
+									break;
+
+								default:
+									continue 2;
+									break;
+
+							}
+							$new_fields[$element->name] = array(
+								'name' => $element->name,
+								'label' => $element->label,
+								'type' => $element->type,
+								'value' => $val,
+							);
+						}
 					}
+
+					$new_config[strtolower($tab_pane->label)] = $new_fields;
 				}
 			}
+			return $new_config;
 		}
-		return $new_fields;
+		return array();
 	}
 
 	function get_files($page_id){
@@ -181,23 +220,14 @@ class GatherContent_Curl extends GatherContent_Functions {
 		$meta_pages = array();
 		if($pages && is_array($pages->pages)){
 			foreach($pages->pages as $page){
-				if($page->state != 'meta'){
-					$original[$page->id] = $page;
-					$parent_id = $page->parent_id;
-					if($page->repeatable_page_id > 0){
-						$parent_id = $page->repeatable_page_id;
-						if(isset($original[$parent_id])){
-							$page->custom_field_config = $original[$parent_id]->custom_field_config;
-						}
-					}
-					if(!isset($parent_array[$parent_id])){
-						$parent_array[$parent_id] = array();
-					}
-					$parent_array[$parent_id][$page->id] = $page;
-					$this->page_count++;
-				} else {
-					$meta_pages[$page->parent_id] = $page;
+				$original[$page->id] = $page;
+				$parent_id = $page->parent_id;
+				if(!isset($parent_array[$parent_id])){
+					$parent_array[$parent_id] = array();
 				}
+				$parent_array[$parent_id][$page->id] = $page;
+
+				$this->page_count++;
 			}
 			foreach($parent_array as $parent_id => $page_array){
 				$array = $page_array;
@@ -460,14 +490,9 @@ class GatherContent_Curl extends GatherContent_Functions {
 			}
 			$add = '';
 			$parent_id = $page->parent_id;
-			$meta = false;
-			if($page->repeatable_page_id > 0){
-				$parent_id = $page->repeatable_page_id;
-			}
-			if(isset($this->meta_pages[$id])){
-				$meta = $this->get_field_config($this->meta_pages[$id]);
-			}
-			$fields = $this->get_field_config($page);
+			$config = $this->get_field_config($page);
+			$fields = $this->val($config, 'content', array());
+			$meta = $this->val($config, 'meta', array());
 			$show_fields = true;
 			if($show_settings && !(count($fields) > 0 || ($meta !== false && count($meta) > 0))){
 				$show_fields = false;
@@ -634,7 +659,7 @@ class GatherContent_Curl extends GatherContent_Functions {
 	}
 
 	function get($command = '', $postfields = array()) {
-		$api_url = 'https://'.$this->option('api_url').'.gathercontent.com/api/0.2.1/'.$command;
+		$api_url = 'https://'.$this->option('api_url').'.gathercontent.com/api/0.3/'.$command;
 		$curl_opts = array(
 			CURLOPT_HTTPAUTH => CURLAUTH_DIGEST,
 			CURLOPT_HTTPHEADER => array('Accept: application/json', 'Content-Type: application/x-www-form-urlencoded'),
