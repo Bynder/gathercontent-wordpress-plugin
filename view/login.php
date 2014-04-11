@@ -12,7 +12,7 @@
 			<span class="gc_domain">.gathercontent.com</span>
 		</div>
 		<div>
-			<label for="gc_api_key"><?php $this->_e('API Key') ?><a href="#" class="gc-ajax-tooltip" title="<?php esc_attr($this->_e('You can find your unique API key inside your GatherContent account by going to Settings and opening the API tab.')) ?>"></a></label>
+			<label for="gc_api_key"><?php $this->_e('API Key') ?><a href="#" class="gc-ajax-tooltip" title="<?php esc_attr($this->_e('You can find your unique API key inside your GatherContent account by going to Personal Settings and opening the API tab.')) ?>"></a></label>
 			<input type="text" name="gc[api_key]" id="gc_api_key" value="<?php echo esc_attr($this->option('api_key')) ?>" />
 		</div>
 		<div class="gc_cf">

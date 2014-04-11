@@ -3,7 +3,7 @@
 Plugin Name: GatherContent Importer
 Plugin URI: http://www.gathercontent.com
 Description: Imports pages from GatherContent to your wordpress blog
-Version: 2.3.0
+Version: 2.4.0
 Author: Mathew Chapman
 Author URI: http://www.gathercontent.com
 License: GPL2
@@ -15,10 +15,41 @@ class GatherContent extends GatherContent_Curl {
 
 	function __construct(){
 		parent::__construct();
+		add_action('plugins_loaded', array(&$this, 'update_db_check'));
 		add_action('admin_menu', array(&$this, 'admin_menu'));
 		add_action('init', array(&$this, 'init'));
 		add_action('wp_ajax_gathercontent_download_media', array(&$this, 'download_media'));
 		add_action('wp_ajax_gathercontent_import_page', array(&$this, 'import_page'));
+	}
+
+	function update_db_check(){
+		if(get_site_option('gathercontent_version') != $this->version){
+			$this->install();
+		}
+	}
+
+	function install(){
+		global $wpdb;
+
+		$table_name = $wpdb->prefix . 'gathercontent_pages';
+
+		$sql = "CREATE TABLE ".$table_name." (
+		  `page_id` int(10) NOT NULL,
+		  `project_id` int(10) NOT NULL,
+		  `config` longblob NOT NULL,
+		  UNIQUE KEY `page_id` (`page_id`)
+		);";
+		require_once( ABSPATH . 'wp-admin/includes/upgrade.php' );
+		dbDelta( $sql );
+		add_option( 'gathercontent_version', $this->version );
+	}
+
+	function uninstall(){
+        global $wpdb;
+
+		$table_name = $wpdb->prefix . 'gathercontent_pages';
+
+		$wpdb->query("DROP TABLE IF EXISTS ".$table_name);
 	}
 
 	function init(){
@@ -295,11 +326,7 @@ class GatherContent extends GatherContent_Curl {
 				break;
 			case 'finished':
 				$project_id = $this->option('project_id');
-				$saved_pages = $this->option('saved_pages');
-				if(is_array($saved_pages) && isset($saved_pages[$project_id])){
-					unset($saved_pages[$project_id]);
-					$this->update('saved_pages', $saved_pages);
-				}
+				$this->delete_gc_pages($project_id);
 				break;
 		}
 		$this->view($this->step, $data);
@@ -314,7 +341,8 @@ class GatherContent extends GatherContent_Curl {
 				$page_id = $gc['page_id'];
 				$this->get_post_types();
 				$project_id = $this->option('project_id');
-				$pages = $this->option('saved_pages');
+				$page = $this->get_gc_page($page_id);
+				$page = $page->config;
 				$file_counter = 0;
 				$total_files = 0;
 				$files = array(
@@ -326,13 +354,10 @@ class GatherContent extends GatherContent_Curl {
 				if($_POST['cur_counter'] == 0) {
 					$this->update('media_files', array());
 				}
-				if(is_array($pages) && isset($pages[$project_id]) && isset($pages[$project_id]['pages'][$page_id])){
-					extract($pages[$project_id]);
+				if($page !== false){
 					$this->get_files($page_id);
 
 					$post_fields = array('post_title', 'post_content', 'post_excerpt');
-
-					$page = $pages[$page_id];
 
 					$config = $this->get_field_config($page, $this->val($this->files, $page_id, array()));
 
@@ -591,5 +616,7 @@ class GatherContent extends GatherContent_Curl {
 	}
 }
 if(is_admin()){
-	new GatherContent;
+	$gc = new GatherContent;
+	register_activation_hook( __FILE__, array( &$gc, 'install' ));
+	register_deactivation_hook( __FILE__, array( &$gc, 'uninstall' ));
 }

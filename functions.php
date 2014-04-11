@@ -15,6 +15,68 @@ class GatherContent_Functions {
 		$this->plugin_path = WP_PLUGIN_DIR.'/'.$this->base_name.'/';
 	}
 
+	function save_gc_page($id, $project_id, $config){
+		global $wpdb;
+		$config = base64_encode(serialize($config));
+		$table_name = $wpdb->prefix . 'gathercontent_pages';
+		if($this->get_gc_page($id) !== false){
+			return $wpdb->update($table_name, array('project_id' => $project_id, 'config' => $config), array('page_id' => $id));
+		}
+		return $wpdb->insert($table_name, array('page_id' => $id, 'project_id' => $project_id, 'config' => $config));
+	}
+
+	function get_gc_page($id){
+		global $wpdb;
+
+		$table_name = $wpdb->prefix . 'gathercontent_pages';
+
+		$row = $wpdb->get_row(
+			$wpdb->prepare("
+				SELECT * FROM ".$table_name."
+				WHERE page_id = %d",
+				$id
+			)
+		);
+
+		if($row === null){
+			return false;
+		}
+
+		$row->config = unserialize(base64_decode($row->config));
+
+		return $row;
+	}
+
+	function delete_gc_page($id){
+		global $wpdb;
+
+		$table_name = $wpdb->prefix . 'gathercontent_pages';
+
+		$row = $wpdb->query(
+			$wpdb->prepare("
+				DELETE FROM ".$table_name."
+				WHERE page_id = %d",
+				$id
+			)
+		);
+
+	}
+
+	function delete_gc_pages($project_id){
+		global $wpdb;
+
+		$table_name = $wpdb->prefix . 'gathercontent_pages';
+
+		$row = $wpdb->query(
+			$wpdb->prepare("
+				DELETE FROM ".$table_name."
+				WHERE project_id = %d",
+				$project_id
+			)
+		);
+
+	}
+
 	function get_submit_button($text,$tag='button',$ext=''){
 		$html = '<'.$tag;
 		if($tag == 'button'){

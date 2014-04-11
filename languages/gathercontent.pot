@@ -195,7 +195,7 @@ msgid "API Key"
 msgstr ""
 
 #: view/login.php:15
-msgid "You can find your unique API key inside your GatherContent account by going to Settings and opening the API tab."
+msgid "You can find your unique API key inside your GatherContent account by going to Personal Settings and opening the API tab."
 msgstr ""
 
 #: view/login.php:19

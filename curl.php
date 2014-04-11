@@ -217,7 +217,6 @@ class GatherContent_Curl extends GatherContent_Functions {
 		$original = array();
 		$new_pages = array();
 		$parent_array = array();
-		$meta_pages = array();
 		if($pages && is_array($pages->pages)){
 			foreach($pages->pages as $page){
 				$original[$page->id] = $page;
@@ -243,14 +242,19 @@ class GatherContent_Curl extends GatherContent_Functions {
 		}
 		$this->pages = $new_pages;
 		$this->original_array = $original;
-		$this->meta_pages = $meta_pages;
+
 		if($save_pages){
-			$saved_pages = $this->option('saved_pages');
-			if(!is_array($saved_pages)){
-				$saved_pages = array();
+
+			$selected = $this->option('selected_pages');
+			if(!$this->foreach_safe($selected)){
+				$selected = array();
 			}
-			$saved_pages[$project_id] = array('pages' => $original, 'meta' => $meta_pages);
-			$this->update('saved_pages', $saved_pages);
+
+			foreach($selected as $id) {
+				if(isset($original[$id])){
+					$this->save_gc_page($id, $project_id, $original[$id]);
+				}
+			}
 		}
 	}
 
