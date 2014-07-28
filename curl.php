@@ -724,7 +724,7 @@ class GatherContent_Curl extends GatherContent_Functions {
 class GC_Walker_PageDropdown extends Walker {
 	var $tree_type = 'page';
 	var $db_fields = array ('parent' => 'post_parent', 'id' => 'ID');
-	function start_el( &$output, $page, $depth = 0, $args = array(), $id = 0, $base_name ) {
+	function start_el( &$output, $page, $depth = 0, $args = array(), $id = 0, $base_name = 'default' ) {
 		$pad = str_repeat('&nbsp;', $depth * 3);
 
 		$title = apply_filters( 'list_pages', $page->post_title, $page );
