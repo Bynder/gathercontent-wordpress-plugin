@@ -540,6 +540,7 @@ class GatherContent extends GatherContent_Curl {
 					}
 
 					wp_update_post($post);
+                    wp_set_post_terms( $post['ID'], $post['post_category'], $taxonomy); //set terms for the current post
 
 					foreach($new_meta_fields as $field => $values){
 						delete_post_meta($post['ID'], $field);
