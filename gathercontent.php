@@ -106,18 +106,15 @@ class GatherContent extends GatherContent_Curl {
                         }
                         break;
                     case 'pages':
-                        if(isset($gc['page_id'])){
-                            $page_ids = $gc['page_id'];
-                            $import = array();
-                            foreach($page_ids as $id){
-                                if(isset($gc['import_'.$id])){
-                                    $import[] = $id;
-                                }
+                        $import = array();
+                        foreach($gc as $key => $val) {
+                            if(substr($key, 0, 7) == 'import_' && !empty($val)) {
+                                $import[] = $val;
                             }
-                            if(count($import) > 0){
-                                $this->update('selected_pages',$import);
-                                $step = 'pages_import';
-                            }
+                        }
+                        if(count($import) > 0){
+                            $this->update('selected_pages',$import);
+                            $step = 'pages_import';
                         }
                         break;
                     default:
@@ -383,6 +380,7 @@ class GatherContent extends GatherContent_Curl {
                     }
                     if($save_settings['overwrite'] > 0){
                         $func = 'wp_update_post';
+                        unset($post['post_title']);
                         $post['ID'] = $save_settings['overwrite'];
                     }
                     $post['ID'] = $func($post);
@@ -565,10 +563,6 @@ class GatherContent extends GatherContent_Curl {
                         update_field($acf, $value, $post['ID']);
                     }
 
-                    /*
-                    if(count($post_tags) > 0){
-                        wp_set_post_tags($post['ID'], $post_tags, true);
-                    }*/
                     $media = $this->option('media_files');
                     if(!isset($media['total_files'])){
                         $media['total_files'] = 0;

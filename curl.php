@@ -401,15 +401,13 @@ class GatherContent_Curl extends GatherContent_Functions {
             }
         }
 
-        $limit = (int) apply_filters( 'postmeta_form_limit', 30 );
         $dont_allow = "'".implode("','",$dont_allow)."'";
         $keys = $wpdb->get_col( "
             SELECT meta_key
             FROM $wpdb->postmeta
             WHERE meta_key NOT IN(".$dont_allow.")
             GROUP BY meta_key
-            ORDER BY meta_key
-            LIMIT $limit" );
+            ORDER BY meta_key" );
         $supports_custom = '|'.implode('|',$supports_custom).'|';
         if ( $keys ){
             natcasesort($keys);
@@ -515,7 +513,7 @@ class GatherContent_Curl extends GatherContent_Functions {
             }
 
             $out .= ' <label for="import_'.$id.'">'.$page->name.'</label></td>
-                    <td class="gc_checkbox">'.($show_fields?'<input type="checkbox" name="gc[import_'.$id.']" id="import_'.$id.'" value="'.$id.'"'.($checked?' checked="checked"':'').' />':'').'<input type="hidden" name="gc[page_id][]" value="'.$id.'" /></td>
+                    <td class="gc_checkbox">'.($show_fields?'<input type="checkbox" name="gc[import_'.$id.']" id="import_'.$id.'" value="'.$id.'"'.($checked?' checked="checked"':'').' />':'').'</td>
                 </tr>';
 
             if($show_settings){
@@ -663,7 +661,7 @@ class GatherContent_Curl extends GatherContent_Functions {
     }
 
     function get($command = '', $postfields = array()) {
-        $api_url = 'https://'.$this->option('api_url').'.gathercontent.com/api/0.3/'.$command;
+        $api_url = 'https://'.$this->option('api_url').'.gathercontent.com/api/0.4/'.$command;
         $curl_opts = array(
             CURLOPT_HTTPAUTH => CURLAUTH_DIGEST,
             CURLOPT_HTTPHEADER => array('Accept: application/json', 'Content-Type: application/x-www-form-urlencoded'),
@@ -724,7 +722,7 @@ class GatherContent_Curl extends GatherContent_Functions {
 class GC_Walker_PageDropdown extends Walker {
     var $tree_type = 'page';
     var $db_fields = array ('parent' => 'post_parent', 'id' => 'ID');
-    function start_el( &$output, $page, $depth = 0, $args = array(), $id = 0, $base_name ) {
+    function start_el( &$output, $page, $depth = 0, $args = array(), $id = 0, $base_name = 'default' ) {
         $pad = str_repeat('&nbsp;', $depth * 3);
 
         $title = apply_filters( 'list_pages', $page->post_title, $page );
