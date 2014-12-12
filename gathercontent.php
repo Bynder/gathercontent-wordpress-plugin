@@ -3,7 +3,7 @@
 Plugin Name: GatherContent Importer
 Plugin URI: http://www.gathercontent.com
 Description: Imports pages from GatherContent to your wordpress blog
-Version: 2.5.0
+Version: 2.6.1
 Author: Mathew Chapman
 Author URI: http://www.gathercontent.com
 License: GPL2
@@ -11,7 +11,7 @@ License: GPL2
 require_once 'curl.php';
 class GatherContent extends GatherContent_Curl {
 
-	var $version = '2.5'; // used for javascript versioning
+	var $version = '2.6.0'; // used for javascript versioning
 
 	function __construct() {
 		parent::__construct();
@@ -23,28 +23,71 @@ class GatherContent extends GatherContent_Curl {
 	}
 
 	function update_db_check() {
-		if ( get_site_option( 'gathercontent_version' ) != $this->version ) {
-			$this->install();
+		if ( get_option( 'gathercontent_version' ) != $this->version ) {
+			$this->install(true);
 		}
 	}
 
-	function install() {
+	function install($networkwide) {
+		global $wpdb;
+
+		if( function_exists( 'is_multisite' ) && is_multisite() ) {
+
+			if($networkwide) {
+				$old_blog = $wpdb->blogid;
+				$blogids = $wpdb->get_col( "SELECT blog_id FROM {$wpdb->blogs}" );
+				foreach ( $blogids as $blog_id ) {
+					switch_to_blog( $blog_id );
+					$this->_install();
+				}
+				switch_to_blog( $old_blog );
+				return;
+			}
+		}
+
+		$this->_install();
+	}
+
+	function _install() {
 		global $wpdb;
 
 		$table_name = $wpdb->prefix . 'gathercontent_pages';
 
-		$sql = "CREATE TABLE IF NOT EXISTS $table_name (
-		  `page_id` int(10) NOT NULL,
-		  `project_id` int(10) NOT NULL,
-		  `config` longblob NOT NULL,
-		  UNIQUE KEY `page_id` (`page_id`)
-		);";
-		require_once( ABSPATH . 'wp-admin/includes/upgrade.php' );
-		dbDelta( $sql );
-		update_site_option( 'gathercontent_version', $this->version );
+		if( $wpdb->get_var( "SHOW TABLES LIKE '{$table_name}'" ) != $table_name ) {
+
+			$sql = "CREATE TABLE IF NOT EXISTS $table_name (
+			  `page_id` int(10) NOT NULL,
+			  `project_id` int(10) NOT NULL,
+			  `config` longblob NOT NULL,
+			  UNIQUE KEY `page_id` (`page_id`)
+			);";
+			require_once( ABSPATH . 'wp-admin/includes/upgrade.php' );
+			dbDelta( $sql );
+			update_option( 'gathercontent_version', $this->version );
+		}
 	}
 
-	function uninstall() {
+	function uninstall($networkwide) {
+		global $wpdb;
+
+		if( function_exists( 'is_multisite' ) && is_multisite() ) {
+
+			if($networkwide) {
+				$old_blog = $wpdb->blogid;
+				$blogids = $wpdb->get_col( "SELECT blog_id FROM {$wpdb->blogs}" );
+				foreach ( $blogids as $blog_id ) {
+					switch_to_blog( $blog_id );
+					$this->_uninstall();
+				}
+				switch_to_blog( $old_blog );
+				return;
+			}
+		}
+
+		$this->_uninstall();
+	}
+
+	function _uninstall() {
 		global $wpdb;
 
 		$table_name = $wpdb->prefix . 'gathercontent_pages';
@@ -371,8 +414,6 @@ class GatherContent extends GatherContent_Curl {
 
 					$config = $this->get_field_config( $page, $this->val( $this->files, $page_id, array() ) );
 
-					$custom_fields = $this->val( $config, 'content', array() );
-					$meta_fields = $this->val( $config, 'meta', array() );
 					$fields = $this->val( $gc, 'fields', array() );
 
 					$parent_id = 0;
@@ -429,10 +470,8 @@ class GatherContent extends GatherContent_Curl {
 						if ( $map_to == '_dont_import_' ) {
 							$save_settings['fields'][$tab . '_' . $field_name] = $map_to;
 							continue;
-						} elseif ( $tab == 'meta' ) {
-							$field = $meta_fields[$field_name];
-						} elseif ( $tab == 'content' ) {
-							$field = $custom_fields[$field_name];
+						} elseif ( isset( $config[$tab] ) && isset( $config[$tab]['elements'][$field_name] ) ) {
+							$field = $config[$tab]['elements'][$field_name];
 						} else {
 							continue;
 						}

@@ -173,3 +173,5 @@ td.gc_pagename { text-align: left; }
 	opacity:0.65;
 	filter:alpha(opacity=65);
 }
+
+#gc_pages .gc_tab_name { display: inline-block; font-size: 12px; background: #000; padding: 1px 5px; margin-right: 5px; -webkit-border-radius: 6px;-moz-border-radius: 6px;border-radius: 6px }

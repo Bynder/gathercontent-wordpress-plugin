@@ -3,7 +3,7 @@ Contributors: Mathew Chapman, namshee
 Tags: structured content, gather content, gathercontent, import, migrate, export, mapping, production, writing, collaboration, platform, connect, link, gather, client, word, production
 Requires at least: 3.5.0
 Tested up to: 4.0
-Stable tag: 2.5.0
+Stable tag: 2.6.1
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -37,6 +37,12 @@ This section describes how to install the plugin and get it working.
 3. Map individual fields to a huge range of places in WordPress.
 
 == Changelog ==
+
+= 2.6.1 =
+* Fix bug for multi site installs
+
+= 2.6.0 =
+* Add support for custom tabs feature within GatherContent
 
 = 2.5.0 =
 * Import hierarchy from GatherContent. Added publish state dropdown to

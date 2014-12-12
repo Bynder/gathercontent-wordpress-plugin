@@ -16,6 +16,7 @@ class GatherContent_Curl extends GatherContent_Functions {
 		if ( $obj->config != '' ) {
 			$config = json_decode( base64_decode( $obj->config ) );
 			$new_config = array();
+			$total_fields = 0;
 			if ( $this->foreach_safe( $config ) ) {
 				foreach ( $config as $tab_pane ) {
 					$new_fields = array();
@@ -83,9 +84,17 @@ class GatherContent_Curl extends GatherContent_Functions {
 						}
 					}
 
-					$new_config[strtolower( $tab_pane->label )] = $new_fields;
+					$total_fields += count($new_fields);
+
+					$new_config[strtolower( $tab_pane->name )] = array(
+						'label' => $tab_pane->label,
+						'elements' => $new_fields,
+					);
 				}
 			}
+
+			$new_config['field_count'] = $total_fields;
+
 			return $new_config;
 		}
 		return array();
@@ -554,12 +563,15 @@ class GatherContent_Curl extends GatherContent_Functions {
 				$cur_settings = $this->data['saved_settings'][$id];
 			}
 			$add = '';
+
 			$parent_id = $page->parent_id;
+
 			$config = $this->get_field_config( $page );
-			$fields = $this->val( $config, 'content', array() );
-			$meta = $this->val( $config, 'meta', array() );
+
+			$field_count = $this->val($config, 'field_count', 0);
+
 			$show_fields = true;
-			if ( $show_settings && !( count( $fields ) > 0 || ( $meta !== false && count( $meta ) > 0 ) ) ) {
+			if ( $show_settings && $field_count == 0 ) {
 				$show_fields = false;
 			}
 			$out .= '
@@ -616,6 +628,7 @@ class GatherContent_Curl extends GatherContent_Functions {
 								<div class="gc_settings_fields" id="gc_fields_' . $id . '">';
 
 					$field_settings = $this->val( $cur_settings, 'fields', array() );
+
 					if ( count( $field_settings ) > 0 ) {
 						foreach ( $field_settings as $name => $value ) {
 							list( $tab, $field_name ) = explode( '_', $name, 2 );
@@ -628,41 +641,28 @@ class GatherContent_Curl extends GatherContent_Functions {
 							} else {
 								$val = $value;
 							}
-							if ( $tab == 'content' && isset( $fields[$field_name] ) ) {
-								$add .= $this->field_settings( $id, $fields[$field_name], $tab, '', $val, $acf, $acf_post );
-								unset($fields[$field_name]);
-							} elseif ( $tab == 'meta' && $meta !== false && isset( $meta[$field_name] ) ) {
-								$add .= $this->field_settings( $id, $meta[$field_name], $tab, ' (Meta)', $val, $acf, $acf_post );
-								unset($meta[$field_name]);
+							if(isset( $config[$tab] ) && isset( $config[$tab]['elements'][$field_name] ) ) {
+								$add .= $this->field_settings( $id, $config[$tab]['elements'][$field_name], $tab, $config[$tab]['label'], $val, $acf, $acf_post );
+								unset( $config[$tab]['elements'][$field_name] );
 							}
 						}
 					}
-					foreach ( $fields as $field ) {
-						$val = $acf = $acf_post = '';
-						$cur = $this->val( $field_settings, 'content_' . $field['name'] );
-						if ( is_array( $cur ) ) {
-							$val = $cur[0];
-							$acf = $cur[1];
-							$acf_post = $cur[2];
-						} else {
-							$val = $cur;
-						}
-						$add .= $this->field_settings( $id, $field, 'content', '', $val, $acf, $acf_post );
-					}
-					if ( $meta !== false ) {
-						foreach ( $meta as $field )
-						{
+
+					unset( $config['field_count'] );
+
+					foreach( $config as $tab_name => $tab ) {
+
+						foreach ( $tab['elements'] as $field ) {
 							$val = $acf = $acf_post = '';
-							$cur = $this->val( $field_settings, 'meta_' . $field['name'] );
-							if ( is_array( $cur ) )
-							{
+							$cur = $this->val( $field_settings, $tab_name . '_' . $field['name'] );
+							if ( is_array( $cur ) ) {
 								$val = $cur[0];
 								$acf = $cur[1];
 								$acf_post = $cur[2];
 							} else {
 								$val = $cur;
 							}
-							$add .= $this->field_settings( $id, $field, 'meta', ' (Meta)', $val, $acf, $acf_post );
+							$add .= $this->field_settings( $id, $field, $tab_name, $tab['label'], $val, $acf, $acf_post );
 						}
 					}
 
@@ -696,7 +696,7 @@ class GatherContent_Curl extends GatherContent_Functions {
 		return $out;
 	}
 
-	function field_settings( $id, $field, $tab = 'content', $name_suffix = '', $val = '', $acf_val = '', $acf_post = '' ) {
+	function field_settings( $id, $field, $tab = 'content', $tab_label = '', $val = '', $acf_val = '', $acf_post = '' ) {
 		if ( $field['type'] == 'section' )
 		{
 			return '';
@@ -711,7 +711,7 @@ class GatherContent_Curl extends GatherContent_Functions {
 		$html = '
 		<div class="gc_settings_field gc_cf" id="field_' . $fieldid . '">
 			<div class="gc_move_field"></div>
-			<div class="gc_field_name gc_left">' . $field['label'].$name_suffix . '</div>
+			<div class="gc_field_name gc_left"><div class="gc_tab_name gc_tooltip" title="' . esc_attr( $this->__('Tab') ) . '">' . $tab_label . '</div>' . $field['label'] . '</div>
 			<div class="gc_field_map gc_right" id="gc_field_map_' . $fieldid . '">
 				<span>' . $this->__( 'Map to' ) . '</span>
 				' . $this->dropdown_html( '<span></span>', $this->data['map_to_select'], 'gc[map_to][' . $id . '][]', $val ) . '

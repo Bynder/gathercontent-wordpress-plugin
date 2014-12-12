@@ -3,6 +3,8 @@
 	$(document).ready(function(){
 		submit_text = $('.gc_ajax_submit_button:first span').text();
 
+		$('.gc_tooltip').tooltip();
+
 		$('.gc_table_row').each(function(){
 			var parent_id = $(this).attr('data-parent-id'),
 				page_id = $(this).attr('data-page-id'),
