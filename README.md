@@ -28,6 +28,9 @@ Contact us directly via email for support [support@gathercontent.com](mailto:sup
 
 ## Changelog ##
 
+### 2.6.2 ###
+* Remove inline comments from text content
+
 ### 2.6.1 ###
 * Fix bug for multi site installs
 

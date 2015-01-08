@@ -41,6 +41,9 @@ class GatherContent_Curl extends GatherContent_Functions {
 										$val = preg_replace( '/<\/p>\s*</m', "</p>\n<", $val );
 										$val = preg_replace( '/<p>\s*<\/p>/m','<p>&nbsp;</p>',$val );
 										$val = str_replace( array('<ul><li', '</li><li>', '</li></ul>'), array("<ul>\n\t<li", "</li>\n\t<li>", "</li>\n</ul>"), $val );
+
+						                $val = preg_replace( '/<mark[^>]*>/i', '', $val );
+						                $val = preg_replace( '/<\/mark>/i', '', $val );
 									}
 									break;
 
