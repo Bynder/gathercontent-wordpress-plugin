@@ -3,7 +3,7 @@
 Plugin Name: GatherContent Importer
 Plugin URI: http://www.gathercontent.com
 Description: Imports pages from GatherContent to your wordpress blog
-Version: 2.6.2
+Version: 2.6.3
 Author: Mathew Chapman
 Author URI: http://www.gathercontent.com
 License: GPL2
