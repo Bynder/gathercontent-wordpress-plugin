@@ -3,7 +3,7 @@ Contributors: Mathew Chapman, namshee
 Tags: structured content, gather content, gathercontent, import, migrate, export, mapping, production, writing, collaboration, platform, connect, link, gather, client, word, production
 Requires at least: 3.5.0
 Tested up to: 4.0
-Stable tag: 2.6.3
+Stable tag: 2.6.31
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
