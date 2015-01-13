@@ -2,8 +2,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: GatherContent Importer\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2014-09-30 14:26-0000\n"
-"PO-Revision-Date: 2014-09-30 14:26-0000\n"
+"POT-Creation-Date: 2015-01-13 00:19-0000\n"
+"PO-Revision-Date: 2015-01-13 00:19-0000\n"
 "Last-Translator: Mathew Chapman <mat@gathercontent.com>\n"
 "Language-Team: GatherContent <support@gathercontent.com>\n"
 "Language: en_GB\n"
@@ -15,153 +15,161 @@ msgstr ""
 "X-Generator: Poedit 1.5.7\n"
 "X-Poedit-SearchPath-0: .\n"
 
-#: curl.php:168 curl.php:178
+#: curl.php:181 curl.php:191
 msgid "All"
 msgstr ""
 
-#: curl.php:184
-msgid "Advanced Custom Fields"
-msgstr ""
-
-#: curl.php:275
+#: curl.php:287
 msgid "New entry"
 msgstr ""
 
-#: curl.php:282
+#: curl.php:294
 msgid "NONE"
 msgstr ""
 
-#: curl.php:285
+#: curl.php:297
 msgid "Parent Being Imported"
 msgstr ""
 
-#: curl.php:327
+#: curl.php:385
 msgid "Search... "
 msgstr ""
 
-#: curl.php:338 curl.php:339
+#: curl.php:408 curl.php:409
 msgid "Title"
 msgstr ""
 
-#: curl.php:341 curl.php:342
+#: curl.php:411 curl.php:412
 msgid "Caption"
 msgstr ""
 
-#: curl.php:344 curl.php:345
+#: curl.php:414 curl.php:415
 msgid "Description"
 msgstr ""
 
-#: curl.php:347 curl.php:348
+#: curl.php:417 curl.php:418
 msgid "Alt Text"
 msgstr ""
 
-#: curl.php:352
+#: curl.php:422
 #, php-format
 msgid "%s Title"
 msgstr ""
 
-#: curl.php:353
+#: curl.php:423
 #, php-format
 msgid "%s Content"
 msgstr ""
 
-#: curl.php:354
+#: curl.php:424
 #, php-format
 msgid "%s Excerpt"
 msgstr ""
 
-#: curl.php:355
+#: curl.php:425
 msgid "Featured Image"
 msgstr ""
 
-#: curl.php:356
+#: curl.php:426
 msgid "Tags"
 msgstr ""
 
-#: curl.php:357 curl.php:600
+#: curl.php:427 curl.php:754
 msgid "Category"
 msgstr ""
 
-#: curl.php:451 curl.php:452
+#: curl.php:428
+msgid "Author"
+msgstr ""
+
+#: curl.php:561 curl.php:562
 msgid "New Custom Field"
 msgstr ""
 
-#: curl.php:455 curl.php:456
+#: curl.php:565 curl.php:566
 msgid "Do Not Import"
 msgstr ""
 
-#: curl.php:478
+#: curl.php:588
 msgid "Choose category"
 msgstr ""
 
-#: curl.php:592
+#: curl.php:746
 msgid "Import as"
 msgstr ""
 
-#: curl.php:596
+#: curl.php:750
 msgid "Import to"
 msgstr ""
 
-#: curl.php:604
+#: curl.php:758
 msgid "Parent"
 msgstr ""
 
-#: curl.php:608
+#: curl.php:762
 msgid "Status"
 msgstr ""
 
-#: curl.php:613
+#: curl.php:766
+msgid "Format"
+msgstr ""
+
+#: curl.php:770
 msgid "Repeat this configuration"
 msgstr ""
 
-#: curl.php:675
+#: curl.php:821
 #, php-format
 msgid ""
 "This page is empty. You can %sadd some content to this page in GatherContent"
 "%s."
 msgstr ""
 
-#: curl.php:716
+#: curl.php:860
+msgid "Tab"
+msgstr ""
+
+#: curl.php:862
 msgid "Map to"
 msgstr ""
 
-#: curl.php:774
+#: curl.php:920
 msgid ""
 "There was a problem contacting the API. Please check your server allows it."
 msgstr ""
 
-#: curl.php:781
+#: curl.php:927
 #, php-format
 msgid ""
 "There was a problem contacting the API. Please check your API credentials. "
 "%sAuth Settings%s"
 msgstr ""
 
-#: curl.php:816
+#: curl.php:962
 msgid "(no title)"
 msgstr ""
 
-#: gathercontent.php:132 gathercontent.php:139 gathercontent.php:152
-#: gathercontent.php:347
+#: gathercontent.php:175 gathercontent.php:182 gathercontent.php:195
+#: gathercontent.php:391
 msgid "Verification failed, please refreshing the page and try again ."
 msgstr ""
 
-#: gathercontent.php:248
+#: gathercontent.php:291
 #, php-format
 msgid "There was an error with the file (%s)"
 msgstr ""
 
-#: gathercontent.php:253 gathercontent.php:267
+#: gathercontent.php:296 gathercontent.php:310
 #, php-format
 msgid "Retrying to download (%s)"
 msgstr ""
 
-#: gathercontent.php:262
+#: gathercontent.php:305
 #, php-format
 msgid "Failed to download the file (%s)"
 msgstr ""
 
-#: gathercontent.php:630 gathercontent.php:635
+#: gathercontent.php:688 gathercontent.php:693
 msgid "There was a problem importing the page, please refresh and try again ."
 msgstr ""
 

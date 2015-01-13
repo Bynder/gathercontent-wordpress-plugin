@@ -11,7 +11,7 @@ License: GPL2
 require_once 'curl.php';
 class GatherContent extends GatherContent_Curl {
 
-	var $version = '2.6.0'; // used for javascript versioning
+	var $version = '2.6.3'; // used for javascript versioning
 
 	function __construct() {
 		parent::__construct();
@@ -351,6 +351,7 @@ class GatherContent extends GatherContent_Curl {
 				$this->categories_dropdown();
 				$this->parent_dropdown();
 				$this->publish_dropdown();
+				$this->format_dropdown();
 				$cur_settings = $this->option( 'saved_settings' );
 				if ( ! is_array( $cur_settings ) ) {
 					$cur_settings = array();
@@ -396,6 +397,7 @@ class GatherContent extends GatherContent_Curl {
 				$project_id = $this->option( 'project_id' );
 				$page = $this->get_gc_page( $page_id );
 				$page = $page->config;
+				$post_format = '0';
 				$file_counter = 0;
 				$total_files = 0;
 				$files = array(
@@ -410,7 +412,7 @@ class GatherContent extends GatherContent_Curl {
 				if ( $page !== false ) {
 					$this->get_files( $page_id );
 
-					$post_fields = array('post_title', 'post_content', 'post_excerpt');
+					$post_fields = array( 'post_title', 'post_content', 'post_excerpt', 'post_author' );
 
 					$config = $this->get_field_config( $page, $this->val( $this->files, $page_id, array() ) );
 
@@ -425,10 +427,13 @@ class GatherContent extends GatherContent_Curl {
 						'post_type' => $gc['post_type'],
 						'overwrite' => $gc['overwrite'],
 						'category' => $gc['category'],
+						'format' => $gc['format'],
 						'parent_id' => $parent_id,
 						'state' => $gc['state'],
 						'fields' => array(),
 					);
+
+					$post_format = $gc['format'];
 
 					$func = 'wp_insert_post';
 					$post = array(
@@ -558,16 +563,26 @@ class GatherContent extends GatherContent_Curl {
 							foreach ( $values as $value ) {
 								if ( $value['value'] != '' ) {
 									if ( $name == 'post_title' ) {
-										$value['value'] = strip_tags( $value['value'] );
+										$post[$name] .= strip_tags( $value['value'] );
 									}
-									$post[$name] .= $value['value']."\n\n";
+									elseif ( $name == 'post_author' ) {
+										$post[$name] = $this->get_author_id( strip_tags( $value['value'] ) );
+									}
+									else {
+										$post[$name] .= $value['value']."\n\n";
+									}
 								}
 							}
 						} else {
 							if ( $name == 'post_title' ) {
-								$values[0]['value'] = strip_tags( $values[0]['value'] );
+								$post[$name] = strip_tags( $values[0]['value'] );
 							}
-							$post[$name] = $values[0]['value'];
+							elseif ( $name == 'post_author' ) {
+								$post[$name] = $this->get_author_id( strip_tags( $values[0]['value'] ) );
+							}
+							else {
+								$post[$name] = $values[0]['value'];
+							}
 						}
 					}
 
@@ -605,6 +620,10 @@ class GatherContent extends GatherContent_Curl {
 
 					if ( $set_post_terms === true ) {
 						wp_set_post_terms( $post['ID'], $post['post_category'], $taxonomy );
+					}
+
+					if ( $post_format == '0' ) {
+						set_post_format( $post['ID'], $post_format );
 					}
 
 					foreach ( $new_meta_fields as $field => $values ) {

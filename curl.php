@@ -3,6 +3,7 @@ require_once 'functions.php';
 class GatherContent_Curl extends GatherContent_Functions {
 
 	var $has_acf = false;
+	var $acf_pro = false;
 	var $page_count = 0;
 	var $page_ids = array();
 	var $taxonomies = array();
@@ -191,11 +192,10 @@ class GatherContent_Curl extends GatherContent_Functions {
 	}
 
 	function get_post_types() {
-		$post_types = get_post_types( array('public' => true), 'objects' );
-		$acf = get_post_type_object( 'acf' );
-		if ( is_object( $acf ) && $acf->labels->singular_name == __( 'Advanced Custom Fields', 'acf' ) ) {
-			$this->has_acf = true;
-		}
+		$post_types = get_post_types( array( 'public' => true ), 'objects' );
+
+		$this->_is_acf_enabled();
+
 		$html = '';
 		$new_post_types = array();
 		$default = '';
@@ -331,6 +331,52 @@ class GatherContent_Curl extends GatherContent_Functions {
 		return $this->data['tree_list'];
 	}
 
+	function _initialize_yoast() {
+		wpseo_init();
+
+		wpseo_admin_init();
+
+		wpseo_load_textdomain();
+
+		$options = WPSEO_Options::get_all();
+
+		new WPSEO_Metabox;
+		WPSEO_Metabox::translate_meta_boxes();
+
+		if ( $options['opengraph'] === true || $options['twitter'] === true || $options['googleplus'] === true ) {
+			new WPSEO_Social_Admin;
+			WPSEO_Social_Admin::translate_meta_boxes();
+		}
+	}
+
+	function _is_acf_enabled() {
+
+		if( function_exists( 'acf_get_field_groups') ) {
+			$this->has_acf = true;
+			$this->acf_pro = true;
+		}
+		elseif( function_exists( 'api_acf_get_field_groups' ) ) {
+			$this->has_acf = true;
+		}
+	}
+
+	function _acf_get_field_groups($params) {
+		if( $this->acf_pro ) {
+			$acf = acf_get_field_groups( $params );
+
+			$post_ids = array();
+
+			foreach($acf as $post) {
+				$post_ids[] = $post['ID'];
+			}
+
+			return $post_ids;
+		}
+		else {
+			return apply_filters( 'acf/location/match_field_groups', array(), $params );
+		}
+	}
+
 	function map_to_dropdown() {
 		global $wpdb;
 		$dont_allow = array('_wp_attachment_image_alt', '_wp_attachment_metadata', '_wp_attached_file', '_edit_lock', '_edit_last', '_wp_page_template');
@@ -340,6 +386,18 @@ class GatherContent_Curl extends GatherContent_Functions {
 			</li>';
 		$field_groups = array();
 		$supports_custom = array();
+
+		$yoast_field_type_array = array('text', 'textarea', 'select', 'upload', 'radio', 'multiselect');
+
+		$yoast = false;
+		if( function_exists( 'wpseo_admin_init' ) ) {
+			$this->_initialize_yoast();
+			$yoast = true;
+		}
+
+		$yoast_prefix = '_yoast_wpseo_';
+		$yoast_fields = array();
+
 		foreach ( $this->post_types as $name => $title ) {
 			$supports = get_all_post_type_supports( $name );
 			if ( isset( $supports['custom-fields'] ) ) {
@@ -361,18 +419,20 @@ class GatherContent_Curl extends GatherContent_Functions {
 			</li>';
 			} else {
 				$labels = array(
-					'title'     => sprintf( $this->__( '%s Title' ),$title ),
-					'editor'    => sprintf( $this->__( '%s Content' ),$title ),
-					'excerpt'   => sprintf( $this->__( '%s Excerpt' ),$title ),
+					'title'     => sprintf( $this->__( '%s Title' ), $title ),
+					'editor'    => sprintf( $this->__( '%s Content' ), $title ),
+					'excerpt'   => sprintf( $this->__( '%s Excerpt' ), $title ),
 					'thumbnail' => $this->__( 'Featured Image' ),
 					'tags'      => $this->__( 'Tags' ),
 					'cats'      => $this->__( 'Category' ),
+					'author'	=> $this->__( 'Author' ),
 				);
 				$fields = array(
 					'editor'    => 'post_content',
 					'title'     => 'post_title',
 					'excerpt'   => 'post_excerpt',
 					'thumbnail' => 'gc_featured_image_',
+					'author'	=> 'post_author',
 				);
 				foreach ( $fields as $type => $fieldname ) {
 					if ( isset( $supports[$type] ) ) {
@@ -397,7 +457,9 @@ class GatherContent_Curl extends GatherContent_Functions {
 			}
 
 			if ( $this->has_acf ) {
-				$acf = apply_filters( 'acf/location/match_field_groups', array(), array('post_type' => $name) );
+
+				$acf = $this->_acf_get_field_groups( array( 'post_type' => $name ) );
+
 				foreach ( $acf as $post_id ) {
 					if ( ! isset( $field_groups[$post_id] ) ) {
 						$field_groups[$post_id] = array('types' => array(), 'posts' => array());
@@ -405,11 +467,14 @@ class GatherContent_Curl extends GatherContent_Functions {
 					$field_groups[$post_id]['types'][] = $name;
 					$field_groups[$post_id]['posts'][] = 0;
 				}
+
 				foreach ( $this->page_ids[$name] as $page_id ) {
-					$acf = apply_filters( 'acf/location/match_field_groups', array(), array('post_id' => $page_id) );
+
+					$acf = $this->_acf_get_field_groups( array( 'post_id' => $page_id ) );
+
 					foreach ( $acf as $post_id ) {
 						if ( ! isset( $field_groups[$post_id] ) ) {
-							$field_groups[$post_id] = array('posts' => array());
+							$field_groups[$post_id] = array( 'posts' => array() );
 						} elseif ( ! isset( $field_groups[$post_id]['posts'] ) ) {
 							$field_groups[$post_id]['posts'] = array();
 						}
@@ -417,10 +482,36 @@ class GatherContent_Curl extends GatherContent_Functions {
 					}
 				}
 			}
+
+			if( $yoast ) {
+				$meta_boxes = array_merge( WPSEO_Meta::get_meta_field_defs( 'general', $name ), WPSEO_Meta::get_meta_field_defs( 'advanced' ), apply_filters( 'wpseo_save_metaboxes', array() ) );
+
+				foreach ( $meta_boxes as $field_name => $meta_box ) {
+					if(in_array($meta_box['type'], $yoast_field_type_array)) {
+						$yoast_fields[$yoast_prefix . $field_name] = true;
+
+						$html .= '
+			<li data-post-type="|' . $name . '|" data-search="' . esc_attr( $meta_box['title'] ) . '">
+				<a href="#" data-value="' . $yoast_prefix . esc_attr( $field_name ) . '">' . esc_html( $meta_box['title'] ) . '</a>
+			</li>';
+
+					}
+				}
+
+			}
 		}
+
+
 		foreach ( $field_groups as $id => $options ) {
 			$options['posts'] = array_unique( $options['posts'] );
-			$fields = apply_filters( 'acf/field_group/get_fields', array(), $id );
+
+			if( $this->acf_pro ) {
+				$fields = acf_get_fields( $id );
+			}
+			else {
+				$fields = apply_filters( 'acf/field_group/get_fields', array(), $id );
+			}
+
 			foreach ( $fields as $field ) {
 				$dont_allow[] = $field['key'];
 				$text = $field['label'];
@@ -440,6 +531,13 @@ class GatherContent_Curl extends GatherContent_Functions {
 			</li>';
 			}
 		}
+
+
+		if( $yoast ) {
+			$yoast_fields[$yoast_prefix . 'linkdex'] = true;
+			$dont_allow = array_merge( $dont_allow, array_keys( $yoast_fields ) );
+		}
+
 
 		$dont_allow = "'".implode( "','", $dont_allow )."'";
 		$keys = $wpdb->get_col(
@@ -510,6 +608,47 @@ class GatherContent_Curl extends GatherContent_Functions {
 			</li>';
 		}
 		$this->data['publish_select'] = $html;
+	}
+
+	function format_dropdown() {
+		$html = '';
+
+		$supported = array();
+
+		if ( current_theme_supports( 'post-formats' ) ) {
+
+			foreach ( $this->post_types as $name => $title ) {
+
+				if( post_type_supports( $name, 'post-formats' ) ) {
+
+					$supported[] = $name;
+
+				}
+			}
+		}
+
+		$supported_str = implode( '|', $supported );
+
+		if( count( $supported ) > 0 ) {
+
+			$post_formats = get_theme_support( 'post-formats' );
+
+			foreach ( $post_formats[0] as $format ) {
+				$html .= '
+			<li data-post-type="|' . $supported_str . '|">
+				<a href="#" data-value="' . esc_attr( $format ) . '">' . esc_html( get_post_format_string( $format ) ) . '</a>
+			</li>';
+			}
+		}
+
+		if( !empty( $html ) ) {
+				$html = '
+			<li data-post-type="|' . $supported_str . '|">
+				<a href="#" data-value="0">' . get_post_format_string( 'standard' ) . '</a>
+			</li>'.$html;
+		}
+
+		$this->data['post_format'] = $html;
 	}
 
 	function dropdown_html( $val, $html, $input = false, $real_val = '' ) {
@@ -623,9 +762,13 @@ class GatherContent_Curl extends GatherContent_Functions {
 											<label>' . $this->__( 'Status' ) . ' </label>
 											' . $this->dropdown_html( '<span></span>', $this->data['publish_select'], 'gc[state][]', $this->val( $cur_settings, 'state', 'draft' ) ) . '
 										</div>
-									</div>
-									<div class="gc_setting repeat_config">
-										<label>' . $this->__( 'Repeat this configuration' ) . ' <input type="checkbox" id="gc_repeat_' . $id . '" name="gc[repeat_' . $id . ']" value="Y" /></label>
+										<div class="gc_setting gc_format" id="gc_format_' . $id . '">
+											<label>' . $this->__( 'Format' ) . ' </label>
+											' . $this->dropdown_html( '<span></span>', $this->data['post_format'], 'gc[format][]', $this->val( $cur_settings, 'format', '0' ) ) . '
+										</div>
+										<div class="gc_setting repeat_config">
+											<label>' . $this->__( 'Repeat this configuration' ) . ' <input type="checkbox" id="gc_repeat_' . $id . '" name="gc[repeat_' . $id . ']" value="Y" /></label>
+										</div>
 									</div>
 								</div>
 								<div class="gc_settings_fields" id="gc_fields_' . $id . '">';

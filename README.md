@@ -28,6 +28,9 @@ Contact us directly via email for support [support@gathercontent.com](mailto:sup
 
 ## Changelog ##
 
+### 2.6.3 ###
+* Better integration with yoast and ACF pro. Map to author. Added post format option
+
 ### 2.6.2 ###
 * Remove inline comments from text content
 

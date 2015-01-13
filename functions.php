@@ -15,6 +15,21 @@ class GatherContent_Functions {
 		$this->plugin_path = WP_PLUGIN_DIR . '/' . $this->base_name . '/';
 	}
 
+	function get_author_id( $display_name ) {
+		global $wpdb;
+
+		$user = $wpdb->get_row( $wpdb->prepare(
+			"SELECT `ID` FROM $wpdb->users WHERE `display_name` = %s",
+			$display_name
+		) );
+
+		if ( ! $user ) {
+			return 0;
+		}
+
+		return $user->ID;
+	}
+
 	function save_gc_page( $id, $project_id, $config ) {
 		global $wpdb;
 		$config = base64_encode( serialize( $config ) );
