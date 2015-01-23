@@ -37,7 +37,6 @@ class GatherContent_Curl extends GatherContent_Functions {
 											$val
 										);
 										$val = str_replace( '</ul><', "</ul>\n<", $val );
-										$val = preg_replace( '/\s*<\//m', '</', $val );
 										$val = preg_replace( '/<\/p>\s*<p>/m', "</p>\n<p>", $val );
 										$val = preg_replace( '/<\/p>\s*</m', "</p>\n<", $val );
 										$val = preg_replace( '/<p>\s*<\/p>/m','<p>&nbsp;</p>',$val );
