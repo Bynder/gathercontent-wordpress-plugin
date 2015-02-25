@@ -255,6 +255,11 @@ class GatherContent_Curl extends GatherContent_Functions {
 					$new_pages[$id]->children = $this->sort_recursive( $parent_array, $id );
 				}
 			}
+			else {
+				foreach ( $parent_array as $parent => $pages ) {
+					$new_pages += $pages;
+				}
+			}
 		}
 		$this->pages = $new_pages;
 		$this->original_array = $original;
