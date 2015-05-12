@@ -677,10 +677,11 @@ class GatherContent_Curl extends GatherContent_Functions {
 				if ( in_array( $parent_id, $selected_pages ) ) {
 					$new_parent_id = '_imported_page_';
 				} else {
+					$project_id = $this->option( 'project_id' );
 					$cur_settings = $this->option( 'saved_settings', array() );
-					if ( isset( $cur_settings[$this->settings['project_id']] ) &&
-						isset( $cur_settings[$this->settings['project_id']][$parent_id] ) ) {
-						$new_parent_id = $cur_settings[$this->settings['project_id']][$parent_id]['overwrite'];
+					if ( isset( $cur_settings[$project_id] ) &&
+						isset( $cur_settings[$project_id][$parent_id] ) ) {
+						$new_parent_id = $cur_settings[$project_id][$parent_id]['overwrite'];
 					}
 				}
 			}
