@@ -28,7 +28,7 @@ Contact us directly via email for support [support@gathercontent.com](mailto:sup
 
 ## Changelog ##
 
-### 2.6.4 ###
+### 2.6.40 ###
 * Update plugin to use Items instead of Pages
 
 ### 2.6.3 ###
