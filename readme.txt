@@ -3,7 +3,7 @@ Contributors: Mathew Chapman, namshee
 Tags: structured content, gather content, gathercontent, import, migrate, export, mapping, production, writing, collaboration, platform, connect, link, gather, client, word, production
 Requires at least: 3.5.0
 Tested up to: 4.2
-Stable tag: 2.6.35
+Stable tag: 2.6.4
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -17,9 +17,9 @@ GatherContent is an online platform for pulling together, editing, and reviewing
 
 Connecting a powerful content production platform, to a powerful content publishing platform.
 
-Content can be imported as pages, posts, media or custom post types. And you can choose to create new pages etc. or overwrite existing entities.
+Content can be imported as items, posts, media or custom post types. And you can choose to create new items etc. or overwrite existing entities.
 
-The plugin allows you to specifically map each field on your pages in GatherContent to various fields in WordPress, these include; title, body content, custom fields, tags, categories, Yoast fields, advanced custom fields, featured images … and many more. It also allows you to directly embed images and files.
+The plugin allows you to specifically map each field on your items in GatherContent to various fields in WordPress, these include; title, body content, custom fields, tags, categories, Yoast fields, advanced custom fields, featured images … and many more. It also allows you to directly embed images and files.
 
 == Installation ==
 
@@ -32,11 +32,14 @@ This section describes how to install the plugin and get it working.
 
 == Screenshots ==
 
-1. Quickly find your pages using filters and live search.
-2. Import GatherContent pages as Pages, Posts, Media and various Custom Post Types.
+1. Quickly find your items using filters and live search.
+2. Import GatherContent items as Pages, Posts, Media and various Custom Post Types.
 3. Map individual fields to a huge range of places in WordPress.
 
 == Changelog ==
+
+= 2.6.4 =
+* Update plugin to use Items instead of Pages
 
 = 2.6.3 =
 * Better integration with yoast and ACF pro. Map to author. Added post format option

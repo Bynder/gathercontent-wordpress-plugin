@@ -14,7 +14,7 @@ if ( $this->error != '' ) {
 		<?php foreach ( $projects as $id => $info ): $fieldid = 'gc_project_'.$id; ?>
 			<li>
 				<input type="radio" class="gc_radio" name="project_id" id="<?php echo $fieldid ?>" value="<?php echo $id ?>"<?php echo $current == $id ? ' checked="checked"':'' ?> />
-				<label for="<?php echo $fieldid ?>" class="gc_label"><?php echo $info['name'] ?> &mdash; <span class="page-count"><?php echo $info['page_count'].' page'.($info['page_count'] == '1'?'':'s') ?></span></label>
+				<label for="<?php echo $fieldid ?>" class="gc_label"><?php echo $info['name'] ?> &mdash; <span class="item-count"><?php echo $info['item_count'].' item'.($info['item_count'] == '1'?'':'s') ?></span></label>
 			</li>
 		<?php endforeach ?>
 		</ul>

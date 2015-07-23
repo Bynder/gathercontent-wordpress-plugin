@@ -9,7 +9,7 @@
 			<?php $this->_e( 'All of your selected content has been imported.' ) ?>
 		</p>
 		<div class="gc_subfooter">
-			<a href="<?php $this->url( 'pages' ) ?>" class="gc_blue_link"><?php $this->_e( 'Go back to project' ) ?></a>
+			<a href="<?php $this->url( 'items' ) ?>" class="gc_blue_link"><?php $this->_e( 'Go back to project' ) ?></a>
 		</div>
 	</div>
 </div>

@@ -2,8 +2,8 @@
 /*
 Plugin Name: GatherContent Importer
 Plugin URI: http://www.gathercontent.com
-Description: Imports pages from GatherContent to your wordpress blog
-Version: 2.6.35
+Description: Imports items from GatherContent to your wordpress blog
+Version: 2.6.4
 Author: Mathew Chapman
 Author URI: http://www.gathercontent.com
 License: GPL2
@@ -11,7 +11,7 @@ License: GPL2
 require_once 'curl.php';
 class GatherContent extends GatherContent_Curl {
 
-	var $version = '2.6.3'; // used for javascript versioning
+	var $version = '2.6.4'; // used for javascript versioning
 
 	function __construct() {
 		parent::__construct();
@@ -19,7 +19,7 @@ class GatherContent extends GatherContent_Curl {
 		add_action( 'admin_menu', array(&$this, 'admin_menu') );
 		add_action( 'init', array(&$this, 'init') );
 		add_action( 'wp_ajax_gathercontent_download_media', array(&$this, 'download_media') );
-		add_action( 'wp_ajax_gathercontent_import_page', array(&$this, 'import_page') );
+		add_action( 'wp_ajax_gathercontent_import_item', array(&$this, 'import_item') );
 	}
 
 	function update_db_check() {
@@ -51,15 +51,15 @@ class GatherContent extends GatherContent_Curl {
 	function _install() {
 		global $wpdb;
 
-		$table_name = $wpdb->prefix . 'gathercontent_pages';
+		$table_name = $wpdb->prefix . 'gathercontent_items';
 
 		if( $wpdb->get_var( "SHOW TABLES LIKE '{$table_name}'" ) != $table_name ) {
 
 			$sql = "CREATE TABLE IF NOT EXISTS $table_name (
-			  `page_id` int(10) NOT NULL,
+			  `item_id` int(10) NOT NULL,
 			  `project_id` int(10) NOT NULL,
 			  `config` longblob NOT NULL,
-			  UNIQUE KEY `page_id` (`page_id`)
+			  UNIQUE KEY `item_id` (`item_id`)
 			);";
 			require_once( ABSPATH . 'wp-admin/includes/upgrade.php' );
 			dbDelta( $sql );
@@ -90,7 +90,7 @@ class GatherContent extends GatherContent_Curl {
 	function _uninstall() {
 		global $wpdb;
 
-		$table_name = $wpdb->prefix . 'gathercontent_pages';
+		$table_name = $wpdb->prefix . 'gathercontent_items';
 
 		$wpdb->query( "DROP TABLE IF EXISTS $table_name" );
 	}
@@ -108,8 +108,8 @@ class GatherContent extends GatherContent_Curl {
 				'file' => 'main.js',
 				'dep' => array($this->base_name . '-bootstrap-tooltips')
 			),
-			'pages_import' => array(
-				'file' => 'pages_import.js',
+			'item_import' => array(
+				'file' => 'item_import.js',
 				'dep' => array('jquery-ui-sortable')
 			),
 			'media' => array(
@@ -122,7 +122,7 @@ class GatherContent extends GatherContent_Curl {
 
 		$styles = array(
 			'main' => 'main.css',
-			'pages' => 'pages.css',
+			'items' => 'items.css',
 		);
 		foreach ($styles as $handle => $file)
 			wp_register_style( $this->base_name . '-' . $handle, $this->plugin_url . 'css/' . $file, false, $this->version );
@@ -130,10 +130,10 @@ class GatherContent extends GatherContent_Curl {
 	}
 
 	function admin_menu() {
-		$page = add_menu_page( 'GatherContent', 'GatherContent', 'publish_pages', $this->base_name, array(&$this, 'load_screen') );
-		add_action( 'admin_print_scripts-' . $page, array($this, 'admin_print_scripts') );
-		add_action( 'admin_print_styles-' . $page, array($this, 'admin_print_styles') );
-		add_action( 'load-' . $page, array(&$this, 'save_settings') );
+		$item = add_menu_page( 'GatherContent', 'GatherContent', 'publish_pages', $this->base_name, array(&$this, 'load_screen') );
+		add_action( 'admin_print_scripts-' . $item, array($this, 'admin_print_scripts') );
+		add_action( 'admin_print_styles-' . $item, array($this, 'admin_print_styles') );
+		add_action( 'load-' . $item, array(&$this, 'save_settings') );
 	}
 
 	function save_settings() {
@@ -145,10 +145,10 @@ class GatherContent extends GatherContent_Curl {
 					case 'projects':
 						if ( isset($_POST['project_id']) ) {
 							$this->update( 'project_id', $_POST['project_id'] );
-							$step = 'pages';
+							$step = 'items';
 						}
 						break;
-					case 'pages':
+					case 'items':
 						$import = array();
 						foreach ( $gc as $key => $val ) {
 							if ( substr( $key, 0, 7 ) == 'import_' && !empty( $val ) ) {
@@ -156,8 +156,8 @@ class GatherContent extends GatherContent_Curl {
 							}
 						}
 						if ( count( $import ) > 0 ) {
-							$this->update( 'selected_pages', $import );
-							$step = 'pages_import';
+							$this->update( 'selected_items', $import );
+							$step = 'item_import';
 						}
 						break;
 					default:
@@ -172,14 +172,14 @@ class GatherContent extends GatherContent_Curl {
 				}
 				wp_redirect( $this->url( $step, false ) );
 			} else {
-				$this->error = $this->__( 'Verification failed, please refreshing the page and try again .' );
+				$this->error = $this->__( 'Verification failed, please refreshing the item and try again .' );
 			}
 		} elseif ( $step == 'projects' && isset($_GET['_wpnonce']) && isset($_GET['set_project_id']) ) {
 			if ( wp_verify_nonce( $_GET['_wpnonce'], $this->base_name ) ) {
 				$this->update( 'project_id', $_GET['set_project_id'] );
-				wp_redirect( $this->url( 'pages', false ) );
+				wp_redirect( $this->url( 'items', false ) );
 			} else {
-				$this->error = $this->__( 'Verification failed, please refreshing the page and try again .' );
+				$this->error = $this->__( 'Verification failed, please refreshing the item and try again .' );
 			}
 		} elseif ( $step == 'media' ) {
 			$media = $this->option( 'media_files' );
@@ -192,7 +192,7 @@ class GatherContent extends GatherContent_Curl {
 
 	function download_media() {
 		global $wpdb;
-		$out = array('error' => $this->__( 'Verification failed, please refreshing the page and try again .' ));
+		$out = array('error' => $this->__( 'Verification failed, please refreshing the item and try again .' ));
 		if ( isset($_GET['_wpnonce']) ) {
 			if ( wp_verify_nonce( $_GET['_wpnonce'], $this->base_name ) ) {
 				$cur_num = $_GET['cur_num'];
@@ -209,7 +209,7 @@ class GatherContent extends GatherContent_Curl {
 
 				if ( $this->foreach_safe( $media[$post_id]['files'] ) ) {
 					$cur_post = $media[$post_id];
-					$page_total = $cur_post['total_files'];
+					$item_total = $cur_post['total_files'];
 					$more_than_1 = ( count( $cur_post['files'][0] ) > 1 );
 					$file = array_shift( $cur_post['files'][0] );
 					if ( ! $more_than_1 ) {
@@ -218,8 +218,8 @@ class GatherContent extends GatherContent_Curl {
 
 					$cur_settings = $this->option( 'saved_settings' );
 					if ( isset( $cur_settings[$file['project_id']] ) &&
-						isset( $cur_settings[$file['project_id']][$file['page_id']] ) ) {
-						$state = $this->val( $cur_settings[$file['project_id']][$file['page_id']], 'state', 'draft' );
+						isset( $cur_settings[$file['project_id']][$file['item_id']] ) ) {
+						$state = $this->val( $cur_settings[$file['project_id']][$file['item_id']], 'state', 'draft' );
 					}
 
 					$id = $wpdb->get_col(
@@ -236,7 +236,7 @@ class GatherContent extends GatherContent_Curl {
 						$file['new_id']   = $id;
 						$this->add_media_to_content( $post_id, $file, $more_than_1 );
 
-						$out = $this->get_media_ajax_output( $post_id, $media, $cur_post, $page_total, $total, $state );
+						$out = $this->get_media_ajax_output( $post_id, $media, $cur_post, $item_total, $total, $state );
 						$out['success']  = true;
 						$out['new_file'] = $file['new_file'];
 					} else {
@@ -281,12 +281,12 @@ class GatherContent extends GatherContent_Curl {
 								$file['new_id'] = $id;
 								$this->add_media_to_content( $post_id, $file, $more_than_1 );
 
-								$out = $this->get_media_ajax_output( $post_id, $media, $cur_post, $page_total, $total, $state );
+								$out = $this->get_media_ajax_output( $post_id, $media, $cur_post, $item_total, $total, $state );
 								$out['success'] = true;
 								$out['new_file'] = $new_file;
 							} else {
 								if ( $retry == '1' ) {
-									$out = $this->get_media_ajax_output( $post_id, $media, $cur_post, $page_total, $total );
+									$out = $this->get_media_ajax_output( $post_id, $media, $cur_post, $item_total, $total );
 									$out['success'] = false;
 									$out['error'] = sprintf( $this->__( 'There was an error with the file (%s)' ), $new_file );
 								} else {
@@ -300,7 +300,7 @@ class GatherContent extends GatherContent_Curl {
 							}
 						} else {
 							if ( $retry == '1' ) {
-								$out = $this->get_media_ajax_output( $post_id, $media, $cur_post, $page_total, $total );
+								$out = $this->get_media_ajax_output( $post_id, $media, $cur_post, $item_total, $total );
 								$out['success'] = false;
 								$out['error'] = sprintf( $this->__( 'Failed to download the file (%s)' ), $file['original_filename'] );
 							} else {
@@ -332,21 +332,21 @@ class GatherContent extends GatherContent_Curl {
 				$this->get_projects();
 				$data['current'] = $this->option( 'project_id' );
 				break;
-			case 'pages':
+			case 'items':
 				$this->get_projects();
 				$this->get_states();
-				$this->get_pages();
+				$this->get_items();
 				$this->get_state_dropdown();
 				$this->get_projects_dropdown();
-				$data['page_count'] = $this->page_count;
-				$data['page_settings'] = $this->generate_settings( $this->pages );
+				$data['item_count'] = $this->item_count;
+				$data['item_settings'] = $this->generate_settings( $this->items );
 				break;
-			case 'pages_import':
+			case 'item_import':
 				$this->update( 'media_files', array() );
 				$this->get_states();
-				$this->get_pages( true );
+				$this->get_items( true );
 				$this->get_post_types();
-				$this->page_overwrite_dropdown();
+				$this->item_overwrite_dropdown();
 				$this->map_to_dropdown();
 				$this->categories_dropdown();
 				$this->parent_dropdown();
@@ -357,10 +357,10 @@ class GatherContent extends GatherContent_Curl {
 					$cur_settings = array();
 				}
 				$this->data['project_id'] = $this->option( 'project_id' );
-				$data['page_count'] = $this->page_count;
+				$data['item_count'] = $this->item_count;
 				$this->data['saved_settings'] = $this->val( $cur_settings, $this->option( 'project_id' ), array() );
-				$data['page_settings'] = $this->generate_settings( $this->pages, -1, true );
-				$template = 'pages-import';
+				$data['item_settings'] = $this->generate_settings( $this->items, -1, true );
+				$template = 'item-import';
 				break;
 			case 'media':
 				$media = $this->option( 'media_files' );
@@ -370,7 +370,7 @@ class GatherContent extends GatherContent_Curl {
 				}
 				unset($media['total_files']);
 				$post_id = key( $media );
-				$data = $this->get_page_title_array( $post_id );
+				$data = $this->get_item_title_array( $post_id );
 				break;
 			case 'login':
 				$data = array(
@@ -380,23 +380,23 @@ class GatherContent extends GatherContent_Curl {
 				break;
 			case 'finished':
 				$project_id = $this->option( 'project_id' );
-				$this->delete_gc_pages( $project_id );
+				$this->delete_gc_items( $project_id );
 				break;
 		}
 		$this->view( $template, $data );
 	}
 
-	function import_page() {
+	function import_item() {
 		global $wpdb;
-		$out = array('error' => $this->__( 'Verification failed, please refreshing the page and try again .' ));
+		$out = array('error' => $this->__( 'Verification failed, please refreshing the item and try again .' ));
 		if ( isset($_POST['_wpnonce']) && wp_verify_nonce( $_POST['_wpnonce'], $this->base_name ) ) {
-			if ( isset($_POST['gc']) && isset($_POST['gc']['page_id']) ) {
+			if ( isset($_POST['gc']) && isset($_POST['gc']['item_id']) ) {
 				$gc = $_POST['gc'];
-				$page_id = $gc['page_id'];
+				$item_id = $gc['item_id'];
 				$this->get_post_types();
 				$project_id = $this->option( 'project_id' );
-				$page = $this->get_gc_page( $page_id );
-				$page = $page->config;
+				$item = $this->get_gc_item( $item_id );
+				$item = $item->config;
 				$post_format = '0';
 				$file_counter = 0;
 				$total_files = 0;
@@ -409,12 +409,12 @@ class GatherContent extends GatherContent_Curl {
 				if ( $_POST['cur_counter'] == 0 ) {
 					$this->update( 'media_files', array() );
 				}
-				if ( $page !== false ) {
-					$this->get_files( $page_id );
+				if ( $item !== false ) {
+					$this->get_files( $item_id );
 
 					$post_fields = array( 'post_title', 'post_content', 'post_excerpt', 'post_author' );
 
-					$config = $this->get_field_config( $page, $this->val( $this->files, $page_id, array() ) );
+					$config = $this->get_field_config( $item, $this->val( $this->files, $item_id, array() ) );
 
 					$fields = $this->val( $gc, 'fields', array() );
 
@@ -437,7 +437,7 @@ class GatherContent extends GatherContent_Curl {
 
 					$func = 'wp_insert_post';
 					$post = array(
-						'post_title' => $page->name,
+						'post_title' => $item->name,
 						'post_type' => $save_settings['post_type'],
 						'post_status' => 'draft',
 						'post_category' => array(),
@@ -671,26 +671,26 @@ class GatherContent extends GatherContent_Curl {
 						$cur_settings[$project_id] = array();
 					}
 
-					$cur_settings[$project_id][$page_id] = $save_settings;
+					$cur_settings[$project_id][$item_id] = $save_settings;
 					$this->update( 'saved_settings', $cur_settings );
 
 					$out = array(
 						'total_files'   => $total_files,
-						'page_id'       => $page_id,
+						'item_id'       => $item_id,
 						'success'       => true,
-						'page_percent'  => $this->percent( ++$_POST['cur_counter'], $_POST['total'] ),
+						'item_percent'  => $this->percent( ++$_POST['cur_counter'], $_POST['total'] ),
 						'redirect_url'  => ($media['total_files'] > 0 ? 'media' : 'finished'),
-						'new_page_id'   => $post['ID'],
-						'new_page_html' => '<li data-post-type="' . $save_settings['post_type'] . '" style="display: none;"><a href="#" title="' . esc_attr( $page->name ) . '" data-value="' . $post['ID'] . '">' . esc_html( $page->name ) . '</a></li>',
+						'new_item_id'   => $post['ID'],
+						'new_item_html' => '<li data-post-type="' . $save_settings['post_type'] . '" style="display: none;"><a href="#" title="' . esc_attr( $item->name ) . '" data-value="' . $post['ID'] . '">' . esc_html( $item->name ) . '</a></li>',
 					);
 				} else {
 					$out = array(
-						'error' => $this->__( 'There was a problem importing the page, please refresh and try again .' ),
+						'error' => $this->__( 'There was a problem importing the item, please refresh and try again .' ),
 					);
 				}
 			} else {
 				$out = array(
-					'error' => $this->__( 'There was a problem importing the page, please refresh and try again .' ),
+					'error' => $this->__( 'There was a problem importing the item, please refresh and try again .' ),
 				);
 			}
 		}

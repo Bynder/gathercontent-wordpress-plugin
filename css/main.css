@@ -41,7 +41,7 @@
 .gc_list span{color: #999;}
 
 .gc_container-header h2 a.gc_blue_link{font-size: 12px; font-weight: normal; margin-right: 20px;}
-#gc_page_title{font-weight: normal; color: #999;}
+#gc_item_title{font-weight: normal; color: #999;}
 #gc_media img, .gc_importing_modal img{float: right; display: none}
 
 .dropdown-menu>li>a{margin: 0;}

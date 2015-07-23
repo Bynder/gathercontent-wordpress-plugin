@@ -30,24 +30,24 @@ class GatherContent_Functions {
 		return $user->ID;
 	}
 
-	function save_gc_page( $id, $project_id, $config ) {
+	function save_gc_item( $id, $project_id, $config ) {
 		global $wpdb;
 		$config = base64_encode( serialize( $config ) );
-		$table_name = $wpdb->prefix . 'gathercontent_pages';
-		if ( $this->get_gc_page( $id ) !== false ) {
-			return $wpdb->update( $table_name, array('project_id' => $project_id, 'config' => $config), array('page_id' => $id) );
+		$table_name = $wpdb->prefix . 'gathercontent_items';
+		if ( $this->get_gc_item( $id ) !== false ) {
+			return $wpdb->update( $table_name, array('project_id' => $project_id, 'config' => $config), array('item_id' => $id) );
 		}
-		return $wpdb->insert( $table_name, array('page_id' => $id, 'project_id' => $project_id, 'config' => $config) );
+		return $wpdb->insert( $table_name, array('item_id' => $id, 'project_id' => $project_id, 'config' => $config) );
 	}
 
-	function get_gc_page( $id ) {
+	function get_gc_item( $id ) {
 		global $wpdb;
 
-		$table_name = $wpdb->prefix . 'gathercontent_pages';
+		$table_name = $wpdb->prefix . 'gathercontent_items';
 
 		$row = $wpdb->get_row(
 			$wpdb->prepare(
-				"SELECT * FROM $table_name WHERE page_id = %d",
+				"SELECT * FROM $table_name WHERE item_id = %d",
 				$id
 			)
 		);
@@ -61,24 +61,24 @@ class GatherContent_Functions {
 		return $row;
 	}
 
-	function delete_gc_page( $id ) {
+	function delete_gc_item( $id ) {
 		global $wpdb;
 
-		$table_name = $wpdb->prefix . 'gathercontent_pages';
+		$table_name = $wpdb->prefix . 'gathercontent_items';
 
 		$row = $wpdb->query(
 			$wpdb->prepare(
-				"DELETE FROM $table_name WHERE page_id = %d",
+				"DELETE FROM $table_name WHERE item_id = %d",
 				$id
 			)
 		);
 
 	}
 
-	function delete_gc_pages( $project_id ) {
+	function delete_gc_items( $project_id ) {
 		global $wpdb;
 
-		$table_name = $wpdb->prefix . 'gathercontent_pages';
+		$table_name = $wpdb->prefix . 'gathercontent_items';
 
 		$row = $wpdb->query(
 			$wpdb->prepare(
@@ -97,7 +97,7 @@ class GatherContent_Functions {
 		echo $html . ' class="btn btn-success gc_ajax_submit_button"' . $ext . '><img src="' . $this->plugin_url . 'img/ajax-loader.gif" /> <span>' . $text . '</span></' . $tag . '>';
 	}
 
-	function get_page_title_array( $post_id ) {
+	function get_item_title_array( $post_id ) {
 		$data = array();
 		$post = get_post( $post_id );
 		$title = isset($post->post_title) ? $post->post_title : '';
@@ -106,7 +106,7 @@ class GatherContent_Functions {
 		if ( strlen( $title ) > 30 ) {
 			$title = substr( $title, 0, 27 ) . '...';
 		}
-		$data['page_title'] = apply_filters( 'the_title', $title, $post_id );
+		$data['item_title'] = apply_filters( 'the_title', $title, $post_id );
 		return $data;
 	}
 
@@ -153,9 +153,9 @@ class GatherContent_Functions {
 	function admin_print_styles() {
 		$this->enqueue( 'main', 'style' );
 		$step = $this->step();
-		if ( $step == 'pages' || $step == 'pages_import' )
+		if ( $step == 'items' || $step == 'item_import' )
 		{
-			$this->enqueue( 'pages', 'style' );
+			$this->enqueue( 'items', 'style' );
 		}
 	}
 
@@ -186,7 +186,7 @@ class GatherContent_Functions {
 		if ( isset( $this->step ) ) {
 			return $this->step;
 		}
-		$steps = array( 'login', 'projects', 'pages', 'pages_import', 'media', 'finished' );
+		$steps = array( 'login', 'projects', 'items', 'item_import', 'media', 'finished' );
 		if ( !( isset( $_GET['step'] ) && in_array( $_GET['step'], $steps ) ) ) {
 			$step = 'login';
 			if ( $this->option( 'api_key' ) != '' && $this->option( 'api_url' ) != '' ) {
@@ -197,8 +197,8 @@ class GatherContent_Functions {
 		}
 		$checks = array(
 			'projects'     => array('fields' => array('api_key', 'api_url'), 'prev' => 'login'),
-			'pages'        => array('fields' => array('project_id'), 'prev' => 'projects'),
-			'pages_import' => array('fields' => array('project_id'), 'prev' => 'projects'),
+			'items'        => array('fields' => array('project_id'), 'prev' => 'projects'),
+			'item_import'  => array('fields' => array('project_id'), 'prev' => 'projects'),
 			'media'        => array('fields' => array('project_id'), 'prev' => 'projects'),
 		);
 		if ( isset( $checks[$step] ) ) {
@@ -223,6 +223,29 @@ class GatherContent_Functions {
 		extract( $vars );
 		include $this->plugin_path . 'view/' . $file . '.php';
 	}
+
+    function custom_state_color( $color_id, $color_custom ) {
+        $colors = array(
+            1 => '#C5C5C5',
+            2 => '#FAA732',
+            3 => '#5EB95E',
+            4 => '#0E90D2',
+            5 => '#ECD815',
+            6 => '#DD4398',
+            7 => '#954F99',
+            9999 => $this->custom_color_hex( $color_custom )
+        );
+        return $colors[$color_id];
+    }
+
+    function custom_color_hex( $color_custom ) {
+
+        if(empty( $color_custom )) {
+            $color_custom = '#999999';
+        }
+
+        return $color_custom;
+    }
 
 	function add_media_to_content( $post_id, $file, $more_than_1 = false ) {
 		$post_fields = array('post_title', 'post_content', 'post_excerpt');
@@ -255,13 +278,13 @@ class GatherContent_Functions {
 
 	}
 
-	function get_media_ajax_output( $post_id, $media, $cur_post, $page_total, $total, $state = 'draft' ) {
+	function get_media_ajax_output( $post_id, $media, $cur_post, $item_total, $total, $state = 'draft' ) {
 		$cur_num = $_GET['cur_num'];
 		$cur_total = $_GET['cur_total'];
 
 		$next_id = $post_id;
-		if ( $cur_num == $page_total ) {
-			$page_percent = 100;
+		if ( $cur_num == $item_total ) {
+			$item_percent = 100;
 			$cur_num = 1;
 			unset($media[$post_id]);
 			$next_id = key( $media );
@@ -272,7 +295,7 @@ class GatherContent_Functions {
             	)
             );
 		} else {
-			$page_percent = $this->percent( $cur_num, $page_total );
+			$item_percent = $this->percent( $cur_num, $item_total );
 			$cur_num++;
 			$media[$post_id] = $cur_post;
 		}
@@ -280,24 +303,24 @@ class GatherContent_Functions {
 		$this->update( 'media_files', $media );
 		if ( $cur_total == $total ) {
 			$next_id = $post_id;
-			$page_percent = $overall_percent = '100';
+			$item_percent = $overall_percent = '100';
 		} else {
 			$overall_percent = $this->percent( $cur_total, $total );
 		}
 		$cur_total++;
 
-		$data = $this->get_page_title_array( $next_id );
+		$data = $this->get_item_title_array( $next_id );
 
 		if ( $overall_percent == 100 ) {
 			$this->update( 'media_files', array() );
 		}
 
 		$out = array(
-			'page_percent' => $page_percent,
+			'item_percent' => $item_percent,
 			'overall_percent' => $overall_percent,
 			'cur_num' => $cur_num,
 			'cur_total' => $cur_total,
-			'page_title' => $data['page_title'],
+			'item_title' => $data['item_title'],
 			'original_title' => $data['original_title'],
 		);
 		return $out;
