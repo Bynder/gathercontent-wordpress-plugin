@@ -314,7 +314,7 @@ class GatherContent_Curl extends GatherContent_Functions {
 		$walker = new GC_Walker_ItemDropdown();
 		foreach ( $this->post_types as $name => $title ) {
 			$args = array(
-				'posts_per_item'  => -1,
+				'posts_per_page'  => -1,
 				'offset'          => 0,
 				'orderby'         => 'title',
 				'order'           => 'ASC',

@@ -3,7 +3,7 @@
 Plugin Name: GatherContent Importer
 Plugin URI: http://www.gathercontent.com
 Description: Imports items from GatherContent to your wordpress blog
-Version: 2.6.41
+Version: 2.6.42
 Author: Mathew Chapman
 Author URI: http://www.gathercontent.com
 License: GPL2
@@ -11,7 +11,7 @@ License: GPL2
 require_once 'curl.php';
 class GatherContent extends GatherContent_Curl {
 
-	var $version = '2.6.41'; // used for javascript versioning
+	var $version = '2.6.4'; // used for javascript versioning
 
 	function __construct() {
 		parent::__construct();
