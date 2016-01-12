@@ -517,23 +517,26 @@ class GatherContent_Curl extends GatherContent_Functions {
 				$fields = apply_filters( 'acf/field_group/get_fields', array(), $id );
 			}
 
-			foreach ( $fields as $field ) {
-				$dont_allow[] = $field['key'];
-				$text = $field['label'];
-				if ( strlen( $text ) > 30 ) {
-					$text = substr( $text, 0, 30 ) . '...';
+			if(is_array($fields) && count($fields) > 0) {
+
+				foreach ( $fields as $field ) {
+					$dont_allow[] = $field['key'];
+					$text = $field['label'];
+					if ( strlen( $text ) > 30 ) {
+						$text = substr( $text, 0, 30 ) . '...';
+					}
+					$ext = '';
+					if ( isset( $options['types'] ) && count( $options['types'] ) > 0 ) {
+						$ext .= ' data-acf-post-types="|' . implode( '|', $options['types'] ) . '|"';
+					}
+					if ( isset( $options['posts'] ) && count( $options['posts'] ) > 0 ) {
+						$ext .= ' data-acf-post-ids="|' . implode( '|', $options['posts'] ) . '|"';
+					}
+					$html .= '
+				<li data-post-type="all" class="acf-row" data-search="' . esc_attr( $field['label'] ) . '"' . $ext . '>
+					<a href="#" data-value="' . esc_attr( $field['name'] ) . '" data-acf-post="' . esc_attr( $id ) . '" data-acf-field="' . esc_attr( $field['key'] ) . '" title="' . esc_attr( $field['label'] ) . '" class="acf-field">' . esc_html( $text ) . '</a>
+				</li>';
 				}
-				$ext = '';
-				if ( isset( $options['types'] ) && count( $options['types'] ) > 0 ) {
-					$ext .= ' data-acf-post-types="|' . implode( '|', $options['types'] ) . '|"';
-				}
-				if ( isset( $options['posts'] ) && count( $options['posts'] ) > 0 ) {
-					$ext .= ' data-acf-post-ids="|' . implode( '|', $options['posts'] ) . '|"';
-				}
-				$html .= '
-			<li data-post-type="all" class="acf-row" data-search="' . esc_attr( $field['label'] ) . '"' . $ext . '>
-				<a href="#" data-value="' . esc_attr( $field['name'] ) . '" data-acf-post="' . esc_attr( $id ) . '" data-acf-field="' . esc_attr( $field['key'] ) . '" title="' . esc_attr( $field['label'] ) . '" class="acf-field">' . esc_html( $text ) . '</a>
-			</li>';
 			}
 		}
 
@@ -590,7 +593,7 @@ class GatherContent_Curl extends GatherContent_Functions {
 
 			$categories = get_categories( $r );
 			if ( $categories ) {
-				$html .= '<li class="level-0" data-post-type="'.$name.'"><a href="#" data-value="-1">' . esc_html( $this->__( 'Choose category' ) ) . '</a></li>';
+				$html .= '';
 				$r['post_type'] = $name;
 				$walker = new GC_Walker_CategoryDropdown;
 				$html .= call_user_func_array( array(&$walker, 'walk'), array($categories, 0, $r) );
@@ -758,7 +761,7 @@ class GatherContent_Curl extends GatherContent_Functions {
 										</div>
 										<div class="gc_setting gc_category" id="gc_category_' . $id . '">
 											<label>' . $this->__( 'Category' ) . ' </label>
-											' . $this->dropdown_html( '<span></span>', $this->data['category_select'], 'gc[category][]', $this->val( $cur_settings, 'category', '-1' ) ) . '
+											' . $this->dropdown_html( '<span>' . esc_html( $this->__( 'Choose category' ) ) . '</span>', $this->data['category_select'], 'gc[category][]', $this->val( $cur_settings, 'category', '-1' ) ) . '
 										</div>
 										<div class="gc_setting gc_parent" id="gc_parent_' . $id . '">
 											<label>' . $this->__( 'Parent' ) . ' </label>

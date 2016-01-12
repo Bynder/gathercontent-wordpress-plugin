@@ -11,8 +11,8 @@ class GatherContent_Functions {
 	function __construct() {
 		$base_name = plugin_basename( __FILE__ );
 		$this->base_name = dirname( $base_name );
-		$this->plugin_url = WP_PLUGIN_URL . '/' . $this->base_name . '/';
-		$this->plugin_path = WP_PLUGIN_DIR . '/' . $this->base_name . '/';
+		$this->plugin_url = plugin_dir_url( __FILE__ );
+		$this->plugin_path = plugin_dir_path( __FILE__ );
 	}
 
 	function get_author_id( $display_name ) {
