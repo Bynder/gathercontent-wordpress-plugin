@@ -17,7 +17,7 @@
 			<div class="bar" style="width:0%"></div>
 		</div>
 		<div class="gc_center">
-			<a href="<?php $this->url( 'items_import' ) ?>" class="gc_blue_link"><?php $this->_e( 'Cancel' ) ?></a>
+			<a href="<?php $this->url( 'item_import' ) ?>" class="gc_blue_link"><?php $this->_e( 'Cancel' ) ?></a>
 		</div>
 		<?php wp_nonce_field( $this->base_name ) ?>
 	</div>

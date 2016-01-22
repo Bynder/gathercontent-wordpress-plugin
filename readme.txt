@@ -3,7 +3,7 @@ Contributors: Mathew Chapman, namshee
 Tags: structured content, gather content, gathercontent, import, migrate, export, mapping, production, writing, collaboration, platform, connect, link, gather, client, word, production
 Requires at least: 3.5.0
 Tested up to: 4.4
-Stable tag: 2.6.43
+Stable tag: 2.6.45
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -28,7 +28,7 @@ This section describes how to install the plugin and get it working.
 1. Upload `gathercontent-import` to the `/wp-content/plugins/` directory
 2. Activate the GatherContent plugin through the 'Plugins' menu in WordPress
 3. Click on the menu item "GatherContent"
-3. Link your accounts. You will need to enter your GatherContent account URL (e.g. http://mywebsite.gathercontent.com) and your personal GatherContent API key. You can find your API key in your Settings area within GatherContent, by opening the API tab.
+3. Link your accounts. You will need to enter your GatherContent account URL (e.g. http://mywebsite.gathercontent.com) and your personal GatherContent Legacy API key. You can find your Legacy API key in your Settings area within GatherContent, by opening the Legacy API tab.
 
 == Screenshots ==
 

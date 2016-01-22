@@ -3,7 +3,7 @@
 Plugin Name: GatherContent Importer
 Plugin URI: http://www.gathercontent.com
 Description: Imports items from GatherContent to your wordpress blog
-Version: 2.6.43
+Version: 2.6.45
 Author: Mathew Chapman
 Author URI: http://www.gathercontent.com
 License: GPL2
@@ -557,7 +557,16 @@ class GatherContent extends GatherContent_Curl {
 						} else {
 							if ( ! empty( $acf ) ) {
 								$save_settings['fields'][$tab . '_' . $field_name] = array($map_to, $acf, $acf_post);
-								$new_acf_fields[$acf] = $field['value'];
+								$acf_field = get_field_object($acf, $acf_post);
+								if(!empty($field['value'])) {
+									if($acf_field['type'] == 'date_picker') {
+										$field['value'] = trim(str_replace("\xE2\x80\x8B", '', $field['value']));
+										$new_acf_fields[$acf] = date('Ymd', strtotime($field['value']));
+									}
+									else {
+										$new_acf_fields[$acf] = $field['value'];
+									}
+								}
 							} else {
 								if ( ! isset( $new_meta_fields[$map_to] ) ) {
 									$new_meta_fields[$map_to] = '';
