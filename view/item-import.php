@@ -20,7 +20,7 @@ if ( $this->error != '' ){
 	<div class="gc_container-header gc_cf">
 		<h2><?php $this->_e( 'Choose items to import' ) ?><a href="<?php $this->url( 'login' ) ?>" class="gc_blue_link gc_right"><?php $this->_e( 'Choose account' ) ?></a></h2>
 	</div>
-	<form action="<?php $this->url( 'items_import' ) ?>" method="post" id="gc_importer_step_items_import">
+	<form action="<?php $this->url( 'item_import' ) ?>" method="post" id="gc_importer_step_items_import">
 		<div class="gc_main_content">
 			<div class="gc_search_items gc_cf">
 				<div class="gc_left">
