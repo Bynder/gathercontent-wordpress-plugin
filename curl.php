@@ -27,6 +27,7 @@ class GatherContent_Curl extends GatherContent_Functions {
 							switch ( $element->type ) {
 								case 'text':
 									$val = $element->value;
+									$val = trim(str_replace("\xE2\x80\x8B", '', $val));
 									if ( !$element->plain_text ) {
 										$val = preg_replace_callback(
 											'#\<p\>(.+?)\<\/p\>#s',
