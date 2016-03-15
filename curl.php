@@ -906,7 +906,9 @@ class GatherContent_Curl extends GatherContent_Functions {
 			}
 		}
 
+		$curl_opts = apply_filters( 'gathercontent_curl_opts', $curl_opts );
 		curl_setopt_array( $session, $curl_opts );
+		$session = apply_filters( 'gathercontent_curl_session', $session, $curl_opts );
 
 		$response = curl_exec( $session );
 		$httpcode = curl_getinfo( $session, CURLINFO_HTTP_CODE );
