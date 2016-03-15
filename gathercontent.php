@@ -718,7 +718,7 @@ class GatherContent extends GatherContent_Curl {
 		exit;
 	}
 }
-if ( is_admin() ) {
+if ( is_admin() || ( defined( 'WP_CLI' ) && WP_CLI ) ) {
 	$gc = new GatherContent;
 	register_activation_hook( __FILE__, array( &$gc, 'install' ) );
 	register_deactivation_hook( __FILE__, array( &$gc, 'uninstall' ) );
