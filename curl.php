@@ -891,6 +891,21 @@ class GatherContent_Curl extends GatherContent_Functions {
 		curl_setopt( $session, CURLOPT_SSL_VERIFYPEER, true );
 		curl_setopt( $session, CURLOPT_CAINFO, $this->plugin_path . 'cacert.pem' );
 
+		// proxy support
+		$proxy = new WP_HTTP_Proxy();
+
+		if ( $proxy->is_enabled() && $proxy->send_through_proxy( $url ) ) {
+
+			curl_setopt( $session, CURLOPT_PROXYTYPE, CURLPROXY_HTTP );
+			curl_setopt( $session, CURLOPT_PROXY, $proxy->host() );
+			curl_setopt( $session, CURLOPT_PROXYPORT, $proxy->port() );
+
+			if ( $proxy->use_authentication() ) {
+				curl_setopt( $session, CURLOPT_PROXYAUTH, CURLAUTH_ANY );
+				curl_setopt( $session, CURLOPT_PROXYUSERPWD, $proxy->authentication() );
+			}
+		}
+
 		curl_setopt_array( $session, $curl_opts );
 
 		$response = curl_exec( $session );
