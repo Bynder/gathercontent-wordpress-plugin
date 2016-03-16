@@ -491,9 +491,8 @@ class GatherContent_Curl extends GatherContent_Functions {
 
 			if( $yoast ) {
 				$meta_boxes = array_merge( WPSEO_Meta::get_meta_field_defs( 'general', $name ), WPSEO_Meta::get_meta_field_defs( 'advanced' ), apply_filters( 'wpseo_save_metaboxes', array() ) );
-
 				foreach ( $meta_boxes as $field_name => $meta_box ) {
-					if(in_array($meta_box['type'], $yoast_field_type_array)) {
+					if(($field_name == 'title' || $field_name == 'metadesc') || (in_array($meta_box['type'], $yoast_field_type_array) && !empty($meta_box['title']))) {
 						$yoast_fields[$yoast_prefix . $field_name] = true;
 
 						$html .= '
