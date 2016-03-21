@@ -658,6 +658,10 @@ class GatherContent extends GatherContent_Curl {
 						set_post_format( $post['ID'], $post_format );
 					}
 
+					if(isset($new_meta_fields['_yoast_wpseo_focuskw_text_input'])) {
+						$new_meta_fields['_yoast_wpseo_focuskw'] = $new_meta_fields['_yoast_wpseo_focuskw_text_input'];
+					}
+
 					foreach ( $new_meta_fields as $field => $values ) {
 						delete_post_meta( $post['ID'], $field );
 						if ( is_array( $values ) ) {
