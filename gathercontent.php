@@ -256,7 +256,7 @@ class GatherContent extends GatherContent_Curl {
 						$filename = wp_unique_filename( $uploads['path'], $file['original_filename'], null );
 						$new_file = $uploads['path'] . '/' . $filename;
 						$fp = fopen( $new_file, 'w' );
-						$resp = $this->_curl( 'https://gathercontent.s3.amazonaws.com/' . $file['filename'], array(CURLOPT_FILE => $fp) );
+						$resp = $this->_curl( 'https://gathercontent-production-uploads.s3.amazonaws.com/' . $file['filename'], array(CURLOPT_FILE => $fp) );
 						fclose( $fp );
 						if ( $resp['httpcode'] == 200 ) {
 							extract( wp_check_filetype( $new_file ) );
