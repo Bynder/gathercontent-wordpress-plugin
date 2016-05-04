@@ -1,11 +1,12 @@
-=== GatherContent Import ===
-Contributors: Mathew Chapman, namshee
-Tags: structured content, gather content, gathercontent, import, migrate, export, mapping, production, writing, collaboration, platform, connect, link, gather, client, word, production
-Requires at least: 3.5.0
-Tested up to: 4.4
-Stable tag: 2.6.47
-License: GPLv2 or later
-License URI: http://www.gnu.org/licenses/gpl-2.0.html
+=== GatherContent Importer ===
+Contributors:      gathercontent, mathew-chapman, namshee, justinsainton, jtsternberg
+Donate link:       http://www.gathercontent.com
+Tags               structured content, gather content, gathercontent, import, migrate, export, mapping, production, writing, collaboration, platform, connect, link, gather, client, word, production
+Requires at least: 3.8
+Tested up to:      4.5
+Stable tag:        2.6.47
+License:           GPL-2.0+
+License URI:       https://opensource.org/licenses/GPL-2.0
 
 The GatherContent Import plugin allows you to quickly import structured content from your GatherContent projects into your WordPress site.
 
@@ -30,8 +31,10 @@ This section describes how to install the plugin and get it working.
 3. Click on the menu item "GatherContent"
 3. Link your accounts. You will need to enter your GatherContent account URL (e.g. http://mywebsite.gathercontent.com) and your personal GatherContent Legacy API key. You can find your Legacy API key in your Settings area within GatherContent, by opening the Legacy API tab.
 
-== Screenshots ==
+== Frequently Asked Questions ==
 
+
+== Screenshots ==
 1. Quickly find your items using filters and live search.
 2. Import GatherContent items as Pages, Posts, Media and various Custom Post Types.
 3. Map individual fields to a huge range of places in WordPress.
