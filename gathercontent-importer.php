@@ -31,17 +31,71 @@
 
 // Useful global constants
 define( 'GATHERCONTENT_VERSION', '3.0.0' );
+define( 'GATHERCONTENT_PLUGIN',  __FILE__ );
 define( 'GATHERCONTENT_URL',     plugin_dir_url( __FILE__ ) );
 define( 'GATHERCONTENT_PATH',    dirname( __FILE__ ) . '/' );
 define( 'GATHERCONTENT_INC',     GATHERCONTENT_PATH . 'includes/' );
 
-// Include files
-require_once GATHERCONTENT_INC . 'functions/core.php';
+if ( version_compare( phpversion(), '5.3', '<' ) ) {
 
+	// Womp womp.. PHP needs to be updated!
+	add_action( 'all_admin_notices', 'gathercontent_importer_php_version_too_low_notice' );
 
-// Activation/Deactivation
-register_activation_hook( __FILE__, '\TenUp\GatherContentImporter\Core\activate' );
-register_deactivation_hook( __FILE__, '\TenUp\GatherContentImporter\Core\deactivate' );
+} elseif ( version_compare( $GLOBALS['wp_version'], '4.4', '<' ) ) {
 
-// Bootstrap
-TenUp\GatherContentImporter\Core\setup();
+	// Sad Trombone.. WordPress needs to be updated!
+	add_action( 'all_admin_notices', 'gathercontent_importer_wp_version_too_low_notice' );
+} else {
+
+	// Include files
+	require_once GATHERCONTENT_INC . 'functions/core.php';
+}
+
+/**
+ * If the server does not have the minimum supported version of PHP,
+ * this notice will be shown in the dashboard.
+ *
+ * @since  3.0.0
+ *
+ * @return void
+ */
+function gathercontent_importer_php_version_too_low_notice() {
+	printf(
+		'<div id="message" class="error"><p>%s</p></div>',
+		__( 'Sorry, the GatherContent Importer plugin requires a minimum PHP version of 5.3. Please contact your host and ask them to upgrade. For convenience, you can use the note provided on the WordPress recommended host supports page: <a href="https://wordpress.org/about/requirements/">https://wordpress.org/about/requirements/</a>', 'gathercontent-import' )
+	);
+}
+
+/**
+ * If the version of WordPress is not supported, this notice will be shown in the dashboard.
+ *
+ * @since  3.0.0
+ *
+ * @return void
+ */
+function gathercontent_importer_wp_version_too_low_notice() {
+	printf(
+		'<div id="message" class="error"><p>%s</p></div>',
+		__( 'Sorry, for security and performance reasons, the GatherContent Importer plugin requires a minimum WordPress version of 4.4. Please update WordPress to the most recent version.', 'gathercontent-import' )
+	);
+}
+
+/**
+ * Registers the default textdomain.
+ *
+ * @since  3.0.0
+ *
+ * @uses apply_filters()
+ * @uses get_locale()
+ * @uses load_textdomain()
+ * @uses load_plugin_textdomain()
+ * @uses plugin_basename()
+ *
+ * @return void
+ */
+function gathercontent_importer_i18n() {
+	$locale = apply_filters( 'plugin_locale', get_locale(), 'gathercontent' );
+	load_textdomain( 'gathercontent', WP_LANG_DIR . '/gathercontent/gathercontent-' . $locale . '.mo' );
+	load_plugin_textdomain( 'gathercontent', false, plugin_basename( GATHERCONTENT_PATH ) . '/languages/' );
+}
+add_action( 'init', 'gathercontent_importer_i18n' );

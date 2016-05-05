@@ -4,6 +4,8 @@ namespace GatherContent\Importer;
 /**
  * Default setup routine
  *
+ * @since  3.0.0
+ *
  * @uses add_action()
  * @uses do_action()
  *
@@ -23,24 +25,9 @@ function setup() {
 }
 
 /**
- * Registers the default textdomain.
- *
- * @uses apply_filters()
- * @uses get_locale()
- * @uses load_textdomain()
- * @uses load_plugin_textdomain()
- * @uses plugin_basename()
- *
- * @return void
- */
-function i18n() {
-	$locale = apply_filters( 'plugin_locale', get_locale(), 'gathercontent' );
-	load_textdomain( 'gathercontent', WP_LANG_DIR . '/gathercontent/gathercontent-' . $locale . '.mo' );
-	load_plugin_textdomain( 'gathercontent', false, plugin_basename( GATHERCONTENT_PATH ) . '/languages/' );
-}
-
-/**
  * Initializes the plugin and fires an action other plugins can hook into.
+ *
+ * @since  3.0.0
  *
  * @uses do_action()
  *
@@ -52,6 +39,8 @@ function init() {
 
 /**
  * Activate the plugin
+ *
+ * @since  3.0.0
  *
  * @uses init()
  * @uses flush_rewrite_rules()
@@ -69,8 +58,16 @@ function activate() {
  *
  * Uninstall routines should be in uninstall.php
  *
+ * @since  3.0.0
+ *
  * @return void
  */
 function deactivate() {
-
 }
+
+// Activation/Deactivation
+register_activation_hook( GATHERCONTENT_PLUGIN, '\GatherContent\Importer\activate' );
+register_deactivation_hook( GATHERCONTENT_PLUGIN, '\GatherContent\Importer\deactivate' );
+
+// Bootstrap
+setup();
