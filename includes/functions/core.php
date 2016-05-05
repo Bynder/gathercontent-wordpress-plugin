@@ -2,6 +2,49 @@
 namespace GatherContent\Importer;
 
 /**
+ * Will look for Some_Class\Name in /includes/classes/some-class/class.name.php
+ *
+ * @since  3.0.0
+ *
+ * @return void
+ */
+function autoload( $class_name ) {
+
+	// project-specific namespace prefix
+	$prefix = __NAMESPACE__. '\\';
+
+	// does the class use the namespace prefix?
+	$len = strlen( $prefix );
+	if ( 0 !== strncmp( $prefix, $class_name, $len ) ) {
+	    // no, move to the next registered autoloader
+	    return;
+	}
+
+	// base directory for the namespace prefix
+	$base_dir = GATHERCONTENT_INC . 'classes/';
+
+	// get the relative class name
+	$relative_class = substr( $class_name, $len );
+
+	/*
+	 * replace the namespace prefix with the base directory, replace namespace
+	 * separators with directory separators in the relative class name, replace
+	 * underscores with dashes, and append with .php
+	 */
+	$path = strtolower( str_replace( array( '\\', '_' ), array( '/', '-' ), $relative_class ) );
+
+	// Append "class." in front of file-name per WP standards.
+	$path = substr_replace( $path, 'class.', strrpos( $path, '/' ), 0 );
+
+	$file = $base_dir . $path . '.php';
+
+	// if the file exists, require it
+	if ( file_exists( $file ) ) {
+		require $file;
+	}
+}
+
+/**
  * Default setup routine
  *
  * @since  3.0.0
@@ -16,7 +59,7 @@ function setup() {
 		return __NAMESPACE__ . "\\$function";
 	};
 
-	add_action( 'init', $n( 'i18n' ) );
+	spl_autoload_register( $n( 'autoload' ), false );
 
 	// We only need to do our work in the admin.
 	add_action( 'admin_init', $n( 'init' ) );
@@ -34,7 +77,14 @@ function setup() {
  * @return void
  */
 function init() {
-	do_action( 'gathercontent_init' );
+
+	$general = General::get_instance();
+	$general->init();
+
+	$general->admin = new Admin();
+	$general->admin->init();
+
+	do_action( 'gathercontent_init', $general );
 }
 
 /**
