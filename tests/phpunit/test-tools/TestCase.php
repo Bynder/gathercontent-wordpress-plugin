@@ -1,6 +1,6 @@
 <?php
 
-namespace TenUp\GatherContentImporter;
+namespace GatherContent\Importer;
 
 use PHPUnit_Framework_TestResult;
 use Text_Template;

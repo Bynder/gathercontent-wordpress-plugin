@@ -1,5 +1,5 @@
 <?php
-namespace TenUp\GatherContentImporter\Core;
+namespace GatherContent\Importer;
 
 /**
  * Default setup routine
@@ -15,7 +15,9 @@ function setup() {
 	};
 
 	add_action( 'init', $n( 'i18n' ) );
-	add_action( 'init', $n( 'init' ) );
+
+	// We only need to do our work in the admin.
+	add_action( 'admin_init', $n( 'init' ) );
 
 	do_action( 'gathercontent_loaded' );
 }

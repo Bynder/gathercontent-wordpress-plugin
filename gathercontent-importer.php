@@ -29,12 +29,6 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-/**
- * Built using yo wp-make:plugin
- * Copyright (c) 2016 10up, LLC
- * https://github.com/10up/generator-wp-make
- */
-
 // Useful global constants
 define( 'GATHERCONTENT_VERSION', '3.0.0' );
 define( 'GATHERCONTENT_URL',     plugin_dir_url( __FILE__ ) );
