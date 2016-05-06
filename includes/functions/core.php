@@ -32,10 +32,6 @@ function autoload( $class_name ) {
 	 * underscores with dashes, and append with .php
 	 */
 	$path = strtolower( str_replace( array( '\\', '_' ), array( '/', '-' ), $relative_class ) );
-
-	// Append "class." in front of file-name per WP standards.
-	$path = substr_replace( $path, 'class.', strrpos( $path, '/' ), 0 );
-
 	$file = $base_dir . $path . '.php';
 
 	// if the file exists, require it

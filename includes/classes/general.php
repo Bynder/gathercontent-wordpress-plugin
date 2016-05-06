@@ -14,7 +14,7 @@ class General {
 
 	/**
 	 * Creates or returns an instance of this class.
-	 * @since  0.1.0
+	 * @since  3.0.0
 	 * @return General A single instance of this class.
 	 */
 	public static function get_instance() {
@@ -34,4 +34,4 @@ class General {
 	}
 
 }
-General::get_instance();
+

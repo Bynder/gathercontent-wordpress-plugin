@@ -11,4 +11,3 @@ class Admin {
 	}
 
 }
-General::get_instance();
