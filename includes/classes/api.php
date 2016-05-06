@@ -53,7 +53,6 @@ class API extends Base {
 
 		if ( ! $response || $this->get_val( 'flush_cache' ) || $this->flush ) {
 
-			error_log( '$this->flush: '. print_r( $this->flush, true ) );
 			$response = $this->request( $endpoint, $args, $method );
 
 			if ( is_wp_error( $response ) ) {

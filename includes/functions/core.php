@@ -82,7 +82,6 @@ function init() {
 	$general->admin = new Admin( $general->api );
 	$general->admin->init();
 
-
 	do_action( 'gathercontent_init', $general );
 }
 
