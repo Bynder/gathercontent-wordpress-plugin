@@ -1,0 +1,9 @@
+{
+	"version": 3,
+	"file": "gathercontent-importer.css",
+	"sources": [
+		"sass/gathercontent-importer.scss"
+	],
+	"mappings": "AAAA;;;;;;GAMG;AAEH,AAAA,UAAU,CAAC;EACV,aAAa,EAAE,IAAK;EACpB,OAAO,EAAE,KAAM;EACf,KAAK,EAAE,IAAK;EACZ,MAAM,EAAE,IAAK;EACb,YAAY,EAAE,IAAK;EACnB,cAAc,EAAE,MAAO;EACvB,KAAK,EAAE,IAAK,GACZ;;AAED,AAAA,SAAS,CAAC;EACT,MAAM,EAAE,KAAM,GACd;;AAED,AAAA,WAAW,CAAC;EACX,OAAO,EAAE,GAAI;EACb,QAAQ,EAAE,MAAO,GACjB",
+	"names": []
+}

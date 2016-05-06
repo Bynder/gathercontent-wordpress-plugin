@@ -1,6 +1,5 @@
 <?php
 namespace GatherContent\Importer\Views;
-use GatherContent\Importer\View as View;
 
 abstract class Form_Element extends View {
 

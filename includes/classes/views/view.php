@@ -1,5 +1,5 @@
 <?php
-namespace GatherContent\Importer;
+namespace GatherContent\Importer\Views;
 
 class View {
 

@@ -77,8 +77,11 @@ function init() {
 	$general = General::get_instance();
 	$general->init();
 
-	$general->admin = new Admin();
+	$general->api = new API( _wp_http_get_object() );
+
+	$general->admin = new Admin( $general->api );
 	$general->admin->init();
+
 
 	do_action( 'gathercontent_init', $general );
 }

@@ -38,7 +38,7 @@ abstract class Base {
 	 *
 	 * @return mixed        Query value if it exists.
 	 */
-	protected function get_val( $key ) {
+	public function get_val( $key ) {
 		return isset( self::$_get[ $key ] ) ? self::$_get[ $key ] : null;
 	}
 
@@ -51,7 +51,7 @@ abstract class Base {
 	 *
 	 * @return boolean      Whether query key exists in query.
 	 */
-	protected function get_has( $key ) {
+	public function get_has( $key ) {
 		return isset( self::$_get[ $key ] );
 	}
 
@@ -64,7 +64,7 @@ abstract class Base {
 	 *
 	 * @return mixed        Query value if it exists.
 	 */
-	protected function post_val( $key ) {
+	public function post_val( $key ) {
 		return isset( self::$_post[ $key ] ) ? self::$_post[ $key ] : null;
 	}
 
@@ -77,7 +77,7 @@ abstract class Base {
 	 *
 	 * @return boolean      Whether query key exists in query.
 	 */
-	protected function post_has( $key ) {
+	public function post_has( $key ) {
 		return isset( self::$_post[ $key ] );
 	}
 
@@ -95,7 +95,7 @@ abstract class Base {
 				break;
 
 			default:
-				echo new View( $template, $args );
+				echo new Views\View( $template, $args );
 				break;
 		}
 	}

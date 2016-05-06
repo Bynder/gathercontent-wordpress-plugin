@@ -1,7 +1,7 @@
 <?php
-namespace GatherContent\Importer;
+namespace GatherContent\Importer\Settings;
 
-class Settings {
+class Setting {
 
 	protected $option_name;
 
@@ -31,7 +31,7 @@ class Settings {
 	 *
 	 * @return [type]       [description]
 	 */
-	public function get_value( $key ) {
+	public function get( $key ) {
 		if ( array_key_exists( $key, $this->options ) ) {
 			return $this->options[ $key ];
 		}

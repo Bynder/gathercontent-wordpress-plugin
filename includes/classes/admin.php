@@ -6,6 +6,14 @@ class Admin extends Base {
 	public $option_page_slug = GATHERCONTENT_SLUG;
 	public $option_name      = 'gathercontent_importer';
 	public $option_group     = 'gathercontent_importer_settings';
+	public $url              = '';
+
+	/**
+	 * API instance
+	 *
+	 * @var API
+	 */
+	protected $api;
 
 	/**
 	 * GatherContent\Importer\Settings instance
@@ -29,9 +37,52 @@ class Admin extends Base {
 	 * Creates an instance of this class.
 	 *
 	 * @since 3.0.0
+	 *
+	 * @param $api API object
 	 */
-	public function __construct() {
+	public function __construct( API $api ) {
 		parent::__construct();
+
+		$this->api = $api;
+		$this->url = admin_url( '?page='. $this->option_page_slug );
+		$this->logo = '<img width="220px" height="39px" src="'. GATHERCONTENT_URL . 'images/logo.svg" alt="GatherContent" />';
+
+		if (
+			$this->get_setting( 'account_owner_email' )
+			&& $this->get_setting( 'platform_url' )
+			&& $this->get_setting( 'api_key' )
+			&& 'gathercontent-import' === $this->get_val( 'page' )
+		) {
+
+			$review = absint( $this->get_val( 'review' ) );
+			if ( $review && 2 !== $review ) {
+				return;
+			}
+
+			$this->api->set_user( $this->get_setting( 'account_owner_email' ) );
+			$this->api->set_api_key( $this->get_setting( 'api_key' ) );
+
+			if ( 2 === $review ) {
+				$this->api->flush = true;
+			}
+
+			$user = $this->api->request_cache( 'me', DAY_IN_SECONDS );
+
+			if ( ! isset( $user->data ) ) {
+
+				if ( 2 === $review ) {
+					return add_settings_error( $this->option_name, 'gc-api-connect-fail', __( 'We had trouble connecting to the GatherContent API. Please check your settings.', 'gathercontent-import' ), 'error' );
+				}
+
+				wp_redirect( esc_url_raw( add_query_arg( array( 'step' => 1, 'review' => 2 ), $this->url ) ) );
+			}
+
+			if ( $this->which_step() < 2 ) {
+				wp_redirect( esc_url_raw( add_query_arg( 'step', 2, $this->url ) ) );
+				exit;
+			}
+
+		}
 	}
 
 	/**
@@ -60,7 +111,7 @@ class Admin extends Base {
 	 */
 	function admin_menu() {
 		$hook_suffix = add_menu_page(
-			'<img width="220px" height="39px" src="'. GATHERCONTENT_URL . 'images/logo.svg" alt="GatherContent" />',
+			$this->logo,
 			'GatherContent',
 			'publish_pages',
 			$this->option_page_slug,
@@ -69,7 +120,7 @@ class Admin extends Base {
 		);
 
 		// add_action( 'admin_print_scripts-' . $hook_suffix, array($this, 'admin_print_scripts') );
-		// add_action( 'admin_print_styles-' . $hook_suffix, array($this, 'admin_print_styles') );
+		add_action( 'admin_print_styles-' . $hook_suffix, array($this, 'admin_print_styles') );
 	}
 
 	public function admin_page() {
@@ -89,8 +140,9 @@ class Admin extends Base {
 
 		} else {
 			$this->view( 'admin-page', array(
-				'option_group' => $this->option_group,
-				'settings_sections' => Settings_Section::get_sections( $this->which_step() ),
+				'logo'              => $this->logo,
+				'option_group'      => $this->option_group,
+				'settings_sections' => Settings\Form_Section::get_sections( $this->which_step() ),
 			) );
 		}
 	}
@@ -114,9 +166,13 @@ class Admin extends Base {
 		);
 	}
 
+	public function admin_print_styles() {
+		wp_enqueue_style( 'gathercontent', GATHERCONTENT_URL . 'assets/css/gathercontent-importer.css', array(), GATHERCONTENT_VERSION );
+	}
+
 	public function step_one_settings() {
 
-		$section = new Settings_Section(
+		$section = new Settings\Form_Section(
 			'step_1',
 			__( 'API Credentials', 'gathercontent-import' ),
 			function() {
@@ -134,7 +190,7 @@ class Admin extends Base {
 				$this->view( 'input', array(
 					'id' => $id,
 					'name' => $this->option_name .'['. $id .']',
-					'value' => esc_attr( $this->get_value( $id ) ),
+					'value' => esc_attr( $this->get_setting( $id ) ),
 				) );
 
 			}
@@ -149,7 +205,7 @@ class Admin extends Base {
 				$this->view( 'input', array(
 					'id' => $id,
 					'name' => $this->option_name .'['. $id .']',
-					'value' => esc_attr( $this->get_value( $id ) ),
+					'value' => esc_attr( $this->get_setting( $id ) ),
 					'placeholder' => 'https://your-account.gathercontent.com/',
 				) );
 
@@ -165,7 +221,7 @@ class Admin extends Base {
 				$this->view( 'input', array(
 					'id' => $id,
 					'name' => $this->option_name .'['. $id .']',
-					'value' => esc_attr( $this->get_value( $id ) ),
+					'value' => esc_attr( $this->get_setting( $id ) ),
 					'placeholder' => 'XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX',
 					'desc' => '<a href="https://gathercontent.com/developers/authentication/" target="_blank">'. __( 'How to get your API key', 'gathercontent-import' ) . '</a>',
 				) );
@@ -176,11 +232,18 @@ class Admin extends Base {
 
 	public function steps_complete_settings() {
 
-		$section = new Settings_Section(
+		$section = new Settings\Form_Section(
 			'steps_complete',
 			'',
 			function() {
-				echo '<p>' . sprintf( __( 'For more information: <a href="%s" target="_blank">https://gathercontent.com/how-it-work</a>.', 'gathercontent-import' ), 'https://gathercontent.com/how-it-works' ) . '</p>';
+				$user = $this->api->request_cache( 'me', DAY_IN_SECONDS );
+				if ( isset( $user->data ) ) {
+					if ( isset( $user->data->first_name ) ) {
+						$this->view( 'user-profile', (array) $user->data );
+					}
+
+					echo '<xmp>$user: '. print_r( $user, true ) .'</xmp>';
+				}
 			},
 			$this->option_page_slug
 		);
@@ -225,7 +288,7 @@ class Admin extends Base {
 	 * @return int  Step number.
 	 */
 	public function which_step() {
-		return $this->get_has( 'step' ) ? absint( $this->get_val( 'step' ) ) : 1;
+		return $this->get_has( 'step' ) ? absint( $this->get_val( 'step' ) ) : 0;
 	}
 
 	/**
@@ -237,8 +300,8 @@ class Admin extends Base {
 	 *
 	 * @return mixed       Value for option.
 	 */
-	public function get_value( $key ) {
-		return $this->settings()->get_value( $key );
+	public function get_setting( $key ) {
+		return $this->settings()->get( $key );
 	}
 
 	/**
@@ -250,7 +313,7 @@ class Admin extends Base {
 	 */
 	public function settings() {
 		if ( null === $this->settings ) {
-			$this->settings = new Settings( $this->option_name, $this->default_options );
+			$this->settings = new Settings\Setting( $this->option_name, $this->default_options );
 		}
 
 		return $this->settings;

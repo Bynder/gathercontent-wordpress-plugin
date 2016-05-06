@@ -1,7 +1,8 @@
 <?php
-namespace GatherContent\Importer;
+namespace GatherContent\Importer\Settings;
+use GatherContent\Importer\Base as Base;
 
-class Settings_Section extends Base {
+class Form_Section extends Base {
 
 	protected $page;
 	protected $id;
