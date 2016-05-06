@@ -1,7 +1,7 @@
 <?php
 namespace GatherContent\Importer;
 
-class General {
+class General extends Base {
 
 	protected static $single_instance = null;
 
@@ -26,7 +26,7 @@ class General {
 	}
 
 	protected function __construct() {
-
+		parent::__construct( $_GET, $_POST );
 	}
 
 	public function init() {

@@ -58,7 +58,7 @@ function setup() {
 	spl_autoload_register( $n( 'autoload' ), false );
 
 	// We only need to do our work in the admin.
-	add_action( 'admin_init', $n( 'init' ) );
+	add_action( 'admin_menu', $n( 'init' ) );
 
 	do_action( 'gathercontent_loaded' );
 }
