@@ -31,6 +31,7 @@
 
 // Useful global constants
 define( 'GATHERCONTENT_VERSION', '3.0.0' );
+define( 'GATHERCONTENT_SLUG',    'gathercontent-import' );
 define( 'GATHERCONTENT_PLUGIN',  __FILE__ );
 define( 'GATHERCONTENT_URL',     plugin_dir_url( __FILE__ ) );
 define( 'GATHERCONTENT_PATH',    dirname( __FILE__ ) . '/' );
@@ -94,8 +95,9 @@ function gathercontent_importer_wp_version_too_low_notice() {
  * @return void
  */
 function gathercontent_importer_i18n() {
-	$locale = apply_filters( 'plugin_locale', get_locale(), 'gathercontent' );
-	load_textdomain( 'gathercontent', WP_LANG_DIR . '/gathercontent/gathercontent-' . $locale . '.mo' );
-	load_plugin_textdomain( 'gathercontent', false, plugin_basename( GATHERCONTENT_PATH ) . '/languages/' );
+	$text_domain = GATHERCONTENT_SLUG;
+	$locale = apply_filters( 'plugin_locale', get_locale(), $text_domain );
+	load_textdomain( $text_domain, WP_LANG_DIR . "/{$text_domain}/{$text_domain}-{$locale}.mo" );
+	load_plugin_textdomain( $text_domain, false, plugin_basename( GATHERCONTENT_PATH ) . '/languages/' );
 }
 add_action( 'init', 'gathercontent_importer_i18n' );
