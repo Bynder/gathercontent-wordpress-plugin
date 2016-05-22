@@ -43,6 +43,20 @@ abstract class Base {
 	}
 
 	/**
+	 * See if the query array has a value and if its value matches the $value.
+	 *
+	 * @since  3.0.0
+	 *
+	 * @param  string  $key   Key to check.
+	 * @param  string  $value Value to check.
+	 *
+	 * @return bool           Whether Query key/value exists.
+	 */
+	public function get_val_equals( $key, $value ) {
+		return isset( self::$_get[ $key ] ) && $value === self::$_get[ $key ];
+	}
+
+	/**
 	 * Check if the query array has a key.
 	 *
 	 * @since  3.0.0
@@ -66,6 +80,20 @@ abstract class Base {
 	 */
 	public function post_val( $key ) {
 		return isset( self::$_post[ $key ] ) ? self::$_post[ $key ] : null;
+	}
+
+	/**
+	 * See if the $_POST array has a value and if its value matches the $value.
+	 *
+	 * @since  3.0.0
+	 *
+	 * @param  string  $key   Key to check.
+	 * @param  string  $value Value to check.
+	 *
+	 * @return bool           Whether Query key/value exists.
+	 */
+	public function post_val_equals( $key, $value ) {
+		return isset( self::$_post[ $key ] ) && $value === self::$_post[ $key ];
 	}
 
 	/**
