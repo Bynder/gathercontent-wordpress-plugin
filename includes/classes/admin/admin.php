@@ -1,26 +1,16 @@
 <?php
-namespace GatherContent\Importer;
+namespace GatherContent\Importer\Admin;
+use GatherContent\Importer\API;
+use GatherContent\Importer\Settings\Setting;
+use GatherContent\Importer\Settings\Form_Section;
+use GatherContent\Importer\Post_Types\Template_Mappings;
 
 class Admin extends Base {
 
 	public $option_page_slug = GATHERCONTENT_SLUG;
 	public $option_name      = 'gathercontent_importer';
 	public $option_group     = 'gathercontent_importer_settings';
-	public $url              = '';
-
-	/**
-	 * API instance
-	 *
-	 * @var API
-	 */
-	protected $api;
-
-	/**
-	 * GatherContent\Importer\Settings instance
-	 *
-	 * @var GatherContent\Importer\Settings
-	 */
-	public $settings = null;
+	public $add_new_template;
 
 	/**
 	 * Default option value (if none is set)
@@ -41,48 +31,31 @@ class Admin extends Base {
 	 * @param $api API object
 	 */
 	public function __construct( API $api ) {
+		parent::set_api( $api );
 		parent::__construct();
-
-		$this->api = $api;
-		$this->url = admin_url( '?page='. $this->option_page_slug );
-		$this->logo = '<img width="220px" height="39px" src="'. GATHERCONTENT_URL . 'images/logo.svg" alt="GatherContent" />';
 
 		if (
 			$this->get_setting( 'account_owner_email' )
 			&& $this->get_setting( 'platform_url' )
 			&& $this->get_setting( 'api_key' )
-			&& 'gathercontent-import' === $this->get_val( 'page' )
 		) {
+			$this->step = 1;
+			$this->api()->set_user( $this->get_setting( 'account_owner_email' ) );
+			$this->api()->set_api_key( $this->get_setting( 'api_key' ) );
 
-			$review = absint( $this->get_val( 'review' ) );
-			if ( $review && 2 !== $review ) {
-				return;
-			}
+			if ( ! $this->api()->get( 'me' ) ) {
 
-			$this->api->set_user( $this->get_setting( 'account_owner_email' ) );
-			$this->api->set_api_key( $this->get_setting( 'api_key' ) );
+				add_settings_error( $this->option_name, 'gc-api-connect-fail', __( 'We had trouble connecting to the GatherContent API. Please check your settings.', 'gathercontent-import' ), 'error' );
 
-			if ( 2 === $review ) {
-				$this->api->flush = true;
-			}
-
-			$user = $this->api->request_cache( 'me', DAY_IN_SECONDS );
-
-			if ( ! isset( $user->data ) ) {
-
-				if ( 2 === $review ) {
-					return add_settings_error( $this->option_name, 'gc-api-connect-fail', __( 'We had trouble connecting to the GatherContent API. Please check your settings.', 'gathercontent-import' ), 'error' );
-				}
-
-				wp_redirect( esc_url_raw( add_query_arg( array( 'step' => 1, 'review' => 2 ), $this->url ) ) );
-			}
-
-			if ( $this->which_step() < 2 ) {
-				wp_redirect( esc_url_raw( add_query_arg( 'step', 2, $this->url ) ) );
-				exit;
+				$this->step = 0;
 			}
 
 		}
+
+		if ( $this->step > 0 ) {
+			$this->add_new_template = new Manage_Templates( $this );
+		}
+
 	}
 
 	/**
@@ -92,14 +65,12 @@ class Admin extends Base {
 	 *
 	 * @return void
 	 */
-	public function init() {
-		if ( did_action( 'admin_menu' ) ) {
-			$this->admin_menu();
-		} else {
-			add_action( 'admin_menu', array( $this, 'admin_menu' ) );
-		}
+	public function init_hooks() {
+		parent::init_hooks();
 
-		$this->initialize_settings_sections();
+		if ( $this->add_new_template ) {
+			$this->add_new_template->init_hooks();
+		}
 	}
 
 	/**
@@ -110,7 +81,7 @@ class Admin extends Base {
 	 * @return void
 	 */
 	function admin_menu() {
-		$hook_suffix = add_menu_page(
+		$page = add_menu_page(
 			$this->logo,
 			'GatherContent',
 			'publish_pages',
@@ -119,8 +90,7 @@ class Admin extends Base {
 			GATHERCONTENT_URL . 'images/menu-logo.svg'
 		);
 
-		// add_action( 'admin_print_scripts-' . $hook_suffix, array($this, 'admin_print_scripts') );
-		add_action( 'admin_print_styles-' . $hook_suffix, array($this, 'admin_print_styles') );
+		add_action( 'admin_print_styles-' . $page, array( $this, 'admin_enqueue_style' ) );
 	}
 
 	public function admin_page() {
@@ -142,7 +112,7 @@ class Admin extends Base {
 			$this->view( 'admin-page', array(
 				'logo'              => $this->logo,
 				'option_group'      => $this->option_group,
-				'settings_sections' => Settings\Form_Section::get_sections( $this->which_step() ),
+				'settings_sections' => Form_Section::get_sections( $this->option_page_slug ),
 			) );
 		}
 	}
@@ -155,24 +125,18 @@ class Admin extends Base {
 	 * @return void
 	 */
 	function initialize_settings_sections() {
+		if ( $this->step > 0 ) {
+			$this->api_setup_complete();
+		}
 
-		$this->step_one_settings();
-		$this->steps_complete_settings();
+		$this->api_setup_settings();
 
-		register_setting(
-			$this->option_group,
-			$this->option_name,
-			array( $this->settings(), 'sanitize_settings' )
-		);
+		parent::initialize_settings_sections();
 	}
 
-	public function admin_print_styles() {
-		wp_enqueue_style( 'gathercontent', GATHERCONTENT_URL . 'assets/css/gathercontent-importer.css', array(), GATHERCONTENT_VERSION );
-	}
+	public function api_setup_settings() {
 
-	public function step_one_settings() {
-
-		$section = new Settings\Form_Section(
+		$section = new Form_Section(
 			'step_1',
 			__( 'API Credentials', 'gathercontent-import' ),
 			function() {
@@ -230,25 +194,21 @@ class Admin extends Base {
 		);
 	}
 
-	public function steps_complete_settings() {
+	public function api_setup_complete() {
 
-		$section = new Settings\Form_Section(
+		$section = new Form_Section(
 			'steps_complete',
 			'',
 			function() {
-				$user = $this->api->request_cache( 'me', DAY_IN_SECONDS );
-				if ( isset( $user->data ) ) {
-					if ( isset( $user->data->first_name ) ) {
-						$this->view( 'user-profile', (array) $user->data );
-					}
 
-					echo '<xmp>$user: '. print_r( $user, true ) .'</xmp>';
+				if ( $user = $this->api()->get( 'me' ) ) {
+					if ( isset( $user->first_name ) ) {
+						$this->view( 'user-profile', (array) $user );
+					}
 				}
 			},
 			$this->option_page_slug
 		);
-
-		// @todo implement next steps
 	}
 
 	/**
@@ -276,47 +236,6 @@ class Admin extends Base {
 		}
 
 		return false;
-	}
-
-	/**
-	 * Determine which step user is on.
-	 *
-	 * @todo  This should be determined which options they have filled out, and redirect user to step.
-	 *
-	 * @since  3.0.0
-	 *
-	 * @return int  Step number.
-	 */
-	public function which_step() {
-		return $this->get_has( 'step' ) ? absint( $this->get_val( 'step' ) ) : 0;
-	}
-
-	/**
-	 * Get option value.
-	 *
-	 * @since  3.0.0
-	 *
-	 * @param  string $key Key from options array to retrieve.
-	 *
-	 * @return mixed       Value for option.
-	 */
-	public function get_setting( $key ) {
-		return $this->settings()->get( $key );
-	}
-
-	/**
-	 * Gets the Settings object
-	 *
-	 * @since  3.0.0
-	 *
-	 * @return Settings
-	 */
-	public function settings() {
-		if ( null === $this->settings ) {
-			$this->settings = new Settings\Setting( $this->option_name, $this->default_options );
-		}
-
-		return $this->settings;
 	}
 
 }

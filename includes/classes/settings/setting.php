@@ -9,7 +9,7 @@ class Setting {
 		$this->option_name = $option_name;
 		$this->options = get_option( $this->option_name );
 
-		if ( empty( $this->options ) ) {
+		if ( false === $this->options && false !== $default_options ) {
 			$this->options = $default_options;
 
 			// Initiate the option, and do NOT autoload option.
@@ -46,9 +46,9 @@ class Setting {
 	public function sanitize_settings( $options ) {
 		if ( is_array( $options ) ) {
 			$this->options = array_map( 'sanitize_text_field', $options );
+		} else {
+			$this->options = is_scalar( $options ) ? sanitize_text_field( $options ) : '';
 		}
-
-		$this->options = is_scalar( $options ) ? sanitize_text_field( $options ) : '';
 
 		return $this->options;
 	}

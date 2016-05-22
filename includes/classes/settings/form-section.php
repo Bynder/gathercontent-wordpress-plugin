@@ -19,11 +19,11 @@ class Form_Section extends Base {
 		$this->title = $section['title'];
 		$this->callback = $section['callback'];
 
-		self::$sections[ $this->id ] = $this;
+		self::$sections[ $this->page ][ $this->id ] = $this;
 	}
 
-	public function get_section( $is_current ) {
-		$class = 'gc-section-'. $this->id . ( $is_current ? '' : ' hidden' );
+	public function get_section( $show ) {
+		$class = 'gc-section-'. $this->id . ( $show ? '' : ' hidden' );
 		$html  = '<div class="gc-setting-section '. $class .'">';
 
 			if ( $this->title ) {
@@ -44,26 +44,47 @@ class Form_Section extends Base {
 	}
 
 	public function do_desc_callback() {
-		ob_start();
-		call_user_func( $this->callback, $this );
-		return ob_get_clean();
+		if ( is_callable( $this->callback ) ) {
+			ob_start();
+			call_user_func( $this->callback, $this );
+			return ob_get_clean();
+		}
+
+		return $this->callback;
 	}
 
 	public function do_fields() {
 		ob_start();
 		do_settings_fields( $this->page, $this->id );
-		return ob_get_clean();
+		// Kill empty label cells
+		return str_replace( '<th scope="row"></th>', '', ob_get_clean() );
 	}
 
 	public function add_field( $id, $title, $callback, $args = array() ) {
 		$args = wp_parse_args( $args, array(
-			'label_for' => $id,
+			'label_for' => $title ? $id : '',
 			'class' => $id . '-row',
 		) );
 
 		$field = compact( 'id', 'title', 'callback', 'args' );
 		$field = apply_filters( "gathercontent_importer_field_{$this->id}_{$id}", $field, $this );
+		$this->fields[ $field['id'] ] = $field;
 
+		if ( did_action( 'admin_menu' ) ) {
+			$this->_add_field( $field );
+		} else {
+			add_action( 'admin_menu', array( $this, '_add_fields' ) );
+		}
+
+	}
+
+	public function _add_fields() {
+		foreach ( $this->fields as $field ) {
+			$this->_add_field( $field );
+		}
+	}
+
+	protected function _add_field( $field ) {
 		add_settings_field(
 			$field['id'],
 			$field['title'],
@@ -75,7 +96,6 @@ class Form_Section extends Base {
 			$this->id,
 			$field['args']
 		);
-
 	}
 
 	public function do_param( $key ) {
@@ -86,13 +106,11 @@ class Form_Section extends Base {
 		return isset( $this->field[ $key ] ) ? $this->field[ $key ] : null;
 	}
 
-	public static function get_sections( $step ) {
+	public static function get_sections( $page ) {
 
 		$html = '';
-		$step_count = 0;
-
-		foreach ( self::$sections as $section ) {
-			$html .= $section->get_section( ++$step_count === $step );
+		foreach ( self::$sections[ $page ] as $section ) {
+			$html .= $section->get_section( 1 );
 		}
 
 		return $html;

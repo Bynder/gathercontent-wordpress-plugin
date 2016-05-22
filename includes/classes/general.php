@@ -29,7 +29,7 @@ class General extends Base {
 		parent::__construct( $_GET, $_POST );
 	}
 
-	public function init() {
+	public function init_hooks() {
 
 	}
 

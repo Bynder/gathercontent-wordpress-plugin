@@ -57,8 +57,10 @@ function setup() {
 
 	spl_autoload_register( $n( 'autoload' ), false );
 
-	// We only need to do our work in the admin.
-	add_action( 'admin_menu', $n( 'init' ) );
+	if ( is_admin() ) {
+		// We only need to do our work in the admin.
+		add_action( 'init', $n( 'init' ) );
+	}
 
 	do_action( 'gathercontent_loaded' );
 }
@@ -75,12 +77,12 @@ function setup() {
 function init() {
 
 	$general = General::get_instance();
-	$general->init();
+	$general->init_hooks();
 
 	$general->api = new API( _wp_http_get_object() );
 
-	$general->admin = new Admin( $general->api );
-	$general->admin->init();
+	$general->admin = new Admin\Admin( $general->api );
+	$general->admin->init_hooks();
 
 	do_action( 'gathercontent_init', $general );
 }

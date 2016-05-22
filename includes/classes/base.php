@@ -122,6 +122,10 @@ abstract class Base {
 				echo new Views\Input( $args );
 				break;
 
+			case 'radio':
+				echo new Views\Radio( $args );
+				break;
+
 			default:
 				echo new Views\View( $template, $args );
 				break;

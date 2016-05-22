@@ -6,7 +6,7 @@
 		<?php
 		settings_fields( $this->get( 'option_group' ) );
 		$this->output( 'settings_sections' );
-		submit_button();
+		submit_button( $this->get( 'submit_button_text' ) );
 		?>
 	</form>
 
