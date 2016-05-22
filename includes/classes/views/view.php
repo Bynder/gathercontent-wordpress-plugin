@@ -75,8 +75,21 @@ class View {
 		return $default;
 	}
 
-	public function output( $arg, $default = null ) {
-		echo $this->get( $arg, $default );
+	/**
+	 * Output one of the $args values.
+	 *
+	 * @since  3.0.0
+	 *
+	 * @param  string  $arg     The $args key.
+	 * @param  mixed   $esc_cb  An escaping function callback.
+	 * @param  mixed   $default Mixed value.
+	 *
+	 * @return mixed            Value or default.
+	 */
+	public function output( $arg, $esc_cb = '', $default = null ) {
+		$val = $this->get( $arg, $default );
+
+		echo $esc_cb ? $esc_cb( $val ) : $val;
 	}
 
 	public function __toString() {
