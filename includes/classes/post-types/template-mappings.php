@@ -53,6 +53,12 @@ class Template_Mappings extends Base {
 
 	public function output_mapping_data( $post ) {
 		if ( $this->slug === $post->post_type ) {
+			echo '<p class="postbox" style="padding: 1em;background: #f5f5f5;margin: -4px 0 0">';
+			echo '<strong>' . __( 'Project ID:', 'gathercontent-import' ) . '</strong> '. get_post_meta( get_the_id(), 'project', 1 );
+			echo ',&nbsp;';
+			echo '<strong>' . __( 'Template ID:', 'gathercontent-import' ) . '</strong> '. get_post_meta( get_the_id(), 'template', 1 );
+			echo '</p>';
+
 			$content = $post->post_content;
 			if ( defined( 'JSON_PRETTY_PRINT' ) ) {
 				$pretty = json_encode( json_decode( $content ), JSON_PRETTY_PRINT );
@@ -63,8 +69,6 @@ class Template_Mappings extends Base {
 
 			echo '<pre><textarea name="content" id="content" rows="20" style="width:100%;">'. print_r( $content, true ) .'</textarea></pre>';
 
-			echo '<p><strong>Template ID:</strong> '. get_post_meta( get_the_id(), 'template', 1 ) .'</p>';
-			echo '<p><strong>Project ID:</strong> '. get_post_meta( get_the_id(), 'project', 1 ) .'</p>';
 		}
 	}
 
