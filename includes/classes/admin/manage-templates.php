@@ -466,14 +466,12 @@ class Manage_Templates extends Base {
 					continue;
 				}
 
-				$tax->terms = array();
+				$type->taxonomies[] = $tax;
+
 				// Get all terms for this taxonomy
 				// @todo NOT SCALABLE
-				foreach ( get_terms( $tax->name, array( 'hide_empty' => false, ) ) as $term ) {
-					$tax->terms[] = $term;
-				}
+				$tax->terms = get_terms( $tax->name, array( 'hide_empty' => false, ) );
 
-				$type->taxonomies[] = $tax;
 			}
 
 			$post_types[ $index ] = $type;
