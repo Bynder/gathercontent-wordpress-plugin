@@ -1,11 +1,3 @@
-/**
- * GatherContent Importer
- * http://www.gathercontent.com
- *
- * Copyright (c) 2016 GatherContent
- * }Licensed under the GPL-2.0+ license.
- */
-
 window.GatherContent = window.GatherContent || {};
 
 ( function( window, document, $, app, undefined ) {

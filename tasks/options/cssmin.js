@@ -1,9 +1,9 @@
 module.exports = {
 	options: {
-		banner: '/*! <%= pkg.title %> - v<%= pkg.version %>\n' +
-		' * <%=pkg.homepage %>\n' +
-		' * Copyright (c) <%= grunt.template.today("yyyy") %>;' +
-		' * Licensed GPL-2.0+' +
+		banner: '/*! <%= pkg.title %> - v<%= pkg.version %> - <%= grunt.template.today("yyyy-mm-dd") %>' +
+		' | <%= pkg.homepage %>' +
+		' | Copyright (c) <%= grunt.template.today("yyyy") %> <%= pkg.author.name %>' +
+		' | Licensed <%= pkg.license %>' +
 		' */\n'
 	},
 	minify: {
