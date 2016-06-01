@@ -119,16 +119,22 @@ abstract class Base {
 	public function view( $template, array $args = array(), $echo = true ) {
 		switch ( $template ) {
 			case 'input':
-				echo new Views\Input( $args );
+				$view = new Views\Input( $args );
 				break;
 
 			case 'radio':
-				echo new Views\Radio( $args );
+				$view = new Views\Radio( $args );
 				break;
 
 			default:
-				echo new Views\View( $template, $args );
+				$view = new Views\View( $template, $args );
 				break;
+		}
+
+		if ( $echo ) {
+			$view->load();
+		} else {
+			return $view->load( false );
 		}
 	}
 

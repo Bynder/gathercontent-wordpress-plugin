@@ -221,7 +221,7 @@ class Manage_Templates extends Base {
 	public function select_project() {
 		$section = new Form_Section(
 			'select_project',
-			__( 'First, choose a project.', 'gathercontent-import' ),
+			__( 'First, choose a project from an account.', 'gathercontent-import' ),
 			'',
 			$this->option_page_slug
 		);
@@ -229,44 +229,54 @@ class Manage_Templates extends Base {
 		$section->add_field(
 			'project',
 			'',
-			function( $field ) {
-				$field_id = $field->param( 'id' );
+			array( $this, 'select_project_field_callback' )
+		);
+	}
 
-				if ( $accounts = $this->api()->get( 'accounts' ) ) {
-					foreach ( $accounts as $account ) {
-						echo '<p class="gc-account-name description">';
-						printf( __( 'Account: %s', 'gathercontent-import' ), isset( $account->name ) ? $account->name : '' );
-						echo '</p>';
+	public function select_project_field_callback( $field ) {
+		$field_id = $field->param( 'id' );
+		$accounts = $this->api()->get( 'accounts' );
 
-						if ( isset( $account->id ) ) {
-							$options = array();
+		if ( ! $accounts ) {
+			return $this->add_settings_error( $this->option_name, 'gc-missing-accounts', sprintf( __( 'We couldn\'t find any accounts associated with your GatherContent API credentials. Please <a href="%s">check your settings</a>.', 'gathercontent-import' ), $this->parent_url ) );
+		}
 
-							$value = '';
-							if ( $projects = $this->api()->get( 'projects?account_id=' . $account->id ) ) {
-								foreach ( $projects as $project ) {
-									$val = esc_attr( $project->id );
-									$options[ $val ] = esc_attr( $project->name );
-									if ( ! $value ) {
-										$value = $val;
-									}
-								}
-							}
+		$tabs = array();
+		foreach ( $accounts as $account ) {
+			if ( ! isset( $account->id ) ) {
+				continue;
+			}
 
-							$this->view( 'radio', array(
-								'id'      => $field_id . '-' . $account->id,
-								'name'    => $this->option_name .'['. $field_id .']',
-								'value'   => $value,
-								'options' => $options,
-							) );
-						}
+			$options = array();
+			$value = '';
 
+			if ( $projects = $this->api()->get( 'projects?account_id=' . $account->id ) ) {
+				foreach ( $projects as $project ) {
+					$val = esc_attr( $project->id );
+					$options[ $val ] = esc_attr( $project->name );
+					if ( ! $value ) {
+						$value = $val;
 					}
 				}
-
 			}
-		);
+
+			$tabs[ $account->id ] = array(
+				'label' => sprintf( __( 'Account: %s', 'gathercontent-import' ), isset( $account->name ) ? $account->name : '' ),
+				'content' => $this->view( 'radio', array(
+					'id'      => $field_id . '-' . $account->id,
+					'name'    => $this->option_name .'['. $field_id .']',
+					'value'   => $value,
+					'options' => $options,
+				), false ),
+			);
+		}
+
+		$this->view( 'tabs-wrapper', array(
+			'tabs' => $tabs,
+		) );
 
 	}
+
 
 	public function select_template() {
 		$project = $this->api()->get( 'projects/' . $this->get_val( 'project' ) );
@@ -331,8 +341,10 @@ class Manage_Templates extends Base {
 
 	public function map_template() {
 
-		$template     = $this->api()->get( 'templates/' . $this->get_val( 'template' ) );
-		$project      = $this->api()->get( 'projects/' . $this->get_val( 'project' ) );
+		$template = $this->api()->get( 'templates/' . $this->get_val( 'template' ) );
+		$project  = $this->api()->get( 'projects/' . $this->get_val( 'project' ) );
+		$existing_id = absint( $this->get_val( 'mapping' ) );
+		$existing_note = $existing_id ? sprintf( __( '<strong>NOTE:</strong> There can be only one %s per project template. You are editing an existing mapping (ID: %d).', 'gathercontent-import' ), $this->mappings->args->labels->singular_name, $existing_id ) : '';
 
 		$title = $template && isset( $template->name )
 			? $template->name
@@ -348,7 +360,7 @@ class Manage_Templates extends Base {
 		$section = new Form_Section(
 			'select_template',
 			$title,
-			$desc,
+			$existing_note . $desc,
 			$this->option_page_slug
 		);
 
@@ -359,34 +371,32 @@ class Manage_Templates extends Base {
 				$project_id  = esc_attr( $this->get_val( 'project' ) );
 				$template_id = esc_attr( $this->get_val( 'template' ) );
 
-				$hidden = '';
-				foreach ( $template->config as $index => $tab ) {
-					$tab->nav_item = array(
-						'value' => $tab->name,
-						'class' => 'nav-tab '. ( '' === $hidden ? 'nav-tab-active' : '' ),
-						'lable' => $tab->label,
+				$existing_id = absint( $this->get_val( 'mapping' ) );
+				$existing_id = $existing_id && get_post( $existing_id ) ? $existing_id : false;
+
+				$tabs = array();
+				foreach ( $template->config as $tab ) {
+					$tabs[ $tab->name ] = array(
+						'label' => $tab->label,
+						'content' => $this->view( 'mapping-tab', array(
+							'elements'    => $tab->elements,
+							'option_base' => $this->option_name,
+							'values'      => $this->stored_values( $existing_id ),
+							'destination_post_options' => $this->post_destinations(),
+						), false ),
 					);
-
-					$tab->tab_class = 'gc-template-tab ' . $hidden;
-					$hidden = 'hidden';
-
-					$template->config[ $index ] = $tab;
 				}
 
-				$existing_id = absint( $this->get_val( 'mapping' ) );
-				$edit_link = $existing_id ? get_edit_post_link( $existing_id ) : '';
-
-				$this->view( 'create-mapping', array(
-					'destination_post_options' => $this->post_destinations(),
-					'option_base'              => $this->option_name,
-					'post_types'               => $this->post_types(),
-					'tabs'                     => $template->config,
-					'edit_link'                => $edit_link,
-					'values'                   => $this->stored_values( $existing_id ),
-					'mapping_template_label'   => $this->mappings->args->labels->singular_name,
+				$this->view( 'tabs-wrapper', array(
+					'tabs' => $tabs,
+					'before_tabs_wrapper' => $this->view( 'mapping-before-tab', array(
+						'option_base' => $this->option_name,
+						'values'      => $this->stored_values( $existing_id ),
+						'post_types'  => $this->post_types(),
+					), false ),
 				) );
 
-				if ( $edit_link ) {
+				if ( $existing_id ) {
 					$this->view( 'input', array(
 						'type'    => 'hidden',
 						'id'      => 'gc-existing-id',
@@ -441,9 +451,7 @@ class Manage_Templates extends Base {
 			$args['redirect_url'] = remove_query_arg( 'flush_cache', remove_query_arg( 'redirect' ) );
 		}
 
-		$view = new View( 'refresh-connection-button', $args );
-
-		return $view->load( false );
+		return $this->view( 'refresh-connection-button', $args, false );
 	}
 
 	public function project_name( $project ) {
