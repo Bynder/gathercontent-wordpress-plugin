@@ -238,23 +238,24 @@ class Manage_Templates extends Base {
 						printf( __( 'Account: %s', 'gathercontent-import' ), isset( $account->name ) ? $account->name : '' );
 						echo '</p>';
 
-						// echo '<xmp>$account: '. print_r( $account, true ) .'</xmp>';
-
 						if ( isset( $account->id ) ) {
 							$options = array();
 
+							$value = '';
 							if ( $projects = $this->api()->get( 'projects?account_id=' . $account->id ) ) {
 								foreach ( $projects as $project ) {
-									# code...
-									$options[ esc_attr( $project->id ) ] = esc_attr( $project->name );
+									$val = esc_attr( $project->id );
+									$options[ $val ] = esc_attr( $project->name );
+									if ( ! $value ) {
+										$value = $val;
+									}
 								}
 							}
 
-							// echo '<xmp>$projects: '. print_r( $projects, true ) .'</xmp>';
 							$this->view( 'radio', array(
 								'id'      => $field_id . '-' . $account->id,
 								'name'    => $this->option_name .'['. $field_id .']',
-								'value'   => '',
+								'value'   => $value,
 								'options' => $options,
 							) );
 						}
@@ -285,6 +286,7 @@ class Manage_Templates extends Base {
 				$project_id = $this->get_val( 'project' );
 				$options    = array();
 
+				$value = '';
 				if ( $templates = $this->api()->get( 'templates?project_id=' . $project_id ) ) {
 
 					foreach ( $templates as $template ) {
@@ -294,18 +296,24 @@ class Manage_Templates extends Base {
 							$desc .= '</p>' . $items . '<p>';
 						}
 
-						$options[ esc_attr( $template->id ) ] = array(
+						$val = esc_attr( $template->id );
+
+						$options[ $val ] = array(
 							'label' => esc_attr( $template->name ),
 							'desc' => $desc,
 						);
+
+						if ( ! $value ) {
+							$value = $val;
+						}
+
 					}
 				}
 
 				$this->view( 'radio', array(
 					'id'      => $field_id,
 					'name'    => $this->option_name .'['. $field_id .']',
-					// 'value'   => $val,
-					'value'   => '',
+					'value'   => $value,
 					'options' => $options,
 				) );
 
@@ -443,7 +451,7 @@ class Manage_Templates extends Base {
 
 		if ( $project->name ) {
 			$url = $this->get_setting( 'platform_url' ) . 'templates/' . $project->id;
-			$project_name = '<p class="gc-project-name description">' . sprintf( __( 'Project: %s', 'gathercontent-import' ), $project->name ) . ' | <a href="'. esc_url( $url ) .'" target="_blank">'. __( 'edit project templates', 'gathercontent-import' ) .'</a></p>';
+			$project_name = '<p class="gc-project-name description">' . sprintf( _x( 'Project: %s', 'GatherContent project name', 'gathercontent-import' ), $project->name ) . ' | <a href="'. esc_url( $url ) .'" target="_blank">'. __( 'edit project templates', 'gathercontent-import' ) .'</a></p>';
 		}
 
 		return $project_name;
