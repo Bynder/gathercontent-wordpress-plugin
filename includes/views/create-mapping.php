@@ -11,7 +11,7 @@
 			<label>Import as </label>
 			<select name="<?php $this->output( 'option_base' ); ?>[post_type]" class="dropdown-menu">
 				<?php foreach ( $this->get( 'post_types' ) as $type ) : ?>
-				<option value="<?php echo $type->name; ?>"><?php echo $type->label; ?></option>
+				<option <?php selected( $this->get_from( 'values', 'post_type' ), $type->name ); ?> value="<?php echo $type->name; ?>"><?php echo $type->label; ?></option>
 				<?php endforeach; ?>
 			</select>
 		</span>
@@ -22,7 +22,7 @@
 					<label><?php echo $tax->label; ?></label>
 					<select name="<?php $this->output( 'option_base' ); ?>[<?php echo $tax->name; ?>]" class="dropdown-menu">
 						<?php foreach ( $tax->terms as $term ) : ?>
-						<option value="<?php echo $term->term_id; ?>"><?php echo $term->name; ?></option>
+						<option <?php selected( $this->get_from( 'values', $tax->name ), $term->term_id ); ?> value="<?php echo $term->term_id; ?>"><?php echo $term->name; ?></option>
 						<?php endforeach; ?>
 					</select>
 
@@ -32,9 +32,9 @@
 		<span class="gc-mapping-setting gc-state">
 			<label>Status </label>
 			<select name="<?php $this->output( 'option_base' ); ?>[post_status]" class="dropdown-menu">
-				<option value="publish">Published</option>
-				<option value="draft">Draft</option>
-				<option value="pending">Pending</option>
+				<option <?php selected( $this->get_from( 'values', 'post_status' ), 'publish' ); ?> value="publish">Published</option>
+				<option <?php selected( $this->get_from( 'values', 'post_status' ), 'draft' ); ?> value="draft">Draft</option>
+				<option <?php selected( $this->get_from( 'values', 'post_status' ), 'pending' ); ?> value="pending">Pending</option>
 			</select>
 		</span>
 	</div>
@@ -50,7 +50,11 @@
 						<strong><?php echo $element->label; ?></strong>
 					</td>
 					<td>
-						<select name="<?php $this->output( 'option_base' ); ?>[mapping][<?php echo $element->name; ?>]"><?php $this->output( 'destination_post_options' ); ?></select>
+						<select name="<?php $this->output( 'option_base' ); ?>[mapping][<?php echo $element->name; ?>]">
+							<?php foreach ( $this->get( 'destination_post_options' ) as $col => $label ) : ?>
+							<option <?php selected( $this->get_from( 'values', $element->name ), $col ); ?> value="<?php echo $col; ?>"><?php echo $label; ?></option>
+							<?php endforeach; ?>
+						</select>
 					</td>
 				</tr>
 				<?php endforeach; ?>

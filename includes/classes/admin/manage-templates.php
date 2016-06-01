@@ -369,11 +369,12 @@ class Manage_Templates extends Base {
 				$edit_link = $existing_id ? get_edit_post_link( $existing_id ) : '';
 
 				$this->view( 'create-mapping', array(
-					'destination_post_options' => $this->post_destinations( true ),
+					'destination_post_options' => $this->post_destinations(),
 					'option_base'              => $this->option_name,
 					'post_types'               => $this->post_types(),
 					'tabs'                     => $template->config,
 					'edit_link'                => $edit_link,
+					'values'                   => $this->stored_values( $existing_id ),
 					'mapping_template_label'   => $this->mappings->args->labels->singular_name,
 				) );
 
@@ -507,21 +508,38 @@ class Manage_Templates extends Base {
 		return $post_types;
 	}
 
-	public function post_destinations( $html = true ) {
+	public function post_destinations() {
 		$options = array(
 			'' => __( 'Unused', 'gathercontent-import' ),
 		);
 
-		$destination_options = '<option value="">'. $options[''] .'</option>';
-
 		foreach ( $this->get_wp_post_columns() as $col ) {
 			if ( $label = $this->post_column_label( $col ) ) {
-				$destination_options .= '<option value="'. $col .'">'. $label .'</option>';
 				$options[ $col ] = $label;
 			}
 		}
 
-		return $html ? $destination_options : $options;
+		return $options;
+	}
+
+	protected function stored_values( $existing_id ) {
+		$values = array();
+
+		if ( $existing_id ) {
+			$json = get_post_field( 'post_content', $existing_id );
+			$json = json_decode( $json, 1 );
+			if ( is_array( $json ) ) {
+				$values = $json;
+
+				if ( isset( $values['mapping'] ) && is_array( $values['mapping'] ) ) {
+					$mapping = $values['mapping'];
+					unset( $values['mapping'] );
+					$values += $mapping;
+				}
+			}
+		}
+
+		return $values;
 	}
 
 	public function post_column_label( $col ) {

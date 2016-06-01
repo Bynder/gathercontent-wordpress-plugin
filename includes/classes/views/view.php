@@ -75,6 +75,20 @@ class View {
 		return $default;
 	}
 
+	public function get_from( $array_arg_name, $array_key, $default = null ) {
+		if ( ! isset( $this->args[ $array_arg_name ] ) ) {
+			return $default;
+		}
+
+		$array = $this->args[ $array_arg_name ];
+
+		if ( ! is_array( $array ) || ! isset( $array[ $array_key ] ) ) {
+			return $default;
+		}
+
+		return $array[ $array_key ];
+	}
+
 	/**
 	 * Output one of the $args values.
 	 *
@@ -88,6 +102,12 @@ class View {
 	 */
 	public function output( $arg, $esc_cb = '', $default = null ) {
 		$val = $this->get( $arg, $default );
+
+		echo $esc_cb ? $esc_cb( $val ) : $val;
+	}
+
+	public function output_from( $arg, $array_key, $esc_cb = '', $default = null ) {
+		$val = $this->get_from( $array_arg_name, $array_key, $default );
 
 		echo $esc_cb ? $esc_cb( $val ) : $val;
 	}
