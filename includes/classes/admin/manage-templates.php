@@ -457,7 +457,7 @@ class Manage_Templates extends Base {
 			$view = new View( 'gc-items-list', array(
 				'class'        => $class,
 				'platform_url' => $this->get_setting( 'platform_url' ),
-				'items'        => $items,
+				'items'        => array_slice( $items, 0, 5 ),
 			) );
 			$list = $view->load( false );
 		}
