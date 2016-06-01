@@ -8,6 +8,10 @@
 		$this->output( 'settings_sections' );
 		?>
 		<p class="submit">
+			<?php if ( $this->get( 'refresh_button' ) ) : ?>
+				<?php $this->output( 'refresh_button' ); ?>
+				&nbsp;
+			<?php endif; ?>
 			<?php if ( $this->get( 'go_back_url' ) ) : ?>
 				<a class="button button-large" href="<?php $this->output( 'go_back_url' ); ?>"><?php $this->output( 'go_back_button_text' ); ?></a>
 				&nbsp;

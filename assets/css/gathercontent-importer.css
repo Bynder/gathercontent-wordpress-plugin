@@ -21,6 +21,15 @@
   padding: 1em;
   overflow: hidden; }
 
+.refresh-connection.button {
+  width: 2em;
+  font-size: 2em;
+  display: inline-block;
+  vertical-align: bottom; }
+
+.wp-core-ui p .refresh-connection {
+  vertical-align: bottom; }
+
 .description.gc-radio-desc {
   margin-left: 1.5em;
   margin-bottom: 1em; }

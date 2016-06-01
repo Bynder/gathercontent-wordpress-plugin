@@ -85,11 +85,14 @@ class Manage_Templates extends Base {
 	}
 
 	public function admin_page() {
+		$this->handle_notices();
+
 		$args = array(
 			'logo'                => $this->logo,
 			'option_group'        => $this->option_group,
 			'settings_sections'   => Form_Section::get_sections( $this->option_page_slug ),
 			'go_back_button_text' => __( 'Previous Step', 'gathercontent-import' ),
+			'refresh_button'      => 2 !== $this->step ? $this->refresh_connection_link() : '',
 			'submit_button_text'  => 2 === $this->step
 				? __( 'Save Mapping', 'gathercontent-import' )
 				: __( 'Next Step', 'gathercontent-import' ),
@@ -112,6 +115,13 @@ class Manage_Templates extends Base {
 		}
 
 		$this->view( 'admin-page', $args );
+	}
+
+	public function handle_notices() {
+		if ( get_option( 'gc-api-updated' ) ) {
+			$this->add_settings_error( $this->option_name, 'gc-api-connection-reset', __( 'We refreshed the data from the GatherContent API.', 'gathercontent-import' ), 'updated' );
+			delete_option( 'gc-api-updated' );
+		}
 	}
 
 	/**
@@ -182,6 +192,7 @@ class Manage_Templates extends Base {
 			if ( $exists->have_posts() ) {
 				// Yep, we found one.
 				$args['mapping'] = $exists->posts[0];
+				$args['settings-updated'] = 1;
 			}
 
 			// Now redirect to the template mapping.
@@ -408,6 +419,22 @@ class Manage_Templates extends Base {
 			}
 		);
 
+	}
+
+	public function refresh_connection_link() {
+		$args = array(
+			'redirect_url' => false,
+			'flush_url' => add_query_arg( array( 'flush_cache' => 1, 'redirect' => 1 ) ),
+		);
+
+		if ( $this->get_val( 'flush_cache' ) && $this->get_val( 'redirect' ) ) {
+			update_option( 'gc-api-updated', 1 );
+			$args['redirect_url'] = remove_query_arg( 'flush_cache', remove_query_arg( 'redirect' ) );
+		}
+
+		$view = new View( 'refresh-connection-button', $args );
+
+		return $view->load( false );
 	}
 
 	public function project_name( $project ) {
