@@ -49,6 +49,7 @@ class Template_Mappings extends Base {
 		parent::register_post_type();
 
 		add_action( 'edit_form_after_title', array( $this, 'output_mapping_data' ) );
+		add_filter( 'get_edit_post_link', array( $this, 'modify_mapping_post_edit_link' ), 10, 2 );
 	}
 
 	public function output_mapping_data( $post ) {
@@ -68,13 +69,12 @@ class Template_Mappings extends Base {
 			}
 
 			echo '<pre><textarea name="content" id="content" rows="20" style="width:100%;">'. print_r( $content, true ) .'</textarea></pre>';
-
 		}
 	}
 
 	public function create_mapping( $project_id, $template_id, $postarr, $wp_error = false ) {
-		$postarr['post_type'] = $this->slug;
-		$postarr['meta_input']['project'] = $project_id;
+		$postarr['post_type']              = $this->slug;
+		$postarr['meta_input']['project']  = $project_id;
 		$postarr['meta_input']['template'] = $template_id;
 
 		return wp_insert_post( $postarr, 1 );
@@ -119,6 +119,40 @@ class Template_Mappings extends Base {
 		) );
 
 		return $this->get_by_project( $project_id, $args );
+	}
+
+	public function modify_mapping_post_edit_link( $link, $post ) {
+		if ( isset( $_GET['gc_standard_edit_links'] ) ) {
+			return $link;
+		}
+
+		$post_type = '';
+
+		if ( isset( $post->ID ) ) {
+			$post_id = $post->ID;
+			$post_type = $post->post_type;
+		} elseif ( is_numeric( $post ) ) {
+			$post_id = $post;
+			$post_type = get_post_type( $post_id );
+		}
+
+		if ( $this->slug === $post_type ) {
+
+			$project_id = get_post_meta( $post_id, 'project', 1 );
+			$template_id = get_post_meta( $post_id, 'template', 1 );
+
+			if ( $project_id && $template_id ) {
+				$link = admin_url( sprintf(
+					'admin.php?page=gathercontent-import-add-new-template&project=%s&template=%s&mapping=%s',
+					$project_id,
+					$template_id,
+					$post_id
+				) );
+			}
+
+		}
+
+		return $link;
 	}
 
 }
