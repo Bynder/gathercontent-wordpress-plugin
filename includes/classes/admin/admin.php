@@ -45,7 +45,7 @@ class Admin extends Base {
 
 			if ( ! $this->api()->get( 'me' ) ) {
 
-				add_settings_error( $this->option_name, 'gc-api-connect-fail', __( 'We had trouble connecting to the GatherContent API. Please check your settings.', 'gathercontent-import' ), 'error' );
+				$this->add_settings_error( $this->option_name, 'gc-api-connect-fail', __( 'We had trouble connecting to the GatherContent API. Please check your settings.', 'gathercontent-import' ), 'error' );
 
 				$this->step = 0;
 			}

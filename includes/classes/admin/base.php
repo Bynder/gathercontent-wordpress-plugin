@@ -106,6 +106,37 @@ abstract class Base extends Plugin_Base {
 	}
 
 	/**
+	 * `add_settings_error` wrapper which is useable before `add_settings_error` is.
+	 *
+	 * @since NEXT
+	 *
+	 * @global array $wp_settings_errors Storage array of errors registered during this pageload
+	 *
+	 * @param string $setting Slug title of the setting to which this error applies
+	 * @param string $code    Slug-name to identify the error. Used as part of 'id' attribute in HTML output.
+	 * @param string $message The formatted message text to display to the user (will be shown inside styled
+	 *                        `<div>` and `<p>` tags).
+	 * @param string $type    Optional. Message type, controls HTML class. Accepts 'error' or 'updated'.
+	 *                        Default 'error'.
+	 */
+	protected function add_settings_error( $setting, $code, $message, $type = 'error' ) {
+		if ( function_exists( 'add_settings_error' ) ) {
+			return add_settings_error( $setting, $code, $message, $type );
+		}
+
+		global $wp_settings_errors;
+		$wp_settings_errors = is_array( $wp_settings_errors ) ? $wp_settings_errors : array();
+
+		// because it's too early to use add_settings_error.
+		$wp_settings_errors[] = array(
+			'setting' => $setting,
+			'code'    => $code,
+			'message' => $message,
+			'type'    => $type
+		);
+	}
+
+	/**
 	 * Determine which step user is on.
 	 *
 	 * @todo  This should be determined which options they have filled out, and redirect user to step.
