@@ -6,8 +6,14 @@
 		<?php
 		settings_fields( $this->get( 'option_group' ) );
 		$this->output( 'settings_sections' );
-		submit_button( $this->get( 'submit_button_text' ) );
 		?>
+		<p class="submit">
+			<?php if ( $this->get( 'go_back_url' ) ) : ?>
+				<a class="button button-large" href="<?php $this->output( 'go_back_url' ); ?>"><?php $this->output( 'go_back_button_text' ); ?></a>
+				&nbsp;
+			<?php endif; ?>
+			<?php submit_button( $this->get( 'submit_button_text' ), 'primary large', 'submit', false ); ?>
+		</p>
 	</form>
 
 </div>

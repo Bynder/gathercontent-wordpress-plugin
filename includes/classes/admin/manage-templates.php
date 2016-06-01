@@ -16,6 +16,7 @@ use WP_Query;
 class Manage_Templates extends Base {
 
 	public $parent_page_slug;
+	public $parent_url;
 	public $items = array();
 	public $menu_priority = 11; // Puts "New Mapping" after "Template Mappings" CPT menu.
 
@@ -45,6 +46,7 @@ class Manage_Templates extends Base {
 		$this->option_name      = $parent->option_name . '_add_new_template';
 		$this->option_group     = $parent->option_group . '_add_new_template';
 		$this->parent_page_slug = $parent->option_page_slug;
+		$this->parent_url       = $parent->url;
 		$this->settings         = new Setting( $parent->option_name, $parent->default_options );
 		$this->mappings         = new Template_Mappings( $parent->option_page_slug );
 
@@ -83,14 +85,33 @@ class Manage_Templates extends Base {
 	}
 
 	public function admin_page() {
-		$this->view( 'admin-page', array(
-			'logo'               => $this->logo,
-			'option_group'       => $this->option_group,
-			'settings_sections'  => Form_Section::get_sections( $this->option_page_slug ),
-			'submit_button_text' => 2 === $this->step
+		$args = array(
+			'logo'                => $this->logo,
+			'option_group'        => $this->option_group,
+			'settings_sections'   => Form_Section::get_sections( $this->option_page_slug ),
+			'go_back_button_text' => __( 'Previous Step', 'gathercontent-import' ),
+			'submit_button_text'  => 2 === $this->step
 				? __( 'Save Mapping', 'gathercontent-import' )
 				: __( 'Next Step', 'gathercontent-import' ),
-		) );
+		);
+
+
+		switch ( $this->step ) {
+			case 0:
+				$args['go_back_button_text'] = __( 'Back to API setup', 'gathercontent-import' );
+				$args['go_back_url'] = $this->parent_url;
+				break;
+
+			case 1:
+				$args['go_back_url'] = remove_query_arg( 'project' );
+				break;
+
+			case 2:
+				$args['go_back_url'] = remove_query_arg( 'template', remove_query_arg( 'mapping' ) );
+				break;
+		}
+
+		$this->view( 'admin-page', $args );
 	}
 
 	/**
