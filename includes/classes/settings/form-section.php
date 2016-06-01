@@ -90,7 +90,7 @@ class Form_Section extends Base {
 			$field['title'],
 			function( $args ) use ( $field ) {
 				$this->field = $field;
-				$field['callback']( $this );
+				call_user_func( $field['callback'], $this );
 			},
 			$this->page,
 			$this->id,
