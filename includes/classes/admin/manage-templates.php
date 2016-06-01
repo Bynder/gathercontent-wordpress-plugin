@@ -92,7 +92,7 @@ class Manage_Templates extends Base {
 			'option_group'        => $this->option_group,
 			'settings_sections'   => Form_Section::get_sections( $this->option_page_slug ),
 			'go_back_button_text' => __( 'Previous Step', 'gathercontent-import' ),
-			'refresh_button'      => 2 !== $this->step ? $this->refresh_connection_link() : '',
+			'refresh_button'      => $this->refresh_connection_link(),
 			'submit_button_text'  => 2 === $this->step
 				? __( 'Save Mapping', 'gathercontent-import' )
 				: __( 'Next Step', 'gathercontent-import' ),
