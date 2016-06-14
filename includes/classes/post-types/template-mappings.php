@@ -49,7 +49,10 @@ class Template_Mappings extends Base {
 		parent::register_post_type();
 
 		add_action( 'edit_form_after_title', array( $this, 'output_mapping_data' ) );
-		add_filter( 'get_edit_post_link', array( $this, 'modify_mapping_post_edit_link' ), 10, 2 );
+
+		if ( ! isset( $_GET['gc_standard_edit_links'] ) ) {
+			add_filter( 'get_edit_post_link', array( $this, 'modify_mapping_post_edit_link' ), 10, 2 );
+		}
 	}
 
 	public function output_mapping_data( $post ) {
@@ -122,10 +125,6 @@ class Template_Mappings extends Base {
 	}
 
 	public function modify_mapping_post_edit_link( $link, $post ) {
-		if ( isset( $_GET['gc_standard_edit_links'] ) ) {
-			return $link;
-		}
-
 		$post_type = '';
 
 		if ( isset( $post->ID ) ) {

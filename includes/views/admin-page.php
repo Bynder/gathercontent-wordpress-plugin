@@ -1,4 +1,4 @@
-<div class="wrap">
+<div class="wrap gc-admin-wrap">
 	<h2><?php $this->output( 'logo' ); ?></h2>
 	<?php settings_errors(); ?>
 

@@ -8,6 +8,6 @@ module.exports = {
 		]
 	},
 	dist: { files: {
-		'assets/js/gathercontent-importer.js' : 'assets/js/src/main.js'
+		'assets/js/gathercontent-importer.js' : 'assets/js/src/components/main.js'
 	} }
 };

@@ -98,11 +98,15 @@ abstract class Base extends Plugin_Base {
 	}
 
 	public function admin_enqueue_style() {
+		wp_enqueue_style( 'select2', GATHERCONTENT_URL . "assets/css/vendor/select2-4.0.3/select2{$this->suffix}.css", array(), '4.0.3' );
+
 		wp_enqueue_style( 'gathercontent', GATHERCONTENT_URL . "assets/css/gathercontent-importer.{$this->suffix}css", array(), GATHERCONTENT_VERSION );
 	}
 
 	public function admin_enqueue_script() {
-		wp_enqueue_script( 'gathercontent', GATHERCONTENT_URL . "assets/js/gathercontent-importer{$this->suffix}.js", array( 'jquery' ), GATHERCONTENT_VERSION, 1 );
+		wp_register_script( 'select2', GATHERCONTENT_URL . "assets/js/vendor/select2-4.0.3/select2{$this->suffix}.js", array( 'jquery' ), '4.0.3', 1 );
+
+		wp_enqueue_script( 'gathercontent', GATHERCONTENT_URL . "assets/js/gathercontent-importer{$this->suffix}.js", array( 'wp-backbone', 'select2' ), GATHERCONTENT_VERSION, 1 );
 	}
 
 	/**

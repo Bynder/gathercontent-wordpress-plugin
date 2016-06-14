@@ -13,7 +13,7 @@ module.exports = {
 		}
 	},
 	js: {
-		files: ['assets/js/src/**/*.js', 'assets/js/vendor/**/*.js'],
+		files: ['assets/js/src/components/**/*.js', 'assets/js/vendor/**/*.js'],
 			tasks: ['js'],
 			options: {
 			debounceDelay: 500

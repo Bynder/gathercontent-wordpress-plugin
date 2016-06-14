@@ -41,11 +41,13 @@
 	margin-bottom: 1em;
 }
 
-.gc-reveal-items.description {
-	margin-bottom: .5em;
-	display: inline-block;
+.gc-reveal-items {
 	text-decoration: none;
 	position: relative;
+	&.description {
+		display: inline-block;
+		margin-bottom: .5em;
+	}
 }
 
 .gc-reveal-items:before {
@@ -82,8 +84,56 @@ ul.gc-radio-desc li, ul.gc-reveal-items-list li {
 	td {
 		border-bottom: 1px solid #ccc;
 		padding: .5em 1em;
-		&:last-child {
-			text-align: right;
+		&:nth-child(2) {
+			vertical-align: top;
 		}
+		// &:last-child {
+		// 	text-align: right;
+		// }
 	}
+}
+
+.nav-tab.alignright {
+	float: right;
+}
+
+.mapping-defaults .link-to-mapping-defaults {
+	display: none;
+}
+
+.gc-admin-wrap {
+
+	.form-table th {
+		padding: 20px 10px;
+	}
+
+	select, .select2-container {
+		width: 250px;
+	}
+
+	.wp-field-th {
+		width: 60%;
+	}
+
+	.gc-field-th {
+		width: 40%;
+	}
+}
+
+
+.gc-template-tab {
+	// .gc-reveal-items {
+	// 	text-decoration: none;
+	// 	position: relative;
+	// }
+
+	ul.gc-reveal-items-list li {
+		margin-left: 1.5em
+	}
+}
+
+.gc-loader {
+	margin: 0 auto;
+	display: block;
+	float: none;
 }

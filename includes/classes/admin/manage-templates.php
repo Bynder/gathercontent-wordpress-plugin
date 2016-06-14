@@ -18,6 +18,8 @@ class Manage_Templates extends Base {
 	public $parent_page_slug;
 	public $parent_url;
 	public $items = array();
+	public $stored_values = null;
+	public $post_types = null;
 	public $menu_priority = 11; // Puts "New Mapping" after "Template Mappings" CPT menu.
 
 	/**
@@ -339,12 +341,24 @@ class Manage_Templates extends Base {
 
 	}
 
+	public function existing_mapping_notice() {
+		?>
+		<div class="notice notice-info ">
+			<p><?php printf( __( '<strong>NOTE:</strong> There can be only one %s per project template. You are editing an existing mapping (ID: %d).', 'gathercontent-import' ), $this->mappings->args->labels->singular_name, absint( $this->get_val( 'mapping' ) ) ); ?></p>
+		</div>
+		<?php
+	}
+
 	public function map_template() {
 
-		$template = $this->api()->get( 'templates/' . $this->get_val( 'template' ) );
-		$project  = $this->api()->get( 'projects/' . $this->get_val( 'project' ) );
+		$template    = $this->api()->get( 'templates/' . $this->get_val( 'template' ) );
+		$project     = $this->api()->get( 'projects/' . $this->get_val( 'project' ) );
 		$existing_id = absint( $this->get_val( 'mapping' ) );
-		$existing_note = $existing_id ? sprintf( __( '<strong>NOTE:</strong> There can be only one %s per project template. You are editing an existing mapping (ID: %d).', 'gathercontent-import' ), $this->mappings->args->labels->singular_name, $existing_id ) : '';
+
+		$existing_note = $existing_id ? $this->view( 'existing-mapping-notice', array(
+			'name' => $this->mappings->args->labels->singular_name,
+			'id'   => $existing_id,
+		), false ) : '';
 
 		$title = $template && isset( $template->name )
 			? $template->name
@@ -359,8 +373,8 @@ class Manage_Templates extends Base {
 
 		$section = new Form_Section(
 			'select_template',
-			$title,
-			$existing_note . $desc,
+			$existing_note . $title,
+			$desc,
 			$this->option_page_slug
 		);
 
@@ -369,32 +383,113 @@ class Manage_Templates extends Base {
 			'',
 			function( $field ) use( $template ) {
 				$project_id  = esc_attr( $this->get_val( 'project' ) );
-				$template_id = esc_attr( $this->get_val( 'template' ) );
+				$template_id   = esc_attr( $this->get_val( 'template' ) );
 
-				$existing_id = absint( $this->get_val( 'mapping' ) );
-				$existing_id = $existing_id && get_post( $existing_id ) ? $existing_id : false;
+				$existing_id   = absint( $this->get_val( 'mapping' ) );
+				$existing_id   = $existing_id && get_post( $existing_id ) ? $existing_id : false;
+				$stored_values = $this->stored_values();
+
+				echo '<div id="mapping-tabs"><span class="gc-loader spinner is-active"></span></div>';
+				// $tabs = $template->config;
+				// $tabs[] = (object) array(
+				// 	'name' => 'mapping-defaults',
+				// 	'label' => __( 'Mapping Defaults', 'gathercontent-import' ),
+				// 	'class' => 'alignright',
+				// 	'content' => $this->view( 'mapping-defaults-tab', array(
+				// 		'option_base' => $this->option_name,
+				// 		'values'      => $stored_values,
+				// 		'destination_post_options' => $this->destination_post_options( $stored_values ),
+				// 	), false ),
+				// );
 
 				$tabs = array();
 				foreach ( $template->config as $tab ) {
-					$tabs[ $tab->name ] = array(
-						'label' => $tab->label,
-						'content' => $this->view( 'mapping-tab', array(
-							'elements'    => $tab->elements,
-							'option_base' => $this->option_name,
-							'values'      => $this->stored_values( $existing_id ),
-							'destination_post_options' => $this->post_destinations(),
-						), false ),
+
+					$rows = array();
+					foreach ( $tab->elements as $element ) {
+
+						if ( isset( $stored_values[ $element->name ] ) ) {
+							$val = $stored_values[ $element->name ];
+							$element->field_type = isset( $val['type'] ) ? $val['type'] : '';
+							$element->field_value = isset( $val['value'] ) ? $val['value'] : '';
+						}
+
+						$rows[] = $element;
+					}
+
+					$tab_array = array(
+						'id'     => $tab->name,
+						'label'  => $tab->label,
+						'hidden' => ! empty( $tabs ),
+						'rows'   => $rows,
 					);
+
+					$tabs[] = $tab_array;
 				}
 
-				$this->view( 'tabs-wrapper', array(
-					'tabs' => $tabs,
-					'before_tabs_wrapper' => $this->view( 'mapping-before-tab', array(
-						'option_base' => $this->option_name,
-						'values'      => $this->stored_values( $existing_id ),
-						'post_types'  => $this->post_types(),
-					), false ),
+				$tabs[] = array(
+					'id'          => 'mapping-defaults',
+					'label'       => __( 'Mapping Defaults', 'gathercontent-import' ),
+					'hidden'      => true,
+					'navClasses'  => 'alignright',
+					'viewId'      => 'defaultTab',
+					'rows'        => $this->destination_post_options(),
+					'post_author' => isset( $stored_values['post_author'] ) ? esc_attr( $stored_values['post_author'] ) : 1,
+					'post_status' => isset( $stored_values['post_status'] ) ? esc_attr( $stored_values['post_status'] ) : 'draft',
+					'post_type'   => isset( $stored_values['post_type'] ) ? esc_attr( $stored_values['post_type'] ) : 'post',
+				);
+
+				// $tabs['mapping-defaults'] = array(
+				// 	'label' => __( 'Mapping Defaults', 'gathercontent-import' ),
+				// 	'class' => 'alignright',
+				// 	'content' => $this->view( 'mapping-defaults-tab', array(
+				// 		'option_base' => $this->option_name,
+				// 		'values'      => $stored_values,
+				// 		'destination_post_options' => $this->destination_post_options( $stored_values ),
+				// 	), false ),
+				// );
+
+
+				add_action( 'admin_footer', array( $this, 'footer_mapping_js_templates' ) );
+
+				wp_localize_script( 'gathercontent', 'GatherContent', array(
+					'debug'         => defined( 'SCRIPT_DEBUG' ) && SCRIPT_DEBUG,
+					'_tabs'         => $tabs,
+					// 'optionBase' => $this->option_name,
+					'_values'       => $stored_values,
 				) );
+
+				// $tabs = array();
+				// foreach ( $template->config as $tab ) {
+				// 	$tabs[ $tab->name ] = array(
+				// 		'label' => $tab->label,
+				// 		'content' => $this->view( 'mapping-tab', array(
+				// 			'elements'    => $tab->elements,
+				// 			'option_base' => $this->option_name,
+				// 			'values'      => $stored_values,
+				// 			'destination_post_options' => $this->destination_post_options( $stored_values ),
+				// 		), false ),
+				// 	);
+				// }
+
+				// $tabs['mapping-defaults'] = array(
+				// 	'label' => __( 'Mapping Defaults', 'gathercontent-import' ),
+				// 	'class' => 'alignright',
+				// 	'content' => $this->view( 'mapping-defaults-tab', array(
+				// 		'option_base' => $this->option_name,
+				// 		'values'      => $stored_values,
+				// 		'destination_post_options' => $this->destination_post_options( $stored_values ),
+				// 	), false ),
+				// );
+
+				// $this->view( 'tabs-wrapper', array(
+				// 	'tabs' => $tabs,
+				// 	'before_tabs_wrapper' => $this->view( 'mapping-before-tab', array(
+				// 		'option_base' => $this->option_name,
+				// 		'values'      => $stored_values,
+				// 		'post_types'  => $this->post_types(),
+				// 	), false ),
+				// ) );
 
 				if ( $existing_id ) {
 					$this->view( 'input', array(
@@ -412,7 +507,7 @@ class Manage_Templates extends Base {
 					'value'   => wp_create_nonce( md5( $project_id . $template_id ) ),
 				) );
 
-				$title = isset( $template->name ) ? ( $template->name ) : __( 'Map Template', 'gathercontent-import' );
+				$title = isset( $template->name ) ? $template->name : __( 'Map Template', 'gathercontent-import' );
 
 				$this->view( 'input', array(
 					'type'    => 'hidden',
@@ -438,6 +533,37 @@ class Manage_Templates extends Base {
 			}
 		);
 
+	}
+
+	public function footer_mapping_js_templates() {
+		?>
+		<script type="text/html" id="tmpl-gc-tabs-wrapper"><?php $this->view( 'tabs-wrapper-js' ); ?></script>
+		<script type="text/html" id="tmpl-gc-tab-wrapper"><?php $this->view( 'tab-wrapper-js' ); ?></script>
+		<script type="text/html" id="tmpl-gc-mapping-tab-row"><?php $this->view( 'mapping-tab-row-js', array(
+			'option_base'  => $this->option_name,
+			'post_types'   => $this->post_types(),
+			'post_options' => $this->destination_post_options(),
+			'meta_options' => $this->add_custom_field_options(),
+		) ); ?></script>
+		<script type="text/html" id="tmpl-gc-post-fields-mapping">
+			<select class="wp-type-value-select wp-post-type" name="<?php echo $this->option_name; ?>[mapping][value][{{ data.name }}]">
+				<?php foreach ( $this->destination_post_options() as $col => $label ) : ?>
+				<option <# if ( data.isSelected === '<?php echo $col; ?>' ) { #>selected="selected"<# } #> value="<?php echo $col; ?>"><?php echo $label; ?></option>
+				<?php endforeach; ?>
+			</select>
+		</script>
+		<script type="text/html" id="tmpl-gc-mapping-defaults-tab"><?php $this->view( 'mapping-defaults-tab-js', array(
+			'default_fields'      => $this->get_default_fields(),
+			'post_author_label'   => $this->post_column_label( 'post_author' ),
+			'post_author_options' => $this->get_default_field_options( 'post_author' ),
+			'post_status_options' => $this->get_default_field_options( 'post_status' ),
+			'post_status_label'   => $this->post_column_label( 'post_status' ),
+			'post_type_label'     => __( 'Post Type', 'gathercontent-import' ),
+			'post_type_options'   => $this->get_default_field_options( 'post_type' ),
+
+			'option_base'         => $this->option_name,
+		) ); ?></script>
+		<?php
 	}
 
 	public function refresh_connection_link() {
@@ -502,43 +628,160 @@ class Manage_Templates extends Base {
 	}
 
 	public function post_types() {
-		$post_types = get_post_types( array( 'public' => true ), 'objects' );
-		foreach ( $post_types as $index => $type ) {
+		if ( null !== $this->post_types ) {
+			return $this->post_types;
+		}
+
+		$this->post_types = get_post_types( array( 'public' => true ), 'objects' );
+		foreach ( $this->post_types as $index => $type ) {
 			$type->taxonomies = array();
 			foreach ( get_object_taxonomies( $type->name, 'objects' ) as $tax ) {
 				if ( 'post_format' === $tax->name ) {
-					continue;
+					// continue;
+					$tax->label = __( 'Post Formats', 'gathercontent-import' );
 				}
 
 				$type->taxonomies[] = $tax;
-
-				// Get all terms for this taxonomy
-				// @todo NOT SCALABLE
-				$tax->terms = get_terms( $tax->name, array( 'hide_empty' => false, ) );
-
 			}
 
-			$post_types[ $index ] = $type;
+			$this->post_types[ $index ] = $type;
 		}
 
-		return $post_types;
+		return $this->post_types;
 	}
 
-	public function post_destinations() {
+	public function get_default_fields() {
+
+		$stored_values = $this->stored_values();
+
+		$new_options = array();
+
+		foreach ( array( 'post_author', 'post_status', 'post_type' ) as $col ) {
+			$label = 'post_type' === $col ? __( 'Post Type', 'gathercontent-import' ) : $this->post_column_label( $col );
+
+			$new_options[] = array(
+				'column'  => $col,
+				'label'   => $label,
+				'options' => $this->get_default_field_options( $col, $stored_values ),
+			);
+		}
+
+		return $new_options;
+	}
+
+	public function get_default_field_options( $col ) {
+		$select_options = array();
+
+		switch ( $col ) {
+			case 'post_author':
+				$value = 1;
+				$user = get_user_by( 'id', $value );
+				$user = isset( $user->user_login ) ? $user->user_login : $user;
+				$select_options[ $value ] = $user;
+
+				$value = 3;
+				$user = get_user_by( 'id', $value );
+				$user = isset( $user->user_login ) ? $user->user_login : $user;
+				$select_options[ $value ] = $user;
+				break;
+			case 'post_status':
+				$select_options = array(
+					'publish' => __( 'Published', 'gathercontent-import' ),
+					'draft'   => __( 'Draft', 'gathercontent-import' ),
+					'pending' => __( 'Pending', 'gathercontent-import' ),
+					'private' => __( 'Private', 'gathercontent-import' ),
+				);
+				break;
+			case 'post_type':
+				foreach ( $this->post_types() as $type ) {
+					$select_options[ $type->name ] = $type->labels->singular_name;
+				}
+				break;
+		}
+
+		return $select_options;
+	}
+
+
+	public function destination_post_options() {
 		$options = array(
-			'' => __( 'Unused', 'gathercontent-import' ),
+			// '' => __( 'Do Not Import', 'gathercontent-import' ),
 		);
+
+		// $options['post'] = array(
+		// 	'group_name' => __( 'Post Fields', 'gathercontent-import' ),
+		// 	'options'    => array(),
+		// );
 
 		foreach ( $this->get_wp_post_columns() as $col ) {
 			if ( $label = $this->post_column_label( $col ) ) {
+				// $options['post']['options'][ $col ] = $label;
 				$options[ $col ] = $label;
 			}
 		}
 
+		$options[''] = __( 'Do Not Import', 'gathercontent-import' );
+		// $type = isset( $stored_values['post_type'] ) ? $stored_values['post_type'] : 'post';
+
+		// $taxonomies = get_object_taxonomies( $type, 'objects' );
+
+		// if ( ! empty( $taxonomies ) ) {
+
+		// 	$options['taxonomies'] = array(
+		// 		'group_name' => __( 'Taxonomies', 'gathercontent-import' ),
+		// 		'options'    => array(),
+		// 	);
+
+		// 	foreach ( $taxonomies as $taxonomy ) {
+		// 		$options['taxonomies']['options'][ $taxonomy->name ] = $taxonomy->labels->singular_name;
+		// 	}
+		// }
+
+		// $options = $this->add_custom_field_options( $options );
+
 		return $options;
 	}
 
-	protected function stored_values( $existing_id ) {
+	protected function add_custom_field_options() {
+		global $wpdb;
+
+		$meta_keys = get_transient( 'gathercontent_importer_custom_field_keys' );
+
+		if ( ! $meta_keys ) {
+			// retrieve custom field keys to include in the Custom Fields weight table select
+			$meta_keys = $wpdb->get_col( $wpdb->prepare( "
+				SELECT meta_key
+				FROM $wpdb->postmeta
+				WHERE meta_key NOT LIKE %s
+				GROUP BY meta_key
+			",
+				'_oembed_%'
+			) );
+
+			set_transient( 'gathercontent_importer_custom_field_keys', $meta_keys, DAY_IN_SECONDS );
+		}
+
+		// allow devs to filter this list
+		$meta_keys = array_unique( apply_filters( 'gathercontent_importer_custom_field_keys', $meta_keys ) );
+
+		// sort the keys alphabetically
+		if ( $meta_keys ) {
+			natcasesort( $meta_keys );
+		} else {
+			$meta_keys = array();
+		}
+
+		return $meta_keys;
+	}
+
+	protected function stored_values() {
+		if ( null !== $this->stored_values ) {
+			return $this->stored_values;
+		}
+
+		$existing_id = absint( $this->get_val( 'mapping' ) );
+		$existing_id = $existing_id && get_post( $existing_id ) ? $existing_id : false;
+
 		$values = array();
 
 		if ( $existing_id ) {
@@ -555,7 +798,9 @@ class Manage_Templates extends Base {
 			}
 		}
 
-		return $values;
+		$this->stored_values = $values;
+
+		return $this->stored_values;
 	}
 
 	public function post_column_label( $col ) {
@@ -567,6 +812,7 @@ class Manage_Templates extends Base {
 			case 'comment_count':
 			case 'post_content_filtered':
 			case 'guid':
+			case 'post_type':
 				return false;
 			case 'post_author':
 				return __( 'Author', 'gathercontent-import' );
@@ -599,8 +845,8 @@ class Manage_Templates extends Base {
 				return __( 'Post Parent', 'gathercontent-import' );
 			case 'menu_order':
 				return __( 'Menu Order', 'gathercontent-import' );
-			case 'post_type':
-				return __( 'Post Type', 'gathercontent-import' );
+			// case 'post_type':
+			// 	return __( 'Post Type', 'gathercontent-import' );
 			default:
 				return $col;
 		}
@@ -727,3 +973,14 @@ class Manage_Templates extends Base {
 	}
 
 }
+
+
+
+
+
+
+function gc_ajax_author_search() {
+	error_log( 'gc_ajax_author_search $_REQUEST: '. print_r( $_REQUEST, true ) );
+	wp_send_json_error();
+}
+add_action( 'wp_ajax_gc_get_option_data_post_author', 'gc_ajax_author_search' );

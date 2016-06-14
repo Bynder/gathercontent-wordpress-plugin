@@ -4,7 +4,7 @@
 	<?php
 	$active = 'nav-tab-active';
 	foreach ( $this->get( 'tabs' ) as $tab_id => $tab ) : ?>
-		<a href="#<?php echo esc_attr( $tab_id ); ?>" class="nav-tab <?php echo $active; ?>"><?php echo $tab['label']; ?></a>
+		<a href="#<?php echo esc_attr( $tab_id ); ?>" class="nav-tab <?php echo $active; ?> <?php echo isset( $tab['class'] ) ? $tab['class'] : ''; ?>"><?php echo $tab['label']; ?></a>
 	<?php
 	$active = '';
 	endforeach; ?>
