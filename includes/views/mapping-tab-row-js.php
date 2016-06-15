@@ -42,10 +42,10 @@
 		</select>
 	<# } #>
 	<# if ( 'meta' === data.field_type ) { #>
-		<select class="gc-select2 wp-type-value-select wp-type-meta" name="<?php $this->output( 'option_base' ); ?>[mapping][{{ data.name }}][value]">
-			<?php foreach ( $this->get( 'meta_options' ) as $key ) : ?>
-			<option <# if ( '<?php echo $key; ?>' === data.field_value ) { #>selected="selected"<# } #> value="<?php echo $key; ?>"><?php echo $key; ?></option>
-			<?php endforeach; ?>
+		<select class="gc-select2 gc-select2-add-new wp-type-value-select wp-type-meta" name="<?php $this->output( 'option_base' ); ?>[mapping][{{ data.name }}][value]">
+			<# _.each( data.metaKeys, function( key ) { #>	<option <# if ( key.value === data.field_value ) { #>selected="selected"<# } #> value="{{ key.value }}">{{ key.value }}</option>
+			<# }); #>
+			<option <# if ( '' === data.field_value ) { #>selected="selected"<# } #> value=""><?php _e( 'Do Not Import', 'gathercontent-import' ); ?></option>
 		</select>
 	<# } #>
 </td>

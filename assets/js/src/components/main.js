@@ -28,9 +28,7 @@ window.GatherContent = window.GatherContent || {};
 		collectionBase : app.collections.base,
 		model : app.models.tabRow
 	} );
-	app.views.tabRow = require( './views/tab-row.js' )( {
-		viewBase : app.views.base
-	} );
+	app.views.tabRow = require( './views/tab-row.js' )( app );
 
 	/*
 	 * Tab setup
@@ -69,9 +67,9 @@ window.GatherContent = window.GatherContent || {};
 			.on( 'click', '.gc-reveal-items', app.maybeReveal );
 
 		// Kick it off.
-		app.mappingView = new app.views.tabs({
+		app.mappingView = new app.views.tabs( {
 			collection : new app.collections.tabs( app._tabs )
-		});
+		} );
 	};
 
 	app.maybeReveal = function( evt ) {

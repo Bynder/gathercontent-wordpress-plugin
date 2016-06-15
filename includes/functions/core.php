@@ -79,11 +79,6 @@ function init() {
 	$general = General::get_instance();
 	$general->init_hooks();
 
-	$general->api = new API( _wp_http_get_object() );
-
-	$general->admin = new Admin\Admin( $general->api );
-	$general->admin->init_hooks();
-
 	do_action( 'gathercontent_init', $general );
 }
 

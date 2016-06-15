@@ -1,5 +1,5 @@
 /**
- * GatherContent Importer - v3.0.0 - 2016-06-08
+ * GatherContent Importer - v3.0.0 - 2016-06-14
  * http://www.gathercontent.com
  *
  * Copyright (c) 2016 GatherContent
@@ -104,9 +104,7 @@ window.GatherContent = window.GatherContent || {};
 		collectionBase: app.collections.base,
 		model: app.models.tabRow
 	});
-	app.views.tabRow = require('./views/tab-row.js')({
-		viewBase: app.views.base
-	});
+	app.views.tabRow = require('./views/tab-row.js')(app);
 
 	/*
   * Tab setup
@@ -292,12 +290,23 @@ module.exports = function (args) {
 			this.$('.gc-select2').each(function () {
 				var $this = jQuery(this);
 				var column = $this.data('column');
-				console.log('column', column);
+				var url = window.ajaxurl + '?action=gc_get_option_data';
+				// console.log('column',column);
+
 				$this.select2({
 					width: '250px',
 					ajax: {
-						url: ajaxurl + '?action=gc_get_option_data_' + column
-					}
+						url: url,
+						data: function data(params) {
+							return {
+								q: params.term,
+								column: column
+							};
+						},
+						delay: 250,
+						cache: true
+					},
+					minimumInputLength: 2
 				});
 			});
 
@@ -333,8 +342,8 @@ module.exports = function (args) {
 },{}],11:[function(require,module,exports){
 'use strict';
 
-module.exports = function (args) {
-	return args.viewBase.extend({
+module.exports = function (app) {
+	return app.views.base.extend({
 		tagName: 'tr',
 		template: wp.template('gc-mapping-tab-row'),
 
@@ -346,15 +355,27 @@ module.exports = function (args) {
 
 		initialize: function initialize() {
 			this.listenTo(this.model, 'change:field_type', this.render);
+
+			// Initiate the metaKeys collection.
+			this.metaKeys = new (app.collections.base.extend({
+				model: app.models.base.extend({ defaults: {
+						value: ''
+					} }),
+				getByValue: function getByValue(value) {
+					return this.find(function (model) {
+						return model.get('value') === value;
+					});
+				}
+			}))(app._meta_keys);
 		},
 
 		changeType: function changeType(evt) {
-			var value = jQuery(evt.target).val();
-			this.model.set('field_type', value);
+			this.model.set('field_type', jQuery(evt.target).val());
 		},
 
 		changeValue: function changeValue(evt) {
 			var value = jQuery(evt.target).val();
+			// console.log('value',value);
 			if ('' === value) {
 				this.model.set('field_value', '');
 				this.model.set('field_type', '');
@@ -368,10 +389,30 @@ module.exports = function (args) {
 		},
 
 		render: function render() {
-			this.$el.html(this.template(this.model.toJSON()));
-			this.$('.gc-select2').select2({
-				width: '250px'
+			var val = this.model.get('field_value');
+
+			if (val && !this.metaKeys.getByValue(val)) {
+				this.metaKeys.add({ value: val });
+			}
+
+			var json = this.model.toJSON();
+			json.metaKeys = this.metaKeys.toJSON();
+
+			this.$el.html(this.template(json));
+
+			this.$('.gc-select2').each(function () {
+				var $this = jQuery(this);
+				var args = {
+					width: '250px'
+				};
+
+				if ($this.hasClass('gc-select2-add-new')) {
+					args.tags = true;
+				}
+
+				$this.select2(args);
 			});
+
 			return this;
 		}
 
@@ -455,12 +496,10 @@ module.exports = function (app) {
 		},
 
 		labelChange: function labelChange(model) {
-			console.log('labelChange', model);
 			this.render();
 		},
 
 		render: function render() {
-			console.log('render');
 			this.$el.html(this.template());
 
 			// Add tab links

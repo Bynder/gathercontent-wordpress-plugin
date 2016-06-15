@@ -22,12 +22,23 @@ module.exports = function( args ) {
 			this.$( '.gc-select2' ).each( function() {
 				var $this = jQuery( this );
 				var column = $this.data( 'column' );
-				console.log('column',column);
+				var url = window.ajaxurl + '?action=gc_get_option_data';
+				// console.log('column',column);
+
 				$this.select2({
 					width: '250px',
 					ajax: {
-						url: ajaxurl + '?action=gc_get_option_data_' + column
-					}
+						url: url,
+						data: function ( params ) {
+							return {
+								q: params.term,
+								column: column
+							};
+						},
+						delay: 250,
+						cache: true
+					},
+					minimumInputLength: 2,
 				});
 
 			} );

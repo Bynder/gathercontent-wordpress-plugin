@@ -38,12 +38,10 @@ module.exports = function( app ) {
 		},
 
 		labelChange : function( model ) {
-			console.log( 'labelChange', model );
 			this.render();
 		},
 
 		render: function() {
-			console.log('render');
 			this.$el.html( this.template() );
 
 			// Add tab links

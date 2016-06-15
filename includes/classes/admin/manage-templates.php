@@ -453,10 +453,11 @@ class Manage_Templates extends Base {
 				add_action( 'admin_footer', array( $this, 'footer_mapping_js_templates' ) );
 
 				wp_localize_script( 'gathercontent', 'GatherContent', array(
-					'debug'         => defined( 'SCRIPT_DEBUG' ) && SCRIPT_DEBUG,
-					'_tabs'         => $tabs,
+					'debug'      => defined( 'SCRIPT_DEBUG' ) && SCRIPT_DEBUG,
+					'_tabs'      => $tabs,
+					'_values'    => $stored_values,
+					'_meta_keys' => $this->add_custom_field_options(),
 					// 'optionBase' => $this->option_name,
-					'_values'       => $stored_values,
 				) );
 
 				// $tabs = array();
@@ -543,7 +544,6 @@ class Manage_Templates extends Base {
 			'option_base'  => $this->option_name,
 			'post_types'   => $this->post_types(),
 			'post_options' => $this->destination_post_options(),
-			'meta_options' => $this->add_custom_field_options(),
 		) ); ?></script>
 		<script type="text/html" id="tmpl-gc-post-fields-mapping">
 			<select class="wp-type-value-select wp-post-type" name="<?php echo $this->option_name; ?>[mapping][value][{{ data.name }}]">
@@ -651,9 +651,6 @@ class Manage_Templates extends Base {
 	}
 
 	public function get_default_fields() {
-
-		$stored_values = $this->stored_values();
-
 		$new_options = array();
 
 		foreach ( array( 'post_author', 'post_status', 'post_type' ) as $col ) {
@@ -662,7 +659,7 @@ class Manage_Templates extends Base {
 			$new_options[] = array(
 				'column'  => $col,
 				'label'   => $label,
-				'options' => $this->get_default_field_options( $col, $stored_values ),
+				'options' => $this->get_default_field_options( $col ),
 			);
 		}
 
@@ -671,18 +668,15 @@ class Manage_Templates extends Base {
 
 	public function get_default_field_options( $col ) {
 		$select_options = array();
+		$stored_values = $this->stored_values();
 
 		switch ( $col ) {
 			case 'post_author':
 				$value = 1;
-				$user = get_user_by( 'id', $value );
-				$user = isset( $user->user_login ) ? $user->user_login : $user;
-				$select_options[ $value ] = $user;
-
-				$value = 3;
-				$user = get_user_by( 'id', $value );
-				$user = isset( $user->user_login ) ? $user->user_login : $user;
-				$select_options[ $value ] = $user;
+				$user = isset( $stored_values['post_author'] )
+					? get_user_by( 'id', absint( $stored_values['post_author'] ) )
+					: wp_get_current_user();
+				$select_options[ $value ] = $user->user_login;
 				break;
 			case 'post_status':
 				$select_options = array(
@@ -771,7 +765,12 @@ class Manage_Templates extends Base {
 			$meta_keys = array();
 		}
 
-		return $meta_keys;
+		$keys = array();
+		foreach ( array_values( $meta_keys ) as $key => $value ) {
+			$keys[ $key ] = array( 'value' => $value );
+		}
+
+		return $keys;
 	}
 
 	protected function stored_values() {
@@ -973,14 +972,3 @@ class Manage_Templates extends Base {
 	}
 
 }
-
-
-
-
-
-
-function gc_ajax_author_search() {
-	error_log( 'gc_ajax_author_search $_REQUEST: '. print_r( $_REQUEST, true ) );
-	wp_send_json_error();
-}
-add_action( 'wp_ajax_gc_get_option_data_post_author', 'gc_ajax_author_search' );
