@@ -5,7 +5,7 @@ module.exports = function( app ) {
 			label       : '',
 			name        : '',
 			field_type  : '',
-			post_type   : 'post',
+			post_type   : 'wp-type-post',
 			field_value : false,
 			expanded    : false,
 		},

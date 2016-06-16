@@ -71,7 +71,7 @@ class API extends Base {
 		$trans_key = 'gctr-' . md5( serialize( compact( 'endpoint', 'args', 'method' ) ) );
 		$response = get_transient( $trans_key );
 
-		if ( ! $response || $this->get_val( 'flush_cache' ) || $this->flush ) {
+		if ( ! $response || $this->_get_val( 'flush_cache' ) || $this->flush ) {
 
 			$response = $this->request( $endpoint, $args, $method );
 

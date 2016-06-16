@@ -23,6 +23,8 @@ class Template_Mappings extends Base {
 				'edit_item'             => __( 'Edit Template Mapping', 'gathercontent-import' ),
 				'new_item'              => __( 'New Template Mapping', 'gathercontent-import' ),
 				'view_item'             => __( 'View Template Mapping', 'gathercontent-import' ),
+				'item_updated'          => __( 'Template Mapping updated', 'gathercontent-import' ),
+				'item_saved'            => __( 'Template Mapping saved', 'gathercontent-import' ),
 				'search_items'          => __( 'Search Template Mappings', 'gathercontent-import' ),
 				'not_found'             => __( 'No template mappings found.', 'gathercontent-import' ),
 				'not_found_in_trash'    => __( 'No template mappings found in Trash.', 'gathercontent-import' ),
@@ -33,7 +35,6 @@ class Template_Mappings extends Base {
 				'filter_items_list'     => __( 'Filter template mappings list', 'gathercontent-import' ),
 				'items_list_navigation' => __( 'Template Mappings list navigation', 'gathercontent-import' ),
 				'items_list'            => __( 'Template Mappings list', 'gathercontent-import' ),
-
 			),
 			array(
 				'show_ui'              => true,
@@ -58,9 +59,9 @@ class Template_Mappings extends Base {
 	public function output_mapping_data( $post ) {
 		if ( $this->slug === $post->post_type ) {
 			echo '<p class="postbox" style="padding: 1em;background: #f5f5f5;margin: -4px 0 0">';
-			echo '<strong>' . __( 'Project ID:', 'gathercontent-import' ) . '</strong> '. get_post_meta( get_the_id(), 'project', 1 );
+			echo '<strong>' . __( 'Project ID:', 'gathercontent-import' ) . '</strong> '. get_post_meta( get_the_id(), '_gc_project', 1 );
 			echo ',&nbsp;';
-			echo '<strong>' . __( 'Template ID:', 'gathercontent-import' ) . '</strong> '. get_post_meta( get_the_id(), 'template', 1 );
+			echo '<strong>' . __( 'Template ID:', 'gathercontent-import' ) . '</strong> '. get_post_meta( get_the_id(), '_gc_template', 1 );
 			echo '</p>';
 
 			$content = $post->post_content;
@@ -75,12 +76,27 @@ class Template_Mappings extends Base {
 		}
 	}
 
-	public function create_mapping( $project_id, $template_id, $postarr, $wp_error = false ) {
-		$postarr['post_type']              = $this->slug;
-		$postarr['meta_input']['project']  = $project_id;
-		$postarr['meta_input']['template'] = $template_id;
+	public function create_mapping( $mapping_args, $postarr = array(), $wp_error = false ) {
 
-		return wp_insert_post( $postarr, 1 );
+		$mapping_args = wp_parse_args( $mapping_args, array(
+			'title'    => '',
+			'content'  => '',
+			'project'  => null,
+			'template' => null,
+		) );
+
+		$postarr = wp_parse_args( $postarr, array(
+			'post_content' => wp_json_encode( $mapping_args['content'] ),
+			'post_title'   => $mapping_args['title'],
+			'post_status'  => 'publish',
+			'post_type'    => $this->slug,
+			'meta_input'   => array(
+				'_gc_project'  => $mapping_args['project'],
+				'_gc_template' => $mapping_args['template'],
+			),
+		) );
+
+		return wp_insert_post( $postarr, $wp_error );
 	}
 
 	public function get_mapping( $args = array() ) {
@@ -92,7 +108,7 @@ class Template_Mappings extends Base {
 	public function get_by_project( $project_id, $args = array() ) {
 		$meta_query = array(
 			array(
-				'key'   => 'project',
+				'key'   => '_gc_project',
 				'value' => $project_id,
 			),
 		);
@@ -107,7 +123,7 @@ class Template_Mappings extends Base {
 	public function get_by_project_template( $project_id, $template_id, $args = array() ) {
 		$meta_query = array(
 			array(
-				'key'   => 'template',
+				'key'   => '_gc_template',
 				'value' => $template_id,
 			),
 		);
@@ -137,8 +153,8 @@ class Template_Mappings extends Base {
 
 		if ( $this->slug === $post_type ) {
 
-			$project_id = get_post_meta( $post_id, 'project', 1 );
-			$template_id = get_post_meta( $post_id, 'template', 1 );
+			$project_id = get_post_meta( $post_id, '_gc_project', 1 );
+			$template_id = get_post_meta( $post_id, '_gc_template', 1 );
 
 			if ( $project_id && $template_id ) {
 				$link = admin_url( sprintf(

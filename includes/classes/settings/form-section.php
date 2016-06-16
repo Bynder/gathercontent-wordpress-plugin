@@ -6,7 +6,7 @@ class Form_Section extends Base {
 
 	protected $page;
 	protected $id;
-	protected $field;
+	public $field;
 	protected static $sections;
 
 	public function __construct( $id, $title, $callback, $page ) {

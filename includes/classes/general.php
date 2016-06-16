@@ -42,8 +42,8 @@ class General extends Base {
 	protected function __construct() {
 		parent::__construct( $_GET, $_POST );
 
-		$this->api = new API( _wp_http_get_object() );
-		$this->admin = new Admin\Admin( $this->api );
+		$this->api          = new API( _wp_http_get_object() );
+		$this->admin        = new Admin\Admin( $this->api );
 		$this->ajax_handler = new Select2_Ajax_Handler;
 	}
 

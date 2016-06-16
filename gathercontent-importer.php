@@ -50,6 +50,7 @@ if ( version_compare( phpversion(), '5.3', '<' ) ) {
 
 	// Include files
 	require_once GATHERCONTENT_INC . 'functions/core.php';
+	require_once GATHERCONTENT_INC . 'functions/functions.php';
 }
 
 /**

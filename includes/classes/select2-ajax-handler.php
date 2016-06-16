@@ -8,17 +8,17 @@ class Select2_Ajax_Handler extends Base {
 	}
 
 	public function callback() {
-		if ( ! $this->get_val( 'q' ) || ! $this->get_val( 'column' ) ) {
+		if ( ! $this->_get_val( 'q' ) || ! $this->_get_val( 'column' ) ) {
 			wp_send_json_error();
 		}
 
-		$search_term = sanitize_text_field( trim( $this->get_val( 'q' ) ) );
+		$search_term = sanitize_text_field( trim( $this->_get_val( 'q' ) ) );
 
 		if ( ! $search_term ) {
 			wp_send_json_error();
 		}
 
-		$method = $this->get_val( 'column' );
+		$method = $this->_get_val( 'column' );
 
 		switch ( $method ) {
 			case 'post_author':

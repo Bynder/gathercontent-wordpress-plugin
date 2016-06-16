@@ -38,7 +38,7 @@ abstract class Base {
 	 *
 	 * @return mixed        Query value if it exists.
 	 */
-	public function get_val( $key ) {
+	public function _get_val( $key ) {
 		return isset( self::$_get[ $key ] ) ? self::$_get[ $key ] : null;
 	}
 
@@ -57,19 +57,6 @@ abstract class Base {
 	}
 
 	/**
-	 * Check if the query array has a key.
-	 *
-	 * @since  3.0.0
-	 *
-	 * @param  string  $key Key to check.
-	 *
-	 * @return boolean      Whether query key exists in query.
-	 */
-	public function get_has( $key ) {
-		return isset( self::$_get[ $key ] );
-	}
-
-	/**
 	 * Get the value from the $_POST array.
 	 *
 	 * @since  3.0.0
@@ -78,7 +65,7 @@ abstract class Base {
 	 *
 	 * @return mixed        Query value if it exists.
 	 */
-	public function post_val( $key ) {
+	public function _post_val( $key ) {
 		return isset( self::$_post[ $key ] ) ? self::$_post[ $key ] : null;
 	}
 
@@ -94,19 +81,6 @@ abstract class Base {
 	 */
 	public function post_val_equals( $key, $value ) {
 		return isset( self::$_post[ $key ] ) && $value === self::$_post[ $key ];
-	}
-
-	/**
-	 * Check if the query array has a key.
-	 *
-	 * @since  3.0.0
-	 *
-	 * @param  string  $key Key to check.
-	 *
-	 * @return boolean      Whether query key exists in query.
-	 */
-	public function post_has( $key ) {
-		return isset( self::$_post[ $key ] );
 	}
 
 	/**
