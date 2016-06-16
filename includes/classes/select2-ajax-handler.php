@@ -32,6 +32,10 @@ class Select2_Ajax_Handler extends Base {
 	}
 
 	public function post_author( $search_term ) {
+		if ( ! apply_filters( 'gathercontent_settings_view_capability', 'publish_pages' ) ) {
+			wp_send_json_error();
+		}
+
 		$users = get_users( array(
 			'search' => '*' . $search_term . '*',
 			'number' => 30,

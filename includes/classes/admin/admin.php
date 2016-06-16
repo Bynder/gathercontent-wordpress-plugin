@@ -84,7 +84,7 @@ class Admin extends Base {
 		$page = add_menu_page(
 			$this->logo,
 			'GatherContent',
-			'publish_pages',
+			apply_filters( 'gathercontent_settings_view_capability', 'publish_pages' ),
 			$this->option_page_slug,
 			array( $this, 'admin_page' ),
 			GATHERCONTENT_URL . 'images/menu-logo.svg'
