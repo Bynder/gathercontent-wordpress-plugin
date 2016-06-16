@@ -8,12 +8,9 @@ use GatherContent\Importer\Post_Types\Template_Mappings;
 use WP_Query;
 
 /**
- * Class for managing/creating template mappings.
- *
- * @todo Make taxonomies easier to apply (a term picker per taxonomy, ideally using WP functionality for applying terms)
- * @todo Look at SearchWP's functionality for mapping meta/terms
+ * Class for the template mappings creation wizzard.
  */
-class Manage_Templates extends Base {
+class Mapping_Wizzard extends Base {
 
 	public $parent_page_slug;
 	public $parent_url;

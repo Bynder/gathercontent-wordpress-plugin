@@ -10,7 +10,7 @@ class Admin extends Base {
 	public $option_page_slug = GATHERCONTENT_SLUG;
 	public $option_name      = 'gathercontent_importer';
 	public $option_group     = 'gathercontent_importer_settings';
-	public $add_new_template;
+	public $mapping_wizzard;
 
 	/**
 	 * Default option value (if none is set)
@@ -53,7 +53,7 @@ class Admin extends Base {
 		}
 
 		if ( $this->step > 0 ) {
-			$this->add_new_template = new Manage_Templates( $this );
+			$this->mapping_wizzard = new Mapping_Wizzard( $this );
 		}
 
 	}
@@ -68,8 +68,8 @@ class Admin extends Base {
 	public function init_hooks() {
 		parent::init_hooks();
 
-		if ( $this->add_new_template ) {
-			$this->add_new_template->init_hooks();
+		if ( $this->mapping_wizzard ) {
+			$this->mapping_wizzard->init_hooks();
 		}
 	}
 
