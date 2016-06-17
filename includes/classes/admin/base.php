@@ -44,7 +44,6 @@ abstract class Base extends Plugin_Base {
 	public function __construct() {
 		parent::__construct();
 
-		$this->suffix = defined( 'SCRIPT_DEBUG' ) && SCRIPT_DEBUG ? '' : '.min';
 		$this->url = admin_url( 'admin.php?page='. $this->option_page_slug );
 		$this->logo = '<img width="220px" height="39px" src="'. GATHERCONTENT_URL . 'images/logo.svg" alt="GatherContent" />';
 	}
@@ -98,15 +97,22 @@ abstract class Base extends Plugin_Base {
 	}
 
 	public function admin_enqueue_style() {
-		wp_enqueue_style( 'select2', GATHERCONTENT_URL . "assets/css/vendor/select2-4.0.3/select2{$this->suffix}.css", array(), '4.0.3' );
-
-		wp_enqueue_style( 'gathercontent', GATHERCONTENT_URL . "assets/css/gathercontent-importer.{$this->suffix}css", array(), GATHERCONTENT_VERSION );
+		\GatherContent\Importer\enqueue_style( 'select2', 'vendor/select2-4.0.3/select2', array(), '4.0.3' );
+		\GatherContent\Importer\enqueue_style( 'gathercontent', 'gathercontent-importer' );
 	}
 
 	public function admin_enqueue_script() {
-		wp_register_script( 'select2', GATHERCONTENT_URL . "assets/js/vendor/select2-4.0.3/select2{$this->suffix}.js", array( 'jquery' ), '4.0.3', 1 );
+		\GatherContent\Importer\enqueue_script( 'select2', 'vendor/select2-4.0.3/select2', array( 'jquery' ), '4.0.3' );
+		\GatherContent\Importer\enqueue_script( 'gathercontent', 'gathercontent', array( 'wp-backbone', 'select2' ) );
 
-		wp_enqueue_script( 'gathercontent', GATHERCONTENT_URL . "assets/js/gathercontent-importer{$this->suffix}.js", array( 'wp-backbone', 'select2' ), GATHERCONTENT_VERSION, 1 );
+		// Localize in footer so that 'gathercontent_localized_data' filter is more useful.
+		add_action( 'admin_footer', array( $this, 'script_localize' ), 1 );
+	}
+
+	public function script_localize() {
+		wp_localize_script( 'gathercontent', 'GatherContent', apply_filters( 'gathercontent_localized_data', array(
+			'debug' => defined( 'SCRIPT_DEBUG' ) && SCRIPT_DEBUG,
+		) ) );
 	}
 
 	/**

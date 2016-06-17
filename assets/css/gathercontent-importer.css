@@ -95,3 +95,6 @@ ul.gc-radio-desc li, ul.gc-reveal-items-list li {
   margin: 0 auto;
   display: block;
   float: none; }
+
+.sync-items-descriptions .dashicons-randomize {
+  text-decoration: none; }

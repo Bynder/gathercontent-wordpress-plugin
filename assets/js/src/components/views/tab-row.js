@@ -1,4 +1,4 @@
-module.exports = function( app ) {
+module.exports = function( app, _meta_keys ) {
 	return app.views.base.extend({
 		tagName : 'tr',
 		template : wp.template( 'gc-mapping-tab-row' ),
@@ -22,7 +22,7 @@ module.exports = function( app ) {
 						return model.get( 'value' ) === value;
 					} );
 				},
-			} ) )( app._meta_keys );
+			} ) )( _meta_keys );
 		},
 
 		changeType: function( evt ) {

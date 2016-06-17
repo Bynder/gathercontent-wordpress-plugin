@@ -8,6 +8,8 @@ module.exports = {
 		]
 	},
 	dist: { files: {
-		'assets/js/gathercontent-importer.js' : 'assets/js/src/components/main.js'
+		'assets/js/gathercontent.js'         : 'assets/js/src/components/main.js',
+		'assets/js/gathercontent-mapping.js' : 'assets/js/src/components/mapping.js',
+		'assets/js/gathercontent-sync.js'    : 'assets/js/src/components/sync.js'
 	} }
 };

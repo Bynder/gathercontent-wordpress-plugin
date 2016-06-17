@@ -30,6 +30,13 @@ class Mapping_Wizzard extends Base {
 	public $template_mapper;
 
 	/**
+	 * Items_Sync
+	 *
+	 * @var Items_Sync
+	 */
+	public $items_sync;
+
+	/**
 	 * Default option value (if none is set)
 	 *
 	 * @var array
@@ -205,7 +212,8 @@ class Mapping_Wizzard extends Base {
 				}
 			}
 
-			$tabs[ $account->id ] = array(
+			$tabs[] = array(
+				'id' => $account->id,
 				'label' => sprintf( __( 'Account: %s', 'gathercontent-import' ), isset( $account->name ) ? $account->name : '' ),
 				'content' => $this->view( 'radio', array(
 					'id'      => $field_id . '-' . $account->id,
@@ -303,50 +311,79 @@ class Mapping_Wizzard extends Base {
 		$project    = $this->api()->get( 'projects/' . esc_attr( $this->_get_val( 'project' ) ) );
 		$mapping_id = absint( $this->_get_val( 'mapping' ) );
 		$mapping_id = $mapping_id && get_post( $mapping_id ) ? $mapping_id : false;
+		$sync_items = $mapping_id && $this->_get_val( 'sync-items' );
 
-		$existing_note = $mapping_id ? $this->view( 'existing-mapping-notice', array(
-			'name' => $this->mappings->args->labels->singular_name,
-			'id'   => $mapping_id,
-		), false ) : '';
+		$notes = '';
 
-		if ( ! isset( $project->id, $template->id ) ) {
-			$existing_note = $this->view( 'no-mapping-or-template-available', array(), false ) . $existing_note;
+		if ( ! $sync_items && $mapping_id ) {
+			$notes .= $this->view( 'existing-mapping-notice', array(
+				'name' => $this->mappings->args->labels->singular_name,
+				'id'   => $mapping_id,
+			), false );
 		}
 
-		$title = isset( $this->template->name )
-			? $this->template->name
+		if ( ! isset( $project->id, $template->id ) ) {
+			$notes = $this->view( 'no-mapping-or-template-available', array(), false ) . $notes;
+		}
+
+		$title = isset( $template->name )
+			? $template->name
 			: __( 'Unknown Template', 'gathercontent-import' );
 
-		$title = $mapping_id
-			? sprintf( __( 'Edit Mapping for: %s', 'gathercontent-import' ), $title )
-			: sprintf( __( 'Create Mapping for: %s', 'gathercontent-import' ), $title );
+		if ( $sync_items ) {
+			$title_prefix = __( 'Sync Items for: %s', 'gathercontent-import' );
+		} elseif ( $mapping_id ) {
+			$title_prefix = __( 'Edit Mapping for: %s', 'gathercontent-import' );
+		} else {
+			$title_prefix = __( 'Create Mapping for: %s', 'gathercontent-import' );
+		}
+		$title = sprintf( $title_prefix, $title );
 
 		$desc = '';
-		if ( $template && isset( $this->template->description ) ) {
-			$desc .= '<h4 class="description">' . esc_attr( $this->template->description ) . '</h4>';
+		if ( $template && isset( $template->description ) ) {
+			$desc .= '<h4 class="description">' . esc_attr( $template->description ) . '</h4>';
 		}
 
 		$desc .= $this->project_name_and_edit_link( $project );
 
 		$section = new Form_Section(
 			'select_template',
-			$existing_note . $title,
+			$notes . $title,
 			$desc,
 			$this->option_page_slug
 		);
 
-		$this->template_mapper = new Template_Mapper( array(
-			'mapping_id'  => $mapping_id,
-			'template'    => $template,
-			'project'     => $project,
-			'option_name' => $this->option_name,
-		) );
+		if ( ! $sync_items ) {
+			$this->template_mapper = new Template_Mapper( array(
+				'mapping_id'  => $mapping_id,
+				'template'    => $template,
+				'project'     => $project,
+				'option_name' => $this->option_name,
+			) );
 
-		$callback = isset( $project->id, $template->id )
-			? array( $this->template_mapper, 'mapping_ui' )
-			: '__return_empty_string';
+			$callback = isset( $project->id, $template->id )
+				? array( $this->template_mapper, 'mapping_ui' )
+				: '__return_empty_string';
 
-		$section->add_field( 'mapping', '', $callback );
+			$section->add_field( 'mapping', '', $callback );
+		} else {
+
+
+			$edit_link = sprintf(
+				'<a href="%s">%s</a>',
+				get_edit_post_link( $mapping_id ),
+				$this->mappings->args->labels->edit_item
+			);
+
+			$this->items_sync = new Items_Sync( array(
+				'mapping_id'        => $mapping_id,
+				'template'          => $template,
+				'project'           => $project,
+				'edit_mapping_link' => $edit_link,
+			) );
+
+			$section->add_field( 'mapping', '', array( $this->items_sync, 'sync_ui' ) );
+		}
 	}
 
 	/**

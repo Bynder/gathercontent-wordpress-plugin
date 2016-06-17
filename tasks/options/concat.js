@@ -9,8 +9,8 @@ module.exports = {
 	},
 	main: {
 		src: [
-			'assets/js/src/gathercontent-importer.js'
+			'assets/js/src/gathercontent.js'
 		],
-			dest: 'assets/js/gathercontent-importer.js'
+			dest: 'assets/js/gathercontent.js'
 	}
 };

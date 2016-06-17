@@ -54,6 +54,35 @@ class Template_Mappings extends Base {
 		if ( ! isset( $_GET['gc_standard_edit_links'] ) ) {
 			add_filter( 'get_edit_post_link', array( $this, 'modify_mapping_post_edit_link' ), 10, 2 );
 		}
+
+		add_filter( 'post_row_actions', array( $this, 'remove_quick_edit' ), 10, 2 );
+	}
+
+	/**
+	 * removes quick edit from custom post type list
+	 *
+	 * @since  3.0.0
+	 *
+	 * @param array $actions An array of row action links. Defaults are
+	 *                         'Edit', 'Quick Edit', 'Restore, 'Trash',
+	 *                         'Delete Permanently', 'Preview', and 'View'.
+	 * @param WP_Post $post  The post object.
+	 *
+	 * @return array         Modified $actions.
+	 */
+	function remove_quick_edit( $actions, $post ) {
+		if ( $this->slug === $post->post_type ) {
+			unset( $actions['inline hide-if-no-js'] );
+
+			$actions['sync-items'] = sprintf(
+				'<a href="%s" aria-label="%s">%s</a>',
+				add_query_arg( 'sync-items', 1,  get_edit_post_link( $post->ID, 'raw' ) ),
+				esc_attr( __( 'Import Items', 'gathercontent-import' ) ),
+				__( 'Import Items', 'gathercontent-import' )
+			);
+		}
+
+		return $actions;
 	}
 
 	public function output_mapping_data( $post ) {

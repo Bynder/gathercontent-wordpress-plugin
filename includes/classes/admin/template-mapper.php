@@ -1,6 +1,5 @@
 <?php
 namespace GatherContent\Importer\Admin;
-use GatherContent\Importer\Settings\Form_Section;
 use GatherContent\Importer\Base as Plugin_Base;
 
 /**
@@ -32,19 +31,19 @@ class Template_Mapper extends Plugin_Base {
 	 *
 	 * @since  3.0.0
 	 *
-	 * @param  array  $field Field array from GatherContent\Importer\Settings\Form_Section
-	 *
 	 * @return void
 	 */
-	public function mapping_ui( $field ) {
+	public function mapping_ui() {
 
 		// Output the markup for the JS to build on.
 		echo '<div id="mapping-tabs"><span class="gc-loader spinner is-active"></span></div>';
 
-		$project_id  = esc_attr( $this->project->id );
-		$template_id = esc_attr( $this->template->id );
-
 		if ( $this->mapping_id ) {
+
+			echo '<div class="sync-items-descriptions">
+			<p class="description"><a href="'. esc_url( add_query_arg( 'sync-items', 1 ) ) .'"><span class="dashicons dashicons-randomize"> </span>' . __( 'Sync Template Items with GatherContent', 'domain' ) . '</a></p>
+			</div>';
+
 			$this->view( 'input', array(
 				'type'    => 'hidden',
 				'id'      => 'gc-existing-id',
@@ -52,6 +51,9 @@ class Template_Mapper extends Plugin_Base {
 				'value'   => $this->mapping_id,
 			) );
 		}
+
+		$project_id  = esc_attr( $this->project->id );
+		$template_id = esc_attr( $this->template->id );
 
 		$this->view( 'input', array(
 			'type'    => 'hidden',
@@ -83,15 +85,18 @@ class Template_Mapper extends Plugin_Base {
 
 		// Hook in the underscores templates
 		add_action( 'admin_footer', array( $this, 'footer_mapping_js_templates' ) );
+		add_filter( 'gathercontent_localized_data', array( $this, 'localize_data' ) );
+
+		wp_enqueue_script( 'gathercontent-mapping', GATHERCONTENT_URL . "assets/js/gathercontent-mapping{$this->suffix}.js", array( 'gathercontent' ), GATHERCONTENT_VERSION, 1 );
 
 		$this->field_types = $this->initiate_mapped_field_types();
+	}
 
-		wp_localize_script( 'gathercontent', 'GatherContent', array(
-			'debug'      => defined( 'SCRIPT_DEBUG' ) && SCRIPT_DEBUG,
-			'_tabs'      => $this->get_tabs(),
-			'_values'    => $this->stored_values(),
-			'_meta_keys' => $this->custom_field_keys(),
-		) );
+	public function localize_data( $data ) {
+		$data['_tabs']      = $this->get_tabs();
+		$data['_meta_keys'] = $this->custom_field_keys();
+
+		return $data;
 	}
 
 	/**
@@ -466,7 +471,12 @@ class Template_Mapper extends Plugin_Base {
 	 * @return mixed              Value of field.
 	 */
 	protected function get_value( $key, $callback = null, $default = null ) {
-		$values = $this->stored_values();
+		static $values = null;
+
+		if ( null === $values ) {
+			$values = $this->stored_values();
+		}
+
 		$value = isset( $values[ $key ] ) ? $values[ $key ] : $default;
 
 		return $callback && $value ? $callback( $value ) : $value;
@@ -480,12 +490,6 @@ class Template_Mapper extends Plugin_Base {
 	 * @return array  Array of values.
 	 */
 	protected function stored_values() {
-		static $stored_values = null;
-
-		if ( null !== $stored_values ) {
-			return $stored_values;
-		}
-
 		$values = array();
 
 		if ( $this->mapping_id && ( $json = get_post_field( 'post_content', $this->mapping_id ) ) ) {
@@ -507,6 +511,5 @@ class Template_Mapper extends Plugin_Base {
 
 		return $stored_values;
 	}
-
 
 }

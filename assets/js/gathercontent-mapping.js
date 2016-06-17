@@ -1,5 +1,5 @@
 /**
- * GatherContent Importer - v3.0.0 - 2016-06-14
+ * GatherContent Importer - v3.0.0 - 2016-06-17
  * http://www.gathercontent.com
  *
  * Copyright (c) 2016 GatherContent
@@ -76,20 +76,11 @@ module.exports = function (args) {
 
 window.GatherContent = window.GatherContent || {};
 
-(function (window, document, $, app, undefined) {
+(function (window, document, $, gc, undefined) {
 	'use strict';
 
-	var $id = function $id(id) {
-		return $(document.getElementById(id));
-	};
-
-	var log = function log() {
-		log.history = log.history || [];
-		log.history.push(arguments);
-		if (app.debug && window.console && window.console.log) {
-			window.console.log(Array.prototype.slice.call(arguments));
-		}
-	};
+	gc.mapping = gc.mapping || {};
+	var app = gc.mapping;
 
 	app.models = { base: require('./models/base.js') };
 	app.collections = { base: require('./collections/base.js') };
@@ -104,7 +95,7 @@ window.GatherContent = window.GatherContent || {};
 		collectionBase: app.collections.base,
 		model: app.models.tabRow
 	});
-	app.views.tabRow = require('./views/tab-row.js')(app);
+	app.views.tabRow = require('./views/tab-row.js')(app, gc._meta_keys);
 
 	/*
   * Tab setup
@@ -138,26 +129,10 @@ window.GatherContent = window.GatherContent || {};
 	app.views.tabs = require('./views/tabs.js')(app);
 
 	app.init = function () {
-
-		$(document.body).on('click', '.gc-reveal-items', app.maybeReveal);
-
 		// Kick it off.
 		app.mappingView = new app.views.tabs({
-			collection: new app.collections.tabs(app._tabs)
+			collection: new app.collections.tabs(gc._tabs)
 		});
-	};
-
-	app.maybeReveal = function (evt) {
-		var $this = $(this);
-		evt.preventDefault();
-
-		if ($this.hasClass('dashicons-arrow-right')) {
-			$this.removeClass('dashicons-arrow-right').addClass('dashicons-arrow-down');
-			$this.next().removeClass('hidden');
-		} else {
-			$this.removeClass('dashicons-arrow-down').addClass('dashicons-arrow-right');
-			$this.next().addClass('hidden');
-		}
 	};
 
 	$(app.init);
@@ -182,7 +157,7 @@ module.exports = function (app) {
 			label: '',
 			name: '',
 			field_type: '',
-			post_type: 'post',
+			post_type: 'wp-type-post',
 			field_value: false,
 			expanded: false
 		},
@@ -342,7 +317,7 @@ module.exports = function (args) {
 },{}],11:[function(require,module,exports){
 'use strict';
 
-module.exports = function (app) {
+module.exports = function (app, _meta_keys) {
 	return app.views.base.extend({
 		tagName: 'tr',
 		template: wp.template('gc-mapping-tab-row'),
@@ -366,7 +341,7 @@ module.exports = function (app) {
 						return model.get('value') === value;
 					});
 				}
-			}))(app._meta_keys);
+			}))(_meta_keys);
 		},
 
 		changeType: function changeType(evt) {
