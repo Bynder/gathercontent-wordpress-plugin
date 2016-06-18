@@ -3,10 +3,10 @@
 		<strong><?php $this->output( 'post_author_label' ); ?></strong>
 	</td>
 	<td>
-		<select class="gc-default-mapping-select gc-select2" data-column="post_author" name="<?php $this->output( 'option_base' ); ?>[post_author]">
-			<?php foreach ( $this->get( 'post_author_options' ) as $option_val => $option_label ) : ?>
-				<option <# if ( '<?php echo $option_val; ?>' === data.post_author ) { #>selected="selected"<# } #> value="<?php echo $option_val; ?>"><?php echo $option_label; ?></option>
-			<?php endforeach; ?>
+		<select class="gc-default-mapping-select gc-select2" data-url="<?php echo esc_url( admin_url( 'admin-ajax.php?action=gc_get_option_data' ) ); ?>" data-column="post_author" name="<?php $this->output( 'option_base' ); ?>[post_author]">
+			<# if ( data.post_author && data[ 'select2:post_author:' + data.post_author ] ) { #>
+				<option selected="selected" value="{{ data.post_author }}">{{ data['select2:post_author:' + data.post_author] }}</option>
+			<# } #>
 		</select>
 	</td>
 </tr>

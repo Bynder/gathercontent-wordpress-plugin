@@ -20,9 +20,9 @@ module.exports = Backbone.Collection.extend({
 },{}],2:[function(require,module,exports){
 'use strict';
 
-module.exports = function (args) {
-	return args.collectionBase.extend({
-		model: args.model,
+module.exports = function (app) {
+	return app.collections.base.extend({
+		model: app.models.tabRow,
 
 		initialize: function initialize(models, options) {
 			this.tab = options.tab;
@@ -50,9 +50,9 @@ module.exports = function (args) {
 },{}],3:[function(require,module,exports){
 'use strict';
 
-module.exports = function (args) {
-	return args.collectionBase.extend({
-		model: args.model,
+module.exports = function (app) {
+	return app.collections.base.extend({
+		model: app.models.tab,
 
 		// initialize: function() {
 		// 	console.log('this (collection)', this);
@@ -91,36 +91,20 @@ window.GatherContent = window.GatherContent || {};
   */
 
 	app.models.tabRow = require('./models/tab-row.js')(app);
-	app.collections.tabRows = require('./collections/tab-rows.js')({
-		collectionBase: app.collections.base,
-		model: app.models.tabRow
-	});
+	app.collections.tabRows = require('./collections/tab-rows.js')(app);
 	app.views.tabRow = require('./views/tab-row.js')(app, gc._meta_keys);
 
 	/*
   * Tab setup
   */
 
-	app.models.tab = require('./models/tab.js')({
-		modelBase: app.models.base,
-		rowCollection: app.collections.tabRows
-	});
-	app.collections.tabs = require('./collections/tabs.js')({
-		collectionBase: app.collections.base,
-		model: app.models.tab
-	});
-	app.views.tab = require('./views/tab.js')({
-		viewBase: app.views.base,
-		rowView: app.views.tabRow
-	});
+	app.models.tab = require('./models/tab.js')(app);
+	app.collections.tabs = require('./collections/tabs.js')(app);
+	app.views.tab = require('./views/tab.js')(app);
 
-	app.views.tabLink = require('./views/tab-link.js')({
-		viewBase: app.views.base
-	});
+	app.views.tabLink = require('./views/tab-link.js')(app);
 
-	app.views.defaultTab = require('./views/default-tab.js')({
-		viewTab: app.views.tab
-	});
+	app.views.defaultTab = require('./views/default-tab.js')(app);
 
 	/*
   * Overall view setup
@@ -190,8 +174,8 @@ module.exports = function (app) {
 },{}],7:[function(require,module,exports){
 'use strict';
 
-module.exports = function (args) {
-	return args.modelBase.extend({
+module.exports = function (app) {
+	return app.models.base.extend({
 		defaults: {
 			id: '',
 			label: '',
@@ -203,7 +187,7 @@ module.exports = function (args) {
 		},
 
 		initialize: function initialize() {
-			this.rows = new args.rowCollection(this.get('rows'), { tab: this });
+			this.rows = new app.collections.tabRows(this.get('rows'), { tab: this });
 			// this.rows.bind( 'change', this.change );
 		} /*,
     _get : function( value, attribute ) {
@@ -229,9 +213,13 @@ module.exports = function (args) {
 };
 
 },{}],8:[function(require,module,exports){
-"use strict";
+'use strict';
 
 module.exports = Backbone.View.extend({
+	toggleExpanded: function toggleExpanded(evt) {
+		this.model.set('expanded', !this.model.get('expanded'));
+	},
+
 	render: function render() {
 		this.$el.html(this.template(this.model.toJSON()));
 		return this;
@@ -241,17 +229,27 @@ module.exports = Backbone.View.extend({
 },{}],9:[function(require,module,exports){
 'use strict';
 
-module.exports = function (args) {
-	return args.viewTab.extend({
+module.exports = function (app) {
+	return app.views.tab.extend({
 		events: {
-			'change select': 'changeDefault'
+			'change select': 'changeDefault',
+			'click .gc-reveal-items': 'toggleExpanded'
 		},
 
 		changeDefault: function changeDefault(evt) {
 			var $this = jQuery(evt.target);
 			var value = $this.val();
 			var column = $this.data('column');
-			this.model.set(column, value);
+
+			if (value) {
+				if ($this.data('select2')) {
+					var data = $this.select2('data')[0];
+					if (data.text) {
+						this.model.set('select2:' + column + ':' + value, data.text);
+					}
+				}
+				this.model.set(column, value);
+			}
 		},
 
 		render: function render() {
@@ -264,18 +262,16 @@ module.exports = function (args) {
 
 			this.$('.gc-select2').each(function () {
 				var $this = jQuery(this);
-				var column = $this.data('column');
-				var url = window.ajaxurl + '?action=gc_get_option_data';
-				// console.log('column',column);
+				var _data = $this.data();
 
 				$this.select2({
 					width: '250px',
 					ajax: {
-						url: url,
+						url: _data.url,
 						data: function data(params) {
 							return {
 								q: params.term,
-								column: column
+								column: _data.column
 							};
 						},
 						delay: 250,
@@ -287,14 +283,15 @@ module.exports = function (args) {
 
 			return this;
 		}
+
 	});
 };
 
 },{}],10:[function(require,module,exports){
 'use strict';
 
-module.exports = function (args) {
-	return args.viewBase.extend({
+module.exports = function (app) {
+	return app.views.base.extend({
 		tagName: 'a',
 
 		id: function id() {
@@ -359,10 +356,6 @@ module.exports = function (app, _meta_keys) {
 			}
 		},
 
-		toggleExpanded: function toggleExpanded(evt) {
-			this.model.set('expanded', !this.model.get('expanded'));
-		},
-
 		render: function render() {
 			var val = this.model.get('field_value');
 
@@ -397,8 +390,8 @@ module.exports = function (app, _meta_keys) {
 },{}],12:[function(require,module,exports){
 'use strict';
 
-module.exports = function (args) {
-	return args.viewBase.extend({
+module.exports = function (app) {
+	return app.views.base.extend({
 		template: wp.template('gc-tab-wrapper'),
 
 		tagName: 'fieldset',
@@ -416,7 +409,7 @@ module.exports = function (args) {
 
 			var addedElements = document.createDocumentFragment();
 			this.model.rows.each(function (model) {
-				var view = new args.rowView({ model: model }).render();
+				var view = new app.views.tabRow({ model: model }).render();
 				// console.log('view.$el', view.$el);
 				addedElements.appendChild(view.el);
 			});
