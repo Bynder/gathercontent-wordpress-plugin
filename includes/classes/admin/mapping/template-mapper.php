@@ -131,6 +131,7 @@ class Template_Mapper extends Base {
 				'gc_status_options'   => $this->statuses,
 				'option_base'         => $this->option_name,
 			),
+			'tmpl-gc-select2-item' => array(),
 		);
 	}
 

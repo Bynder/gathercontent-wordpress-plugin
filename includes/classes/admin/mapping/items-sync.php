@@ -56,8 +56,7 @@ class Items_Sync extends Base {
 	 */
 	protected function get_localize_data() {
 		return array(
-			// '_tabs'      => $this->get_tabs(),
-			// '_meta_keys' => $this->custom_field_keys(),
+			// '_items' => $this->items,
 		);
 	}
 

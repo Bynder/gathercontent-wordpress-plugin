@@ -98,3 +98,26 @@ ul.gc-radio-desc li, ul.gc-reveal-items-list li {
 
 .sync-items-descriptions .dashicons-randomize {
   text-decoration: none; }
+
+.select2-results__option {
+  border-bottom: 1px solid #eee;
+  margin: 0; }
+  .select2-results__option .description {
+    font-style: italic;
+    opacity: .7;
+    margin-top: .2em; }
+
+.select2-gc_status .gc-status-color {
+  width: 1.1em;
+  height: 1.1em;
+  display: inline-block;
+  border-radius: 100%;
+  line-height: 1.1em;
+  margin-bottom: -2px;
+  float: right; }
+
+.select2-gc_status.select2-container--default .gc-status-color {
+  position: relative;
+  top: .4em;
+  float: left;
+  margin-right: 5px; }

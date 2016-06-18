@@ -5,6 +5,9 @@ module.exports = function( app ) {
 			'click .gc-reveal-items' : 'toggleExpanded'
 		},
 
+		defaultTabTemplate  : wp.template( 'gc-mapping-defaults-tab' ),
+		select2ItemTemplate : wp.template( 'gc-select2-item' ),
+
 		changeDefault: function( evt ) {
 			var $this = jQuery( evt.target );
 			var value = $this.val();
@@ -22,20 +25,52 @@ module.exports = function( app ) {
 		},
 
 		render : function() {
-			var modelJSON = this.model.toJSON();
+			var json = this.model.toJSON();
 
-			this.$el.html( this.template( modelJSON ) );
+			this.$el.html( this.template( json ) );
 
-			var template = wp.template( 'gc-mapping-defaults-tab' );
-			this.$el.find( 'tbody' ).html( template( modelJSON ) );
+			this.$el.find( 'tbody' ).html( this.defaultTabTemplate( json ) );
 
+			var that = this;
 			this.$( '.gc-select2' ).each( function() {
 				var $this = jQuery( this );
-				var data  = $this.data();
+				var data = $this.data();
+				$this.select2( that.select2Args( data ) );
+				var s2Data = $this.data( 'select2' );
 
-				$this.select2( {
-					width: '250px',
-					ajax: {
+				// Add classes for styling.
+				s2Data.$results.addClass( 'select2-'+ data.column );
+				s2Data.$container.addClass( 'select2-'+ data.column );
+			} );
+
+			return this;
+		},
+
+		select2Args: function( data ) {
+			var args = {
+				width: '250px'
+			};
+
+			switch ( data.column ) {
+				case 'gc_status':
+
+					args.templateResult = function( status, showDesc ) {
+						var data = jQuery.extend( status, jQuery( status.element ).data() );
+						data.description = false === showDesc ? false : ( data.description || {} );
+
+						return jQuery( this.select2ItemTemplate( status ) );
+					}.bind( this );
+
+					args.templateSelection = function( status ) {
+						return args.templateResult( status, false );
+					};
+
+					break;
+
+				case 'post_author':
+
+					args.minimumInputLength = 2;
+					args.ajax = {
 						url: data.url,
 						data: function ( params ) {
 							return {
@@ -45,14 +80,13 @@ module.exports = function( app ) {
 						},
 						delay: 250,
 						cache: true
-					},
-					minimumInputLength: 2
-				} );
+					};
 
-			} );
+					break;
+			}
 
-			return this;
-		}
+			return args;
+		},
 
 	});
 };

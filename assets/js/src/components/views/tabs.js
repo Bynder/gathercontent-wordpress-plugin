@@ -8,7 +8,7 @@ module.exports = function( app ) {
 
 		initialize: function() {
 			// this.listenTo( this.collection, 'change:post_status change:post_type change:post_author', this.changeDefault );
-			this.listenTo( this.collection, 'change:label', this.labelChange );
+			// this.listenTo( this.collection, 'change:label', this.render );
 			this.listenTo( this.collection, 'render', this.render );
 			this.listenTo( this, 'render', this.render );
 
@@ -37,11 +37,11 @@ module.exports = function( app ) {
 			this.collection.showTab( id );
 		},
 
-		labelChange : function( model ) {
-			this.render();
-		},
-
 		render: function() {
+			this.$( '.gc-select2' ).each( function() {
+				jQuery( this ).select2( 'destroy' );
+			} );
+
 			this.$el.html( this.template() );
 
 			// Add tab links

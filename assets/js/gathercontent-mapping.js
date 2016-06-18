@@ -1,5 +1,5 @@
 /**
- * GatherContent Importer - v3.0.0 - 2016-06-17
+ * GatherContent Importer - v3.0.0 - 2016-06-18
  * http://www.gathercontent.com
  *
  * Copyright (c) 2016 GatherContent
@@ -236,6 +236,9 @@ module.exports = function (app) {
 			'click .gc-reveal-items': 'toggleExpanded'
 		},
 
+		defaultTabTemplate: wp.template('gc-mapping-defaults-tab'),
+		select2ItemTemplate: wp.template('gc-select2-item'),
+
 		changeDefault: function changeDefault(evt) {
 			var $this = jQuery(evt.target);
 			var value = $this.val();
@@ -253,20 +256,52 @@ module.exports = function (app) {
 		},
 
 		render: function render() {
-			var modelJSON = this.model.toJSON();
+			var json = this.model.toJSON();
 
-			this.$el.html(this.template(modelJSON));
+			this.$el.html(this.template(json));
 
-			var template = wp.template('gc-mapping-defaults-tab');
-			this.$el.find('tbody').html(template(modelJSON));
+			this.$el.find('tbody').html(this.defaultTabTemplate(json));
 
+			var that = this;
 			this.$('.gc-select2').each(function () {
 				var $this = jQuery(this);
-				var _data = $this.data();
+				var data = $this.data();
+				$this.select2(that.select2Args(data));
+				var s2Data = $this.data('select2');
 
-				$this.select2({
-					width: '250px',
-					ajax: {
+				// Add classes for styling.
+				s2Data.$results.addClass('select2-' + data.column);
+				s2Data.$container.addClass('select2-' + data.column);
+			});
+
+			return this;
+		},
+
+		select2Args: function select2Args(_data) {
+			var args = {
+				width: '250px'
+			};
+
+			switch (_data.column) {
+				case 'gc_status':
+
+					args.templateResult = (function (status, showDesc) {
+						var data = jQuery.extend(status, jQuery(status.element).data());
+						data.description = false === showDesc ? false : data.description || {};
+
+						return jQuery(this.select2ItemTemplate(status));
+					}).bind(this);
+
+					args.templateSelection = function (status) {
+						return args.templateResult(status, false);
+					};
+
+					break;
+
+				case 'post_author':
+
+					args.minimumInputLength = 2;
+					args.ajax = {
 						url: _data.url,
 						data: function data(params) {
 							return {
@@ -276,12 +311,12 @@ module.exports = function (app) {
 						},
 						delay: 250,
 						cache: true
-					},
-					minimumInputLength: 2
-				});
-			});
+					};
 
-			return this;
+					break;
+			}
+
+			return args;
 		}
 
 	});
@@ -434,7 +469,7 @@ module.exports = function (app) {
 
 		initialize: function initialize() {
 			// this.listenTo( this.collection, 'change:post_status change:post_type change:post_author', this.changeDefault );
-			this.listenTo(this.collection, 'change:label', this.labelChange);
+			// this.listenTo( this.collection, 'change:label', this.render );
 			this.listenTo(this.collection, 'render', this.render);
 			this.listenTo(this, 'render', this.render);
 
@@ -463,11 +498,11 @@ module.exports = function (app) {
 			this.collection.showTab(id);
 		},
 
-		labelChange: function labelChange(model) {
-			this.render();
-		},
-
 		render: function render() {
+			this.$('.gc-select2').each(function () {
+				jQuery(this).select2('destroy');
+			});
+
 			this.$el.html(this.template());
 
 			// Add tab links
