@@ -40,10 +40,6 @@ module.exports = function( app, _meta_keys ) {
 			}
 		},
 
-		toggleExpanded: function( evt ) {
-			this.model.set( 'expanded', ! this.model.get( 'expanded' ) );
-		},
-
 		render : function() {
 			var val = this.model.get( 'field_value' );
 

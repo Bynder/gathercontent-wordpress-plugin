@@ -34,3 +34,18 @@
 		</select>
 	</td>
 </tr>
+<tr id="default-mapping-gc_status">
+	<td>
+		<a title="<?php _ex( 'Click to show additional details', 'About the GatherContent object', 'gathercontent-import' ); ?>" href="#" class="gc-reveal-items dashicons-before dashicons-arrow-<# if ( data.expanded ) { #>down<# } else { #>right<# } #>"><strong><?php _e( 'GatherContent Status', 'gathercontent-import' ); ?></strong></a>
+		<ul class="gc-reveal-items-list <# if ( ! data.expanded ) { #>hidden<# } #>">
+			<li><?php _e( 'Optionally change the GatherContent Status when content is imported.', 'gathercontent-import' ); ?></li>
+		</ul>
+	</td>
+	<td>
+		<select class="gc-default-mapping-select" data-column="gc_status" name="<?php $this->output( 'option_base' ); ?>[gc_status]">
+			<?php foreach ( $this->get( 'gc_status_options' ) as $status ) : ?>
+				<option <# if ( '<?php echo esc_attr( $status->id ); ?>' === data.gc_status ) { #>selected="selected"<# } #> value="<?php echo esc_attr( $status->id ); ?>"><?php echo esc_attr( $status->name ); ?></option>
+			<?php endforeach; ?>
+		</select>
+	</td>
+</tr>

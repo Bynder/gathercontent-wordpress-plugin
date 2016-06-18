@@ -15,36 +15,20 @@ window.GatherContent = window.GatherContent || {};
 	 */
 
 	app.models.tabRow = require( './models/tab-row.js' )( app );
-	app.collections.tabRows = require( './collections/tab-rows.js' )( {
-		collectionBase : app.collections.base,
-		model : app.models.tabRow
-	} );
+	app.collections.tabRows = require( './collections/tab-rows.js' )( app );
 	app.views.tabRow = require( './views/tab-row.js' )( app, gc._meta_keys );
 
 	/*
 	 * Tab setup
 	 */
 
-	app.models.tab = require( './models/tab.js' )( {
-		modelBase : app.models.base,
-		rowCollection : app.collections.tabRows
-	} );
-	app.collections.tabs = require( './collections/tabs.js' )( {
-		collectionBase : app.collections.base,
-		model : app.models.tab
-	} );
-	app.views.tab = require( './views/tab.js' )( {
-		viewBase : app.views.base,
-		rowView : app.views.tabRow
-	} );
+	app.models.tab = require( './models/tab.js' )( app );
+	app.collections.tabs = require( './collections/tabs.js' )( app );
+	app.views.tab = require( './views/tab.js' )( app );
 
-	app.views.tabLink = require( './views/tab-link.js' )( {
-		viewBase : app.views.base
-	} );
+	app.views.tabLink = require( './views/tab-link.js' )( app );
 
-	app.views.defaultTab = require( './views/default-tab.js' )( {
-		viewTab : app.views.tab,
-	} );
+	app.views.defaultTab = require( './views/default-tab.js' )( app );
 
 	/*
 	 * Overall view setup

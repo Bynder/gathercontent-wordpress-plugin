@@ -1,6 +1,6 @@
-module.exports = function( args ) {
-	return args.collectionBase.extend({
-		model : args.model,
+module.exports = function( app ) {
+	return app.collections.base.extend({
+		model : app.models.tab,
 
 		// initialize: function() {
 		// 	console.log('this (collection)', this);

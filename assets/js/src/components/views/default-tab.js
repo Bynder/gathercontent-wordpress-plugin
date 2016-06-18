@@ -1,7 +1,8 @@
-module.exports = function( args ) {
-	return args.viewTab.extend({
+module.exports = function( app ) {
+	return app.views.tab.extend({
 		events : {
-			'change select' : 'changeDefault'
+			'change select'          : 'changeDefault',
+			'click .gc-reveal-items' : 'toggleExpanded'
 		},
 
 		changeDefault: function( evt ) {

@@ -1,5 +1,5 @@
-module.exports = function( args ) {
-	return args.modelBase.extend({
+module.exports = function( app ) {
+	return app.models.base.extend({
 		defaults: {
 			id         : '',
 			label      : '',
@@ -11,7 +11,7 @@ module.exports = function( args ) {
 		},
 
 		initialize: function() {
-			this.rows = new args.rowCollection( this.get( 'rows' ), { tab: this } );
+			this.rows = new app.collections.tabRows( this.get( 'rows' ), { tab: this } );
 			// this.rows.bind( 'change', this.change );
 		}/*,
 

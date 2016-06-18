@@ -1,102 +1,75 @@
 <?php
-namespace GatherContent\Importer\Admin;
+namespace GatherContent\Importer\Admin\Mapping;
 use GatherContent\Importer\Base as Plugin_Base;
 
 /**
- * Class for managing/creating template mappings.
+ * Class for managing syncing template items.
  */
-class Template_Mapper extends Plugin_Base {
+abstract class Base extends Plugin_Base {
 
-	protected $mapping_id;
+	protected $mapping_id = 0;
 	protected $template;
 	protected $project;
-	protected $option_name;
-
-	/**
-	 * Field_Types\Types
-	 *
-	 * @var Field_Types\Types
-	 */
-	public $field_types;
 
 	public function __construct( array $args ) {
-		$this->mapping_id  = $args['mapping_id'];
-		$this->template    = $args['template'];
-		$this->project     = $args['project'];
-		$this->option_name = $args['option_name'];
+		$this->mapping_id = $args['mapping_id'];
+		$this->template   = $args['template'];
+		$this->project    = $args['project'];
 	}
 
 	/**
-	 * The mapping page UI callback.
+	 * The page-specific script ID to enqueue.
+	 *
+	 * @since  3.0.0
+	 *
+	 * @return string
+	 */
+	abstract protected function script_id();
+
+	/**
+	 * The page-specific Form_Section section UI callback.
 	 *
 	 * @since  3.0.0
 	 *
 	 * @return void
 	 */
-	public function mapping_ui() {
+	abstract protected function ui_page();
 
-		// Output the markup for the JS to build on.
-		echo '<div id="mapping-tabs"><span class="gc-loader spinner is-active"></span></div>';
+	/**
+	 * Get the localizable data array.
+	 *
+	 * @since  3.0.0
+	 *
+	 * @return array Array of localizable data
+	 */
+	abstract protected function get_localize_data();
 
-		if ( $this->mapping_id ) {
+	/**
+	 * Gets the underscore templates array.
+	 *
+	 * @since  3.0.0
+	 *
+	 * @return array
+	 */
+	abstract protected function get_underscore_templates();
 
-			echo '<div class="sync-items-descriptions">
-			<p class="description"><a href="'. esc_url( add_query_arg( 'sync-items', 1 ) ) .'"><span class="dashicons dashicons-randomize"> </span>' . __( 'Sync Template Items with GatherContent', 'domain' ) . '</a></p>
-			</div>';
-
-			$this->view( 'input', array(
-				'type'    => 'hidden',
-				'id'      => 'gc-existing-id',
-				'name'    => $this->option_name .'[existing_mapping_id]',
-				'value'   => $this->mapping_id,
-			) );
-		}
-
-		$project_id  = esc_attr( $this->project->id );
-		$template_id = esc_attr( $this->template->id );
-
-		$this->view( 'input', array(
-			'type'    => 'hidden',
-			'id'      => 'gc-create-map',
-			'name'    => $this->option_name .'[create_mapping]',
-			'value'   => wp_create_nonce( md5( $project_id . $template_id ) ),
-		) );
-
-		$this->view( 'input', array(
-			'type'    => 'hidden',
-			'id'      => 'gc-project-id',
-			'name'    => $this->option_name .'[title]',
-			'value'   => esc_attr( isset( $this->template->name ) ? $this->template->name : __( 'Mapped Template', 'gathercontent-import' ) ),
-		) );
-
-		$this->view( 'input', array(
-			'type'    => 'hidden',
-			'id'      => 'gc-project-id',
-			'name'    => $this->option_name .'[project]',
-			'value'   => $project_id,
-		) );
-
-		$this->view( 'input', array(
-			'type'    => 'hidden',
-			'id'      => 'gc-template-id',
-			'name'    => $this->option_name .'[template]',
-			'value'   => $template_id,
-		) );
+	/**
+	 * The Form_Section section UI callback.
+	 *
+	 * @since  3.0.0
+	 *
+	 * @return void
+	 */
+	public function ui() {
+		$this->ui_page();
 
 		// Hook in the underscores templates
 		add_action( 'admin_footer', array( $this, 'footer_mapping_js_templates' ) );
+
 		add_filter( 'gathercontent_localized_data', array( $this, 'localize_data' ) );
 
-		wp_enqueue_script( 'gathercontent-mapping', GATHERCONTENT_URL . "assets/js/gathercontent-mapping{$this->suffix}.js", array( 'gathercontent' ), GATHERCONTENT_VERSION, 1 );
-
-		$this->field_types = $this->initiate_mapped_field_types();
-	}
-
-	public function localize_data( $data ) {
-		$data['_tabs']      = $this->get_tabs();
-		$data['_meta_keys'] = $this->custom_field_keys();
-
-		return $data;
+		$script_id = $this->script_id();
+		\GatherContent\Importer\enqueue_script( $script_id, $script_id, array( 'gathercontent' ) );
 	}
 
 	/**
@@ -107,25 +80,7 @@ class Template_Mapper extends Plugin_Base {
 	 * @return void
 	 */
 	public function footer_mapping_js_templates() {
-		$templates = array(
-			'tmpl-gc-tabs-wrapper' => array(),
-			'tmpl-gc-tab-wrapper' => array(),
-			'tmpl-gc-mapping-tab-row' => array(
-				'option_base' => $this->option_name,
-				'post_types'  => $this->post_types(),
-			),
-			'tmpl-gc-mapping-defaults-tab' => array(
-				'default_fields'      => $this->get_default_fields(),
-				'post_author_label'   => $this->post_column_label( 'post_author' ),
-				'post_author_options' => $this->get_default_field_options( 'post_author' ),
-				'post_status_options' => $this->get_default_field_options( 'post_status' ),
-				'post_status_label'   => $this->post_column_label( 'post_status' ),
-				'post_type_label'     => __( 'Post Type', 'gathercontent-import' ),
-				'post_type_options'   => $this->get_default_field_options( 'post_type' ),
-				'option_base'         => $this->option_name,
-			),
-		);
-		foreach ( $templates as $template_id => $view_args ) {
+		foreach ( $this->get_underscore_templates() as $template_id => $view_args ) {
 			echo '<script type="text/html" id="'. $template_id .'">';
 			$this->view( $template_id, $view_args );
 			echo '</script>';
@@ -133,73 +88,16 @@ class Template_Mapper extends Plugin_Base {
 	}
 
 	/**
-	 * Initiates the mapped field types. By default, post fields, taxonomies, and meta fields.
-	 * If WP-SEO is installed, that field type will be iniitated as well.
+	 * Add to the localized data array.
 	 *
 	 * @since  3.0.0
 	 *
-	 * @return Field_Types\Types object
-	 */
-	protected function initiate_mapped_field_types() {
-		$core_field_types = array(
-			new Field_Types\Post( $this->post_options() ),
-			new Field_Types\Taxonomy( $this->post_types() ),
-			new Field_Types\Meta(),
-		);
-
-		if ( defined( 'WPSEO_VERSION' ) ) {
-			$core_field_types[] = new Field_Types\WPSEO( $this->post_types() );
-		}
-
-		return ( new Field_Types\Types( $core_field_types ) )->register();
-	}
-
-	/**
-	 * Get's the GC tabs and adds a default tab for universal settings.
+	 * @param  array  $data Array of localizable data
 	 *
-	 * @since  3.0.0
-	 *
-	 * @return array  Array of tabs.
+	 * @return array        Modified array of data.
 	 */
-	protected function get_tabs() {
-		$tabs = array();
-		foreach ( $this->template->config as $tab ) {
-
-			$rows = array();
-			foreach ( $tab->elements as $element ) {
-
-				if ( $this->get_value( $element->name ) ) {
-					$val = $this->get_value( $element->name );
-					$element->field_type = isset( $val['type'] ) ? $val['type'] : '';
-					$element->field_value = isset( $val['value'] ) ? $val['value'] : '';
-				}
-
-				$rows[] = $element;
-			}
-
-			$tab_array = array(
-				'id'     => $tab->name,
-				'label'  => $tab->label,
-				'hidden' => ! empty( $tabs ),
-				'rows'   => $rows,
-			);
-
-			$tabs[] = $tab_array;
-		}
-
-		$tabs[] = array(
-			'id'          => 'mapping-defaults',
-			'label'       => __( 'Mapping Defaults', 'gathercontent-import' ),
-			'hidden'      => true,
-			'navClasses'  => 'alignright',
-			'viewId'      => 'defaultTab',
-			'rows'        => $this->post_options(),
-			'post_author' => $this->get_value( 'post_author', 'esc_attr', 1 ),
-			'post_status' => $this->get_value( 'post_status', 'esc_attr', 'draft' ),
-			'post_type'   => $this->get_value( 'post_type', 'esc_attr', 'post' ),
-		);
-
-		return $tabs;
+	public function localize_data( $data ) {
+		return array_merge( $data, $this->get_localize_data() );
 	}
 
 	/**
@@ -220,7 +118,7 @@ class Template_Mapper extends Plugin_Base {
 				$user = $this->get_value( 'post_author' )
 					? get_user_by( 'id', absint( $this->get_value( 'post_author' ) ) )
 					: wp_get_current_user();
-				$select_options[ $value ] = $user->user_login;
+				$select_options = $user->user_login;
 				break;
 			case 'post_status':
 				$select_options = array(
@@ -329,27 +227,6 @@ class Template_Mapper extends Plugin_Base {
 		}
 
 		return $keys;
-	}
-
-	/**
-	 * Gets the universal/default field rows for the "Mapping Defaults" tab.
-	 *
-	 * @since  3.0.0
-	 *
-	 * @return array  Array of field rows.
-	 */
-	public function get_default_fields() {
-		$new_options = array();
-
-		foreach ( array( 'post_author', 'post_status', 'post_type' ) as $col ) {
-			$new_options[] = array(
-				'column'  => $col,
-				'label'   => $this->post_column_label( $col ),
-				'options' => $this->get_default_field_options( $col ),
-			);
-		}
-
-		return $new_options;
 	}
 
 	/**

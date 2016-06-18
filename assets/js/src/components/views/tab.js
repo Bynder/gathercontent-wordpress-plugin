@@ -1,5 +1,5 @@
-module.exports = function( args ) {
-	return args.viewBase.extend({
+module.exports = function( app ) {
+	return app.views.base.extend({
 		template : wp.template( 'gc-tab-wrapper' ),
 
 		tagName : 'fieldset',
@@ -17,7 +17,7 @@ module.exports = function( args ) {
 
 			var addedElements = document.createDocumentFragment();
 			this.model.rows.each( function( model ) {
-				var view = ( new args.rowView({ model: model }) ).render();
+				var view = ( new app.views.tabRow({ model: model }) ).render();
 				// console.log('view.$el', view.$el);
 				addedElements.appendChild( view.el );
 			});

@@ -1,5 +1,5 @@
-module.exports = function( args ) {
-	return args.viewBase.extend({
+module.exports = function( app ) {
+	return app.views.base.extend({
 		tagName : 'a',
 
 		id : function() {

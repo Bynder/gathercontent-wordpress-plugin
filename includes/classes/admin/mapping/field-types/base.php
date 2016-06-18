@@ -1,5 +1,5 @@
 <?php
-namespace GatherContent\Importer\Admin\Field_Types;
+namespace GatherContent\Importer\Admin\Mapping\Field_Types;
 use GatherContent\Importer\Base as Plugin_Base;
 use GatherContent\Importer\Views\View;
 

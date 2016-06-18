@@ -46,6 +46,10 @@ class View {
 	 * @return string        Rendered template
 	 */
 	public function load( $echo = true ) {
+
+		// Filter args before outputting template.
+		$this->args = apply_filters( "gc_template_args_for_{$this->template}", $this->args, $this );
+
 		try {
 			ob_start();
 			// Do html
