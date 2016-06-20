@@ -15,12 +15,7 @@ module.exports = function( app ) {
 		render : function() {
 			this.$el.html( this.template( this.model.toJSON() ) );
 
-			var addedElements = document.createDocumentFragment();
-			this.model.rows.each( function( model ) {
-				var view = ( new app.views.tabRow({ model: model }) ).render();
-				// console.log('view.$el', view.$el);
-				addedElements.appendChild( view.el );
-			});
+			var addedElements = this.getRenderedItems( app.views.tabRow, this.model.rows );
 
 			this.$el.find( 'tbody' ).html( addedElements );
 

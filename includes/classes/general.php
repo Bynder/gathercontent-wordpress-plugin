@@ -44,7 +44,7 @@ class General extends Base {
 
 		$this->api          = new API( _wp_http_get_object() );
 		$this->admin        = new Admin\Admin( $this->api );
-		$this->ajax_handler = new Select2_Ajax_Handler;
+		$this->ajax_handler = new Admin\Ajax\Handlers;
 	}
 
 	public function init_hooks() {

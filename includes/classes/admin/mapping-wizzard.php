@@ -129,8 +129,13 @@ class Mapping_Wizzard extends Base {
 			delete_option( 'gc-api-updated' );
 		}
 
-		if ( isset( $_GET['updated'], $_GET['project'], $_GET['template'] ) ) {
-			$label = 1 === absint( $_GET['updated'] ) ? 'item_updated' : 'item_saved';
+		if ( $this->_get_val( 'updated' ) &&  $this->_get_val( 'project' ) &&  $this->_get_val( 'template' ) ) {
+
+			if ( $this->_get_val( 'sync-items' ) ) {
+				return $this->add_settings_error( $this->option_name, 'gc-mapping-updated', __( 'Item Sync complete!', 'gathercontent-import' ), 'updated' );
+			}
+
+			$label = 1 === absint( $this->_get_val( 'updated' ) ) ? 'item_updated' : 'item_saved';
 			$this->add_settings_error( $this->option_name, 'gc-mapping-updated', $this->mappings->args->labels->{$label}, 'updated' );
 		}
 	}

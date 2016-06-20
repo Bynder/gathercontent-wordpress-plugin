@@ -6,9 +6,8 @@ window.GatherContent = window.GatherContent || {};
 	gc.mapping = gc.mapping || {};
 	var app = gc.mapping;
 
-	app.models      = { base : require( './models/base.js' ) };
-	app.collections = { base : require( './collections/base.js' ) };
-	app.views       = { base : require( './views/base.js' ) };
+	// Initiate base objects.
+	require( './initiate-objects.js' )( app );
 
 	/*
 	 * Tab Row setup

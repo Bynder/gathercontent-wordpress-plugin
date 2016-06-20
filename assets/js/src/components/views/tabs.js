@@ -1,20 +1,14 @@
 module.exports = function( app ) {
-	return Backbone.View.extend({
+	return app.views.base.extend({
 		el : '#mapping-tabs',
 
-		template : function() {
-			return wp.template( 'gc-tabs-wrapper' );
-		},
+		template : wp.template( 'gc-tabs-wrapper' ),
 
 		initialize: function() {
-			// this.listenTo( this.collection, 'change:post_status change:post_type change:post_author', this.changeDefault );
-			// this.listenTo( this.collection, 'change:label', this.render );
 			this.listenTo( this.collection, 'render', this.render );
 			this.listenTo( this, 'render', this.render );
 
 			this.render();
-
-			app.defaults = this.collection.getById( 'mapping-defaults' );
 		},
 
 		events : {

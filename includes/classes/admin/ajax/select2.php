@@ -1,11 +1,8 @@
 <?php
-namespace GatherContent\Importer;
+namespace GatherContent\Importer\Admin\Ajax;
+use GatherContent\Importer\Base as Plugin_Base;
 
-class Select2_Ajax_Handler extends Base {
-
-	public function init_hooks() {
-		add_action( 'wp_ajax_gc_get_option_data', array( new Select2_Ajax_Handler, 'callback' ) );
-	}
+class Select2 extends Plugin_Base {
 
 	public function callback() {
 		if ( ! $this->_get_val( 'q' ) || ! $this->_get_val( 'column' ) ) {

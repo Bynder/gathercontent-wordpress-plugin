@@ -1,18 +1,30 @@
 window.GatherContent = window.GatherContent || {};
 
-( function( window, document, $, undefined ) {
+( function( window, document, $, gc, undefined ) {
 	'use strict';
 
-	this.sync = this.sync || {};
-	var app = this.sync;
-	var log = this.log;
+	gc.sync = gc.sync || {};
+	var app = gc.sync;
 
-	log( this );
+	// Initiate base objects.
+	require( './initiate-objects.js' )( app );
+
+	/*
+	 * Item setup
+	 */
+
+	app.models.item = require( './models/item.js' )( app );
+	app.collections.items = require( './collections/items.js' )( app );
+	app.views.item = require( './views/item.js' )( app );
+	app.views.items = require( './views/items.js' )( app, $, gc.percent );
 
 	app.init = function() {
-		log( 'warn', 'GC Sync init' );
+		// Kick it off.
+		app.syncView = new app.views.items( {
+			collection : new app.collections.items( gc._items )
+		} );
 	};
 
 	$( app.init );
 
-} ).call( window.GatherContent, window, document, jQuery );
+} )( window, document, jQuery, window.GatherContent );

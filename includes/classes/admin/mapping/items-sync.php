@@ -36,15 +36,14 @@ class Items_Sync extends Base {
 	 * @return void
 	 */
 	public function ui_page() {
-
 		// Output the markup for the JS to build on.
-		echo '<div id="sync-tabs"><span class="gc-loader spinner is-active"></span></div>';
-
-		print( '<xmp>$this->items: '. print_r( $this->items, true ) .'</xmp>' );
-		echo '<p class="description">';
-		echo $this->edit_mapping_link;
-		echo '</p>';
-
+		?>
+		<input type="hidden" name="post_id" value="<?php echo $this->mapping_id; ?>"/>
+		<div id="sync-tabs"><span class="gc-loader spinner is-active"></span></div>
+		<p class="description">
+			<?php echo $this->edit_mapping_link; ?>
+		</p>
+		<?php
 	}
 
 	/**
@@ -56,7 +55,9 @@ class Items_Sync extends Base {
 	 */
 	protected function get_localize_data() {
 		return array(
-			// '_items' => $this->items,
+			'_items'  => array_values( $this->items ),
+			'percent' => absint( get_post_meta( $this->mapping_id, '_gc_sync_percent', 1 ) ),
+			// 'percent' => 22,
 		);
 	}
 
@@ -69,10 +70,9 @@ class Items_Sync extends Base {
 	 */
 	protected function get_underscore_templates() {
 		return array(
-			// 'tmpl-gc-mapping-tab-row' => array(
-			// 	'option_base' => $this->option_name,
-			// 	'post_types'  => $this->post_types(),
-			// ),
+			'tmpl-gc-items-sync' => array(),
+			'tmpl-gc-item' => array(),
+			'tmpl-gc-items-sync-progress' => array(),
 		);
 	}
 
