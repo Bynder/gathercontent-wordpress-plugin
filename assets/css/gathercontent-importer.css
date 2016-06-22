@@ -76,18 +76,21 @@ ul.gc-radio-desc li, ul.gc-reveal-items-list li {
 .mapping-defaults .link-to-mapping-defaults {
   display: none; }
 
-.gc-admin-wrap .form-table th {
+.gathercontent-admin .form-table th {
   padding: 20px 10px; }
 
-.gc-admin-wrap select, .gc-admin-wrap .select2-container {
+.gathercontent-admin.gc-sync .form-table th {
+  padding: 10px; }
+
+.gathercontent-admin select, .gathercontent-admin .select2-container {
   width: 250px; }
 
-.gc-admin-wrap .wp-field-th {
+.gathercontent-admin .wp-field-th {
   width: 60%; }
 
-.gc-admin-wrap .gc-field-th {
+.gathercontent-admin .gc-field-th {
   width: 40%; }
-  .gc-admin-wrap .gc-field-th.check-column {
+  .gathercontent-admin .gc-field-th.check-column {
     width: 20px;
     padding: 6px 0 6px 6px;
     vertical-align: middle; }

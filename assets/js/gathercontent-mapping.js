@@ -1,5 +1,5 @@
 /**
- * GatherContent Importer - v3.0.0 - 2016-06-20
+ * GatherContent Importer - v3.0.0 - 2016-06-22
  * http://www.gathercontent.com
  *
  * Copyright (c) 2016 GatherContent
@@ -307,8 +307,7 @@ module.exports = function (app) {
 
 					args.templateResult = (function (status, showDesc) {
 						var data = jQuery.extend(status, jQuery(status.element).data());
-						data.description = false === showDesc ? false : data.description || {};
-
+						data.description = false === showDesc ? false : data.description || '';
 						return jQuery(this.select2ItemTemplate(status));
 					}).bind(this);
 
