@@ -9,6 +9,18 @@ use GatherContent\Importer\Post_Types\Template_Mappings;
  */
 class Mapping_Wizzard extends Base {
 
+	const ACCOUNT = 0;
+	const PROJECT = 1;
+	const TEMPLATE = 2;
+	const SYNC = 3;
+
+	protected $slugs = array(
+		self::ACCOUNT  => 'gc-account',
+		self::PROJECT  => 'gc-project',
+		self::TEMPLATE => 'gc-template',
+		self::SYNC     => 'gc-sync',
+	);
+
 	public $parent_page_slug;
 	public $parent_url;
 	public $project_items = array();
@@ -58,10 +70,14 @@ class Mapping_Wizzard extends Base {
 		$this->mappings         = new Template_Mappings( $parent->option_page_slug );
 
 		if ( $this->_get_val( 'project' ) ) {
-			$this->step = 1;
+			$this->step = self::PROJECT;
 
 			if ( $this->_get_val( 'template' ) ) {
-				$this->step = 2;
+				$this->step = self::TEMPLATE;
+
+				if ( $this->_get_val( 'sync-items' ) ) {
+					$this->step = self::SYNC;
+				}
 			}
 		}
 
@@ -87,6 +103,7 @@ class Mapping_Wizzard extends Base {
 			array( $this, 'admin_page' )
 		);
 
+		add_filter( 'admin_body_class', array( $this, 'body_class' ) );
 		add_action( 'admin_print_styles-' . $page, array( $this, 'admin_enqueue_style' ) );
 		add_action( 'admin_print_styles-' . $page, array( $this, 'admin_enqueue_script' ) );
 	}
@@ -100,23 +117,26 @@ class Mapping_Wizzard extends Base {
 			'settings_sections'   => Form_Section::get_sections( $this->option_page_slug ),
 			'go_back_button_text' => __( 'Previous Step', 'gathercontent-import' ),
 			'refresh_button'      => $this->refresh_connection_link(),
-			'submit_button_text'  => 2 === $this->step
-				? __( 'Save Mapping', 'gathercontent-import' )
-				: __( 'Next Step', 'gathercontent-import' ),
+			'submit_button_text'  => __( 'Next Step', 'gathercontent-import' ),
 		);
 
 		switch ( $this->step ) {
-			case 0:
+			case self::ACCOUNT:
 				$args['go_back_button_text'] = __( 'Back to API setup', 'gathercontent-import' );
 				$args['go_back_url'] = $this->parent_url;
 				break;
 
-			case 1:
+			case self::PROJECT:
 				$args['go_back_url'] = remove_query_arg( 'project' );
 				break;
 
-			case 2:
+			case self::TEMPLATE:
 				$args['go_back_url'] = remove_query_arg( 'template', remove_query_arg( 'mapping' ) );
+				$args['submit_button_text'] = __( 'Save Mapping', 'gathercontent-import' );
+				break;
+
+			case self::SYNC:
+				$args['submit_button_text'] = __( 'Sync Items', 'gathercontent-import' );
 				break;
 		}
 
@@ -140,6 +160,11 @@ class Mapping_Wizzard extends Base {
 		}
 	}
 
+	public function body_class( $classes ) {
+		$classes .= ' gathercontent-admin '. $this->slugs[ $this->step ] .' ';
+		return $classes;
+	}
+
 	/**
 	 * Initializes the plugin's setting, and settings sections/Fields.
 	 *
@@ -150,11 +175,12 @@ class Mapping_Wizzard extends Base {
 	function initialize_settings_sections() {
 
 		switch ( $this->step ) {
-			case 1:
+			case self::PROJECT:
 				$this->select_template();
 				break;
 
-			case 2:
+			case self::SYNC:
+			case self::TEMPLATE:
 				$this->map_template();
 				break;
 

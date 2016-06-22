@@ -13,8 +13,6 @@ class Items_Sync extends Base {
 		parent::__construct( $args );
 		$this->items             = $args['items'];
 		$this->edit_mapping_link = $args['edit_mapping_link'];
-
-		add_filter( 'gc_template_args_for_admin-page', array( $this, 'replace_page_buttons' ) );
 	}
 
 	/**
@@ -74,14 +72,6 @@ class Items_Sync extends Base {
 			'tmpl-gc-item' => array(),
 			'tmpl-gc-items-sync-progress' => array(),
 		);
-	}
-
-	public function replace_page_buttons( $args ) {
-
-		$args['go_back_url'] = '';
-		$args['submit_button_text'] = __( 'Sync Items', 'gathercontent-import' );
-
-		return $args;
 	}
 
 }
