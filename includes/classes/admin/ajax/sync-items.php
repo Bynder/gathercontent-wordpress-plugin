@@ -1,111 +1,144 @@
 <?php
 namespace GatherContent\Importer\Admin\Ajax;
 use GatherContent\Importer\Base as Plugin_Base;
+use GatherContent\Importer\General;
+use GatherContent\Importer\Post_Types\Template_Mappings;
 
 class Sync_Items extends Plugin_Base {
 
+	/**
+	 * GatherContent\Importer\Post_Types\Template_Mappings instance
+	 *
+	 * @var GatherContent\Importer\Post_Types\Template_Mappings
+	 */
+	protected $mappings = null;
+
+	/**
+	 * Creates an instance of this class.
+	 *
+	 * @since 3.0.0
+	 *
+	 * @param $mappings Template_Mappings object
+	 */
+	public function __construct( Template_Mappings $mappings ) {
+		$this->mappings = $mappings;
+	}
+
 	public function callback() {
-		if ( ! $this->_post_val( 'data' ) ) {
-			wp_send_json_error();
-		}
+		$this->verify_request();
 
-		if ( 'check' === $this->_post_val( 'data' ) ) {
-			// For now, fake it to work on the UI
-			$percent = absint( $this->_post_val( 'percent' ) ) + 12;
-			wp_send_json_success( array( 'percent' => $percent ) );
-		}
+		$mapping = $this->get_mapping_post();
 
+		$this->maybe_cancelling( $mapping->ID );
 
-		// Parse the URL query string of the fields array.
-		parse_str( $this->_post_val( 'data' ), $fields );
+		$this->maybe_checking_status( $mapping->ID );
 
-		if ( ! wp_verify_nonce( $fields['_wpnonce'], $fields['option_page'] . '-options' ) ) {
-			wp_send_json_error();
-		}
+		$fields = $this->get_fields( $mapping->ID );
 
-		// $this->do_item( absint( $fields['post_id'] ), $fields['import'] );
-
-		// error_log( '$fields: '. print_r( $fields, true ) );
-		wp_send_json_success( $fields );
+		$this->start_pull( $mapping, $fields );
 	}
 
-	public function do_item( $post_id, $items ) {
-		if ( empty( $items ) || ! is_array( $items ) ) {
-			wp_send_json_error();
+	protected function verify_request() {
+		// Make sure we have the minimum data.
+		if ( ! isset( $_REQUEST['data'], $_REQUEST['id'], $_REQUEST['nonce'] ) ) {
+			wp_send_json_error( sprintf(
+				__( 'Error %d: Missing required data.', 'gathercontent-import' ),
+				__LINE__
+			) );
 		}
 
+		// Get opt-group for nonce-verification
+		$opt_group = General::get_instance()->admin->mapping_wizzard->option_group;
 
-		$mapping = $this->get_mapping( $post_id );
-
-		if ( ! $mapping ) {
-			wp_send_json_error();
+ 		// No nonce, no pass.
+		if ( ! wp_verify_nonce( $this->_post_val( 'nonce' ), $opt_group . '-options' ) ) {
+			wp_send_json_error( sprintf(
+				__( 'Error %d: Missing security nonce.', 'gathercontent-import' ),
+				__LINE__
+			) );
 		}
-
-		$post = array_shift( $items );
-
-		if ( ! empty( $items ) ) {
-			update_post_meta( $post_id, '_gc_sync_items', array_map( 'sanitize_text_field', $items ) );
-		}
-
-
-
-		// @todo figure out how to calculate percentage complete.
-
-
-
-		update_post_meta( $post_id, '_gc_sync_percent', 0.1 );
 	}
 
-	public function get_mapping( $post_id ) {
-		$mapping = false;
-
-		if ( $post_id && ( $json = get_post_field( 'post_content', $post_id ) ) ) {
-
-			$json = json_decode( $json, 1 );
-
-			if ( is_array( $json ) ) {
-				$mapping = $json;
-
-				if ( isset( $mapping['mapping'] ) && is_array( $mapping['mapping'] ) ) {
-					$_mapping = $mapping['mapping'];
-					unset( $mapping['mapping'] );
-					$mapping += $_mapping;
-				}
-			}
+	protected function get_mapping_post() {
+		if ( $mapping = get_post( absint( $this->_post_val( 'id' ) ) ) ) {
+			return $mapping;
 		}
 
-		return $mapping;
+		wp_send_json_error( sprintf(
+			__( 'Error %d: Cannot find a mapping by that id: %d', 'gathercontent-import' ),
+			__LINE__,
+			absint( $this->_post_val( 'id' ) )
+		) );
+	}
+
+	protected function maybe_cancelling( $mapping_id ) {
+		if ( 'cancel' !== $this->_post_val( 'data' ) ) {
+			return false;
+		}
+
+		error_log( 'delete meta and cancel' );
+		delete_post_meta( $mapping_id, '_gc_sync_items' );
+
+		wp_send_json_success();
+	}
+
+	protected function maybe_checking_status( $mapping_id ) {
+		if ( 'check' !== $this->_post_val( 'data' ) ) {
+			return false;
+		}
+
+		$percent = $this->mappings->get_pull_percent( $mapping_id );
+		error_log( '$percent: '. print_r( $percent, true ) );
+
+		// $percent = absint( $this->_post_val( 'percent' ) ) + 12;
+		wp_send_json_success( compact( 'percent' ) );
+	}
+
+	protected function get_fields( $mapping_id ) {
+		$data = $this->_post_val( 'data' );
+
+		if ( empty( $data ) || ! is_string( $data ) ) {
+			wp_send_json_error( sprintf(
+				__( 'Error %d: Missing form data.', 'gathercontent-import' ),
+				__LINE__
+			) );
+		}
+
+		// Parse the serialized fields string.
+		parse_str( $data, $fields );
+
+		if (
+			! isset( $fields['import'], $fields['project'], $fields['template'] )
+			|| empty( $fields['import'] ) || ! is_array( $fields['import'] )
+			|| get_post_meta( $mapping_id, '_gc_project', 1 ) != $fields['project']
+			|| get_post_meta( $mapping_id, '_gc_template', 1 ) != $fields['template']
+		) {
+			wp_send_json_error( sprintf(
+				__( 'Error %d: Missing required form data.', 'gathercontent-import' ),
+				__LINE__
+			) );
+		}
+
+		$fields['project']  = absint( $fields['project'] );
+		$fields['template'] = absint( $fields['template'] );
+		$fields['import']   = array_map( 'absint', $fields['import'] );
+
+		return $fields;
+	}
+
+	protected function start_pull( $mapping, $fields ) {
+
+		// Start the sync and bump percent value.
+		update_post_meta( $mapping->ID, '_gc_sync_items', array( 'pending' => $fields['import'] ) );
+
+		error_log( __METHOD__ .': '. print_r( $mapping->ID, true ) );
+
+		do_action( 'gc_pull_items', $mapping );
+		// error_log( 'start_pull $fields: '. print_r( $fields, true ) );
+		// error_log( '$_REQUEST: '. print_r( $_REQUEST, true ) );
+
+		$percent = 0.1;
+		wp_send_json_success( compact( 'percent' ) );
 	}
 
 }
-
-/*
-
-[20-Jun-2016 04:51:55 UTC] $fields: Array
-(
-    [option_page] => gathercontent_importer_settings_add_new_template
-    [action] => update
-    [_wpnonce] => 7fda24b448
-    [_wp_http_referer] => /gathercontent/wp-admin/admin.php?page=gathercontent-import-add-new-template&project=73849&template=347939&mapping=33&sync-items=1
-    [post_id] => 33
-    [import] => Array
-        (
-            [0] => 2862508
-        )
-
-)
-
-$fields: Array
-(
-    [option_page] => gathercontent_importer_settings_add_new_template
-    [action] => update
-    [_wpnonce] => 7fda24b448
-    [_wp_http_referer] => /gathercontent/wp-admin/admin.php?page=gathercontent-import-add-new-template&project=73849&template=347939&mapping=33&sync-items=1
-    [import] => Array
-        (
-            [0] => 2817575
-        )
-
-)
-
- */

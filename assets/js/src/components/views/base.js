@@ -3,11 +3,11 @@ module.exports = Backbone.View.extend({
 		this.model.set( 'expanded', ! this.model.get( 'expanded' ) );
 	},
 
-	getRenderedItems : function( View, items ) {
-		items = items || this.collection;
+	getRenderedModels : function( View, models ) {
+		models = models || this.collection;
 		var addedElements = document.createDocumentFragment();
 
-		items.each( function( model ) {
+		models.each( function( model ) {
 			var view = ( new View({ model: model }) ).render();
 			addedElements.appendChild( view.el );
 		});

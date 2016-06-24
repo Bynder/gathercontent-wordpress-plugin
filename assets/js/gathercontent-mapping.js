@@ -1,5 +1,5 @@
 /**
- * GatherContent Importer - v3.0.0 - 2016-06-22
+ * GatherContent Importer - v3.0.0 - 2016-06-23
  * http://www.gathercontent.com
  *
  * Copyright (c) 2016 GatherContent
@@ -228,11 +228,11 @@ module.exports = Backbone.View.extend({
 		this.model.set('expanded', !this.model.get('expanded'));
 	},
 
-	getRenderedItems: function getRenderedItems(View, items) {
-		items = items || this.collection;
+	getRenderedModels: function getRenderedModels(View, models) {
+		models = models || this.collection;
 		var addedElements = document.createDocumentFragment();
 
-		items.each(function (model) {
+		models.each(function (model) {
 			var view = new View({ model: model }).render();
 			addedElements.appendChild(view.el);
 		});
@@ -461,9 +461,9 @@ module.exports = function (app) {
 		render: function render() {
 			this.$el.html(this.template(this.model.toJSON()));
 
-			var addedElements = this.getRenderedItems(app.views.tabRow, this.model.rows);
+			var rendered = this.getRenderedModels(app.views.tabRow, this.model.rows);
 
-			this.$el.find('tbody').html(addedElements);
+			this.$el.find('tbody').html(rendered);
 
 			return this;
 		}

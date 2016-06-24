@@ -6,13 +6,19 @@ namespace GatherContent\Importer\Admin\Mapping;
  */
 class Items_Sync extends Base {
 
+	/**
+	 * Template_Mappings
+	 *
+	 * @var Template_Mappings
+	 */
+	public $mappings;
+
 	protected $items = array();
-	protected $edit_mapping_link = '';
 
 	public function __construct( array $args ) {
 		parent::__construct( $args );
-		$this->items             = $args['items'];
-		$this->edit_mapping_link = $args['edit_mapping_link'];
+		$this->mappings = $args['mappings'];
+		$this->items    = $args['items'];
 	}
 
 	/**
@@ -36,10 +42,13 @@ class Items_Sync extends Base {
 	public function ui_page() {
 		// Output the markup for the JS to build on.
 		?>
-		<input type="hidden" name="post_id" value="<?php echo $this->mapping_id; ?>"/>
+		<input type="hidden" name="mapping_id" id="gc-input-mapping_id" value="<?php echo $this->mapping_id; ?>"/>
+		<?php foreach ( $_GET as $key => $value ) : if ( 'mapping' === $key ) { continue; } ?>
+			<input type="hidden" name="<?php echo esc_attr( $key ); ?>" id="gc-input-<?php echo esc_attr( $key ); ?>" value="<?php echo esc_attr( $value ); ?>" />
+		<?php endforeach; ?>
 		<div id="sync-tabs"><span class="gc-loader spinner is-active"></span></div>
 		<p class="description">
-			<?php echo $this->edit_mapping_link; ?>
+			<a href="<?php echo get_edit_post_link( $this->mapping_id ); ?>"><?php echo $this->mappings->args->labels->edit_item; ?></a>
 		</p>
 		<?php
 	}
@@ -54,8 +63,7 @@ class Items_Sync extends Base {
 	protected function get_localize_data() {
 		return array(
 			'_items'  => array_values( $this->items ),
-			'percent' => absint( get_post_meta( $this->mapping_id, '_gc_sync_percent', 1 ) ),
-			// 'percent' => 22,
+			'percent' => $this->mappings->get_pull_percent( $this->mapping_id ),
 		);
 	}
 

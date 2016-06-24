@@ -1,5 +1,6 @@
 <?php
 namespace GatherContent\Importer;
+use WP_Query;
 
 /**
  * Utility function for doing array_map recursively.
@@ -62,4 +63,28 @@ function enqueue_script( $handle, $filename, $deps = [], $ver = GATHERCONTENT_VE
 	$suffix = defined( 'SCRIPT_DEBUG' ) && SCRIPT_DEBUG ? '' : '.min';
 
 	wp_enqueue_script( $handle, GATHERCONTENT_URL . "assets/js/{$filename}{$suffix}.js", $deps, $ver, 1 );
+}
+
+function get_posts_by_item_id( $item_id, $args = array() ) {
+	$query = new WP_Query( wp_parse_args( $args, array(
+		'post_type'      => 'any',
+		'posts_per_page' => 1,
+		'no_found_rows'  => true,
+		'meta_query'     => array(
+			array(
+				'key'   => '_gc_mapped_item_id',
+				'value' => $item_id,
+			),
+		),
+	) ) );
+
+	return $query->have_posts() && $query->post ? $query->post : false;
+}
+
+function get_post_item_id( $post_id ) {
+	return get_post_meta( $post_id, '_gc_mapped_item_id', 1 );
+}
+
+function update_post_item_id( $post_id, $item_id ) {
+	return update_post_meta( $post_id, '_gc_mapped_item_id', $item_id );
 }

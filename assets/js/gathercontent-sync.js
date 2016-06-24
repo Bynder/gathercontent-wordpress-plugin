@@ -1,5 +1,5 @@
 /**
- * GatherContent Importer - v3.0.0 - 2016-06-22
+ * GatherContent Importer - v3.0.0 - 2016-06-23
  * http://www.gathercontent.com
  *
  * Copyright (c) 2016 GatherContent
@@ -23,15 +23,46 @@ module.exports = Backbone.Collection.extend({
 module.exports = function (app) {
 	return app.collections.base.extend({
 		model: app.models.item,
+		totalChecked: 0,
+		allChecked: false,
+		syncEnabled: false,
 
 		initialize: function initialize() {
 			this.listenTo(this, 'checkAll', this.toggleChecked);
+			this.listenTo(this, 'change:checked', this.checkChecked);
+		},
+
+		checkChecked: function checkChecked(model) {
+			var render = false;
+
+			if (model.changed.checked) {
+				this.totalChecked++;
+			} else {
+				if (this.totalChecked === this.length) {
+					this.allChecked = false;
+					render = true;
+				}
+				this.totalChecked--;
+			}
+
+			var syncWasEnabled = this.syncEnabled;
+			this.syncEnabled = this.totalChecked > 0;
+
+			if (syncWasEnabled !== this.syncEnabled) {
+				this.trigger('enabledChange', this.syncEnabled);
+			}
+
+			if (this.totalChecked < this.length) {
+				this.trigger('notAllChecked', false);
+			}
 		},
 
 		toggleChecked: function toggleChecked(checked) {
+			this.allChecked = checked;
 			this.each(function (model) {
 				model.set('checked', checked ? true : false);
 			});
+			this.trigger('render');
 		}
 	});
 };
@@ -45,7 +76,66 @@ module.exports = function (app) {
 	app.views = { base: require('./views/base.js') };
 };
 
-},{"./collections/base.js":1,"./models/base.js":4,"./views/base.js":7}],4:[function(require,module,exports){
+},{"./collections/base.js":1,"./models/base.js":5,"./views/base.js":8}],4:[function(require,module,exports){
+'use strict';
+
+module.exports = function (app, $, gc) {
+	var log = gc.log;
+
+	return app.models.base.extend({
+		defaults: {
+			action: 'gc_sync_items',
+			data: '',
+			percent: 0,
+			nonce: '',
+			id: '',
+			stopSync: true
+		},
+
+		initialize: function initialize() {
+			this.defaults.nonce = gc.el('_wpnonce').value;
+			this.defaults.id = gc.el('gc-input-mapping_id').value;
+			this.set('nonce', this.defaults.nonce);
+			this.set('id', this.defaults.id);
+
+			this.listenTo(this, 'send', this.send);
+		},
+
+		reset: function reset() {
+			this.clear().set(this.defaults);
+			return this;
+		},
+
+		send: function send(formData, cb, percent, failcb) {
+			if (percent) {
+				this.set('percent', percent);
+			}
+
+			$.post(window.ajaxurl, {
+				action: this.get('action'),
+				percent: this.get('percent'),
+				nonce: this.get('nonce'),
+				id: this.get('id'),
+				data: formData
+			}, (function (response) {
+				this.trigger('response', response, formData);
+
+				if (response.success) {
+					return cb(response);
+				}
+
+				if (failcb) {
+					return failcb(response);
+				}
+			}).bind(this));
+
+			return this;
+		}
+
+	});
+};
+
+},{}],5:[function(require,module,exports){
 "use strict";
 
 module.exports = Backbone.Model.extend({
@@ -54,7 +144,7 @@ module.exports = Backbone.Model.extend({
 	}
 });
 
-},{}],5:[function(require,module,exports){
+},{}],6:[function(require,module,exports){
 'use strict';
 
 module.exports = function (app) {
@@ -83,7 +173,7 @@ module.exports = function (app) {
 	});
 };
 
-},{}],6:[function(require,module,exports){
+},{}],7:[function(require,module,exports){
 'use strict';
 
 window.GatherContent = window.GatherContent || {};
@@ -97,6 +187,8 @@ window.GatherContent = window.GatherContent || {};
 	// Initiate base objects.
 	require('./initiate-objects.js')(app);
 
+	app.ajax = require('./models/ajax.js')(app, $, gc);
+
 	/*
   * Item setup
   */
@@ -104,7 +196,7 @@ window.GatherContent = window.GatherContent || {};
 	app.models.item = require('./models/item.js')(app);
 	app.collections.items = require('./collections/items.js')(app);
 	app.views.item = require('./views/item.js')(app);
-	app.views.items = require('./views/items.js')(app, $, gc.percent);
+	app.views.items = require('./views/items.js')(app, $, gc);
 
 	app.init = function () {
 		// Kick it off.
@@ -116,7 +208,7 @@ window.GatherContent = window.GatherContent || {};
 	$(app.init);
 })(window, document, jQuery, window.GatherContent);
 
-},{"./collections/items.js":2,"./initiate-objects.js":3,"./models/item.js":5,"./views/item.js":8,"./views/items.js":9}],7:[function(require,module,exports){
+},{"./collections/items.js":2,"./initiate-objects.js":3,"./models/ajax.js":4,"./models/item.js":6,"./views/item.js":9,"./views/items.js":10}],8:[function(require,module,exports){
 'use strict';
 
 module.exports = Backbone.View.extend({
@@ -124,11 +216,11 @@ module.exports = Backbone.View.extend({
 		this.model.set('expanded', !this.model.get('expanded'));
 	},
 
-	getRenderedItems: function getRenderedItems(View, items) {
-		items = items || this.collection;
+	getRenderedModels: function getRenderedModels(View, models) {
+		models = models || this.collection;
 		var addedElements = document.createDocumentFragment();
 
-		items.each(function (model) {
+		models.each(function (model) {
 			var view = new View({ model: model }).render();
 			addedElements.appendChild(view.el);
 		});
@@ -142,7 +234,7 @@ module.exports = Backbone.View.extend({
 	}
 });
 
-},{}],8:[function(require,module,exports){
+},{}],9:[function(require,module,exports){
 'use strict';
 
 module.exports = function (app) {
@@ -174,26 +266,63 @@ module.exports = function (app) {
 	});
 };
 
-},{}],9:[function(require,module,exports){
+},{}],10:[function(require,module,exports){
 'use strict';
 
-module.exports = function (app, $, percent) {
+module.exports = function (app, $, gc) {
+	var percent = gc.percent;
+	var log = gc.log;
 	var thisView;
+	var masterCheckSelector = '.gc-field-th.check-column input';
+
 	return app.views.base.extend({
 		el: '#sync-tabs',
 		template: wp.template('gc-items-sync'),
 		progressTemplate: wp.template('gc-items-sync-progress'),
 		spinnerRow: '<tr><td colspan="3"><span class="gc-loader spinner is-active"></span></td></tr>',
-
 		$wrap: $('.gc-admin-wrap'),
 		intervalID: null,
-		hits: 0,
-		time: 500,
-		stopSync: false,
 
-		events: {
-			'change th.check-column input': 'checkAll',
-			'click .gc-cancel-sync': 'clickCancelSync'
+		events: function events() {
+			var evts = {
+				'click .gc-cancel-sync': 'clickCancelSync'
+			};
+			evts['change ' + masterCheckSelector] = 'checkAll';
+
+			return evts;
+		},
+
+		initialize: function initialize() {
+			thisView = this;
+
+			app.ajax.prototype.defaults.checkHits = 0;
+			app.ajax.prototype.defaults.time = 500;
+
+			this.ajax = new app.ajax({
+				percent: percent
+			});
+
+			this.listenTo(this.ajax, 'response', this.ajaxResponse);
+			this.listenTo(this.collection, 'render', this.render);
+			this.listenTo(this.collection, 'enabledChange', this.checkEnableButton);
+			this.listenTo(this.collection, 'notAllChecked', this.allCheckedStatus);
+			this.listenTo(this, 'render', this.render);
+
+			this.$wrap.on('submit', 'form', this.submit.bind(this));
+
+			this.initRender();
+		},
+
+		checkEnableButton: function checkEnableButton(syncEnabled) {
+			this.buttonStatus(syncEnabled);
+		},
+
+		buttonStatus: function buttonStatus(enable) {
+			this.$wrap.find('.button-primary').prop('disabled', !enable);
+		},
+
+		allCheckedStatus: function allCheckedStatus(checked) {
+			this.$wrap.find(masterCheckSelector).prop('checked', checked);
 		},
 
 		checkAll: function checkAll(evt) {
@@ -203,30 +332,6 @@ module.exports = function (app, $, percent) {
 		clickCancelSync: function clickCancelSync(evt) {
 			evt.preventDefault();
 			this.cancelSync();
-		},
-
-		cancelSync: function cancelSync(url) {
-			console.warn('cancelSync');
-			percent = null;
-			this.stopSync = true;
-			this.hits = 0;
-			this.time = 500;
-			this.clearInterval();
-			if (url) {
-				window.location.href = url;
-			} else {
-				this.initRender();
-			}
-		},
-
-		initialize: function initialize() {
-			thisView = this;
-			this.listenTo(this.collection, 'render', this.render);
-			this.listenTo(this, 'render', this.render);
-
-			this.$wrap.on('submit', 'form', this.submit.bind(this));
-
-			this.initRender();
 		},
 
 		doSpinner: function doSpinner() {
@@ -240,49 +345,61 @@ module.exports = function (app, $, percent) {
 
 		startSync: function startSync(formData) {
 			this.doSpinner();
-			this.stopSync = false;
+			this.ajax.reset().set('stopSync', false);
 			this.renderProgress(percent);
-			this.ajaxPost(formData, percent);
+			this.doAjax(formData, percent);
 		},
 
-		ajaxPost: function ajaxPost(formData, completed) {
-			$.post(window.ajaxurl, {
-				action: 'gc_sync_items',
-				data: formData,
-				percent: completed
-			}, this.ajaxResponse.bind(this));
+		cancelSync: function cancelSync(url) {
+			console.warn('cancelSync');
+			percent = null;
+
+			this.ajax.reset();
+			this.clearInterval();
+
+			if (url) {
+				this.doAjax('cancel', 0, function () {
+					window.location.href = url;
+				});
+			} else {
+				this.doAjax('cancel', 0, function () {});
+				this.initRender();
+			}
 		},
 
-		ajaxResponse: function ajaxResponse(response) {
-			this.hits++;
+		doAjax: function doAjax(formData, completed, cb) {
+			cb = cb || this.ajaxSuccess.bind(this);
+			this.ajax.send(formData, cb, completed);
+		},
 
-			if (this.stopSync) {
+		ajaxSuccess: function ajaxSuccess(response) {
+			if (this.ajax.get('stopSync')) {
 				return;
 			}
 
-			if (response.success) {
-				percent = response.data.percent || 1;
+			percent = response.data.percent || 1;
+			var hits = this.checkHits();
+			var time = this.ajax.get('time');
 
-				if (this.hits > 25 && this.time < 2000) {
-					this.clearInterval();
-					this.time = 2000;
-				} else if (this.hits > 50 && this.time < 5000) {
-					this.clearInterval();
-					this.time = 5000;
-				}
+			if (hits > 25 && time < 2000) {
+				this.clearInterval();
+				this.ajax.set('time', 2000);
+			} else if (hits > 50 && time < 5000) {
+				this.clearInterval();
+				this.ajax.set('time', 5000);
+			}
 
-				this.setInterval(this.checkProgress.bind(this));
+			this.setInterval(this.checkProgress.bind(this));
 
-				if (percent > 99) {
-					this.cancelSync(window.location.href + '&updated=1');
-				} else {
-					this.renderProgressUpdate(percent);
-				}
+			if (percent > 99) {
+				this.cancelSync(window.location.href + '&updated=1');
+			} else {
+				this.renderProgressUpdate(percent);
 			}
 		},
 
 		setInterval: function setInterval(callback) {
-			this.intervalID = this.intervalID || window.setInterval(callback, this.time);
+			this.intervalID = this.intervalID || window.setInterval(callback, this.ajax.get('time'));
 		},
 
 		clearInterval: function clearInterval() {
@@ -291,8 +408,30 @@ module.exports = function (app, $, percent) {
 		},
 
 		checkProgress: function checkProgress() {
-			console.log('checkProgress ' + this.hits + ' ' + this.time);
-			this.ajaxPost('check', percent);
+			console.log('checkProgress ' + this.checkHits() + ' ' + this.ajax.get('time'));
+			this.doAjax('check', percent);
+		},
+
+		checkHits: function checkHits() {
+			return window.parseInt(this.ajax.get('checkHits'), 10);
+		},
+
+		ajaxResponse: function ajaxResponse(response, formData) {
+			log('warn', 'response', response);
+
+			if ('check' === formData) {
+				this.ajax.set('checkHits', this.checkHits() + 1);
+			} else {
+				this.ajax.set('checkHits', 0);
+			}
+
+			if (!response.success) {
+				this.renderProgressUpdate(0);
+				if (response.data) {
+					window.alert(response.data);
+				}
+				this.cancelSync();
+			}
 		},
 
 		renderProgressUpdate: function renderProgressUpdate(percent) {
@@ -301,29 +440,36 @@ module.exports = function (app, $, percent) {
 
 		renderProgress: function renderProgress(percent) {
 			this.$wrap.addClass('sync-progress');
-			this.$wrap.find('.button-primary').prop('disabled', true);
+			this.buttonStatus(false);
 			this.$el.html(this.progressTemplate({ percent: percent }));
 		},
 
 		initRender: function initRender() {
+			// If sync is going, show that status.
 			if (percent > 0 && percent < 100) {
 				this.startSync('check');
 			} else {
-				this.$wrap.removeClass('sync-progress');
-				this.$wrap.find('.button-primary').prop('disabled', false);
-				this.$el.html(this.template());
+				this.$el.html(this.template({ checked: this.collection.allChecked }));
 				this.render();
 			}
 		},
 
 		render: function render() {
+			// Not syncing, so remove wrap-class
+			this.$wrap.removeClass('sync-progress');
 
-			var addedElements = this.getRenderedItems(app.views.item);
-			this.$el.find('tbody').html(addedElements);
+			// Re-render and replace table rows.
+			this.$el.find('tbody').html(this.getRenderedModels(app.views.item));
+
+			// Make sync button enabled/disabled
+			this.buttonStatus(this.collection.syncEnabled);
+
+			// Make check-all inputs checked/unchecked
+			this.allCheckedStatus(this.collection.allChecked);
 
 			return this;
 		}
 	});
 };
 
-},{}]},{},[6]);
+},{}]},{},[7]);

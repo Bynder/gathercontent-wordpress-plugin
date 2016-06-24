@@ -14,6 +14,13 @@ class Types extends Plugin_Base {
 	protected $core_types = array();
 
 	/**
+	 * Array of Type
+	 *
+	 * @var Type[]
+	 */
+	protected $field_types = array();
+
+	/**
 	 * Creates an instance of this class.
 	 *
 	 * @since 3.0.0
@@ -39,6 +46,10 @@ class Types extends Plugin_Base {
 		}
 
 		return $this;
+	}
+
+	public function get_field_types() {
+		return $this->field_types;
 	}
 
 }

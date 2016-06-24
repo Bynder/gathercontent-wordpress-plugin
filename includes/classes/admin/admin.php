@@ -43,7 +43,8 @@ class Admin extends Base {
 			$this->api()->set_user( $this->get_setting( 'account_owner_email' ) );
 			$this->api()->set_api_key( $this->get_setting( 'api_key' ) );
 
-			if ( ! $this->api()->get( 'me' ) ) {
+			// Get 'me'. If that fails, try again w/o cached response, to flush "fail" response cache.
+			if ( ! $this->api()->get_me() && ! $this->api()->get_me( 1 ) ) {
 
 				$this->add_settings_error( $this->option_name, 'gc-api-connect-fail', __( 'We had trouble connecting to the GatherContent API. Please check your settings.', 'gathercontent-import' ), 'error' );
 
@@ -201,7 +202,7 @@ class Admin extends Base {
 			'',
 			function() {
 
-				if ( $user = $this->api()->get( 'me' ) ) {
+				if ( $user = $this->api()->get_me() ) {
 					if ( isset( $user->first_name ) ) {
 						$this->view( 'user-profile', (array) $user );
 					}

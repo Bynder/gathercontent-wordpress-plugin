@@ -1,6 +1,7 @@
 <?php
 namespace GatherContent\Importer\Admin\Ajax;
 use GatherContent\Importer\Base as Plugin_Base;
+use GatherContent\Importer\Post_Types\Template_Mappings;
 
 class Handlers extends Plugin_Base {
 
@@ -18,9 +19,16 @@ class Handlers extends Plugin_Base {
 	 */
 	public $sync_items;
 
-	public function __construct() {
-		$this->select2 = new Select2;
-		$this->sync_items = new Sync_Items;
+	/**
+	 * Creates an instance of this class.
+	 *
+	 * @since 3.0.0
+	 *
+	 * @param $mappings Template_Mappings object
+	 */
+	public function __construct( Template_Mappings $mappings ) {
+		$this->select2    = new Select2;
+		$this->sync_items = new Sync_Items( $mappings );
 	}
 
 	public function init_hooks() {

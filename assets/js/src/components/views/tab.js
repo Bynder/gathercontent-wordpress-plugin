@@ -15,9 +15,9 @@ module.exports = function( app ) {
 		render : function() {
 			this.$el.html( this.template( this.model.toJSON() ) );
 
-			var addedElements = this.getRenderedItems( app.views.tabRow, this.model.rows );
+			var rendered = this.getRenderedModels( app.views.tabRow, this.model.rows );
 
-			this.$el.find( 'tbody' ).html( addedElements );
+			this.$el.find( 'tbody' ).html( rendered );
 
 			return this;
 		}

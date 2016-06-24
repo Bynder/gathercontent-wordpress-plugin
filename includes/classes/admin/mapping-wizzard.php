@@ -136,7 +136,7 @@ class Mapping_Wizzard extends Base {
 				break;
 
 			case self::SYNC:
-				$args['submit_button_text'] = __( 'Sync Items', 'gathercontent-import' );
+				$args['submit_button_text'] = __( 'Import Selected Items', 'gathercontent-import' );
 				break;
 		}
 
@@ -152,7 +152,7 @@ class Mapping_Wizzard extends Base {
 		if ( $this->_get_val( 'updated' ) &&  $this->_get_val( 'project' ) &&  $this->_get_val( 'template' ) ) {
 
 			if ( $this->_get_val( 'sync-items' ) ) {
-				return $this->add_settings_error( $this->option_name, 'gc-mapping-updated', __( 'Item Sync complete!', 'gathercontent-import' ), 'updated' );
+				return $this->add_settings_error( $this->option_name, 'gc-mapping-updated', __( 'Items Import complete!', 'gathercontent-import' ), 'updated' );
 			}
 
 			$label = 1 === absint( $this->_get_val( 'updated' ) ) ? 'item_updated' : 'item_saved';
@@ -218,7 +218,7 @@ class Mapping_Wizzard extends Base {
 
 	public function select_project_fields_ui( $field ) {
 		$field_id = $field->param( 'id' );
-		$accounts = $this->api()->get( 'accounts' );
+		$accounts = $this->api()->get_accounts();
 
 		if ( ! $accounts ) {
 			return $this->add_settings_error( $this->option_name, 'gc-missing-accounts', sprintf( __( 'We couldn\'t find any accounts associated with your GatherContent API credentials. Please <a href="%s">check your settings</a>.', 'gathercontent-import' ), $this->parent_url ) );
@@ -233,7 +233,7 @@ class Mapping_Wizzard extends Base {
 			$options = array();
 			$value = '';
 
-			if ( $projects = $this->api()->get( 'projects?account_id=' . $account->id ) ) {
+			if ( $projects = $this->api()->get_account_projects( $account->id ) ) {
 				foreach ( $projects as $project ) {
 					$val = esc_attr( $project->id );
 					$options[ $val ] = esc_attr( $project->name );
@@ -269,7 +269,7 @@ class Mapping_Wizzard extends Base {
 	 * @return void
 	 */
 	public function select_template() {
-		$project = $this->api()->get( 'projects/' . $this->_get_val( 'project' ) );
+		$project = $this->api()->get_project( absint( $this->_get_val( 'project' ) ) );
 
 		$section = new Form_Section(
 			'select_template',
@@ -292,7 +292,7 @@ class Mapping_Wizzard extends Base {
 		$options    = array();
 
 		$value = '';
-		if ( $templates = $this->api()->get( 'templates?project_id=' . $project_id ) ) {
+		if ( $templates = $this->api()->get_project_templates( absint( $project_id ) ) ) {
 
 			foreach ( $templates as $template ) {
 				$desc = esc_attr( $template->description );
@@ -338,8 +338,8 @@ class Mapping_Wizzard extends Base {
 	 * @return void
 	 */
 	public function map_template() {
-		$template   = $this->api()->get( 'templates/' . esc_attr( $this->_get_val( 'template' ) ) );
-		$project    = $this->api()->get( 'projects/' . esc_attr( $this->_get_val( 'project' ) ) );
+		$template   = $this->api()->get_template( absint( $this->_get_val( 'template' ) ) );
+		$project    = $this->api()->get_project( absint( $this->_get_val( 'project' ) ) );
 		$mapping_id = absint( $this->_get_val( 'mapping' ) );
 		$mapping_id = $mapping_id && get_post( $mapping_id ) ? $mapping_id : false;
 		$sync_items = $mapping_id && $this->_get_val( 'sync-items' );
@@ -361,7 +361,7 @@ class Mapping_Wizzard extends Base {
 			: __( 'Unknown Template', 'gathercontent-import' );
 
 		if ( $sync_items ) {
-			$title_prefix = __( 'Sync Items for: %s', 'gathercontent-import' );
+			$title_prefix = __( 'Import Items for: %s', 'gathercontent-import' );
 		} elseif ( $mapping_id ) {
 			$title_prefix = __( 'Edit Mapping for: %s', 'gathercontent-import' );
 		} else {
@@ -384,11 +384,12 @@ class Mapping_Wizzard extends Base {
 		);
 
 		if ( ! $sync_items ) {
+
 			$this->template_mapper = new Mapping\Template_Mapper( array(
 				'mapping_id'  => $mapping_id,
 				'template'    => $template,
 				'project'     => $project,
-				'statuses'    => $this->api()->get( 'projects/' . esc_attr( $this->_get_val( 'project' ) ) .'/statuses' ),
+				'statuses'    => $this->api()->get_project_statuses( absint( $this->_get_val( 'project' ) ) ),
 				'option_name' => $this->option_name,
 			) );
 
@@ -400,18 +401,12 @@ class Mapping_Wizzard extends Base {
 
 		} else {
 
-			$edit_link = sprintf(
-				'<a href="%s">%s</a>',
-				get_edit_post_link( $mapping_id ),
-				$this->mappings->args->labels->edit_item
-			);
-
 			$this->items_sync = new Mapping\Items_Sync( array(
 				'mapping_id'        => $mapping_id,
 				'template'          => $template,
 				'project'           => $project,
+				'mappings'          => $this->mappings,
 				'items'             => $this->filter_items_by_template( $project->id, $template->id ),
-				'edit_mapping_link' => $edit_link,
 			) );
 
 			$section->add_field( 'mapping', '', array( $this->items_sync, 'ui' ) );
@@ -593,7 +588,7 @@ class Mapping_Wizzard extends Base {
 			return $this->project_items[ $project_id ];
 		}
 
-		$this->project_items[ $project_id ] = $this->api()->get( 'items?project_id=' . $project_id );
+		$this->project_items[ $project_id ] = $this->api()->get_project_items( $project_id );
 
 		return $this->project_items[ $project_id ];
 	}

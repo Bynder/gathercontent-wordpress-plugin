@@ -1,5 +1,6 @@
 <?php
 namespace GatherContent\Importer\Post_Types;
+use GatherContent\Importer\Mapping;
 use WP_Query;
 
 class Template_Mappings extends Base {
@@ -197,6 +198,72 @@ class Template_Mappings extends Base {
 		}
 
 		return $link;
+	}
+
+	public function get_mapping_template( $mapping_id ) {
+		return get_post_meta( $post_id, '_gc_template', 1 );
+	}
+
+	public function get_mapping_project( $mapping_id ) {
+		return get_post_meta( $post_id, '_gc_project', 1 );
+	}
+
+	public function get_items_to_pull( $mapping_id ) {
+		$items = get_post_meta( $mapping_id, '_gc_sync_items', 1 );
+
+		return is_array( $items ) ? $items : array();
+	}
+
+	public function update_items_to_sync( $mapping_id, $items ) {
+		if ( empty( $items['pending'] ) ) {
+			return delete_post_meta( $mapping_id, '_gc_sync_items' );
+		}
+
+		return update_post_meta( $mapping_id, '_gc_sync_items', $items );
+	}
+
+	public function get_pull_percent( $mapping_id ) {
+		$percent = 100;
+
+		$items = $this->get_items_to_pull( $mapping_id );
+
+		if ( ! empty( $items ) ) {
+
+			if ( empty( $items['pending'] ) ) {
+				delete_post_meta( $mapping_id, '_gc_sync_items' );
+			} else {
+
+				$pending = count( $items['pending'] );
+				$done = ! empty( $items['complete'] ) ? count( $items['complete'] ) : 0;
+
+				$percent = $done / ( $pending + $done );
+			}
+		}
+
+		return $percent;
+	}
+
+	public function get_mapping_data( $post ) {
+		$post = is_numeric( $post ) ? get_post( $post ) : $post;
+		if ( isset( $post->mapping ) ) {
+			return $post->mapping;
+		}
+
+		$post->mapping = new Mapping( $post );
+
+		return $post->mapping->data();
+	}
+
+	public function is_mapping_post( $post ) {
+		if ( is_numeric( $post ) ) {
+			$post = get_post( $post );
+		}
+
+		if ( $post && isset( $post->post_type ) && $post->post_type === $this->slug ) {
+			return $post;
+		}
+
+		return false;
 	}
 
 }

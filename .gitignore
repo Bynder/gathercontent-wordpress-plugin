@@ -1,6 +1,6 @@
 node_modules
 release
-vendor
+/vendor
 composer.lock
 phpunit.xml
 .idea
@@ -12,7 +12,8 @@ phpunit.xml
 .LSOverride
 
 # Icon must end with two \r
-Icon
+Icon
+
 
 # Thumbnails
 ._*

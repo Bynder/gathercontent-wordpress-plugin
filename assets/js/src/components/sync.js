@@ -9,6 +9,8 @@ window.GatherContent = window.GatherContent || {};
 	// Initiate base objects.
 	require( './initiate-objects.js' )( app );
 
+	app.ajax = require( './models/ajax.js' )( app, $, gc );
+
 	/*
 	 * Item setup
 	 */
@@ -16,7 +18,7 @@ window.GatherContent = window.GatherContent || {};
 	app.models.item = require( './models/item.js' )( app );
 	app.collections.items = require( './collections/items.js' )( app );
 	app.views.item = require( './views/item.js' )( app );
-	app.views.items = require( './views/items.js' )( app, $, gc.percent );
+	app.views.items = require( './views/items.js' )( app, $, gc );
 
 	app.init = function() {
 		// Kick it off.

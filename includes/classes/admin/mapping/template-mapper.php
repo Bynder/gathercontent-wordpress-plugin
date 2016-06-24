@@ -48,7 +48,7 @@ class Template_Mapper extends Base {
 		if ( $this->mapping_id ) {
 
 			echo '<div class="sync-items-descriptions">
-			<p class="description"><a href="'. esc_url( add_query_arg( 'sync-items', 1 ) ) .'"><span class="dashicons dashicons-randomize"> </span>' . __( 'Sync Template Items with GatherContent', 'domain' ) . '</a></p>
+			<p class="description"><a href="'. esc_url( add_query_arg( 'sync-items', 1 ) ) .'"><span class="dashicons dashicons-randomize"> </span>' . __( 'Import Template Items from GatherContent', 'domain' ) . '</a></p>
 			</div>';
 
 			$this->view( 'input', array(
@@ -148,6 +148,8 @@ class Template_Mapper extends Base {
 			new Field_Types\Post( $this->post_options() ),
 			new Field_Types\Taxonomy( $this->post_types() ),
 			new Field_Types\Meta(),
+			// @todo add
+			// new Field_Types\Media(),
 		);
 
 		if ( defined( 'WPSEO_VERSION' ) ) {

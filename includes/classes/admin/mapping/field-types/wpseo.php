@@ -82,7 +82,11 @@ class WPSEO extends Base implements Type {
 			}
 
 			if ( $can_add ) {
-				$seo_key = '_yoast_wpseo_' . esc_attr( $field_name );
+
+				$seo_key = 'focuskw_text_input' === $field_name
+					? '_yoast_wpseo_focuskw'
+					: '_yoast_wpseo_' . esc_attr( $field_name );
+
 				$this->seo_keys[ $seo_key ] = $seo_key;
 				$options[ $key ][ $seo_key ] = esc_html( $field['title'] );
 			}

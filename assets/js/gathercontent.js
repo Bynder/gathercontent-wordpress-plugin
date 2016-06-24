@@ -1,5 +1,5 @@
 /**
- * GatherContent Importer - v3.0.0 - 2016-06-22
+ * GatherContent Importer - v3.0.0 - 2016-06-23
  * http://www.gathercontent.com
  *
  * Copyright (c) 2016 GatherContent
@@ -29,16 +29,20 @@ module.exports = function log() {
 
 window.GatherContent = window.GatherContent || {};
 
-(function (window, document, $, undefined) {
+(function (window, document, $, gc, undefined) {
 	'use strict';
 
-	this.$id = function (id) {
-		return $(document.getElementById(id));
+	gc.el = function (id) {
+		return document.getElementById(id);
 	};
 
-	this.log = require('./log.js').bind(this);
+	gc.$id = function (id) {
+		return $(gc.el(id));
+	};
 
-	var main = this.main = {};
+	gc.log = require('./log.js').bind(gc);
+
+	var main = gc.main = {};
 
 	main.init = function () {
 		$(document.body).on('click', '.gc-nav-tab-wrapper:not( .gc-nav-tab-wrapper-bb ) .nav-tab', main.changeTabs).on('click', '.gc-reveal-items', main.maybeReveal);
@@ -53,7 +57,7 @@ window.GatherContent = window.GatherContent || {};
 		main.$tabNav.removeClass('nav-tab-active');
 		$(this).addClass('nav-tab-active');
 		main.$tabs.addClass('hidden');
-		$(document.getElementById($(this).attr('href').substring(1))).removeClass('hidden');
+		gc.$id($(this).attr('href').substring(1)).removeClass('hidden');
 	};
 
 	main.maybeReveal = function (evt) {
@@ -70,6 +74,6 @@ window.GatherContent = window.GatherContent || {};
 	};
 
 	$(main.init);
-}).call(window.GatherContent, window, document, jQuery);
+})(window, document, jQuery, window.GatherContent);
 
 },{"./log.js":1}]},{},[2]);
