@@ -2,10 +2,6 @@ module.exports = function( app ) {
 	return app.collections.base.extend({
 		model : app.models.tab,
 
-		// initialize: function() {
-		// 	console.log('this (collection)', this);
-		// },
-
 		showTab: function( id ) {
 			var model = this.getById( id );
 

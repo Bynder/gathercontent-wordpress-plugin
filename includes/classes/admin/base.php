@@ -111,7 +111,8 @@ abstract class Base extends Plugin_Base {
 
 	public function script_localize() {
 		wp_localize_script( 'gathercontent', 'GatherContent', apply_filters( 'gathercontent_localized_data', array(
-			'debug' => defined( 'SCRIPT_DEBUG' ) && SCRIPT_DEBUG,
+			'debug'     => defined( 'SCRIPT_DEBUG' ) && SCRIPT_DEBUG,
+			'queryargs' => $_GET,
 		) ) );
 	}
 
