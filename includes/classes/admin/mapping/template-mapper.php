@@ -197,7 +197,6 @@ class Template_Mapper extends Base {
 			'label'       => __( 'Mapping Defaults', 'gathercontent-import' ),
 			'hidden'      => true,
 			'navClasses'  => 'alignright',
-			'viewId'      => 'defaultTab',
 			'rows'        => $this->post_options(),
 			'post_author' => $this->get_value( 'post_author', 'absint', 1 ),
 			'post_status' => $this->get_value( 'post_status', 'esc_attr', 'draft' ),

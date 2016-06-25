@@ -1,5 +1,5 @@
 /**
- * GatherContent Importer - v3.0.0 - 2016-06-23
+ * GatherContent Importer - v3.0.0 - 2016-06-24
  * http://www.gathercontent.com
  *
  * Copyright (c) 2016 GatherContent
@@ -346,7 +346,7 @@ module.exports = function (app, $, gc) {
 		startSync: function startSync(formData) {
 			this.doSpinner();
 			this.ajax.reset().set('stopSync', false);
-			this.renderProgress(percent);
+			this.renderProgress(100 === window.parseInt(percent, 10) ? 0 : percent);
 			this.doAjax(formData, percent);
 		},
 

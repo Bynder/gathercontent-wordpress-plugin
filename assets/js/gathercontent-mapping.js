@@ -1,5 +1,5 @@
 /**
- * GatherContent Importer - v3.0.0 - 2016-06-23
+ * GatherContent Importer - v3.0.0 - 2016-06-24
  * http://www.gathercontent.com
  *
  * Copyright (c) 2016 GatherContent
@@ -53,10 +53,6 @@ module.exports = function (app) {
 module.exports = function (app) {
 	return app.collections.base.extend({
 		model: app.models.tab,
-
-		// initialize: function() {
-		// 	console.log('this (collection)', this);
-		// },
 
 		showTab: function showTab(id) {
 			var model = this.getById(id);
@@ -149,7 +145,7 @@ module.exports = function (app) {
 			label: '',
 			name: '',
 			field_type: '',
-			post_type: 'wp-type-post',
+			post_type: 'post',
 			field_value: false,
 			expanded: false
 		},
@@ -158,8 +154,8 @@ module.exports = function (app) {
 
 			switch (attribute) {
 				case 'post_type':
-					if (app.defaults) {
-						value = app.defaults.get('post_type');
+					if (app.mappingView) {
+						value = app.mappingView.defaultTab.get('post_type');
 					}
 					break;
 			}
@@ -189,34 +185,12 @@ module.exports = function (app) {
 			label: '',
 			hidden: false,
 			navClasses: '',
-			viewId: 'tab',
-			linkViewId: 'tabLink',
 			rows: []
 		},
 
 		initialize: function initialize() {
 			this.rows = new app.collections.tabRows(this.get('rows'), { tab: this });
-			// this.rows.bind( 'change', this.change );
-		} /*,
-    _get : function( value, attribute ) {
-    var action;
-    	switch ( attribute ) {
-    	case 'navClass':
-    		value = 'hide' === this.get( 'action' ) ? '' : 'nav-tab-active';
-    		break;
-    		case 'tabClass':
-    		value = 'hide' === this.get( 'action' ) ? 'hidden' : '';
-    		break;
-    }
-    	return value;
-    },
-    get : function( attribute ) {
-    return this._get( Backbone.Model.prototype.get.call( this, attribute ), attribute );
-    },
-    // hijack the toJSON method and overwrite the data that is sent back to the view.
-    toJSON: function() {
-    return _.mapObject( Backbone.Model.prototype.toJSON.call( this ), _.bind( this._get, this ) );
-    }*/
+		}
 	});
 };
 
@@ -483,6 +457,7 @@ module.exports = function (app) {
 			this.listenTo(this.collection, 'render', this.render);
 			this.listenTo(this, 'render', this.render);
 
+			this.defaultTab = this.collection.getById('mapping-defaults');
 			this.render();
 		},
 
@@ -514,25 +489,25 @@ module.exports = function (app) {
 			this.$el.html(this.template());
 
 			// Add tab links
-			this.appendViewItems('.nav-tab-wrapper', 'linkViewId');
+			this.$el.find('.nav-tab-wrapper').append(this.getRenderedModels(app.views.tabLink));
 
 			// Add tab content
-			this.appendViewItems('.gc-template-tab-group', 'viewId');
+			this.renderTabs();
 
 			return this;
 		},
 
-		appendViewItems: function appendViewItems(appendSelector, viewIdId) {
-			var addedElements = document.createDocumentFragment();
+		renderTabs: function renderTabs() {
+			var frag = document.createDocumentFragment();
 
 			this.collection.each(function (model) {
-				var viewid = model.get(viewIdId);
+				var viewid = 'mapping-defaults' === model.get('id') ? 'defaultTab' : 'tab';
 				var view = new app.views[viewid]({ model: model });
 
-				addedElements.appendChild(view.render().el);
+				frag.appendChild(view.render().el);
 			});
 
-			this.$el.find(appendSelector).append(addedElements);
+			this.$el.find('.gc-template-tab-group').append(frag);
 		}
 
 	});

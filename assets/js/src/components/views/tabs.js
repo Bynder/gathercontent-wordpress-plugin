@@ -8,6 +8,7 @@ module.exports = function( app ) {
 			this.listenTo( this.collection, 'render', this.render );
 			this.listenTo( this, 'render', this.render );
 
+			this.defaultTab = this.collection.getById( 'mapping-defaults' );
 			this.render();
 		},
 
@@ -39,25 +40,25 @@ module.exports = function( app ) {
 			this.$el.html( this.template() );
 
 			// Add tab links
-			this.appendViewItems( '.nav-tab-wrapper', 'linkViewId' );
+			this.$el.find( '.nav-tab-wrapper' ).append( this.getRenderedModels( app.views.tabLink ) );
 
 			// Add tab content
-			this.appendViewItems( '.gc-template-tab-group', 'viewId' );
+			this.renderTabs();
 
 			return this;
 		},
 
-		appendViewItems: function( appendSelector, viewIdId ) {
-			var addedElements = document.createDocumentFragment();
+		renderTabs: function() {
+			var frag = document.createDocumentFragment();
 
 			this.collection.each( function( model ) {
-				var viewid = model.get( viewIdId );
+				var viewid = 'mapping-defaults' === model.get( 'id' ) ? 'defaultTab' : 'tab';
 				var view = new app.views[ viewid ]({ model: model });
 
-				addedElements.appendChild( view.render().el );
+				frag.appendChild( view.render().el );
 			});
 
-			this.$el.find( appendSelector ).append( addedElements );
+			this.$el.find( '.gc-template-tab-group' ).append( frag );
 		}
 
 	});

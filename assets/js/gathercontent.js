@@ -1,5 +1,5 @@
 /**
- * GatherContent Importer - v3.0.0 - 2016-06-23
+ * GatherContent Importer - v3.0.0 - 2016-06-24
  * http://www.gathercontent.com
  *
  * Copyright (c) 2016 GatherContent
@@ -46,6 +46,12 @@ window.GatherContent = window.GatherContent || {};
 
 	main.init = function () {
 		$(document.body).on('click', '.gc-nav-tab-wrapper:not( .gc-nav-tab-wrapper-bb ) .nav-tab', main.changeTabs).on('click', '.gc-reveal-items', main.maybeReveal);
+
+		if (gc.queryargs.mapping) {
+			var $menu = gc.$id('toplevel_page_gathercontent-import');
+			$menu.find('.current').removeClass('current');
+			$menu.find('[href="edit.php?post_type=gc_templates"]').parent().addClass('current');
+		}
 	};
 
 	main.changeTabs = function (evt) {

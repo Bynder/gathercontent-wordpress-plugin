@@ -5,7 +5,7 @@ module.exports = function( app ) {
 			label       : '',
 			name        : '',
 			field_type  : '',
-			post_type   : 'wp-type-post',
+			post_type   : 'post',
 			field_value : false,
 			expanded    : false,
 		},
@@ -14,8 +14,8 @@ module.exports = function( app ) {
 
 			switch ( attribute ) {
 				case 'post_type':
-					if ( app.defaults ) {
-						value = app.defaults.get( 'post_type' );
+					if ( app.mappingView ) {
+						value = app.mappingView.defaultTab.get( 'post_type' );
 					}
 					break;
 			}
