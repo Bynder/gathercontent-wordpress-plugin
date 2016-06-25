@@ -141,7 +141,7 @@ class Pull extends Base {
 				if ( isset( $tab->elements ) && $tab->elements ) {
 					foreach ( $tab->elements as $element ) {
 						$destination = $mapping->get( $element->name );
-						if ( ! $destination  ) {
+						if ( ! $destination || ! isset( $destination['type'], $destination['value'] ) ) {
 							break;
 						}
 
