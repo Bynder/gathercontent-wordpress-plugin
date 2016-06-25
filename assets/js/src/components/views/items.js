@@ -75,7 +75,7 @@ module.exports = function( app, $, gc ) {
 		startSync: function( formData ) {
 			this.doSpinner();
 			this.ajax.reset().set( 'stopSync', false );
-			this.renderProgress( percent );
+			this.renderProgress( 100 === window.parseInt( percent, 10 ) ? 0 : percent );
 			this.doAjax( formData, percent );
 		},
 
