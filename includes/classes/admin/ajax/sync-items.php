@@ -77,7 +77,7 @@ class Sync_Items extends Plugin_Base {
 		}
 
 		error_log( 'delete meta and cancel' );
-		delete_post_meta( $mapping_id, '_gc_sync_items' );
+		$this->mappings->update_items_to_sync( $mapping_id, false );
 
 		wp_send_json_success();
 	}
@@ -110,8 +110,8 @@ class Sync_Items extends Plugin_Base {
 		if (
 			! isset( $fields['import'], $fields['project'], $fields['template'] )
 			|| empty( $fields['import'] ) || ! is_array( $fields['import'] )
-			|| get_post_meta( $mapping_id, '_gc_project', 1 ) != $fields['project']
-			|| get_post_meta( $mapping_id, '_gc_template', 1 ) != $fields['template']
+			|| $this->mappings->get_mapping_project( $mapping_id ) != $fields['project']
+			|| $this->mappings->get_mapping_template( $mapping_id ) != $fields['template']
 		) {
 			wp_send_json_error( sprintf(
 				__( 'Error %d: Missing required form data.', 'gathercontent-import' ),
@@ -130,7 +130,7 @@ class Sync_Items extends Plugin_Base {
 		$count = count( $fields['import'] );
 
 		// Start the sync and bump percent value.
-		update_post_meta( $mapping->ID, '_gc_sync_items', array( 'pending' => $fields['import'] ) );
+		$this->mappings->update_items_to_sync( $mapping->ID, array( 'pending' => $fields['import'] ) );
 
 		error_log( __METHOD__ .': '. print_r( $mapping->ID, true ) );
 

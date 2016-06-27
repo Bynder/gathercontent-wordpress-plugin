@@ -214,8 +214,8 @@ class Template_Mappings extends Base {
 		return is_array( $items ) ? $items : array();
 	}
 
-	public function update_items_to_sync( $mapping_id, $items ) {
-		if ( empty( $items['pending'] ) ) {
+	public function update_items_to_sync( $mapping_id, $items = array() ) {
+		if ( empty( $items ) || empty( $items['pending'] ) ) {
 			return delete_post_meta( $mapping_id, '_gc_sync_items' );
 		}
 
