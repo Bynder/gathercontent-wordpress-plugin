@@ -210,13 +210,15 @@ abstract class Base extends Plugin_Base {
 		 */
 		$meta_keys_blacklist = apply_filters( 'gathercontent_importer_custom_field_keys_blacklist', array(
 			'_wp_attachment_image_alt' => 1,
-			'_wp_attachment_metadata' => 1,
-			'_wp_attached_file' => 1,
-			'_edit_lock' => 1,
-			'_edit_last' => 1,
-			'_wp_page_template' => 1,
-			'_gc_project' => 1,
-			'_gc_template' => 1,
+			'_wp_attachment_metadata'  => 1,
+			'_wp_attached_file'        => 1,
+			'_edit_lock'               => 1,
+			'_edit_last'               => 1,
+			'_wp_page_template'        => 1,
+			'_gc_project'              => 1,
+			'_gc_template'             => 1,
+			'_gc_sync_items'           => 1,
+			'_gc_mapped_item_id'       => 1,
 		) );
 
 		$keys = array();
