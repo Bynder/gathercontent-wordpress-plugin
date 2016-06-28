@@ -26,17 +26,17 @@ class Pull extends Base {
 		add_action( 'wp_async_gc_pull_items', array( $this, 'pull_items' ) );
 
 		if ( isset( $_GET['jtdebug'] ) ) {
-			// do_action( 'wp_async_gc_pull_items', get_post( 33 ) );
 			wp_die( '<xmp>maybe_pull_item: '. print_r( $this->maybe_pull_item( 33, 2861687 ), true ) .'</xmp>' );
 		}
 
 	}
 
 	public function pull_items( $mapping ) {
+		$this->mapping = $mapping;
 		try {
 
-			$mapping_data = $this->get_mapping_data( $mapping );
-			$items = $this->get_items_to_pull( $mapping->ID );
+			$this->set_mapping_data( $this->mapping );
+			$items = $this->get_items_to_pull( $this->mapping->ID );
 
 		} catch ( Exception $e ) {
 			$error = new WP_Error( 'gc_pull_items_fail_' . $e->getCode(), $e->getMessage(), $e->get_data() );
@@ -46,19 +46,19 @@ class Pull extends Base {
 
 		try {
 
-			$item = array_shift( $items['pending'] );
+			$item_id = array_shift( $items['pending'] );
 
-			$result = $this->pull_item( $mapping, $item );
+			$result = $this->pull_item( $this->mapping, $item_id );
 
 			$items['complete'] = isset( $items['complete'] ) ? $items['complete'] : array();
-			$items['complete'][] = $item;
+			$items['complete'][] = $item_id;
 
 			$this->mappings->update_items_to_sync( $mapping->ID, $items );
 
 			// If we have more items
 			if ( ! empty( $items['pending'] ) ) {
 				// Then trigger the next async request
-				do_action( 'gc_pull_items', $mapping );
+				do_action( 'gc_pull_items', $this->mapping );
 			}
 
 		} catch ( Exception $e ) {
@@ -79,26 +79,31 @@ class Pull extends Base {
 	}
 
 	protected function pull_item( $mapping, $item_id ) {
-		$mapping = $this->get_post( $mapping );
+		$this->mapping = $this->get_post( $mapping );
 
-		if ( ! $mapping || ! isset( $mapping->ID ) ) {
-			throw new Exception( sprintf( __( 'No mapping object found for: %s' ), print_r( $mapping, true ) ), __LINE__ );
+		if ( ! $this->mapping || ! isset( $this->mapping->ID ) ) {
+			throw new Exception( sprintf( __( 'No mapping object found for: %s' ), print_r( $this->mapping, true ) ), __LINE__ );
 		}
 
-		$mapping_data = $this->get_mapping_data( $mapping );
+		$this->set_mapping_data( $this->mapping );
 
-		$item = $this->get_item( $item_id );
+		$this->set_item( $item_id );
 
 		$post_data = array();
+		$attachments = false;
 
-		if ( $existing = \GatherContent\Importer\get_posts_by_item_id( $item_id ) ) {
+		if ( $existing = \GatherContent\Importer\get_post_by_item_id( $item_id ) ) {
 			$post_data = (array) $existing;
 		} else {
 			$post_data['ID'] = 0;
 		}
 
-		$post_data = $this->map_gc_data_to_wp_data( $mapping, $item, $post_data );
-		// wp_die( '<xmp>'. print_r( get_defined_vars(), true ) .'</xmp>' );
+		$post_data = $this->map_gc_data_to_wp_data( $post_data );
+
+		if ( ! empty( $post_data['attachments'] ) ) {
+			$attachments = $post_data['attachments'];
+			unset( $post_data['attachments'] );
+		}
 
 		$post_id = wp_insert_post( $post_data, 1 );
 
@@ -108,8 +113,31 @@ class Pull extends Base {
 
 		// Store item ID reference to post-meta.
 		\GatherContent\Importer\update_post_item_id( $post_id, $item_id );
+		\GatherContent\Importer\update_post_mapping_id( $post_id, $this->mapping->ID );
 
-		if ( $gc_status = $mapping->mapping->get( 'gc_status' ) ) {
+		if ( $attachments ) {
+			$attachments = apply_filters( 'gc_media_objects', $attachments, $post_data );
+			$replacements = $this->sideload_attachments( $post_id, $attachments );
+
+			if ( ! empty( $replacements ) ) {
+
+				// Do replacements
+				if ( ! empty( $replacements['post_content'] ) ) {
+					$post_data['post_content'] = strtr( $post_data['post_content'], $replacements['post_content'] );
+				}
+
+				if ( ! empty( $replacements['post_excerpt'] ) ) {
+					$post_data['post_excerpt'] = strtr( $post_data['post_excerpt'], $replacements['post_excerpt'] );
+				}
+
+				// And update post (but don't create a revision for it).
+				remove_action( 'post_updated', 'wp_save_post_revision' );
+				$post_id = wp_update_post( $post_data );
+				add_action( 'post_updated', 'wp_save_post_revision' );
+			}
+		}
+
+		if ( $gc_status = $this->mapping->mapping->get( 'gc_status' ) ) {
 			// Update the GC item status.
 			$this->api->set_item_status( $item_id, $gc_status );
 		}
@@ -117,72 +145,442 @@ class Pull extends Base {
 		return $post_id;
 	}
 
-	protected function map_gc_data_to_wp_data( \WP_Post $post, $item, $post_data = array() ) {
-		$this->get_mapping_data( $post );
-		$mapping = $post->mapping;
+	protected function map_gc_data_to_wp_data( $post_data = array() ) {
+
+		// when calling, mapping object gets attached to the post object, so we don't need the return.
+		$this->set_mapping_data( $this->mapping );
+
+		// We now have the mapping attached.
+		$mapping = $this->mapping->mapping;
 
 		foreach ( array( 'post_author', 'post_status', 'post_type' ) as $key ) {
 			$post_data[ $key ] = $mapping->get( $key );
 		}
 
-		$files = $this->api->get_item_files( $item->id );
-		// @todo disable cache for these requests
-		// $files = $this->api->uncached()->get_item_files( $item->id );
+		$backup = array();
+		foreach ( $this->get_append_types() as $key ) {
+			$backup[ $key ] = $post_data[ $key ];
+			$post_data[ $key ] = 'gcinitial';
+		}
 
-		$item->files = array();
+		// $files = $this->api->get_item_files( $this->item->id );
+		$files = $this->api->uncached()->get_item_files( $this->item->id );
+
+		$this->item->files = array();
 		if ( is_array( $files ) ) {
 			foreach ( $files as $file ) {
-				$item->files[ $file->field ][] = $file;
+				$this->item->files[ $file->field ][] = $file;
 			}
 		}
 
-		if ( isset( $item->config ) && $item->config ) {
-			foreach ( $item->config as $tab ) {
-				if ( isset( $tab->elements ) && $tab->elements ) {
-					foreach ( $tab->elements as $element ) {
-						$destination = $mapping->get( $element->name );
-						if ( ! $destination || ! isset( $destination['type'], $destination['value'] ) ) {
-							break;
-						}
+		$post_data = $this->loop_item_elements_and_map( $post_data, $mapping );
 
-						$element->value = $this->get_element_value( $element, $item );
+		// Put the backup data back.
+		foreach ( $backup as $key => $value ) {
+			if ( 'gcinitial' === $post_data[ $key ] ) {
+				$post_data[ $key ] = $value;
+			}
+		}
 
-						try {
-							switch ( $destination['type'] ) {
-								case 'wp-type-post':
-									$field = $destination['value'];
-									$value = $this->sanitize_field( $field, $element->value, $post_data['ID'] );
-									$post_data[ $field ] = $value;
-									break;
+		if ( ! empty( $post_data['ID'] ) ) {
+			$post_data = apply_filters( 'gc_update_wp_post_data', $post_data );
+		} else {
+			$post_data = apply_filters( 'gc_new_wp_post_data', $post_data );
+		}
 
-								case 'wp-type-taxonomy':
-									$taxonomy = $destination['value'];
-									$terms = $this->get_element_terms( $taxonomy, $element, $item );
-									if ( ! empty( $terms ) ) {
-										if ( 'category' === $taxonomy ) {
-											$post_data['post_category'] = $terms;
-										} else {
-											$post_data['tax_input'][ $taxonomy ] = $terms;
-										}
-									}
-									break;
+		return $post_data;
+	}
 
-								case 'wp-type-meta':
-									$meta_key = $destination['value'];
-									$post_data['meta_input'][ $meta_key ] = $this->sanitize_element_meta( $element, $item );
-									break;
-							}
-						} catch ( Exception $e ) {
+	protected function loop_item_elements_and_map( $post_data, $mapping ) {
+		if ( ! isset( $this->item->config ) || empty( $this->item->config ) ) {
+			return $post_data;
+		}
 
-						}
-					}
+		foreach ( $this->item->config as $tab ) {
+			if ( ! isset( $tab->elements ) || ! $tab->elements ) {
+				continue;
+			}
+
+			foreach ( $tab->elements as $this->element ) {
+
+				$destination = $mapping->get( $this->element->name );
+
+				if ( $destination && isset( $destination['type'], $destination['value'] ) ) {
+					$post_data = $this->set_post_values( $destination, $post_data );
 				}
 			}
 		}
 
-		// wp_die( '<xmp>$post_data: '. print_r( $post_data, true ) .'</xmp>' );
-		print( '<xmp>$post_data: '. print_r( $post_data, true ) .'</xmp>' );
 		return $post_data;
 	}
+
+	protected function set_post_values( $destination, $post_data ) {
+		$this->set_element_value();
+
+		try {
+			switch ( $destination['type'] ) {
+				case 'wp-type-post':
+					$post_data = $this->set_post_field_value( $destination['value'], $post_data );
+					break;
+
+				case 'wp-type-taxonomy':
+					$post_data = $this->set_taxonomy_field_value( $destination['value'], $post_data );
+					break;
+
+				case 'wp-type-meta':
+					$post_data = $this->set_meta_field_value( $destination['value'], $post_data );
+					break;
+
+				case 'wp-type-media':
+					$post_data = $this->set_media_field_value( $destination['value'], $post_data );
+					break;
+			}
+		} catch ( Exception $e ) {
+
+		}
+
+		return $post_data;
+	}
+
+	protected function set_post_field_value( $field, $post_data ) {
+		$value = $this->sanitize_post_field( $field, $this->element->value, $post_data['ID'] );
+
+		return $this->maybe_append( $field, $value, $post_data );
+	}
+
+	protected function set_taxonomy_field_value( $taxonomy, $post_data ) {
+		$terms = $this->get_element_terms( $taxonomy );
+		if ( ! empty( $terms ) ) {
+			if ( 'category' === $taxonomy ) {
+				$post_data['post_category'] = $terms;
+			} else {
+				$post_data['tax_input'][ $taxonomy ] = $terms;
+			}
+		}
+
+		return $post_data;
+	}
+
+	protected function set_meta_field_value( $meta_key, $post_data ) {
+		$value = $this->sanitize_element_meta();
+		if ( ! isset( $post_data['meta_input'] ) ) {
+			$post_data['meta_input'] = array();
+		}
+
+		$post_data['meta_input'] = $this->maybe_append( $meta_key, $value, $post_data['meta_input'] );
+
+		return $post_data;
+	}
+
+	protected function set_media_field_value( $destination, $post_data ) {
+		$media_items = $this->sanitize_element_media();
+
+		$post_data['attachments'][] = array(
+			'destination' => $destination,
+			'media'       => $media_items,
+		);
+
+		if ( in_array( $destination, array( 'gallery', 'content_image', 'excerpt_image' ), 1 ) && is_array( $media_items ) ) {
+			foreach ( $media_items as $media ) {
+				$field = 'excerpt_image' === $destination ? 'post_excerpt' : 'post_content';
+				$post_data = $this->maybe_append( $field, '#_gc_media_id_' . $media->id . '#', $post_data );
+			}
+		}
+
+		return $post_data;
+	}
+
+	protected function get_append_types() {
+		return array( 'post_content', 'post_title', 'post_excerpt' );
+	}
+
+	protected function type_can_append( $field ) {
+		$can_append = in_array( $field, $this->get_append_types(), 1 );
+
+		return apply_filters( "gc_can_append_{$field}", $can_append, $this->element, $this->item );
+	}
+
+	protected function maybe_append( $field, $value, $array ) {
+		if ( $this->type_can_append( $field ) ) {
+			$array[ $field ] = isset( $array[ $field ] ) ? $array[ $field ] : '';
+			if ( 'gcinitial' === $array[ $field ] ) {
+				$array[ $field ] = '';
+			}
+			$array[ $field ] .= $value;
+		} else {
+			$array[ $field ] = $value;
+		}
+
+		return $array;
+	}
+
+	protected function sanitize_post_field( $field, $value, $post_data ) {
+		if ( ! $value ) {
+			return $value;
+		}
+
+		switch ( $field ) {
+			case 'ID':
+				throw new Exception( 'Cannot override post IDs', __LINE__ );
+
+			case 'post_date':
+			case 'post_date_gmt':
+			case 'post_modified':
+			case 'post_modified_gmt':
+				if ( ! is_string( $value ) && ! is_numeric( $value ) ) {
+					throw new Exception( "{$field} field requires a numeric timestamp, or date string.", __LINE__ );
+				}
+
+				$value = is_numeric( $value ) ? $value : strtotime( $value );
+
+				return false !== strpos( $field, '_gmt' )
+					? gmdate( 'Y-m-d H:i:s', $value )
+					: date( 'Y-m-d H:i:s', $value );
+			case 'post_format':
+				if ( isset( $post_data['post_type'] ) && ! post_type_supports( $post_data['post_type'], 'post-formats' ) ) {
+					throw new Exception( 'The '. $post_data['post_type'] .' post-type does not support post-formats.', __LINE__ );
+				}
+		}
+
+		return sanitize_post_field( $field, $value, $post_data['ID'], 'db' );
+	}
+
+	protected function get_element_terms( $taxonomy ) {
+		if ( 'text' === $this->element->type ) {
+			$terms = array_map( 'trim', explode( ',', sanitize_text_field( $this->element->value ) ) );
+		} else {
+			$terms = (array) $this->element->value;
+		}
+
+		if ( ! empty( $terms ) && is_taxonomy_hierarchical( $taxonomy ) ) {
+			foreach ( $terms as $key => $term ) {
+				if ( ! $term_info = term_exists( $term, $taxonomy ) ) {
+					// Skip if a non-existent term ID is passed.
+					if ( is_int( $term ) ) {
+						unset( $terms[ $key ] );
+						continue;
+					}
+					$term_info = wp_insert_term( $term, $taxonomy );
+				}
+
+				if ( ! is_wp_error( $term_info ) ) {
+					$terms[ $key ] = $term_info['term_id'];
+				}
+			}
+		}
+
+		return apply_filters( 'gc_get_element_terms', $terms, $this->element, $this->item );
+	}
+
+	protected function sanitize_element_meta() {
+		return apply_filters( 'gc_sanitize_meta_field', $this->element->value, $this->element, $this->item );
+	}
+
+	protected function sanitize_element_media() {
+		return apply_filters( 'gc_sanitize_media_field', $this->element->value, $this->element, $this->item );
+	}
+
+	protected function sideload_attachments( $post_id, $attachments ) {
+		$featured_img_id = false;
+		$replacements = $gallery_ids = array();
+		foreach ( $attachments as $attachment ) {
+			if ( is_array( $attachment['media'] ) ) {
+				foreach ( $attachment['media'] as $media ) {
+					$attach_id = $this->maybe_sideload_image( $media, $post_id );
+
+					if ( ! $attach_id || is_wp_error( $attach_id ) ) {
+						// @todo How to handle failures?
+						continue;
+					}
+
+					if ( 'featured_image' === $attachment['destination'] ) {
+						$featured_img_id = $attach_id;
+					} elseif ( in_array( $attachment['destination'], array( 'content_image', 'excerpt_image' ), 1 ) ) {
+
+						$image = wp_get_attachment_image( $attach_id, 'full' );
+						$image = apply_filters( 'gc_content_image', $image, $media, $attach_id, $post_id );
+
+						$field = 'excerpt_image' === $attachment['destination'] ? 'post_excerpt' : 'post_content';
+						$replacements[ $field ]['#_gc_media_id_' . $media->id . '#'] = $image;
+
+					} elseif ( 'gallery' === $attachment['destination'] ) {
+
+						$gallery_ids[] = $attach_id;
+						$replacements['post_content']['#_gc_media_id_' . $media->id . '#'] = '';
+					}
+
+					// Store media item ID reference to attachment post-meta.
+					\GatherContent\Importer\update_post_item_id( $attach_id, $media->id );
+					\GatherContent\Importer\update_post_mapping_id( $attach_id, $this->mapping->ID );
+
+					// Store other media item meta to attachment post-meta.
+					\GatherContent\Importer\update_post_item_meta( $attach_id, array(
+						'user_id'    => $media->user_id,
+						'item_id'    => $media->item_id,
+						'field'      => $media->field,
+						'type'       => $media->type,
+						'url'        => $media->url,
+						'filename'   => $media->filename,
+						'size'       => $media->size,
+						'created_at' => $media->created_at,
+						'updated_at' => $media->updated_at,
+					) );
+				}
+			}
+		}
+
+		if ( $featured_img_id ) {
+			set_post_thumbnail( $post_id, $featured_img_id );
+		}
+
+		if ( ! empty( $gallery_ids ) ) {
+
+			$shortcode = '[gallery link="file" size="full" ids="'. implode( ',', $gallery_ids ) .'"]';
+			$shortcode = apply_filters( 'gc_content_gallery_shortcode', $shortcode, $gallery_ids, $post_id );
+
+			$replacements['post_content'][ key( $replacements['post_content'] ) ] = $shortcode;
+		}
+
+		return $replacements;
+	}
+
+	protected function maybe_sideload_image( $media, $post_id ) {
+		$attachment = \GatherContent\Importer\get_post_by_item_id( $media->id, array( 'post_status' => 'inherit' ) );
+
+		if ( ! $attachment ) {
+			return $this->sideload_image( $media->url, $media->filename, $post_id );
+		}
+
+		$attach_id = $attachment->ID;
+
+		if ( $meta = \GatherContent\Importer\get_post_item_meta( $attach_id ) ) {
+
+			$meta = (object) $meta;
+			$new_updated = strtotime( $media->updated_at );
+			$old_updated = strtotime( $meta->updated_at );
+
+			// Check if updated time-stamp is newer than previous updated timestamp
+			if ( $new_updated > $old_updated ) {
+
+				$replace_data = apply_filters( 'gc_replace_attachment_data_on_update', false, $attachment );
+
+				// @todo How to handle failures?
+				$attach_id = $this->sideload_and_update_attachment( $media->url, $media->filename, $attachment, $replace_data );
+			}
+
+		}
+
+		return $attach_id;
+	}
+
+	/**
+	 * Downloads an image from the specified URL and attaches it to a post.
+	 *
+	 * @param string $file_url  The URL of the image to download.
+	 * @param string $file_name The Name of the image file.
+	 * @param int    $post_id   The post ID the media is to be associated with.
+	 * @return string|WP_Error  Populated HTML img tag on success, WP_Error object otherwise.
+	 */
+	protected function sideload_image( $file_url, $file_name, $post_id ) {
+		if ( ! empty( $file_url ) ) {
+			$file_array = $this->tmp_file( $file_url, $file_name );
+
+			// Do the validation and storage stuff.
+			$id = media_handle_sideload( $file_array, $post_id );
+
+			// If error storing permanently, unlink.
+			if ( is_wp_error( $id ) ) {
+				@unlink( $file_array['tmp_name'] );
+				return $id;
+			}
+
+			$src = wp_get_attachment_url( $id );
+		}
+
+		// Finally, check to make sure the file has been saved, then return the ID.
+		return ! empty( $src ) ? $id : new WP_Error( 'image_sideload_failed' );
+	}
+
+	protected function sideload_and_update_attachment( $file_url, $file_name, $attachment, $replace_data ) {
+		if ( ! isset( $attachment->ID ) || empty( $file_url ) ) {
+			return new WP_Error( 'sideload_and_update_attachment_error' );
+		}
+
+		$time = substr( $attachment->post_date, 0, 4 ) > 0
+			? $attachment->post_date
+			: current_time( 'mysql' );
+
+		$file_array = $this->tmp_file( $file_url, $file_name );
+		$file       = wp_handle_sideload( $file_array, array( 'test_form' => false ), $time );
+
+		if ( isset( $file['error'] ) ) {
+			return new WP_Error( 'upload_error', $file['error'] );
+		}
+
+		$args = array(
+			'ID'             => $attachment->ID,
+			'post_parent'    => $attachment->post_parent,
+			'post_mime_type' => $type,
+		);
+
+		$_file = $file['file'];
+
+		if ( $replace_data ) {
+			$type = $file['type'];
+			$title = preg_replace('/\.[^.]+$/', '', basename($_file));
+			$content = '';
+
+			// Use image exif/iptc data for title and caption defaults if possible.
+			if ( $image_meta = @wp_read_image_metadata( $_file ) ) {
+				if ( trim( $image_meta['title'] ) && ! is_numeric( sanitize_title( $image_meta['title'] ) ) ) {
+					$title = $image_meta['title'];
+				}
+				if ( trim( $image_meta['caption'] ) ) {
+					$content = $image_meta['caption'];
+				}
+			}
+
+			$args['post_title'] = $title;
+			$args['post_content'] = $content;
+		}
+
+		// Save the attachment metadata
+		$id = wp_insert_attachment( $args, $_file, $attachment->post_parent );
+
+		if ( is_wp_error( $id ) ) {
+			// If error storing permanently, unlink.
+			@unlink( $file_array['tmp_name'] );
+		} else {
+			wp_update_attachment_metadata( $id, wp_generate_attachment_metadata( $id, $file ) );
+		}
+
+		return $id;
+	}
+
+	protected function tmp_file( $file_url, $file_name ) {
+		// Set variables for storage, fix file filename for query strings.
+		preg_match( '/[^\?]+\.(jpe?g|jpe|gif|png)\b/i', $file_name, $matches );
+		if ( ! $matches ) {
+			return new WP_Error( 'image_sideload_failed', __( 'Invalid image URL' ) );
+		}
+
+		$file_array = array();
+		$file_array['name'] = basename( $matches[0] );
+
+		require_once( ABSPATH .'/wp-admin/includes/file.php' );
+		require_once( ABSPATH .'/wp-admin/includes/media.php' );
+		require_once( ABSPATH .'/wp-admin/includes/image.php' );
+
+		// Download file to temp location.
+		$file_array['tmp_name'] = download_url( $file_url );
+
+		// If error storing temporarily, return the error.
+		if ( is_wp_error( $file_array['tmp_name'] ) ) {
+			return $file_array['tmp_name'];
+		}
+
+		return $file_array;
+	}
+
 
 }

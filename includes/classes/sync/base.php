@@ -43,6 +43,27 @@ abstract class Base extends Plugin_Base {
 	protected $async = null;
 
 	/**
+	 * GatherContent item object.
+	 *
+	 * @var null|object
+	 */
+	protected $item = null;
+
+	/**
+	 * GatherContent item element object.
+	 *
+	 * @var null|object
+	 */
+	protected $element = null;
+
+	/**
+	 * Mapping post object
+	 *
+	 * @var null|WP_Post
+	 */
+	protected $mapping = null;
+
+	/**
 	 * Creates an instance of this class.
 	 *
 	 * @since 3.0.0
@@ -86,17 +107,16 @@ abstract class Base extends Plugin_Base {
 		return $item_id;
 	}
 
-	protected function get_item( $item_id ) {
-		$item = $this->api->get_item( $item_id );
-		// @todo disable cache for these requests
-		// $item = $this->api->uncached()->get_item( $item_id );
+	protected function set_item( $item_id ) {
+		// $this->item = $this->api->get_item( $item_id );
+		$this->item = $this->api->uncached()->get_item( $item_id );
 
-		if ( ! isset( $item->id ) ) {
+		if ( ! isset( $this->item->id ) ) {
 			// @todo maybe check if error was temporary.
-			throw new Exception( sprintf( __( 'GatherContent could not get an item for that item id: %d' ), $item_id ), __LINE__, $item );
+			throw new Exception( sprintf( __( 'GatherContent could not get an item for that item id: %d' ), $item_id ), __LINE__, $this->item );
 		}
 
-		return $item;
+		return $this->item;
 	}
 
 	protected function get_item_mapping( $item ) {
@@ -119,7 +139,7 @@ abstract class Base extends Plugin_Base {
 		return $items;
 	}
 
-	protected function get_mapping_data( $mapping ) {
+	protected function set_mapping_data( $mapping ) {
 		$mapping_data = $this->mappings->get_mapping_data( $mapping );
 		if ( empty( $mapping_data ) ) {
 			// @todo maybe check if error was temporary.
@@ -129,45 +149,14 @@ abstract class Base extends Plugin_Base {
 		return $mapping_data;
 	}
 
-	public function sanitize_field( $field, $value, $post_data ) {
-		if ( ! $value ) {
-			return $value;
-		}
-
-		switch ( $field ) {
-			case 'ID':
-				throw new Exception( 'Cannot override post IDs', __LINE__ );
-
-			case 'post_date':
-			case 'post_date_gmt':
-			case 'post_modified':
-			case 'post_modified_gmt':
-				if ( ! is_string( $value ) && ! is_numeric( $value ) ) {
-					throw new Exception( "{$field} field requires a numeric timestamp, or date string.", __LINE__ );
-				}
-
-				$value = is_numeric( $value ) ? $value : strtotime( $value );
-
-				return false !== strpos( $field, '_gmt' )
-					? gmdate( 'Y-m-d H:i:s', $value )
-					: date( 'Y-m-d H:i:s', $value );
-			case 'post_format':
-				if ( isset( $post_data['post_type'] ) && ! post_type_supports( $post_data['post_type'], 'post-formats' ) ) {
-					throw new Exception( 'The '. $post_data['post_type'] .' post-type does not support post-formats.', __LINE__ );
-				}
-		}
-
-		return sanitize_post_field( $field, $value, $post_data['ID'], 'db' );
-	}
-
-	public function get_element_value( $element, $item ) {
+	protected function set_element_value() {
 		$val = false;
 
-		switch ( $element->type ) {
+		switch ( $this->element->type ) {
 			case 'text':
-				$val = $element->value;
+				$val = $this->element->value;
 				$val = trim( str_replace( "\xE2\x80\x8B", '', $val ) );
-				if ( ! $element->plain_text ) {
+				if ( ! $this->element->plain_text ) {
 					$val = preg_replace_callback(
 						'#\<p\>(.+?)\<\/p\>#s',
 						function ( $matches ) {
@@ -196,7 +185,7 @@ abstract class Base extends Plugin_Base {
 
 			case 'choice_radio':
 				$val = '';
-				foreach ( $element->options as $idx => $option ) {
+				foreach ( $this->element->options as $idx => $option ) {
 					if ( $option->selected ) {
 						if ( isset( $option->value ) ) {
 							$val = sanitize_text_field( $option->value );
@@ -210,7 +199,7 @@ abstract class Base extends Plugin_Base {
 
 			case 'choice_checkbox':
 				$val = array();
-				foreach ( $element->options as $option ) {
+				foreach ( $this->element->options as $option ) {
 					if ( $option->selected ) {
 						$val = sanitize_text_field( $option->label );
 					}
@@ -218,50 +207,19 @@ abstract class Base extends Plugin_Base {
 				break;
 
 			case 'files':
-				if ( is_array( $item->files ) && isset( $item->files[ $element->name ] ) ) {
-					$val = $item->files[ $element->name ];
+				if ( is_array( $this->item->files ) && isset( $this->item->files[ $this->element->name ] ) ) {
+					$val = $this->item->files[ $this->element->name ];
 				}
 				break;
 
 			default:
-				if ( isset( $element->value ) ) {
+				if ( isset( $this->element->value ) ) {
 					$val = sanitize_text_field( $option->label );
 				}
 				break;
 		}
 
-		return apply_filters( 'gc_get_element_value', $val, $element, $item );
-	}
-
-	public function get_element_terms( $taxonomy, $element, $item ) {
-		if ( 'text' === $element->type ) {
-			$terms = array_map( 'trim', explode( ',', sanitize_text_field( $element->value ) ) );
-		} else {
-			$terms = (array) $element->value;
-		}
-
-		if ( ! empty( $terms ) && is_taxonomy_hierarchical( $taxonomy ) ) {
-			foreach ( $terms as $key => $term ) {
-				if ( ! $term_info = term_exists( $term, $taxonomy ) ) {
-					// Skip if a non-existent term ID is passed.
-					if ( is_int( $term ) ) {
-						unset( $terms[ $key ] );
-						continue;
-					}
-					$term_info = wp_insert_term( $term, $taxonomy );
-				}
-
-				if ( ! is_wp_error( $term_info ) ) {
-					$terms[ $key ] = $term_info['term_id'];
-				}
-			}
-		}
-
-		return apply_filters( 'gc_get_element_terms', $terms, $element, $item );
-	}
-
-	public function sanitize_element_meta( $element, $item ) {
-		return apply_filters( 'gc_sanitize_meta_field', $element->value, $element, $item );
+		$this->element->value = apply_filters( 'gc_get_element_value', $val, $this->element, $this->item );
 	}
 
 }
