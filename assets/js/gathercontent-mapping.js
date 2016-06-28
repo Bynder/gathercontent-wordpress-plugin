@@ -1,5 +1,5 @@
 /**
- * GatherContent Importer - v3.0.0 - 2016-06-24
+ * GatherContent Importer - v3.0.0 - 2016-06-28
  * http://www.gathercontent.com
  *
  * Copyright (c) 2016 GatherContent

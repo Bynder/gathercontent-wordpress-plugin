@@ -1,5 +1,5 @@
 /**
- * GatherContent Importer - v3.0.0 - 2016-06-24
+ * GatherContent Importer - v3.0.0 - 2016-06-28
  * http://www.gathercontent.com
  *
  * Copyright (c) 2016 GatherContent
@@ -392,7 +392,7 @@ module.exports = function (app, $, gc) {
 			this.setInterval(this.checkProgress.bind(this));
 
 			if (percent > 99) {
-				this.cancelSync(window.location.href + '&updated=1');
+				this.cancelSync(window.location.href + '&updated=1&flush_cache=1&redirect=1');
 			} else {
 				this.renderProgressUpdate(percent);
 			}

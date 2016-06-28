@@ -121,7 +121,7 @@ module.exports = function( app, $, gc ) {
 			this.setInterval( this.checkProgress.bind( this ) );
 
 			if ( percent > 99 ) {
-				this.cancelSync( window.location.href + '&updated=1' );
+				this.cancelSync( window.location.href + '&updated=1&flush_cache=1&redirect=1' );
 			} else {
 				this.renderProgressUpdate( percent );
 			}
