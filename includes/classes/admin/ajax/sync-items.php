@@ -87,10 +87,8 @@ class Sync_Items extends Plugin_Base {
 			return false;
 		}
 
-		$percent = round( $this->mappings->get_pull_percent( $mapping_id ) * 100 );
-		error_log( '$percent: '. print_r( $percent, true ) );
+		$percent = $this->mappings->get_pull_percent( $mapping_id );
 
-		// $percent = absint( $this->_post_val( 'percent' ) ) + 12;
 		wp_send_json_success( compact( 'percent' ) );
 	}
 
@@ -127,24 +125,13 @@ class Sync_Items extends Plugin_Base {
 	}
 
 	protected function start_pull( $mapping, $fields ) {
-		$count = count( $fields['import'] );
 
 		// Start the sync and bump percent value.
 		$this->mappings->update_items_to_sync( $mapping->ID, array( 'pending' => $fields['import'] ) );
 
-		error_log( __METHOD__ .': '. print_r( $mapping->ID, true ) );
-
-		do_action( 'gc_pull_items', $mapping );
-		// error_log( 'start_pull $fields: '. print_r( $fields, true ) );
-		// error_log( '$_REQUEST: '. print_r( $_REQUEST, true ) );
+		do_action( 'wp_async_gc_pull_items', $mapping );
 
 		$percent = 0.1;
-
-		if ( 1 === $count ) {
-			$percent = 50;
-		} elseif ( $count < 5 ) {
-			$percent = 20;
-		}
 
 		wp_send_json_success( compact( 'percent' ) );
 	}

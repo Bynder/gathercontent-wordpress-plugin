@@ -200,47 +200,47 @@ class Template_Mappings extends Base {
 		return $link;
 	}
 
-	public function get_mapping_template( $mapping_id ) {
+	public function get_mapping_template( $post_id ) {
 		return get_post_meta( $post_id, '_gc_template', 1 );
 	}
 
-	public function get_mapping_project( $mapping_id ) {
+	public function get_mapping_project( $post_id ) {
 		return get_post_meta( $post_id, '_gc_project', 1 );
 	}
 
-	public function get_items_to_pull( $mapping_id ) {
-		$items = get_post_meta( $mapping_id, '_gc_sync_items', 1 );
+	public function get_items_to_pull( $post_id ) {
+		$items = get_post_meta( $post_id, '_gc_sync_items', 1 );
 
 		return is_array( $items ) ? $items : array();
 	}
 
-	public function update_items_to_sync( $mapping_id, $items = array() ) {
+	public function update_items_to_sync( $post_id, $items = array() ) {
 		if ( empty( $items ) || empty( $items['pending'] ) ) {
-			return delete_post_meta( $mapping_id, '_gc_sync_items' );
+			return delete_post_meta( $post_id, '_gc_sync_items' );
 		}
 
-		return update_post_meta( $mapping_id, '_gc_sync_items', $items );
+		return update_post_meta( $post_id, '_gc_sync_items', $items );
 	}
 
-	public function get_pull_percent( $mapping_id ) {
-		$percent = 100;
+	public function get_pull_percent( $post_id ) {
+		$percent = 1;
 
-		$items = $this->get_items_to_pull( $mapping_id );
+		$items = $this->get_items_to_pull( $post_id );
 
 		if ( ! empty( $items ) ) {
 
 			if ( empty( $items['pending'] ) ) {
-				delete_post_meta( $mapping_id, '_gc_sync_items' );
+				delete_post_meta( $post_id, '_gc_sync_items' );
 			} else {
 
-				$pending = count( $items['pending'] );
-				$done = ! empty( $items['complete'] ) ? count( $items['complete'] ) : 0;
+				$pending_count = count( $items['pending'] );
+				$done_count = ! empty( $items['complete'] ) ? count( $items['complete'] ) : 0;
 
-				$percent = $done / ( $pending + $done );
+				$percent = $done_count / ( $pending_count + $done_count );
 			}
 		}
 
-		return $percent;
+		return round( $percent * 100 );
 	}
 
 	public function get_mapping_data( $post ) {
