@@ -65,7 +65,17 @@ function enqueue_script( $handle, $filename, $deps = [], $ver = GATHERCONTENT_VE
 	wp_enqueue_script( $handle, GATHERCONTENT_URL . "assets/js/{$filename}{$suffix}.js", $deps, $ver, 1 );
 }
 
-function get_posts_by_item_id( $item_id, $args = array() ) {
+/**
+ * Wrapper for WP_Query that gets the assocated post for a GatherContent Item Id.
+ *
+ * @since  3.0.0
+ *
+ * @param  int   $item_id GatherContent Item Id.
+ * @param  array $args    Optional array of WP_Query args.
+ *
+ * @return mixed          WP_Post if an associated post is found.
+ */
+function get_post_by_item_id( $item_id, $args = array() ) {
 	$query = new WP_Query( wp_parse_args( $args, array(
 		'post_type'      => 'any',
 		'posts_per_page' => 1,
@@ -81,10 +91,82 @@ function get_posts_by_item_id( $item_id, $args = array() ) {
 	return $query->have_posts() && $query->post ? $query->post : false;
 }
 
+/**
+ * Wrapper for get_post_meta that gets the associated GatherContent item ID, if it exists.
+ *
+ * @since  3.0.0
+ *
+ * @param  int  $post_id The ID of the post to check.
+ *
+ * @return mixed         Result of get_post_meta.
+ */
 function get_post_item_id( $post_id ) {
 	return get_post_meta( $post_id, '_gc_mapped_item_id', 1 );
 }
 
+/**
+ * Wrapper for update_post_meta that saves the associated GatherContent item ID to the post's meta.
+ *
+ * @since  3.0.0
+ *
+ * @param  int $post_id The ID of the post to store the item ID against.
+ * @param  int $item_id The item id to store against the post.
+ *
+ * @return mixed         Result of update_post_meta.
+ */
 function update_post_item_id( $post_id, $item_id ) {
 	return update_post_meta( $post_id, '_gc_mapped_item_id', $item_id );
+}
+
+/**
+ * Wrapper for get_post_meta that gets the associated GatherContent item meta, if it exists.
+ *
+ * @since  3.0.0
+ *
+ * @param  int  $post_id The ID of the post to check.
+ *
+ * @return mixed         Result of get_post_meta.
+ */
+function get_post_item_meta( $post_id ) {
+	return get_post_meta( $post_id, '_gc_mapped_meta', 1 );
+}
+
+/**
+ * Wrapper for update_post_meta that saves the associated GatherContent item meta to the post's meta.
+ *
+ * @since  3.0.0
+ *
+ * @param  int   $post_id The ID of the post to update.
+ * @param  mixed $meta    The item meta to store against the post.
+ *
+ * @return mixed          Result of update_post_meta.
+ */
+function update_post_item_meta( $post_id, $meta ) {
+	return update_post_meta( $post_id, '_gc_mapped_meta', $meta );
+}
+
+/**
+ * Wrapper for get_post_meta that gets the associated GatherContent mapping post ID, if it exists.
+ *
+ * @since  3.0.0
+ *
+ * @param  int $post_id The ID of the post to check.
+ *
+ * @return mixed Result of get_post_meta.
+ */
+function get_post_mapping_id( $post_id ) {
+	return get_post_meta( $post_id, '_gc_mapping_id', 1 );
+}
+
+/**
+ * Wrapper for update_post_meta that saves the associated GatherContent mapping post ID to the post's meta.
+ *
+ * @since  3.0.0
+ *
+ * @param  int $mapping_post_id The ID of the mapping post.
+ *
+ * @return mixed Result of update_post_meta.
+ */
+function update_post_mapping_id( $post_id, $mapping_post_id ) {
+	return update_post_meta( $post_id, '_gc_mapping_id', $mapping_post_id );
 }

@@ -219,6 +219,8 @@ abstract class Base extends Plugin_Base {
 			'_gc_template'             => 1,
 			'_gc_sync_items'           => 1,
 			'_gc_mapped_item_id'       => 1,
+			'_gc_mapping_id'           => 1,
+			'_gc_mapped_meta'          => 1,
 		) );
 
 		$keys = array();
