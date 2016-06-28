@@ -7,6 +7,7 @@ class API extends Base {
 	protected $user = '';
 	protected $api_key = '';
 	protected $reset_request_cache = false;
+	protected $disable_cache = false;
 
 	/**
 	 * WP_Http instance
@@ -24,6 +25,7 @@ class API extends Base {
 		parent::__construct();
 
 		$this->http = $http;
+		$this->disable_cache = $this->_get_val( 'flush_cache' );
 	}
 
 	public function set_user( $email ) {
@@ -275,7 +277,7 @@ class API extends Base {
 		$trans_key = 'gctr-' . md5( serialize( compact( 'endpoint', 'args', 'method' ) ) );
 		$response = get_transient( $trans_key );
 
-		if ( ! $response || $this->_get_val( 'flush_cache' ) || $this->reset_request_cache ) {
+		if ( ! $response || $this->disable_cache || $this->reset_request_cache ) {
 
 			$response = $this->request( $endpoint, $args, $method );
 
