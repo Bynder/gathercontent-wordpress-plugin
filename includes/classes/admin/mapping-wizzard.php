@@ -466,8 +466,8 @@ class Mapping_Wizzard extends Base {
 			$this->redirect_to_mapping_creation( $project, $template );
 		}
 
-		// Ok, we have all we need. Let's attempt to create a new mapping post.
-		$this->create_new_mapping_post_and_redirect( $project, $template, $options );
+		// Ok, we have all we need. Let's attempt to create/update a mapping post.
+		$this->save_mapping_post_and_redirect( $project, $template, $options );
 	}
 
 	/**
@@ -523,14 +523,14 @@ class Mapping_Wizzard extends Base {
 	 *
 	 * @return void
 	 */
-	protected function create_new_mapping_post_and_redirect( $project, $template, $options ) {
+	protected function save_mapping_post_and_redirect( $project, $template, $options ) {
 		if ( ! wp_verify_nonce( $options['create_mapping'], md5( $project . $template ) ) ) {
 
 			// Let check_admin_referer handle the fail.
 			check_admin_referer( 'fail', 'fail' );
 		}
 
-		$post_id = $this->create_new_mapping_post( $options );
+		$post_id = $this->create_or_update_mapping_post( $options );
 
 		if ( is_wp_error( $post_id ) ) {
 			wp_die( $post_id->get_error_message(), __( 'Failed creating mapping!', 'gathercontent-import' ) );
@@ -620,7 +620,7 @@ class Mapping_Wizzard extends Base {
 	 *
 	 * @return int|WP_Error The post ID on success. The value 0 or WP_Error on failure.
 	 */
-	protected function create_new_mapping_post( $options ) {
+	protected function create_or_update_mapping_post( $options ) {
 		$post_args = $mapping_args = array();
 
 		$mapping_args = \GatherContent\Importer\array_map_recursive( 'sanitize_text_field', $options );
