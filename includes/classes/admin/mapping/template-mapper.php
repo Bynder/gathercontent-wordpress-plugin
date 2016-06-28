@@ -148,8 +148,7 @@ class Template_Mapper extends Base {
 			new Field_Types\Post( $this->post_options() ),
 			new Field_Types\Taxonomy( $this->post_types() ),
 			new Field_Types\Meta(),
-			// @todo add
-			// new Field_Types\Media(),
+			new Field_Types\Media(),
 		);
 
 		if ( defined( 'WPSEO_VERSION' ) ) {
