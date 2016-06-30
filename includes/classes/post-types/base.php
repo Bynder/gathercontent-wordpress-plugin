@@ -4,7 +4,7 @@ use GatherContent\Importer\Base as Plugin_Base;
 
 abstract class Base extends Plugin_Base {
 
-	public $slug = '';
+	const SLUG = '';
 	public $args = array();
 
 	/**
@@ -28,7 +28,7 @@ abstract class Base extends Plugin_Base {
 	}
 
 	public function register_post_type() {
-		$this->args = register_post_type( $this->slug, $this->args );
+		$this->args = register_post_type( static::SLUG, $this->args );
 
 		add_filter( 'enter_title_here', array( $this, 'modify_title' ) );
 	}
@@ -43,7 +43,7 @@ abstract class Base extends Plugin_Base {
 	public function modify_title( $title ){
 
 		$screen = get_current_screen();
-		if ( isset( $screen->post_type ) && $screen->post_type == $this->slug ) {
+		if ( isset( $screen->post_type ) && $screen->post_type == static::SLUG ) {
 			$name = $this->args->labels->singular_name;
 			return sprintf( __( '%s Title', 'cpt-core' ), $name );
 		}

@@ -4,8 +4,8 @@ use GatherContent\Importer\Mapping;
 use WP_Query;
 
 class Template_Mappings extends Base {
-	public $slug = 'gc_templates';
-	public $add_new_template;
+	const SLUG = 'gc_templates';
+	public $slug = self::SLUG;
 
 	/**
 	 * Creates an instance of this class.
@@ -72,7 +72,7 @@ class Template_Mappings extends Base {
 	 * @return array         Modified $actions.
 	 */
 	function remove_quick_edit( $actions, $post ) {
-		if ( $this->slug === $post->post_type ) {
+		if ( self::SLUG === $post->post_type ) {
 			unset( $actions['inline hide-if-no-js'] );
 
 			$actions['sync-items'] = sprintf(
