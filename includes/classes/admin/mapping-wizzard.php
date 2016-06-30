@@ -552,17 +552,7 @@ class Mapping_Wizzard extends Base {
 	 * @return string URL for flushing cache.
 	 */
 	public function refresh_connection_link() {
-		$args = array(
-			'redirect_url' => false,
-			'flush_url' => add_query_arg( array( 'flush_cache' => 1, 'redirect' => 1 ) ),
-		);
-
-		if ( $this->_get_val( 'flush_cache' ) && $this->_get_val( 'redirect' ) ) {
-			update_option( 'gc-api-updated', 1 );
-			$args['redirect_url'] = remove_query_arg( 'flush_cache', remove_query_arg( 'redirect' ) );
-		}
-
-		return $this->view( 'refresh-connection-button', $args, false );
+		return \GatherContent\Importer\refresh_connection_link();
 	}
 
 	public function project_name_and_edit_link( $project ) {

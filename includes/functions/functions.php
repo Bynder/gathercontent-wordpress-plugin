@@ -170,3 +170,26 @@ function get_post_mapping_id( $post_id ) {
 function update_post_mapping_id( $post_id, $mapping_post_id ) {
 	return update_post_meta( $post_id, '_gc_mapping_id', $mapping_post_id );
 }
+
+/**
+ * A button for flushing the cached connection to GC's API.
+ *
+ * @since  3.0.0
+ *
+ * @return string URL for flushing cache.
+ */
+function refresh_connection_link() {
+	$args = array(
+		'redirect_url' => false,
+		'flush_url' => add_query_arg( array( 'flush_cache' => 1, 'redirect' => 1 ) ),
+	);
+
+	if ( isset( $_GET['flush_cache'], $_GET['redirect'] ) ) {
+		update_option( 'gc-api-updated', 1, false );
+		$args['redirect_url'] = remove_query_arg( 'flush_cache', remove_query_arg( 'redirect' ) );
+	}
+
+	$view = new Views\View( 'refresh-connection-button', $args );
+
+	return $view->load( false );
+}
