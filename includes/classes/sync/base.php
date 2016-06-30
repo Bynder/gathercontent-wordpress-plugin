@@ -2,6 +2,7 @@
 namespace GatherContent\Importer\Sync;
 use GatherContent\Importer\Base as Plugin_Base;
 use GatherContent\Importer\Post_Types\Template_Mappings;
+use GatherContent\Importer\Mapping_Post;
 use GatherContent\Importer\API;
 
 class Exception extends \Exception {
@@ -29,13 +30,6 @@ abstract class Base extends Plugin_Base {
 	protected $api = null;
 
 	/**
-	 * GatherContent\Importer\Post_Types\Template_Mappings instance
-	 *
-	 * @var GatherContent\Importer\Post_Types\Template_Mappings
-	 */
-	protected $mappings = null;
-
-	/**
 	 * Async_Base instance
 	 *
 	 * @var Async_Base
@@ -59,7 +53,7 @@ abstract class Base extends Plugin_Base {
 	/**
 	 * Mapping post object
 	 *
-	 * @var null|WP_Post
+	 * @var null|Mapping_Post
 	 */
 	protected $mapping = null;
 
@@ -70,10 +64,9 @@ abstract class Base extends Plugin_Base {
 	 *
 	 * @param $api API object
 	 */
-	public function __construct( API $api, Template_Mappings $mappings, Async_Base $async ) {
-		$this->api      = $api;
-		$this->mappings = $mappings;
-		$this->async    = $async;
+	public function __construct( API $api, Async_Base $async ) {
+		$this->api   = $api;
+		$this->async = $async;
 	}
 
 	abstract public function init_hooks();
@@ -91,7 +84,7 @@ abstract class Base extends Plugin_Base {
 	protected function get_post( $post_id ) {
 		$post = $post_id instanceof WP_Post ? $post_id : get_post( $post_id );
 		if ( ! $post ) {
-			throw new Exception( sprintf( __( 'No post object by that id: %d' ), $post_id ), __LINE__ );
+			throw new Exception( sprintf( __( 'No post object by that id: %d', 'gathercontent-import' ), $post_id ), __LINE__ );
 		}
 
 		return $post;
@@ -101,7 +94,7 @@ abstract class Base extends Plugin_Base {
 		$item_id = \GatherContent\Importer\get_post_item_id( $post_id );
 
 		if ( ! $item_id ) {
-			throw new Exception( sprintf( __( 'No GatherContent item id for that id: %d' ), $post_id ), __LINE__ );
+			throw new Exception( sprintf( __( 'No GatherContent item id for that id: %d', 'gathercontent-import' ), $post_id ), __LINE__ );
 		}
 
 		return $item_id;
@@ -113,40 +106,40 @@ abstract class Base extends Plugin_Base {
 
 		if ( ! isset( $this->item->id ) ) {
 			// @todo maybe check if error was temporary.
-			throw new Exception( sprintf( __( 'GatherContent could not get an item for that item id: %d' ), $item_id ), __LINE__, $this->item );
+			throw new Exception( sprintf( __( 'GatherContent could not get an item for that item id: %d', 'gathercontent-import' ), $item_id ), __LINE__, $this->item );
 		}
 
 		return $this->item;
 	}
 
 	protected function get_item_mapping( $item ) {
-		$mapping = $this->mappings->get_by_project_template( $item->project_id, $item->template_id );
+		$mapping = Template_Mappings::get_by_project_template( $item->project_id, $item->template_id );
 
 		if ( ! $mapping->have_posts() ) {
-			throw new Exception( sprintf( __( 'Could not find an existing project (%s) template (%s) mapping for this item: %d' ), $item->project_id, $item->template_id, $item->id ), __LINE__, $item );
+			throw new Exception( sprintf( __( 'Could not find an existing project (%s) template (%s) mapping for this item: %d', 'gathercontent-import' ), $item->project_id, $item->template_id, $item->id ), __LINE__, $item );
 		}
 
-		return $mapping;
+		$this->mapping = Mapping_Post::get( $mapping, true );
+
+		return $this->mapping;
 	}
 
-	protected function get_items_to_pull( $mapping_id ) {
-		$items = $this->mappings->get_items_to_pull( $mapping_id );
+	protected function get_items_to_pull() {
+		$items = $this->mapping->get_items_to_pull();
 
 		if ( empty( $items['pending'] ) ) {
-			throw new Exception( sprintf( __( 'No items to pull for: %s' ), $mapping_id ), __LINE__ );
+			throw new Exception( sprintf( __( 'No items to pull for: %s', 'gathercontent-import' ), $this->mapping->ID ), __LINE__ );
 		}
 
 		return $items;
 	}
 
-	protected function set_mapping_data( $mapping ) {
-		$mapping_data = $this->mappings->get_mapping_data( $mapping );
+	protected function check_mapping_data() {
+		$mapping_data = $this->mapping->data();
 		if ( empty( $mapping_data ) ) {
 			// @todo maybe check if error was temporary.
-			throw new Exception( sprintf( __( 'No mapping data found for: %s' ), $mapping->id ), __LINE__ );
+			throw new Exception( sprintf( __( 'No mapping data found for: %s', 'gathercontent-import' ), $this->mapping->ID ), __LINE__ );
 		}
-
-		return $mapping_data;
 	}
 
 	protected function set_element_value() {

@@ -319,8 +319,12 @@ class API extends Base {
 		$uri = $this->base_url . $endpoint;
 		$args = $this->request_args( $args );
 
-		error_log( '$uri: '. print_r( $uri, true ) );
+		error_log( '$uri: '. print_r( add_query_arg( array(
+			'disable_cache' => $this->disable_cache,
+			'reset_request_cache' => $this->reset_request_cache,
+		), $uri ), true ) );
 		error_log( '$args: '. print_r( $args, true ) );
+
 		$response = $this->http->{strtolower( $method )}( $uri, $args );
 
 		if ( is_wp_error( $response ) ) {

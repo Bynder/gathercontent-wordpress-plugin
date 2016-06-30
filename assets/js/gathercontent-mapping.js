@@ -1,5 +1,5 @@
 /**
- * GatherContent Importer - v3.0.0 - 2016-06-28
+ * GatherContent Importer - v3.0.0 - 2016-06-30
  * http://www.gathercontent.com
  *
  * Copyright (c) 2016 GatherContent
@@ -12,7 +12,8 @@
 module.exports = Backbone.Collection.extend({
 	getById: function getById(id) {
 		return this.find(function (model) {
-			return model.get('id') === id;
+			var modelId = model.get('id');
+			return modelId === id || modelId && id && modelId == id;
 		});
 	}
 });
@@ -26,12 +27,6 @@ module.exports = function (app) {
 
 		initialize: function initialize(models, options) {
 			this.tab = options.tab;
-		},
-
-		getById: function getById(id) {
-			return this.find(function (model) {
-				return model.get('id') === id;
-			});
 		},
 
 		showTab: function showTab(id) {
@@ -89,6 +84,7 @@ window.GatherContent = window.GatherContent || {};
 
 	// Initiate base objects.
 	require('./initiate-objects.js')(app);
+	app.views.statusSelect2 = require('./views/status-select2.js')(app);
 
 	/*
   * Tab Row setup
@@ -126,7 +122,7 @@ window.GatherContent = window.GatherContent || {};
 	$(app.init);
 })(window, document, jQuery, window.GatherContent);
 
-},{"./collections/tab-rows.js":2,"./collections/tabs.js":3,"./initiate-objects.js":4,"./models/tab-row.js":7,"./models/tab.js":8,"./views/default-tab.js":10,"./views/tab-link.js":11,"./views/tab-row.js":12,"./views/tab.js":13,"./views/tabs.js":14}],6:[function(require,module,exports){
+},{"./collections/tab-rows.js":2,"./collections/tabs.js":3,"./initiate-objects.js":4,"./models/tab-row.js":7,"./models/tab.js":8,"./views/default-tab.js":10,"./views/status-select2.js":11,"./views/tab-link.js":12,"./views/tab-row.js":13,"./views/tab.js":14,"./views/tabs.js":15}],6:[function(require,module,exports){
 "use strict";
 
 module.exports = Backbone.Model.extend({
@@ -231,7 +227,6 @@ module.exports = function (app) {
 		},
 
 		defaultTabTemplate: wp.template('gc-mapping-defaults-tab'),
-		select2ItemTemplate: wp.template('gc-select2-item'),
 
 		changeDefault: function changeDefault(evt) {
 			var $this = jQuery(evt.target);
@@ -256,43 +251,21 @@ module.exports = function (app) {
 
 			this.$el.find('tbody').html(this.defaultTabTemplate(json));
 
-			var that = this;
-			this.$('.gc-select2').each(function () {
-				var $this = jQuery(this);
-				var data = $this.data();
-				$this.select2(that.select2Args(data));
-				var s2Data = $this.data('select2');
-
-				// Add classes for styling.
-				s2Data.$results.addClass('select2-' + data.column);
-				s2Data.$container.addClass('select2-' + data.column);
-			});
+			this.renderSelect2();
 
 			return this;
 		},
 
 		select2Args: function select2Args(_data) {
-			var args = {
-				width: '250px'
-			};
+			var args = {};
 
 			switch (_data.column) {
 				case 'gc_status':
-
-					args.templateResult = (function (status, showDesc) {
-						var data = jQuery.extend(status, jQuery(status.element).data());
-						data.description = false === showDesc ? false : data.description || '';
-						return jQuery(this.select2ItemTemplate(status));
-					}).bind(this);
-
-					args.templateSelection = function (status) {
-						return args.templateResult(status, false);
-					};
-
+					args = app.views.statusSelect2.prototype.select2Args.call(this, _data);
 					break;
 
 				case 'post_author':
-
+					args.width = '250px';
 					args.minimumInputLength = 2;
 					args.ajax = {
 						url: _data.url,
@@ -319,6 +292,54 @@ module.exports = function (app) {
 'use strict';
 
 module.exports = function (app) {
+	var thisView;
+	return app.views.base.extend({
+		select2ItemTemplate: wp.template('gc-select2-item'),
+		width: '250px',
+
+		renderSelect2: function renderSelect2($context) {
+			var $selector = $context ? $context.find('.gc-select2') : this.$('.gc-select2');
+			thisView = this;
+
+			$selector.each(function () {
+				var $this = jQuery(this);
+				var data = $this.data();
+				$this.select2(thisView.select2Args(data));
+				var s2Data = $this.data('select2');
+
+				// Add classes for styling.
+				s2Data.$results.addClass('select2-' + data.column);
+				s2Data.$container.addClass('select2-' + data.column);
+			});
+
+			return this;
+		},
+
+		select2Args: function select2Args(data) {
+			var args = {
+				width: thisView.width
+			};
+
+			args.templateResult = (function (status, showDesc) {
+				var data = jQuery.extend(status, jQuery(status.element).data());
+				data.description = false === showDesc ? false : data.description || '';
+				return jQuery(thisView.select2ItemTemplate(status));
+			}).bind(thisView);
+
+			args.templateSelection = function (status) {
+				return args.templateResult(status, false);
+			};
+
+			return args;
+		}
+
+	});
+};
+
+},{}],12:[function(require,module,exports){
+'use strict';
+
+module.exports = function (app) {
 	return app.views.base.extend({
 		tagName: 'a',
 
@@ -339,7 +360,7 @@ module.exports = function (app) {
 	});
 };
 
-},{}],12:[function(require,module,exports){
+},{}],13:[function(require,module,exports){
 'use strict';
 
 module.exports = function (app, _meta_keys) {
@@ -415,11 +436,11 @@ module.exports = function (app, _meta_keys) {
 	});
 };
 
-},{}],13:[function(require,module,exports){
+},{}],14:[function(require,module,exports){
 'use strict';
 
 module.exports = function (app) {
-	return app.views.base.extend({
+	return app.views.statusSelect2.extend({
 		template: wp.template('gc-tab-wrapper'),
 
 		tagName: 'fieldset',
@@ -444,7 +465,7 @@ module.exports = function (app) {
 	});
 };
 
-},{}],14:[function(require,module,exports){
+},{}],15:[function(require,module,exports){
 'use strict';
 
 module.exports = function (app) {

@@ -6,6 +6,9 @@
  * Licensed under the GPL-2.0+ license.
  */
 
+$yellow: #ffa200;
+$dkyellow: #cc8200;
+
 .gc-avatar {
 	border-radius: 50px;
 	display: block;
@@ -130,6 +133,19 @@ ul.gc-radio-desc li, ul.gc-reveal-items-list li {
 			vertical-align: middle;
 		}
 	}
+
+}
+
+.gathercontent-admin, .gathercontent-admin-select2 {
+	.select2-results__option {
+		border-bottom: 1px solid #eee;
+		margin: 0;
+		.description {
+			font-style: italic;
+			opacity: .7;
+			margin-top: .2em;
+		}
+	}
 }
 
 .gc-template-tab {
@@ -170,15 +186,6 @@ ul.gc-radio-desc li, ul.gc-reveal-items-list li {
 	}
 	#gc-edit {
 		width: 20px;
-	}
-}
-.select2-results__option {
-	border-bottom: 1px solid #eee;
-	margin: 0;
-	.description {
-		font-style: italic;
-		opacity: .7;
-		margin-top: .2em;
 	}
 }
 .select2-gc_status {
@@ -227,4 +234,53 @@ ul.gc-radio-desc li, ul.gc-reveal-items-list li {
 		display: block;
 		min-width: 3.2em;
 	}
+}
+
+.gc-logo-column {
+	overflow: hidden;
+	width: 21px;
+	height: 20px;
+	max-width: 100%;
+	display: inline-block;
+	vertical-align: top;
+	margin-right: 1px;
+	img {
+		width: 100px;
+		height: auto;
+	}
+}
+
+.column-gathercontent {
+	.gc-status-color {
+		float: left;
+		margin-top: 2px;
+		margin-right: 3px;
+	}
+}
+
+.inline-edit-gc-status .gc-status-select2 {
+	display: inline-block;
+	.spinner {
+		visibility: visible;
+	}
+}
+
+.gc-yellow-bg, .gc-button-primary {
+	color: #fff;
+	background-color: $yellow;
+	border: 1px solid $yellow;
+	&:hover {
+		background-color: $dkyellow;
+		border: 1px solid $dkyellow;
+	}
+}
+
+.wp-core-ui .button {
+	&.gc-yellow-bg, &.gc-button-primary {
+		@extend .gc-yellow-bg;
+	}
+}
+
+#bulk-edit .gc-button-primary {
+
 }

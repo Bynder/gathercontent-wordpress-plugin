@@ -95,6 +95,14 @@ ul.gc-radio-desc li, ul.gc-reveal-items-list li {
     padding: 6px 0 6px 6px;
     vertical-align: middle; }
 
+.gathercontent-admin .select2-results__option, .gathercontent-admin-select2 .select2-results__option {
+  border-bottom: 1px solid #eee;
+  margin: 0; }
+  .gathercontent-admin .select2-results__option .description, .gathercontent-admin-select2 .select2-results__option .description {
+    font-style: italic;
+    opacity: .7;
+    margin-top: .2em; }
+
 .gc-template-tab ul.gc-reveal-items-list li {
   margin-left: 1.5em; }
 
@@ -160,3 +168,33 @@ ul.gc-radio-desc li, ul.gc-reveal-items-list li {
   .gc-progress-bar-partial span {
     display: block;
     min-width: 3.2em; }
+
+.gc-logo-column {
+  overflow: hidden;
+  width: 21px;
+  height: 20px;
+  max-width: 100%;
+  display: inline-block;
+  vertical-align: top;
+  margin-right: 1px; }
+  .gc-logo-column img {
+    width: 100px;
+    height: auto; }
+
+.column-gathercontent .gc-status-color {
+  float: left;
+  margin-top: 2px;
+  margin-right: 3px; }
+
+.inline-edit-gc-status .gc-status-select2 {
+  display: inline-block; }
+  .inline-edit-gc-status .gc-status-select2 .spinner {
+    visibility: visible; }
+
+.gc-yellow-bg, .wp-core-ui .button.gc-yellow-bg, .wp-core-ui .button.gc-button-primary, .gc-button-primary {
+  color: #fff;
+  background-color: #ffa200;
+  border: 1px solid #ffa200; }
+  .gc-yellow-bg:hover, .wp-core-ui .button.gc-yellow-bg:hover, .wp-core-ui .button.gc-button-primary:hover, .gc-button-primary:hover {
+    background-color: #cc8200;
+    border: 1px solid #cc8200; }

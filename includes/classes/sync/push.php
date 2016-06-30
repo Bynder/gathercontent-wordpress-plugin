@@ -12,8 +12,8 @@ class Push extends Base {
 	 *
 	 * @param $api API object
 	 */
-	public function __construct( API $api, Template_Mappings $mappings ) {
-		parent::__construct( $api, $mappings, new Async_Push_Action() );
+	public function __construct( API $api ) {
+		parent::__construct( $api, new Async_Push_Action() );
 	}
 
 	public function init_hooks() {

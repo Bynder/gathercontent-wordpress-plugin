@@ -2,40 +2,23 @@
 namespace GatherContent\Importer\Admin\Ajax;
 use GatherContent\Importer\Base as Plugin_Base;
 use GatherContent\Importer\General;
+use GatherContent\Importer\Mapping_Post;
 use GatherContent\Importer\Post_Types\Template_Mappings;
 
 class Sync_Items extends Plugin_Base {
 
-	/**
-	 * GatherContent\Importer\Post_Types\Template_Mappings instance
-	 *
-	 * @var GatherContent\Importer\Post_Types\Template_Mappings
-	 */
-	protected $mappings = null;
-
-	/**
-	 * Creates an instance of this class.
-	 *
-	 * @since 3.0.0
-	 *
-	 * @param $mappings Template_Mappings object
-	 */
-	public function __construct( Template_Mappings $mappings ) {
-		$this->mappings = $mappings;
-	}
-
 	public function callback() {
 		$this->verify_request();
 
-		$mapping = $this->get_mapping_post();
+		$this->set_mapping_post();
 
-		$this->maybe_cancelling( $mapping->ID );
+		$this->maybe_cancelling();
 
-		$this->maybe_checking_status( $mapping->ID );
+		$this->maybe_checking_status();
 
-		$fields = $this->get_fields( $mapping->ID );
+		$fields = $this->get_fields();
 
-		$this->start_pull( $mapping, $fields );
+		$this->start_pull( $fields );
 	}
 
 	protected function verify_request() {
@@ -59,40 +42,41 @@ class Sync_Items extends Plugin_Base {
 		}
 	}
 
-	protected function get_mapping_post() {
-		if ( $mapping = get_post( absint( $this->_post_val( 'id' ) ) ) ) {
-			return $mapping;
+	protected function set_mapping_post() {
+		try {
+			$this->mapping = Mapping_Post::get( absint( $this->_post_val( 'id' ) ), true );
+		} catch( \Exception $e ) {
+			wp_send_json_error( sprintf(
+				__( 'Error %d: Cannot find a mapping by that id: %d', 'gathercontent-import' ),
+				__LINE__,
+				absint( $this->_post_val( 'id' ) )
+			) );
 		}
 
-		wp_send_json_error( sprintf(
-			__( 'Error %d: Cannot find a mapping by that id: %d', 'gathercontent-import' ),
-			__LINE__,
-			absint( $this->_post_val( 'id' ) )
-		) );
 	}
 
-	protected function maybe_cancelling( $mapping_id ) {
+	protected function maybe_cancelling() {
 		if ( 'cancel' !== $this->_post_val( 'data' ) ) {
 			return false;
 		}
 
 		error_log( 'delete meta and cancel' );
-		$this->mappings->update_items_to_sync( $mapping_id, false );
+		$this->mapping->update_items_to_sync( false );
 
 		wp_send_json_success();
 	}
 
-	protected function maybe_checking_status( $mapping_id ) {
+	protected function maybe_checking_status() {
 		if ( 'check' !== $this->_post_val( 'data' ) ) {
 			return false;
 		}
 
-		$percent = $this->mappings->get_pull_percent( $mapping_id );
+		$percent = $this->mapping->get_pull_percent();
 
 		wp_send_json_success( compact( 'percent' ) );
 	}
 
-	protected function get_fields( $mapping_id ) {
+	protected function get_fields() {
 		$data = $this->_post_val( 'data' );
 
 		if ( empty( $data ) || ! is_string( $data ) ) {
@@ -108,8 +92,8 @@ class Sync_Items extends Plugin_Base {
 		if (
 			! isset( $fields['import'], $fields['project'], $fields['template'] )
 			|| empty( $fields['import'] ) || ! is_array( $fields['import'] )
-			|| $this->mappings->get_mapping_project( $mapping_id ) != $fields['project']
-			|| $this->mappings->get_mapping_template( $mapping_id ) != $fields['template']
+			|| $this->mapping->get_project() != $fields['project']
+			|| $this->mapping->get_template() != $fields['template']
 		) {
 			wp_send_json_error( sprintf(
 				__( 'Error %d: Missing required form data.', 'gathercontent-import' ),
@@ -124,12 +108,12 @@ class Sync_Items extends Plugin_Base {
 		return $fields;
 	}
 
-	protected function start_pull( $mapping, $fields ) {
+	protected function start_pull( $fields ) {
 
 		// Start the sync and bump percent value.
-		$this->mappings->update_items_to_sync( $mapping->ID, array( 'pending' => $fields['import'] ) );
+		$this->mapping->update_items_to_sync( array( 'pending' => $fields['import'] ) );
 
-		do_action( 'wp_async_gc_pull_items', $mapping );
+		do_action( 'wp_async_gc_pull_items', $this->mapping );
 
 		$percent = 0.1;
 

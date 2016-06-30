@@ -49,18 +49,14 @@ class General extends Base {
 	protected function __construct() {
 		parent::__construct( $_GET, $_POST );
 
-		$this->api      = new API( _wp_http_get_object() );
-		$this->admin    = new Admin\Admin( $this->api );
+		$this->api   = new API( _wp_http_get_object() );
+		$this->admin = new Admin\Admin( $this->api );
+		$this->pull = new Sync\Pull( $this->api );
+		$this->push = new Sync\Push( $this->api );
+		$this->ajax_handler = new Admin\Ajax\Handlers( $this->api );
 		if ( isset( $this->admin->mapping_wizzard->mappings ) ) {
-			$this->pull = new Sync\Pull(
+			$this->bulk_ui = new Admin\Bulk(
 				$this->api,
-				$this->admin->mapping_wizzard->mappings
-			);
-			$this->push = new Sync\Push(
-				$this->api,
-				$this->admin->mapping_wizzard->mappings
-			);
-			$this->ajax_handler = new Admin\Ajax\Handlers(
 				$this->admin->mapping_wizzard->mappings
 			);
 		}
@@ -68,10 +64,11 @@ class General extends Base {
 
 	public function init_hooks() {
 		$this->admin->init_hooks();
-		if ( $this->pull ) {
-			$this->pull->init_hooks();
-			$this->push->init_hooks();
-			$this->ajax_handler->init_hooks();
+		$this->pull->init_hooks();
+		$this->push->init_hooks();
+		$this->ajax_handler->init_hooks();
+		if ( $this->bulk_ui ) {
+			$this->bulk_ui->init_hooks();
 		}
 	}
 

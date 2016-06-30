@@ -1,6 +1,6 @@
 <?php
 namespace GatherContent\Importer\Post_Types;
-use GatherContent\Importer\Mapping;
+use GatherContent\Importer\Mapping_Post;
 use WP_Query;
 
 class Template_Mappings extends Base {
@@ -57,6 +57,57 @@ class Template_Mappings extends Base {
 		}
 
 		add_filter( 'post_row_actions', array( $this, 'remove_quick_edit' ), 10, 2 );
+		add_action( 'gc_mapping_pre_post_update', array( $this, 'store_post_type_references' ) );
+	}
+
+	public function output_mapping_data( $post ) {
+		if ( self::SLUG === $post->post_type ) {
+			echo '<p class="postbox" style="padding: 1em;background: #f5f5f5;margin: -4px 0 0">';
+			echo '<strong>' . __( 'Project ID:', 'gathercontent-import' ) . '</strong> '. get_post_meta( get_the_id(), '_gc_project', 1 );
+			echo ',&nbsp;';
+			echo '<strong>' . __( 'Template ID:', 'gathercontent-import' ) . '</strong> '. get_post_meta( get_the_id(), '_gc_template', 1 );
+			echo '</p>';
+
+			$content = $post->post_content;
+			if ( defined( 'JSON_PRETTY_PRINT' ) ) {
+				$pretty = json_encode( json_decode( $content ), JSON_PRETTY_PRINT );
+				if ( $pretty && $pretty !== $content ) {
+					$content = $pretty;
+				}
+			}
+
+			echo '<pre><textarea name="content" id="content" rows="20" style="width:100%;">'. print_r( $content, true ) .'</textarea></pre>';
+		}
+	}
+
+	public function modify_mapping_post_edit_link( $link, $post ) {
+		$post_type = '';
+
+		if ( isset( $post->ID ) ) {
+			$post_id = $post->ID;
+			$post_type = $post->post_type;
+		} elseif ( is_numeric( $post ) ) {
+			$post_id = $post;
+			$post_type = get_post_type( $post_id );
+		}
+
+		if ( self::SLUG === $post_type ) {
+
+			$project_id = $this->get_mapping_project( $post_id );
+			$template_id = $this->get_mapping_template( $post_id );
+
+			if ( $project_id && $template_id ) {
+				$link = admin_url( sprintf(
+					'admin.php?page=gathercontent-import-add-new-template&project=%s&template=%s&mapping=%s',
+					$project_id,
+					$template_id,
+					$post_id
+				) );
+			}
+
+		}
+
+		return $link;
 	}
 
 	/**
@@ -86,28 +137,34 @@ class Template_Mappings extends Base {
 		return $actions;
 	}
 
-	public function output_mapping_data( $post ) {
-		if ( $this->slug === $post->post_type ) {
-			echo '<p class="postbox" style="padding: 1em;background: #f5f5f5;margin: -4px 0 0">';
-			echo '<strong>' . __( 'Project ID:', 'gathercontent-import' ) . '</strong> '. get_post_meta( get_the_id(), '_gc_project', 1 );
-			echo ',&nbsp;';
-			echo '<strong>' . __( 'Template ID:', 'gathercontent-import' ) . '</strong> '. get_post_meta( get_the_id(), '_gc_template', 1 );
-			echo '</p>';
+	public function store_post_type_references( $post_data ) {
+		$post_id = $post_data['ID'];
 
-			$content = $post->post_content;
-			if ( defined( 'JSON_PRETTY_PRINT' ) ) {
-				$pretty = json_encode( json_decode( $content ), JSON_PRETTY_PRINT );
-				if ( $pretty && $pretty !== $content ) {
-					$content = $pretty;
-				}
-			}
-
-			echo '<pre><textarea name="content" id="content" rows="20" style="width:100%;">'. print_r( $content, true ) .'</textarea></pre>';
+		$mapping = Mapping_Post::get( $post );
+		if ( ! $mapping ) {
+			return;
 		}
+
+		$all_types = $this->get_mapping_post_types();
+
+		$old_post_type = $mapping->data( 'post_type' );
+
+		if ( $old_post_type && isset( $all_types[ $old_post_type ], $all_types[ $old_post_type ][ $mapping->ID ] ) ) {
+			unset( $all_types[ $old_post_type ][ $mapping->ID ] );
+			if ( empty( $all_types[ $old_post_type ] ) ) {
+				unset( $all_types[ $old_post_type ] );
+			}
+		}
+
+		$new_mapping = json_decode( $post_data['post_content'], 1 );
+		if ( isset( $new_mapping['post_type'] ) && $new_mapping['post_type'] ) {
+			$all_types[ $new_mapping['post_type'] ][ $mapping->ID ] = 1;
+		}
+
+		$this->update_mapping_post_types( $all_types );
 	}
 
-	public function create_mapping( $mapping_args, $postarr = array(), $wp_error = false ) {
-
+	public static function create_mapping( $mapping_args, $post_data = array(), $wp_error = false ) {
 		$mapping_args = wp_parse_args( $mapping_args, array(
 			'title'    => '',
 			'content'  => '',
@@ -115,27 +172,33 @@ class Template_Mappings extends Base {
 			'template' => null,
 		) );
 
-		$postarr = wp_parse_args( $postarr, array(
+		$post_data = wp_parse_args( $post_data, array(
 			'post_content' => wp_json_encode( $mapping_args['content'] ),
 			'post_title'   => $mapping_args['title'],
 			'post_status'  => 'publish',
-			'post_type'    => $this->slug,
+			'post_type'    => self::SLUG,
 			'meta_input'   => array(
 				'_gc_project'  => $mapping_args['project'],
 				'_gc_template' => $mapping_args['template'],
 			),
 		) );
 
-		return wp_insert_post( $postarr, $wp_error );
+		if ( ! empty( $post_data['ID'] ) ) {
+			do_action( 'gc_mapping_pre_post_update', $post_data );
+		} else {
+			do_action( 'gc_mapping_pre_post_create', $post_data );
+		}
+
+		return wp_insert_post( $post_data, $wp_error );
 	}
 
-	public function get_mapping( $args = array() ) {
-		$args['post_type'] = $this->slug;
+	public static function get_mapping( $args = array() ) {
+		$args['post_type'] = self::SLUG;
 
 		return new WP_Query( $args );
 	}
 
-	public function get_by_project( $project_id, $args = array() ) {
+	public static function get_by_project( $project_id, $args = array() ) {
 		$meta_query = array(
 			array(
 				'key'   => '_gc_project',
@@ -147,10 +210,10 @@ class Template_Mappings extends Base {
 			? $args['meta_query'] + $meta_query
 			: $meta_query;
 
-		return $this->get_mapping( $args );
+		return self::get_mapping( $args );
 	}
 
-	public function get_by_project_template( $project_id, $template_id, $args = array() ) {
+	public static function get_by_project_template( $project_id, $template_id, $args = array() ) {
 		$meta_query = array(
 			array(
 				'key'   => '_gc_template',
@@ -167,103 +230,61 @@ class Template_Mappings extends Base {
 			'fields'         => 'ids',
 		) );
 
-		return $this->get_by_project( $project_id, $args );
+		return self::get_by_project( $project_id, $args );
 	}
 
-	public function modify_mapping_post_edit_link( $link, $post ) {
-		$post_type = '';
+	public function get_mapping_post_types() {
+		$all_types = get_option( 'gc_post_types', array() );
+		return is_array( $all_types ) ? $all_types : array();
+	}
 
-		if ( isset( $post->ID ) ) {
-			$post_id = $post->ID;
-			$post_type = $post->post_type;
-		} elseif ( is_numeric( $post ) ) {
-			$post_id = $post;
-			$post_type = get_post_type( $post_id );
+	public function update_mapping_post_types( $all_types = false ) {
+		if ( ! is_array( $all_types ) || empty( $all_types ) ) {
+			return delete_option( 'gc_post_types' );
 		}
 
-		if ( $this->slug === $post_type ) {
-
-			$project_id = get_post_meta( $post_id, '_gc_project', 1 );
-			$template_id = get_post_meta( $post_id, '_gc_template', 1 );
-
-			if ( $project_id && $template_id ) {
-				$link = admin_url( sprintf(
-					'admin.php?page=gathercontent-import-add-new-template&project=%s&template=%s&mapping=%s',
-					$project_id,
-					$template_id,
-					$post_id
-				) );
-			}
-
-		}
-
-		return $link;
+		return update_option( 'gc_post_types', $all_types );
 	}
 
 	public function get_mapping_template( $post_id ) {
-		return get_post_meta( $post_id, '_gc_template', 1 );
+		$mapping = Mapping_Post::get( $post_id );
+		return $mapping ? $mapping->get_template() : false;
 	}
 
 	public function get_mapping_project( $post_id ) {
-		return get_post_meta( $post_id, '_gc_project', 1 );
+		$mapping = Mapping_Post::get( $post_id );
+		return $mapping ? $mapping->get_project() : false;
 	}
 
 	public function get_items_to_pull( $post_id ) {
-		$items = get_post_meta( $post_id, '_gc_sync_items', 1 );
-
-		return is_array( $items ) ? $items : array();
+		$mapping = Mapping_Post::get( $post_id );
+		return $mapping ? $mapping->get_items_to_pull() : false;
 	}
 
 	public function update_items_to_sync( $post_id, $items = array() ) {
-		if ( empty( $items ) || empty( $items['pending'] ) ) {
-			return delete_post_meta( $post_id, '_gc_sync_items' );
-		}
-
-		return update_post_meta( $post_id, '_gc_sync_items', $items );
+		$mapping = Mapping_Post::get( $post_id );
+		return $mapping ? $mapping->update_items_to_sync( $items ) : false;
 	}
 
 	public function get_pull_percent( $post_id ) {
-		$percent = 1;
+		$mapping = Mapping_Post::get( $post_id );
+		return $mapping ? $mapping->get_pull_percent() : 0;
+	}
 
-		$items = $this->get_items_to_pull( $post_id );
-
-		if ( ! empty( $items ) ) {
-
-			if ( empty( $items['pending'] ) ) {
-				delete_post_meta( $post_id, '_gc_sync_items' );
-			} else {
-
-				$pending_count = count( $items['pending'] );
-				$done_count = ! empty( $items['complete'] ) ? count( $items['complete'] ) : 0;
-
-				$percent = $done_count / ( $pending_count + $done_count );
-			}
-		}
-
-		return round( $percent * 100 );
+	public function get_mapping_object( $post ) {
+		return Mapping_Post::get( $post );
 	}
 
 	public function get_mapping_data( $post ) {
-		$post = is_numeric( $post ) ? get_post( $post ) : $post;
-		if ( isset( $post->mapping ) ) {
-			return $post->mapping;
-		}
-
-		$post->mapping = new Mapping( $post );
-
-		return $post->mapping->data();
+		return Mapping_Post::get( $post )->data();
 	}
 
 	public function is_mapping_post( $post ) {
-		if ( is_numeric( $post ) ) {
-			$post = get_post( $post );
+		try {
+			return Mapping_Post::get_post( $post );
+		} catch( \Exception $e ) {
+			return false;
 		}
-
-		if ( $post && isset( $post->post_type ) && $post->post_type === $this->slug ) {
-			return $post;
-		}
-
-		return false;
 	}
 
 }

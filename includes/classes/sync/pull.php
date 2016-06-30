@@ -1,6 +1,7 @@
 <?php
 namespace GatherContent\Importer\Sync;
 use GatherContent\Importer\Post_Types\Template_Mappings;
+use GatherContent\Importer\Mapping_Post;
 use GatherContent\Importer\API;
 use WP_Error;
 
@@ -18,8 +19,8 @@ class Pull extends Base {
 	 *
 	 * @param $api API object
 	 */
-	public function __construct( API $api, Template_Mappings $mappings ) {
-		parent::__construct( $api, $mappings, new Async_Pull_Action() );
+	public function __construct( API $api ) {
+		parent::__construct( $api, new Async_Pull_Action() );
 	}
 
 	public function init_hooks() {
@@ -32,11 +33,11 @@ class Pull extends Base {
 	}
 
 	public function pull_items( $mapping ) {
-		$this->mapping = $mapping;
 		try {
+			$this->mapping = Mapping_Post::get( $mapping, true );
 
-			$this->set_mapping_data( $this->mapping );
-			$items = $this->get_items_to_pull( $this->mapping->ID );
+			$this->check_mapping_data();
+			$items = $this->get_items_to_pull();
 
 		} catch ( Exception $e ) {
 			$error = new WP_Error( 'gc_pull_items_fail_' . $e->getCode(), $e->getMessage(), $e->get_data() );
@@ -48,12 +49,12 @@ class Pull extends Base {
 
 			$item_id = array_shift( $items['pending'] );
 
-			$result = $this->pull_item( $this->mapping, $item_id );
+			$result = $this->pull_item( $item_id );
 
 			$items['complete'] = isset( $items['complete'] ) ? $items['complete'] : array();
 			$items['complete'][] = $item_id;
 
-			$this->mappings->update_items_to_sync( $mapping->ID, $items );
+			$this->mapping->update_items_to_sync( $items );
 
 			// If we have more items
 			if ( ! empty( $items['pending'] ) ) {
@@ -68,9 +69,10 @@ class Pull extends Base {
 		return $result;
 	}
 
-	public function maybe_pull_item( $mapping, $item_id ) {
+	public function maybe_pull_item( $post, $item_id ) {
 		try {
-			$result = $this->pull_item( $mapping, $item_id );
+			$this->mapping = Mapping_Post::get( $post, true );
+			$result = $this->pull_item( $item_id );
 		} catch ( Exception $e ) {
 			$result = new WP_Error( 'gc_pull_item_fail_' . $e->getCode(), $e->getMessage(), $e->get_data() );
 		}
@@ -78,14 +80,8 @@ class Pull extends Base {
 		return $result;
 	}
 
-	protected function pull_item( $mapping, $item_id ) {
-		$this->mapping = $this->get_post( $mapping );
-
-		if ( ! $this->mapping || ! isset( $this->mapping->ID ) ) {
-			throw new Exception( sprintf( __( 'No mapping object found for: %s' ), print_r( $this->mapping, true ) ), __LINE__ );
-		}
-
-		$this->set_mapping_data( $this->mapping );
+	protected function pull_item( $item_id ) {
+		$this->check_mapping_data( $this->mapping );
 
 		$this->set_item( $item_id );
 
@@ -137,7 +133,7 @@ class Pull extends Base {
 			}
 		}
 
-		if ( $gc_status = $this->mapping->mapping->get( 'gc_status' ) ) {
+		if ( $gc_status = $this->mapping->data( 'gc_status' ) ) {
 			// Update the GC item status.
 			$this->api->set_item_status( $item_id, $gc_status );
 		}
@@ -146,15 +142,10 @@ class Pull extends Base {
 	}
 
 	protected function map_gc_data_to_wp_data( $post_data = array() ) {
-
-		// when calling, mapping object gets attached to the post object, so we don't need the return.
-		$this->set_mapping_data( $this->mapping );
-
-		// We now have the mapping attached.
-		$mapping = $this->mapping->mapping;
+		$this->check_mapping_data( $this->mapping );
 
 		foreach ( array( 'post_author', 'post_status', 'post_type' ) as $key ) {
-			$post_data[ $key ] = $mapping->get( $key );
+			$post_data[ $key ] = $this->mapping->data( $key );
 		}
 
 		$backup = array();
@@ -173,7 +164,7 @@ class Pull extends Base {
 			}
 		}
 
-		$post_data = $this->loop_item_elements_and_map( $post_data, $mapping );
+		$post_data = $this->loop_item_elements_and_map( $post_data );
 
 		// Put the backup data back.
 		foreach ( $backup as $key => $value ) {
@@ -191,7 +182,7 @@ class Pull extends Base {
 		return $post_data;
 	}
 
-	protected function loop_item_elements_and_map( $post_data, $mapping ) {
+	protected function loop_item_elements_and_map( $post_data ) {
 		if ( ! isset( $this->item->config ) || empty( $this->item->config ) ) {
 			return $post_data;
 		}
@@ -203,7 +194,7 @@ class Pull extends Base {
 
 			foreach ( $tab->elements as $this->element ) {
 
-				$destination = $mapping->get( $this->element->name );
+				$destination = $this->mapping->data( $this->element->name );
 
 				if ( $destination && isset( $destination['type'], $destination['value'] ) ) {
 					$post_data = $this->set_post_values( $destination, $post_data );
@@ -321,14 +312,14 @@ class Pull extends Base {
 
 		switch ( $field ) {
 			case 'ID':
-				throw new Exception( 'Cannot override post IDs', __LINE__ );
+				throw new Exception( __( 'Cannot override post IDs', 'gathercontent-import' ), __LINE__ );
 
 			case 'post_date':
 			case 'post_date_gmt':
 			case 'post_modified':
 			case 'post_modified_gmt':
 				if ( ! is_string( $value ) && ! is_numeric( $value ) ) {
-					throw new Exception( "{$field} field requires a numeric timestamp, or date string.", __LINE__ );
+					throw new Exception( sprintf( __( '%s field requires a numeric timestamp, or date string.', 'gathercontent-import' ), $field ), __LINE__ );
 				}
 
 				$value = is_numeric( $value ) ? $value : strtotime( $value );
@@ -338,7 +329,7 @@ class Pull extends Base {
 					: date( 'Y-m-d H:i:s', $value );
 			case 'post_format':
 				if ( isset( $post_data['post_type'] ) && ! post_type_supports( $post_data['post_type'], 'post-formats' ) ) {
-					throw new Exception( 'The '. $post_data['post_type'] .' post-type does not support post-formats.', __LINE__ );
+					throw new Exception( sprintf( __( 'The %s post-type does not support post-formats.', 'gathercontent-import' ), $post_data['post_type'] ), __LINE__ );
 				}
 		}
 

@@ -1,17 +1,16 @@
 <?php
 namespace GatherContent\Importer\Admin;
-use GatherContent\Importer\Base as Plugin_Base;
 use GatherContent\Importer\API;
 use GatherContent\Importer\Settings\Setting;
 
-abstract class Base extends Plugin_Base {
+abstract class Base extends Enqueue {
 
-	public $option_page_slug = '';
-	public $option_name      = '';
-	public $option_group     = '';
-	public $url              = '';
-	public $step             = 0;
-	public $menu_priority    = 9;
+	public $option_page_slug   = '';
+	public $option_name        = '';
+	public $option_group       = '';
+	public $url                = '';
+	public $step               = 0;
+	public $menu_priority      = 9;
 
 	/**
 	 * GatherContent\Importer\API instance
@@ -42,8 +41,6 @@ abstract class Base extends Plugin_Base {
 	 * @param $api API object
 	 */
 	public function __construct() {
-		parent::__construct();
-
 		$this->url = admin_url( 'admin.php?page='. $this->option_page_slug );
 		$this->logo = '<img width="220px" height="39px" src="'. GATHERCONTENT_URL . 'images/logo.svg" alt="GatherContent" />';
 	}
@@ -94,26 +91,6 @@ abstract class Base extends Plugin_Base {
 	public function sanitize_settings( $options ) {
 		self::$api->flush_cache();
 		return $this->settings()->sanitize_settings( $options );
-	}
-
-	public function admin_enqueue_style() {
-		\GatherContent\Importer\enqueue_style( 'select2', 'vendor/select2-4.0.3/select2', array(), '4.0.3' );
-		\GatherContent\Importer\enqueue_style( 'gathercontent', 'gathercontent-importer' );
-	}
-
-	public function admin_enqueue_script() {
-		\GatherContent\Importer\enqueue_script( 'select2', 'vendor/select2-4.0.3/select2', array( 'jquery' ), '4.0.3' );
-		\GatherContent\Importer\enqueue_script( 'gathercontent', 'gathercontent', array( 'wp-backbone', 'select2' ) );
-
-		// Localize in footer so that 'gathercontent_localized_data' filter is more useful.
-		add_action( 'admin_footer', array( $this, 'script_localize' ), 1 );
-	}
-
-	public function script_localize() {
-		wp_localize_script( 'gathercontent', 'GatherContent', apply_filters( 'gathercontent_localized_data', array(
-			'debug'     => defined( 'SCRIPT_DEBUG' ) && SCRIPT_DEBUG,
-			'queryargs' => $_GET,
-		) ) );
 	}
 
 	/**

@@ -1,5 +1,5 @@
 /**
- * GatherContent Importer - v3.0.0 - 2016-06-28
+ * GatherContent Importer - v3.0.0 - 2016-06-30
  * http://www.gathercontent.com
  *
  * Copyright (c) 2016 GatherContent
@@ -12,7 +12,8 @@
 module.exports = Backbone.Collection.extend({
 	getById: function getById(id) {
 		return this.find(function (model) {
-			return model.get('id') === id;
+			var modelId = model.get('id');
+			return modelId === id || modelId && id && modelId == id;
 		});
 	}
 });
@@ -116,7 +117,8 @@ module.exports = function (app, $, gc) {
 				percent: this.get('percent'),
 				nonce: this.get('nonce'),
 				id: this.get('id'),
-				data: formData
+				data: formData,
+				flush_cache: !!gc.queryargs.flush_cache
 			}, (function (response) {
 				this.trigger('response', response, formData);
 
@@ -439,7 +441,7 @@ module.exports = function (app, $, gc) {
 		},
 
 		renderProgress: function renderProgress(percent) {
-			this.$wrap.addClass('sync-progress');
+			this.$wrap.addClass('gc-sync-progress');
 			this.buttonStatus(false);
 			this.$el.html(this.progressTemplate({ percent: percent }));
 		},
@@ -456,7 +458,7 @@ module.exports = function (app, $, gc) {
 
 		render: function render() {
 			// Not syncing, so remove wrap-class
-			this.$wrap.removeClass('sync-progress');
+			this.$wrap.removeClass('gc-sync-progress');
 
 			// Re-render and replace table rows.
 			this.$el.find('tbody').html(this.getRenderedModels(app.views.item));
