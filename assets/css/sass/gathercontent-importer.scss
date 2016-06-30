@@ -25,14 +25,14 @@
 	overflow: hidden;
 }
 
-.refresh-connection.button {
+.gc-refresh-connection.button {
 	width: 2em;
 	font-size: 2em;
 	display: inline-block;
 	vertical-align: bottom;
 }
 
-.wp-core-ui p .refresh-connection {
+.wp-core-ui p .gc-refresh-connection {
 	vertical-align: bottom;
 }
 
@@ -144,7 +144,7 @@ ul.gc-radio-desc li, ul.gc-reveal-items-list li {
 	float: none;
 }
 
-.sync-items-descriptions .dashicons-randomize {
+.gc-sync-items-descriptions .dashicons-randomize {
 	text-decoration: none;
 }
 
@@ -192,7 +192,7 @@ ul.gc-radio-desc li, ul.gc-reveal-items-list li {
 	}
 }
 
-.sync-progress {
+.gc-sync-progress {
 	#progress {
 		padding: 0;
 	}

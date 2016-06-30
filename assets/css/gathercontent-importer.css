@@ -21,13 +21,13 @@
   padding: 1em;
   overflow: hidden; }
 
-.refresh-connection.button {
+.gc-refresh-connection.button {
   width: 2em;
   font-size: 2em;
   display: inline-block;
   vertical-align: bottom; }
 
-.wp-core-ui p .refresh-connection {
+.wp-core-ui p .gc-refresh-connection {
   vertical-align: bottom; }
 
 .description.gc-radio-desc {
@@ -103,7 +103,7 @@ ul.gc-radio-desc li, ul.gc-reveal-items-list li {
   display: block;
   float: none; }
 
-.sync-items-descriptions .dashicons-randomize {
+.gc-sync-items-descriptions .dashicons-randomize {
   text-decoration: none; }
 
 .gc-status-color {
@@ -127,24 +127,16 @@ ul.gc-radio-desc li, ul.gc-reveal-items-list li {
   #sync-tabs #gc-edit {
     width: 20px; }
 
-.select2-results__option {
-  border-bottom: 1px solid #eee;
-  margin: 0; }
-  .select2-results__option .description {
-    font-style: italic;
-    opacity: .7;
-    margin-top: .2em; }
-
 .select2-gc_status.select2-container--default .gc-status-color {
   position: relative;
   top: .4em;
   float: left;
   margin-right: 5px; }
 
-.sync-progress #progress {
+.gc-sync-progress #progress {
   padding: 0; }
 
-.sync-progress table {
+.gc-sync-progress table {
   background: none; }
 
 .gc-progress-bar {

@@ -47,7 +47,7 @@ class Template_Mapper extends Base {
 
 		if ( $this->mapping_id ) {
 
-			echo '<div class="sync-items-descriptions">
+			echo '<div class="gc-sync-items-descriptions">
 			<p class="description"><a href="'. esc_url( add_query_arg( 'sync-items', 1 ) ) .'"><span class="dashicons dashicons-randomize"> </span>' . __( 'Import Template Items from GatherContent', 'domain' ) . '</a></p>
 			</div>';
 

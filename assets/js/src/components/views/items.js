@@ -170,7 +170,7 @@ module.exports = function( app, $, gc ) {
 		},
 
 		renderProgress: function( percent ) {
-			this.$wrap.addClass( 'sync-progress' );
+			this.$wrap.addClass( 'gc-sync-progress' );
 			this.buttonStatus( false );
 			this.$el.html( this.progressTemplate( { percent: percent } ) );
 		},
@@ -187,7 +187,7 @@ module.exports = function( app, $, gc ) {
 
 		render: function() {
 			// Not syncing, so remove wrap-class
-			this.$wrap.removeClass( 'sync-progress' );
+			this.$wrap.removeClass( 'gc-sync-progress' );
 
 			// Re-render and replace table rows.
 			this.$el.find( 'tbody' ).html( this.getRenderedModels( app.views.item ) );
