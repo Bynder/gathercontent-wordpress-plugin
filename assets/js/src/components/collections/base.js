@@ -1,7 +1,8 @@
 module.exports = Backbone.Collection.extend({
 	getById : function( id ) {
 		return this.find( function( model ) {
-			return model.get( 'id' ) === id;
+			var modelId = model.get( 'id' );
+			return modelId === id || modelId && id && modelId == id;
 		} );
 	},
 });
