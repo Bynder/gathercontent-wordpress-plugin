@@ -33,11 +33,12 @@ module.exports = function( app, $, gc ) {
 			$.post(
 				window.ajaxurl,
 				{
-					action  : this.get( 'action' ),
-					percent : this.get( 'percent' ),
-					nonce   : this.get( 'nonce' ),
-					id      : this.get( 'id' ),
-					data    : formData
+					action      : this.get( 'action' ),
+					percent     : this.get( 'percent' ),
+					nonce       : this.get( 'nonce' ),
+					id          : this.get( 'id' ),
+					data        : formData,
+					flush_cache : !! gc.queryargs.flush_cache
 				},
 				function( response ) {
 					this.trigger( 'response', response, formData );
