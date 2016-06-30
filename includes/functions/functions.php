@@ -193,3 +193,25 @@ function refresh_connection_link() {
 
 	return $view->load( false );
 }
+
+/**
+ * Determine if current user can view GC settings.
+ *
+ * @since  3.0.0
+ *
+ * @return bool Whether current user can view GC settings.
+ */
+function user_allowed() {
+	return current_user_can( \GatherContent\Importer\view_capability() );
+}
+
+/**
+ * Capability for user to be able to view GC settings.
+ *
+ * @since  3.0.0
+ *
+ * @return string Capability
+ */
+function view_capability() {
+	return apply_filters( 'gathercontent_settings_view_capability', 'publish_pages' );
+}

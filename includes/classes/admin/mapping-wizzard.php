@@ -98,7 +98,7 @@ class Mapping_Wizzard extends Base {
 			$this->parent_page_slug,
 			$this->logo,
 			__( 'New Mapping', 'gathercontent-import' ),
-			apply_filters( 'gathercontent_settings_view_capability', 'publish_pages' ),
+			\GatherContent\Importer\view_capability(),
 			$this->option_page_slug,
 			array( $this, 'admin_page' )
 		);

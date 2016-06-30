@@ -122,7 +122,7 @@ class Handlers extends Plugin_Base {
 	 */
 
 	protected function post_author( $search_term ) {
-		if ( ! apply_filters( 'gathercontent_settings_view_capability', 'publish_pages' ) ) {
+		if ( ! \GatherContent\Importer\user_allowed() ) {
 			wp_send_json_error();
 		}
 
