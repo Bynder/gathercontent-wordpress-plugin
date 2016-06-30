@@ -8,6 +8,7 @@ window.GatherContent = window.GatherContent || {};
 
 	// Initiate base objects.
 	require( './initiate-objects.js' )( app );
+	app.views.statusSelect2 = require( './views/status-select2.js' )( app );
 
 	/*
 	 * Tab Row setup

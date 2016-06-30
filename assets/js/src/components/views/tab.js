@@ -1,5 +1,5 @@
 module.exports = function( app ) {
-	return app.views.base.extend({
+	return app.views.statusSelect2.extend({
 		template : wp.template( 'gc-tab-wrapper' ),
 
 		tagName : 'fieldset',
