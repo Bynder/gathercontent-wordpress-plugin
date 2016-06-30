@@ -6,12 +6,6 @@ module.exports = function( app ) {
 			this.tab = options.tab;
 		},
 
-		getById : function( id ) {
-			return this.find( function( model ) {
-				return model.get( 'id' ) === id;
-			} );
-		},
-
 		showTab: function( id ) {
 			var model = this.getById( id );
 
