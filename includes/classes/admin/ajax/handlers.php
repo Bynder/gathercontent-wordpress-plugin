@@ -70,6 +70,8 @@ class Handlers extends Plugin_Base {
 			wp_send_json_error();
 		}
 
+		$post_statuses = array();
+
 		foreach ( $posts as $key => $post ) {
 			if ( empty( $post['id'] ) ) {
 				continue;
@@ -78,21 +80,24 @@ class Handlers extends Plugin_Base {
 			$post = wp_parse_args( $post, array(
 				'id' => 0,
 				'item' => 0,
-				'mapping' => 0,
 			) );
 
+			$status = (object) array();
 			if ( $post['item'] ) {
 				$item = $this->api->uncached()->get_item( $post['item'] );
 
 				if ( isset( $item->status->data ) ) {
-					$post['status'] = $item->status->data;
+					$status = $item->status->data;
 				}
 			}
 
-			$posts[ $key ] = $post;
+			$post_statuses[ $post['id'] ] = array(
+				'id'     => $post['id'],
+				'status' => $status
+			);
 		}
 
-		wp_send_json_success( $posts );
+		wp_send_json_success( $post_statuses );
 	}
 
 	public function post_statuses_callback() {
