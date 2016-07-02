@@ -9,6 +9,7 @@ use GatherContent\Importer\Post_Types\Template_Mappings;
  */
 class Mapping_Wizzard extends Base {
 
+	const SLUG = 'gathercontent-import-add-new-template';
 	const ACCOUNT = 0;
 	const PROJECT = 1;
 	const TEMPLATE = 2;
@@ -61,13 +62,12 @@ class Mapping_Wizzard extends Base {
 	 * @since 3.0.0
 	 */
 	public function __construct( Admin $parent ) {
-		$this->option_page_slug = $parent->option_page_slug . '-add-new-template';
 		$this->option_name      = $parent->option_name . '_add_new_template';
 		$this->option_group     = $parent->option_group . '_add_new_template';
-		$this->parent_page_slug = $parent->option_page_slug;
+		$this->parent_page_slug = parent::SLUG;
 		$this->parent_url       = $parent->url;
 		$this->settings         = new Setting( $parent->option_name, $parent->default_options );
-		$this->mappings         = new Template_Mappings( $parent->option_page_slug );
+		$this->mappings         = new Template_Mappings( parent::SLUG );
 
 		if ( $this->_get_val( 'project' ) ) {
 			$this->step = self::PROJECT;
@@ -99,7 +99,7 @@ class Mapping_Wizzard extends Base {
 			$this->logo,
 			__( 'New Mapping', 'gathercontent-import' ),
 			\GatherContent\Importer\view_capability(),
-			$this->option_page_slug,
+			self::SLUG,
 			array( $this, 'admin_page' )
 		);
 
@@ -132,7 +132,7 @@ class Mapping_Wizzard extends Base {
 		$args = array(
 			'logo'                => $this->logo,
 			'option_group'        => $this->option_group,
-			'settings_sections'   => Form_Section::get_sections( $this->option_page_slug ),
+			'settings_sections'   => Form_Section::get_sections( self::SLUG ),
 			'go_back_button_text' => __( 'Previous Step', 'gathercontent-import' ),
 			'refresh_button'      => $this->refresh_connection_link(),
 			'submit_button_text'  => __( 'Next Step', 'gathercontent-import' ),
@@ -224,7 +224,7 @@ class Mapping_Wizzard extends Base {
 			'select_project',
 			__( 'First, choose a project from an account.', 'gathercontent-import' ),
 			'',
-			$this->option_page_slug
+			self::SLUG
 		);
 
 		$section->add_field(
@@ -293,7 +293,7 @@ class Mapping_Wizzard extends Base {
 			'select_template',
 			__( 'Next, select a template to map.', 'gathercontent-import' ),
 			$this->project_name_and_edit_link( $project ),
-			$this->option_page_slug
+			self::SLUG
 		);
 
 		$section->add_field(
@@ -398,7 +398,7 @@ class Mapping_Wizzard extends Base {
 			'select_template',
 			$notes . $title,
 			$desc,
-			$this->option_page_slug
+			self::SLUG
 		);
 
 		if ( ! $sync_items ) {
@@ -669,7 +669,7 @@ class Mapping_Wizzard extends Base {
 	 */
 	protected function maybe_redirect_to_edit_mapping_template() {
 		if (
-			! $this->get_val_equals( 'page', $this->option_page_slug )
+			! $this->get_val_equals( 'page', self::SLUG )
 			|| ! $this->_get_val( 'project' )
 			|| ! $this->_get_val( 'template' )
 		) {

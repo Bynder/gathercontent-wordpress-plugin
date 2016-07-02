@@ -5,7 +5,7 @@ use GatherContent\Importer\Settings\Setting;
 
 abstract class Base extends Enqueue {
 
-	public $option_page_slug   = '';
+	const SLUG = GATHERCONTENT_SLUG;
 	public $option_name        = '';
 	public $option_group       = '';
 	public $url                = '';
@@ -41,7 +41,7 @@ abstract class Base extends Enqueue {
 	 * @param $api API object
 	 */
 	public function __construct() {
-		$this->url = admin_url( 'admin.php?page='. $this->option_page_slug );
+		$this->url = admin_url( 'admin.php?page='. static::SLUG );
 		$this->logo = '<img width="220px" height="39px" src="'. GATHERCONTENT_URL . 'images/logo.svg" alt="GatherContent" />';
 	}
 
