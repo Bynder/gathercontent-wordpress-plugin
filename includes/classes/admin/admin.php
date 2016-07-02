@@ -7,7 +7,6 @@ use GatherContent\Importer\Post_Types\Template_Mappings;
 
 class Admin extends Base {
 
-	public $option_page_slug = GATHERCONTENT_SLUG;
 	public $option_name      = 'gathercontent_importer';
 	public $option_group     = 'gathercontent_importer_settings';
 	public $mapping_wizzard;
@@ -86,7 +85,7 @@ class Admin extends Base {
 			$this->logo,
 			'GatherContent',
 			\GatherContent\Importer\view_capability(),
-			$this->option_page_slug,
+			self::SLUG,
 			array( $this, 'admin_page' ),
 			GATHERCONTENT_URL . 'images/menu-logo.svg'
 		);
@@ -113,7 +112,7 @@ class Admin extends Base {
 			$this->view( 'admin-page', array(
 				'logo'              => $this->logo,
 				'option_group'      => $this->option_group,
-				'settings_sections' => Form_Section::get_sections( $this->option_page_slug ),
+				'settings_sections' => Form_Section::get_sections( self::SLUG ),
 			) );
 		}
 	}
@@ -143,7 +142,7 @@ class Admin extends Base {
 			function() {
 				echo '<p>' . sprintf( __( 'Enter you GatherContent API credentials. Instructions for getting your API key can be found <a href="%s" target="_blank">here</a>.', 'gathercontent-import' ), 'https://gathercontent.com/developers/authentication/' ) . '</p>';
 			},
-			$this->option_page_slug
+			self::SLUG
 		);
 
 		$section->add_field(
@@ -208,7 +207,7 @@ class Admin extends Base {
 					}
 				}
 			},
-			$this->option_page_slug
+			self::SLUG
 		);
 	}
 
