@@ -6,6 +6,7 @@ class API extends Base {
 	protected $base_url = 'https://api.gathercontent.com/';
 	protected $user = '';
 	protected $api_key = '';
+	protected $only_cached = false;
 	protected $reset_request_cache = false;
 	protected $disable_cache = false;
 
@@ -277,6 +278,11 @@ class API extends Base {
 		$trans_key = 'gctr-' . md5( serialize( compact( 'endpoint', 'args', 'method' ) ) );
 		$response = get_transient( $trans_key );
 
+		if ( $this->only_cached ) {
+			$this->only_cached = false;
+			return $response;
+		}
+
 		if ( ! $response || $this->disable_cache || $this->reset_request_cache ) {
 
 			$response = $this->request( $endpoint, $args, $method );
@@ -361,6 +367,21 @@ class API extends Base {
 			: $headers;
 
 		return $args;
+	}
+
+	/**
+	 * Sets the only_cached flag and returns object, for chaining methods,
+	 * and only gets results from cache (doesn't make actual request).
+	 *
+	 * e.g. `$this->only_cached()->get( 'me' )`
+	 *
+	 * @since  3.0.0
+	 *
+	 * @return $this
+	 */
+	public function only_cached() {
+		$this->only_cached = true;
+		return $this;
 	}
 
 	/**
