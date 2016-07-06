@@ -213,13 +213,13 @@ class API extends Base {
 	 * @link https://gathercontent.com/developers/items/post-items-by-id/
 	 *
 	 * @param  int   $item_id GatherContent Item Id.
-	 * @param  array $data    Data to save.
-	 * @return bool            If request was successful.
+	 * @param  array $config  Data to save.
+	 * @return bool           If request was successful.
 	 */
-	public function save_item( $item_id, $data ) {
+	public function save_item( $item_id, $config ) {
 		$response = $this->post( 'items/'. absint( $item_id ) .'/save', array(
 			'body' => array(
-				'config' => $data,
+				'config' => $config,
 			),
 		) );
 
@@ -227,11 +227,50 @@ class API extends Base {
 	}
 
 	/**
+	 * GC API request to save an item.
+	 *
+	 * /items
+	 *
+	 * @since 3.0.0
+	 *
+	 * @link https://gathercontent.com/developers/items/post-items/
+	 *
+	 * @param  int    $project_id  Project ID.
+	 * @param  int    $template_id Template ID.
+	 * @param  string $name        Item name.
+	 * @param  array  $config      Data to save to Item.
+	 * @return bool                If request was successful.
+	 */
+	public function create_item( $project_id, $template_id, $name, $config = array() ) {
+		$args = array(
+			'body' => compact( 'project_id', 'template_id', 'name' )
+		);
+
+		if ( ! empty( $config ) ) {
+			$args['body']['config'] = $config;
+		}
+
+		$response = $this->post( 'items', $args );
+		$item_id = false;
+
+		if (
+			202 === $response['response']['code']
+			&& ! empty( $response['headers']['location'] )
+			&& ( $location = $response['headers']['location'] )
+			&& ( false !== strpos( $location, 'http://api.gathercontent.com/items/' ) )
+		) {
+			$item_id = str_replace( 'http://api.gathercontent.com/items/', '', $location );
+		}
+
+		return $item_id;
+	}
+
+	/**
 	 * POST request helper, which assumes a data parameter in response.
 	 *
 	 * @since  3.0.0
 	 *
-	 * @see    API::request_cache() For additional information
+	 * @see    API::cache_get() For additional information
 	 *
 	 * @param  string $endpoint GatherContent API endpoint to retrieve.
 	 * @param  array  $args     Optional. Request arguments. Default empty array.
@@ -246,14 +285,14 @@ class API extends Base {
 	 *
 	 * @since  3.0.0
 	 *
-	 * @see    API::request_cache() For additional information
+	 * @see    API::cache_get() For additional information
 	 *
 	 * @param  string $endpoint GatherContent API endpoint to retrieve.
 	 * @param  array  $args     Optional. Request arguments. Default empty array.
 	 * @return mixed            The response.
 	 */
 	public function get( $endpoint, $args = array() ) {
-		$data = $this->request_cache( $endpoint, DAY_IN_SECONDS, $args, 'GET' );
+		$data = $this->cache_get( $endpoint, DAY_IN_SECONDS, $args, 'GET' );
 		if ( isset( $data->data ) ) {
 			return $data->data;
 		}
@@ -271,10 +310,9 @@ class API extends Base {
 	 * @param  string $endpoint   GatherContent API endpoint to retrieve.
 	 * @param  string $expiration The expiration time. Defaults to an hour.
 	 * @param  array  $args       Optional. Request arguments. Default empty array.
-	 * @param  array  $method     Optional. Request method, defaults to 'GET'.
 	 * @return array              The response.
 	 */
-	public function request_cache( $endpoint, $expiration = HOUR_IN_SECONDS, $args = array(), $method = 'GET' ) {
+	public function cache_get( $endpoint, $expiration = HOUR_IN_SECONDS, $args = array() ) {
 		$trans_key = 'gctr-' . md5( serialize( compact( 'endpoint', 'args', 'method' ) ) );
 		$response = get_transient( $trans_key );
 
@@ -285,12 +323,14 @@ class API extends Base {
 
 		if ( ! $response || $this->disable_cache || $this->reset_request_cache ) {
 
-			$response = $this->request( $endpoint, $args, $method );
+			$response = $this->request( $endpoint, $args, 'GET' );
 
 			if ( is_wp_error( $response ) ) {
 				return $response;
 			}
 
+			// delete_transient( $trans_key );
+			// delete_option( 'gathercontent_transients' );
 			set_transient( $trans_key, $response, $expiration );
 
 			$keys = get_option( 'gathercontent_transients' );
@@ -329,7 +369,7 @@ class API extends Base {
 			'disable_cache' => $this->disable_cache,
 			'reset_request_cache' => $this->reset_request_cache,
 		), $uri ), true ) );
-		error_log( '$args: '. print_r( $args, true ) );
+		// error_log( '$args: '. print_r( $args, true ) );
 
 		$response = $this->http->{strtolower( $method )}( $uri, $args );
 
