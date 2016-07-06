@@ -1,5 +1,5 @@
 /**
- * GatherContent Importer - v3.0.0 - 2016-06-30
+ * GatherContent Importer - v3.0.0 - 2016-07-06
  * http://www.gathercontent.com
  *
  * Copyright (c) 2016 GatherContent
@@ -98,13 +98,13 @@ window.GatherContent = window.GatherContent || {};
   * Tab setup
   */
 
-	app.models.tab = require('./models/tab.js')(app);
+	app.models.tab = require('./models/tab.js')(app, gc._table_headings);
 	app.collections.tabs = require('./collections/tabs.js')(app);
 	app.views.tab = require('./views/tab.js')(app);
 
 	app.views.tabLink = require('./views/tab-link.js')(app);
 
-	app.views.defaultTab = require('./views/default-tab.js')(app);
+	app.views.defaultTab = require('./views/default-tab.js')(app, gc._table_headings);
 
 	/*
   * Overall view setup
@@ -174,14 +174,16 @@ module.exports = function (app) {
 },{}],8:[function(require,module,exports){
 'use strict';
 
-module.exports = function (app) {
+module.exports = function (app, table_headings) {
 	return app.models.base.extend({
 		defaults: {
 			id: '',
 			label: '',
 			hidden: false,
 			navClasses: '',
-			rows: []
+			rows: [],
+			table_id: '',
+			col_headings: table_headings['default']
 		},
 
 		initialize: function initialize() {
@@ -219,7 +221,7 @@ module.exports = Backbone.View.extend({
 },{}],10:[function(require,module,exports){
 'use strict';
 
-module.exports = function (app) {
+module.exports = function (app, table_headings) {
 	return app.views.tab.extend({
 		events: {
 			'change select': 'changeDefault',
@@ -227,6 +229,7 @@ module.exports = function (app) {
 		},
 
 		defaultTabTemplate: wp.template('gc-mapping-defaults-tab'),
+		statusMappingsTemplate: wp.template('gc-mapping-defaults-tab-status-mappings'),
 
 		changeDefault: function changeDefault(evt) {
 			var $this = jQuery(evt.target);
@@ -247,13 +250,26 @@ module.exports = function (app) {
 		render: function render() {
 			var json = this.model.toJSON();
 
-			this.$el.html(this.template(json));
-
-			this.$el.find('tbody').html(this.defaultTabTemplate(json));
+			this.$el.html(this.wrapHtml(json));
+			this.$el.find('tbody').first().html(this.defaultTabTemplate(json));
+			this.$el.find('#gc-status-mappings tbody').html(this.statusMappingsTemplate(json));
 
 			this.renderSelect2();
 
 			return this;
+		},
+
+		wrapHtml: function wrapHtml(json) {
+			var html = this.template(json);
+
+			json.table_id = 'gc-status-mappings';
+			delete json.label;
+			json.col_headings = table_headings.status;
+
+			html += '<br>';
+			html += this.template(json);
+
+			return html;
 		},
 
 		select2Args: function select2Args(_data) {

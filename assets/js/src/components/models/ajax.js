@@ -1,22 +1,18 @@
-module.exports = function( app, $, gc ) {
-	var log = gc.log;
+module.exports = function( app, defaults ) {
+	defaults = jQuery.extend( {}, {
+		action      : 'gc_sync_items',
+		data        : '',
+		percent     : 0,
+		nonce       : '',
+		id          : '',
+		stopSync    : true,
+		flush_cache : false,
+	}, defaults );
 
 	return app.models.base.extend({
-		defaults: {
-			action    : 'gc_sync_items',
-			data      : '',
-			percent   : 0,
-			nonce     : '',
-			id        : '',
-			stopSync  : true,
-		},
+		defaults: defaults,
 
 		initialize: function() {
-			this.defaults.nonce = gc.el( '_wpnonce' ).value;
-			this.defaults.id    = gc.el( 'gc-input-mapping_id' ).value;
-			this.set( 'nonce', this.defaults.nonce );
-			this.set( 'id', this.defaults.id );
-
 			this.listenTo( this, 'send', this.send );
 		},
 
@@ -30,7 +26,7 @@ module.exports = function( app, $, gc ) {
 				this.set( 'percent', percent );
 			}
 
-			$.post(
+			jQuery.post(
 				window.ajaxurl,
 				{
 					action      : this.get( 'action' ),
@@ -38,7 +34,7 @@ module.exports = function( app, $, gc ) {
 					nonce       : this.get( 'nonce' ),
 					id          : this.get( 'id' ),
 					data        : formData,
-					flush_cache : !! gc.queryargs.flush_cache
+					flush_cache : this.get( 'flush_cache' )
 				},
 				function( response ) {
 					this.trigger( 'response', response, formData );

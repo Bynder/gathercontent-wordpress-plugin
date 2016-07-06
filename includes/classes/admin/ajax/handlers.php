@@ -22,6 +22,13 @@ class Handlers extends Plugin_Base {
 	public $sync_items;
 
 	/**
+	 * Sync_Bulk instance
+	 *
+	 * @var Sync_Bulk
+	 */
+	public $sync_bulk;
+
+	/**
 	 * Creates an instance of this class.
 	 *
 	 * @since 3.0.0
@@ -31,11 +38,14 @@ class Handlers extends Plugin_Base {
 	public function __construct( API $api ) {
 		$this->api = $api;
 		$this->sync_items = new Sync_Items();
+		$this->sync_bulk = new Sync_Bulk();
 	}
 
 	public function init_hooks() {
 		add_action( 'wp_ajax_gc_get_option_data', array( $this, 'select2_field_data_callback' ) );
 		add_action( 'wp_ajax_gc_sync_items', array( $this->sync_items, 'callback' ) );
+		add_action( 'wp_ajax_gc_pull_items', array( $this->sync_bulk, 'pull_callback' ) );
+		add_action( 'wp_ajax_gc_push_items', array( $this->sync_bulk, 'push_callback' ) );
 		add_action( 'wp_ajax_gc_get_items', array( $this, 'get_items_callback' ) );
 		add_action( 'wp_ajax_gc_get_post_statuses', array( $this, 'post_statuses_callback' ) );
 	}
@@ -92,8 +102,9 @@ class Handlers extends Plugin_Base {
 			}
 
 			$post_statuses[ $post['id'] ] = array(
-				'id'     => $post['id'],
-				'status' => $status
+				'id'       => $post['id'],
+				'status'   => $status,
+				'itemName' => isset( $item->name ) ? $item->name : __( 'N/A', 'gathercontent-importer' ),
 			);
 		}
 

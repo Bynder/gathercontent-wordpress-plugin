@@ -18,11 +18,6 @@ module.exports = function( app ) {
 
 		toggleCheck : function() {
 			this.model.set( 'checked', ! this.model.get( 'checked' ) );
-		},
-
-		render : function() {
-			this.$el.html( this.template( this.model.toJSON() ) );
-			return this;
 		}
 	});
 };

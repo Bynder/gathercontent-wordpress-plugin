@@ -15,6 +15,18 @@ module.exports = function( app, gc, $ ) {
 			thisView = this;
 			this.listenTo( this, 'quickEdit', this.edit );
 			this.render();
+
+			// Trigger an un-cached update for the statuses
+			$.post( window.ajaxurl, {
+				action      : 'gc_get_items',
+				posts       : gc._posts,
+				flush_cache : !! gc.queryargs.flush_cache
+			}, function( response ) {
+				if ( response.success, response.data ) {
+					thisView.collection.trigger( 'updateItems', response.data );
+				}
+			} );
+
 		},
 
 		storeStatus: function( evt ) {
@@ -97,11 +109,7 @@ module.exports = function( app, gc, $ ) {
 
 		render: function() {
 			this.collection.each( function( model ) {
-				var html = ( new app.views.postRow({ model: model }) ).html();
-
-				var $td = gc.$id( 'post-'+ model.get( 'id' ) ).find( '.column-gathercontent' );
-
-				$td.html( html );
+				( new app.views.postRow({ model: model }) ).render();
 			} );
 			return this;
 		},

@@ -1,6 +1,7 @@
 <?php
 namespace GatherContent\Importer\Admin;
 use GatherContent\Importer\Post_Types\Template_Mappings;
+use GatherContent\Importer\General;
 use GatherContent\Importer\API;
 use GatherContent\Importer\Admin\Mapping\Base as UI_Base;
 use GatherContent\Importer\Admin\Enqueue;
@@ -127,6 +128,8 @@ class Bulk extends UI_Base {
 			return;
 		}
 
+		wp_enqueue_style( 'media-views' );
+
 		$this->enqueue->admin_enqueue_style();
 		$this->enqueue->admin_enqueue_script();
 
@@ -158,23 +161,45 @@ class Bulk extends UI_Base {
 		if ( 'gathercontent' !== $column_name ) {
 			return;
 		}
-		// if ( $this->doing_ajax ) {
-		// 	return $this->ajax_column_output();
-		// }
+		global $post;
 
-		$item_id = absint( \GatherContent\Importer\get_post_item_id( $post_id ) );
-		$mapping_id = absint( \GatherContent\Importer\get_post_mapping_id( $post_id ) );
+		$js_post = array_change_key_case( (array) $post );
+
+
+		$js_post['item'] = absint( \GatherContent\Importer\get_post_item_id( $post_id ) );
+		$js_post['mapping'] = absint( \GatherContent\Importer\get_post_mapping_id( $post_id ) );
 
 		if ( $this->doing_ajax ) {
-			return $this->ajax_view( $post_id, $item_id, $mapping_id );
+			return $this->ajax_view( $post_id, $js_post['item'], $js_post['mapping'] );
 		}
+
+		$js_post['status'] = (object) array();
+		$js_post['itemName'] = __( 'N/A', 'gathercontent-importer' );
+
+		if ( $js_post['item'] ) {
+			$item = $this->api->only_cached()->get_item( $js_post['item'] );
+			// error_log( '$item: '. print_r( $item, true ) );
+
+			if ( isset( $item->name ) ) {
+				$js_post['itemName'] = $item->name;
+			}
+
+			$js_post['status'] = isset( $item->status->data )
+				? $item->status->data
+				: (object) array();
+		}
+
+		$js_post['mappingLink'] = get_edit_post_link( $js_post['mapping'] );
 
 		printf(
 			'<span class="gc-status-column" data-id="%d" data-item="%d" data-mapping="%d">&mdash;</span>',
 			absint( $post_id ),
-			$item_id,
-			$mapping_id
+			$js_post['item'],
+			$js_post['mapping']
 		);
+
+		// Save post object for backbone data.
+		$this->posts[] = $js_post;
 	}
 
 	protected function ajax_view( $post_id, $item_id, $mapping_id ) {
@@ -231,11 +256,11 @@ class Bulk extends UI_Base {
 		}
 
 		?>
-		<div class="display:none">
+		<div style="display:none;">
 			<?php echo \GatherContent\Importer\refresh_connection_link(); ?>
 		</div>
 		<p class="submit inline-edit-save">
-			<button type="button" class="button gc-button-primary alignright">GatherContent Sync</button>
+			<button id="gc-sync-modal" type="button" class="button gc-button-primary alignright">GatherContent Sync</button>
 		</p>
 		<?php
 	}
@@ -274,6 +299,8 @@ class Bulk extends UI_Base {
 			'tmpl-gc-post-column-row' => array(),
 			'tmpl-gc-status-select2' => array(),
 			'tmpl-gc-select2-item' => array(),
+			'tmpl-gc-modal-window' => array(),
+			'tmpl-gc-modal-item' => array(),
 		);
 	}
 
@@ -287,6 +314,38 @@ class Bulk extends UI_Base {
 	protected function get_localize_data() {
 		return array(
 			'mapping_post_types' => $this->post_types,
+			'_posts'             => $this->posts,
+			// '_nav_items'         => array(
+			// 	array(
+			// 		'label'  => __( 'Pull', 'gathercontent-importer' ),
+			// 		'id'     => 'pull',
+			// 		'hidden' => false,
+			// 	),
+			// 	array(
+			// 		'label'  => __( 'Push', 'gathercontent-importer' ),
+			// 		'id'     => 'push',
+			// 		'hidden' => true,
+			// 	),
+			// ),
+			'_modal_btns'         => array(
+				array(
+					'label'   => __( 'Push Items', 'gathercontent-importer' ),
+					'id'      => 'push',
+					'primary' => false,
+				),
+				array(
+					'label'   => __( 'Pull Items', 'gathercontent-importer' ),
+					'id'      => 'pull',
+					'primary' => true,
+				),
+			),
+			'_edit_nonce' => wp_create_nonce( General::get_instance()->admin->mapping_wizzard->option_group . '-options' ),
+			'_statuses' => array(
+				'starting' => __( 'Starting Sync', 'gathercontent-importer' ),
+				'syncing'  => __( 'Syncing', 'gathercontent-importer' ),
+				'complete' => __( 'Sync Complete', 'gathercontent-importer' ),
+				'failed'   => __( 'Sync Failed', 'gathercontent-importer' ),
+			),
 		);
 	}
 

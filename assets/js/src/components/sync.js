@@ -9,8 +9,6 @@ window.GatherContent = window.GatherContent || {};
 	// Initiate base objects.
 	require( './initiate-objects.js' )( app );
 
-	app.ajax = require( './models/ajax.js' )( app, $, gc );
-
 	/*
 	 * Item setup
 	 */

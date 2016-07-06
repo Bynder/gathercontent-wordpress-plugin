@@ -11,6 +11,7 @@ module.exports = function( app, $, gc ) {
 		spinnerRow : '<tr><td colspan="3"><span class="gc-loader spinner is-active"></span></td></tr>',
 		$wrap : $( '.gc-admin-wrap' ),
 		intervalID : null,
+		ajax : null,
 
 		events : function() {
 			var evts = {
@@ -24,12 +25,7 @@ module.exports = function( app, $, gc ) {
 		initialize: function() {
 			thisView = this;
 
-			app.ajax.prototype.defaults.checkHits = 0;
-			app.ajax.prototype.defaults.time = 500;
-
-			this.ajax = new app.ajax( {
-				percent : percent
-			} );
+			this.setupAjax();
 
 			this.listenTo( this.ajax, 'response', this.ajaxResponse );
 			this.listenTo( this.collection, 'render', this.render );
@@ -40,6 +36,20 @@ module.exports = function( app, $, gc ) {
 			this.$wrap.on( 'submit', 'form', this.submit.bind( this ) );
 
 			this.initRender();
+		},
+
+		setupAjax: function() {
+			var Ajax = require( './../models/ajax.js' )( app, {
+				checkHits   : 0,
+				time        : 500,
+				nonce       : gc.el( '_wpnonce' ).value,
+				id          : gc.el( 'gc-input-mapping_id' ).value,
+				flush_cache : !! gc.queryargs.flush_cache,
+			} );
+
+			this.ajax = new Ajax( {
+				percent : percent
+			} );
 		},
 
 		checkEnableButton: function( syncEnabled ) {

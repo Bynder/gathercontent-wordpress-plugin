@@ -1,5 +1,5 @@
 /**
- * GatherContent Importer - v3.0.0 - 2016-06-30
+ * GatherContent Importer - v3.0.0 - 2016-07-06
  * http://www.gathercontent.com
  *
  * Copyright (c) 2016 GatherContent
@@ -80,25 +80,21 @@ module.exports = function (app) {
 },{"./collections/base.js":1,"./models/base.js":5,"./views/base.js":8}],4:[function(require,module,exports){
 'use strict';
 
-module.exports = function (app, $, gc) {
-	var log = gc.log;
+module.exports = function (app, defaults) {
+	defaults = jQuery.extend({}, {
+		action: 'gc_sync_items',
+		data: '',
+		percent: 0,
+		nonce: '',
+		id: '',
+		stopSync: true,
+		flush_cache: false
+	}, defaults);
 
 	return app.models.base.extend({
-		defaults: {
-			action: 'gc_sync_items',
-			data: '',
-			percent: 0,
-			nonce: '',
-			id: '',
-			stopSync: true
-		},
+		defaults: defaults,
 
 		initialize: function initialize() {
-			this.defaults.nonce = gc.el('_wpnonce').value;
-			this.defaults.id = gc.el('gc-input-mapping_id').value;
-			this.set('nonce', this.defaults.nonce);
-			this.set('id', this.defaults.id);
-
 			this.listenTo(this, 'send', this.send);
 		},
 
@@ -112,13 +108,13 @@ module.exports = function (app, $, gc) {
 				this.set('percent', percent);
 			}
 
-			$.post(window.ajaxurl, {
+			jQuery.post(window.ajaxurl, {
 				action: this.get('action'),
 				percent: this.get('percent'),
 				nonce: this.get('nonce'),
 				id: this.get('id'),
 				data: formData,
-				flush_cache: !!gc.queryargs.flush_cache
+				flush_cache: this.get('flush_cache')
 			}, (function (response) {
 				this.trigger('response', response, formData);
 
@@ -189,8 +185,6 @@ window.GatherContent = window.GatherContent || {};
 	// Initiate base objects.
 	require('./initiate-objects.js')(app);
 
-	app.ajax = require('./models/ajax.js')(app, $, gc);
-
 	/*
   * Item setup
   */
@@ -210,7 +204,7 @@ window.GatherContent = window.GatherContent || {};
 	$(app.init);
 })(window, document, jQuery, window.GatherContent);
 
-},{"./collections/items.js":2,"./initiate-objects.js":3,"./models/ajax.js":4,"./models/item.js":6,"./views/item.js":9,"./views/items.js":10}],8:[function(require,module,exports){
+},{"./collections/items.js":2,"./initiate-objects.js":3,"./models/item.js":6,"./views/item.js":9,"./views/items.js":10}],8:[function(require,module,exports){
 'use strict';
 
 module.exports = Backbone.View.extend({
@@ -259,11 +253,6 @@ module.exports = function (app) {
 
 		toggleCheck: function toggleCheck() {
 			this.model.set('checked', !this.model.get('checked'));
-		},
-
-		render: function render() {
-			this.$el.html(this.template(this.model.toJSON()));
-			return this;
 		}
 	});
 };
@@ -284,6 +273,7 @@ module.exports = function (app, $, gc) {
 		spinnerRow: '<tr><td colspan="3"><span class="gc-loader spinner is-active"></span></td></tr>',
 		$wrap: $('.gc-admin-wrap'),
 		intervalID: null,
+		ajax: null,
 
 		events: function events() {
 			var evts = {
@@ -297,12 +287,7 @@ module.exports = function (app, $, gc) {
 		initialize: function initialize() {
 			thisView = this;
 
-			app.ajax.prototype.defaults.checkHits = 0;
-			app.ajax.prototype.defaults.time = 500;
-
-			this.ajax = new app.ajax({
-				percent: percent
-			});
+			this.setupAjax();
 
 			this.listenTo(this.ajax, 'response', this.ajaxResponse);
 			this.listenTo(this.collection, 'render', this.render);
@@ -313,6 +298,20 @@ module.exports = function (app, $, gc) {
 			this.$wrap.on('submit', 'form', this.submit.bind(this));
 
 			this.initRender();
+		},
+
+		setupAjax: function setupAjax() {
+			var Ajax = require('./../models/ajax.js')(app, {
+				checkHits: 0,
+				time: 500,
+				nonce: gc.el('_wpnonce').value,
+				id: gc.el('gc-input-mapping_id').value,
+				flush_cache: !!gc.queryargs.flush_cache
+			});
+
+			this.ajax = new Ajax({
+				percent: percent
+			});
 		},
 
 		checkEnableButton: function checkEnableButton(syncEnabled) {
@@ -474,4 +473,4 @@ module.exports = function (app, $, gc) {
 	});
 };
 
-},{}]},{},[7]);
+},{"./../models/ajax.js":4}]},{},[7]);

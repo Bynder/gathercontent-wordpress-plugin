@@ -10,28 +10,42 @@ class General extends Base {
 	 *
 	 * @var GatherContent\Importer\API
 	 */
-	public $api;
+	protected $api;
 
 	/**
 	 * GatherContent\Importer\Admin instance
 	 *
 	 * @var GatherContent\Importer\Admin
 	 */
-	public $admin;
+	protected $admin;
 
 	/**
 	 * GatherContent\Importer\importer Sync\Pull instance
 	 *
 	 * @var GatherContent\Importer\importer Sync\Pull
 	 */
-	public $importer;
+	protected $pull;
+
+	/**
+	 * GatherContent\Importer\importer Sync\Push instance
+	 *
+	 * @var GatherContent\Importer\importer Sync\Push
+	 */
+	protected $push;
 
 	/**
 	 * GatherContent\Importer\Select2_Ajax_Handler instance
 	 *
 	 * @var GatherContent\Importer\Select2_Ajax_Handler
 	 */
-	public $ajax_handler;
+	protected $ajax_handler;
+
+	/**
+	 * GatherContent\Importer\Admin\Bulk instance
+	 *
+	 * @var GatherContent\Importer\Admin\Bulk
+	 */
+	protected $bulk_ui;
 
 	/**
 	 * Creates or returns an instance of this class.
@@ -70,6 +84,15 @@ class General extends Base {
 		if ( $this->bulk_ui ) {
 			$this->bulk_ui->init_hooks();
 		}
+	}
+
+	/**
+	 * Magic getter for our object, to make protected properties accessible.
+	 * @param string $field
+	 * @return mixed
+	 */
+	public function __get( $field ) {
+		return $this->{$field};
 	}
 
 }

@@ -3,12 +3,13 @@ namespace GatherContent\Importer\Admin\Ajax;
 use GatherContent\Importer\Base as Plugin_Base;
 use GatherContent\Importer\General;
 use GatherContent\Importer\Mapping_Post;
-use GatherContent\Importer\Post_Types\Template_Mappings;
 
 class Sync_Items extends Plugin_Base {
 
 	public function callback() {
 		$this->verify_request();
+
+		$this->verify_nonce();
 
 		$this->set_mapping_post();
 
@@ -29,7 +30,9 @@ class Sync_Items extends Plugin_Base {
 				__LINE__
 			) );
 		}
+	}
 
+	protected function verify_nonce() {
 		// Get opt-group for nonce-verification
 		$opt_group = General::get_instance()->admin->mapping_wizzard->option_group;
 
@@ -61,7 +64,7 @@ class Sync_Items extends Plugin_Base {
 		}
 
 		error_log( 'delete meta and cancel' );
-		$this->mapping->update_items_to_sync( false );
+		$this->mapping->update_items_to_pull( false );
 
 		wp_send_json_success();
 	}
@@ -111,7 +114,7 @@ class Sync_Items extends Plugin_Base {
 	protected function start_pull( $fields ) {
 
 		// Start the sync and bump percent value.
-		$this->mapping->update_items_to_sync( array( 'pending' => $fields['import'] ) );
+		$this->mapping->update_items_to_pull( array( 'pending' => $fields['import'] ) );
 
 		do_action( 'wp_async_gc_pull_items', $this->mapping );
 

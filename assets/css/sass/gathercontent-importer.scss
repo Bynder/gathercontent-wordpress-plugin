@@ -8,6 +8,8 @@
 
 $yellow: #ffa200;
 $dkyellow: #cc8200;
+$gcblue: #00ABBD;
+$dkblue: #11284A;
 
 .gc-avatar {
 	border-radius: 50px;
@@ -262,22 +264,22 @@ ul.gc-radio-desc li, ul.gc-reveal-items-list li {
 	}
 }
 
-.gc-yellow-bg, .gc-button-primary {
-	color: #fff;
-	background-color: $yellow;
-	border: 1px solid $yellow;
+.gc-button-primary {
+	background-color: #fff;
+	border: 1px solid $gcblue;
+	color: $gcblue;
+	font-weight: bold;
 	&:hover {
-		background-color: $dkyellow;
-		border: 1px solid $dkyellow;
+		background-color: $gcblue;
+		border: 1px solid $gcblue;
+		color: #fff;
 	}
 }
 
 .wp-core-ui .button {
-	&.gc-yellow-bg, &.gc-button-primary {
-		@extend .gc-yellow-bg;
+	&.gc-button-primary {
+		@extend .gc-button-primary;
 	}
 }
 
-#bulk-edit .gc-button-primary {
-
-}
+@import 'modal';

@@ -140,7 +140,7 @@ class Template_Mappings extends Base {
 	public function store_post_type_references( $post_data ) {
 		$post_id = $post_data['ID'];
 
-		$mapping = Mapping_Post::get( $post );
+		$mapping = Mapping_Post::get( $post_id );
 		if ( ! $mapping ) {
 			return;
 		}
@@ -261,9 +261,9 @@ class Template_Mappings extends Base {
 		return $mapping ? $mapping->get_items_to_pull() : false;
 	}
 
-	public function update_items_to_sync( $post_id, $items = array() ) {
+	public function update_items_to_pull( $post_id, $items = array() ) {
 		$mapping = Mapping_Post::get( $post_id );
-		return $mapping ? $mapping->update_items_to_sync( $items ) : false;
+		return $mapping ? $mapping->update_items_to_pull( $items ) : false;
 	}
 
 	public function get_pull_percent( $post_id ) {
