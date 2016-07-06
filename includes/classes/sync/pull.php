@@ -13,6 +13,13 @@ use WP_Error;
 class Pull extends Base {
 
 	/**
+	 * Sync direction.
+	 *
+	 * @var string
+	 */
+	protected $direction = 'pull';
+
+	/**
 	 * Creates an instance of this class.
 	 *
 	 * @since 3.0.0
@@ -24,55 +31,18 @@ class Pull extends Base {
 	}
 
 	public function init_hooks() {
-		add_action( 'wp_async_gc_pull_items', array( $this, 'pull_items' ) );
+		add_action( 'wp_async_gc_pull_items', array( $this, 'sync_items' ) );
 
-		if ( isset( $_GET['jtdebug'] ) ) {
+		if ( isset( $_GET['test_pull'] ) ) {
 			wp_die( '<xmp>maybe_pull_item: '. print_r( $this->maybe_pull_item( 33, 2861687 ), true ) .'</xmp>' );
 		}
 
 	}
 
-	public function pull_items( $mapping ) {
-		try {
-			$this->mapping = Mapping_Post::get( $mapping, true );
-
-			$this->check_mapping_data();
-			$items = $this->get_items_to_pull();
-
-		} catch ( Exception $e ) {
-			$error = new WP_Error( 'gc_pull_items_fail_' . $e->getCode(), $e->getMessage(), $e->get_data() );
-			// @todo remove
-			wp_die( '<xmp>$error: '. print_r( $error, true ) .'</xmp>' );
-		}
-
-		try {
-
-			$item_id = array_shift( $items['pending'] );
-
-			$result = $this->pull_item( $item_id );
-
-			$items['complete'] = isset( $items['complete'] ) ? $items['complete'] : array();
-			$items['complete'][] = $item_id;
-
-			$this->mapping->update_items_to_sync( $items );
-
-			// If we have more items
-			if ( ! empty( $items['pending'] ) ) {
-				// Then trigger the next async request
-				do_action( 'gc_pull_items', $this->mapping );
-			}
-
-		} catch ( Exception $e ) {
-			$result = new WP_Error( 'gc_pull_item_fail_' . $e->getCode(), $e->getMessage(), $e->get_data() );
-		}
-
-		return $result;
-	}
-
 	public function maybe_pull_item( $post, $item_id ) {
 		try {
 			$this->mapping = Mapping_Post::get( $post, true );
-			$result = $this->pull_item( $item_id );
+			$result = $this->do_item( $item_id );
 		} catch ( Exception $e ) {
 			$result = new WP_Error( 'gc_pull_item_fail_' . $e->getCode(), $e->getMessage(), $e->get_data() );
 		}
@@ -80,15 +50,17 @@ class Pull extends Base {
 		return $result;
 	}
 
-	protected function pull_item( $item_id ) {
+	protected function do_item( $id ) {
 		$this->check_mapping_data( $this->mapping );
 
-		$this->set_item( $item_id );
+		$this->set_item( $id );
+
+		// @todo Check item updated_at value to determine if pull is necessary.
 
 		$post_data = array();
 		$attachments = false;
 
-		if ( $existing = \GatherContent\Importer\get_post_by_item_id( $item_id ) ) {
+		if ( $existing = \GatherContent\Importer\get_post_by_item_id( $id ) ) {
 			$post_data = (array) $existing;
 		} else {
 			$post_data['ID'] = 0;
@@ -108,8 +80,12 @@ class Pull extends Base {
 		}
 
 		// Store item ID reference to post-meta.
-		\GatherContent\Importer\update_post_item_id( $post_id, $item_id );
+		\GatherContent\Importer\update_post_item_id( $post_id, $id );
 		\GatherContent\Importer\update_post_mapping_id( $post_id, $this->mapping->ID );
+		\GatherContent\Importer\update_post_item_meta( $post_id, array(
+			'created_at' => $this->item->created_at,
+			'updated_at' => $this->item->updated_at,
+		) );
 
 		if ( $attachments ) {
 			$attachments = apply_filters( 'gc_media_objects', $attachments, $post_data );
@@ -133,9 +109,9 @@ class Pull extends Base {
 			}
 		}
 
-		if ( $gc_status = $this->mapping->data( 'gc_status' ) ) {
+		if ( $status = $this->mapping->get_item_new_status( $this->item ) ) {
 			// Update the GC item status.
-			$this->api->set_item_status( $item_id, $gc_status );
+			$this->api->set_item_status( $id, $status );
 		}
 
 		return $post_id;
@@ -146,6 +122,10 @@ class Pull extends Base {
 
 		foreach ( array( 'post_author', 'post_status', 'post_type' ) as $key ) {
 			$post_data[ $key ] = $this->mapping->data( $key );
+		}
+
+		if ( $status = $this->mapping->get_wp_status_for_item( $this->item ) ) {
+			$post_data['post_status'] = $status;
 		}
 
 		$backup = array();

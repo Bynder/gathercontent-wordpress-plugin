@@ -23,6 +23,13 @@ class Exception extends \Exception {
 abstract class Base extends Plugin_Base {
 
 	/**
+	 * Sync direction. 'push', or 'pull'.
+	 *
+	 * @var string
+	 */
+	protected $direction = '';
+
+	/**
 	 * GatherContent\Importer\API instance
 	 *
 	 * @var GatherContent\Importer\API
@@ -70,15 +77,43 @@ abstract class Base extends Plugin_Base {
 	}
 
 	abstract public function init_hooks();
+	abstract protected function do_item( $id );
 
-	protected function map_wp_data_to_gc_data( WP_Post $mapping, WP_Post $post, $item ) {
-		$data = $item->config;
+	public function sync_items( $mapping ) {
+		try {
+			$this->mapping = Mapping_Post::get( $mapping, true );
 
-		// @todo Use mapping to map WP data to GC data
-		throw new Exception( '@todo' );
+			$this->check_mapping_data();
+			$ids = $this->get_items_to_sync( $this->direction );
 
+		} catch ( Exception $e ) {
+			$error = new WP_Error( "gc_{$this->direction}_items_fail_" . $e->getCode(), $e->getMessage(), $e->get_data() );
+			// @todo remove
+			wp_die( '<xmp>$error: '. print_r( $error, true ) .'</xmp>' );
+		}
 
-		return $data;
+		try {
+
+			$id = array_shift( $ids['pending'] );
+
+			$result = $this->do_item( $id );
+
+			$ids['complete'] = isset( $ids['complete'] ) ? $ids['complete'] : array();
+			$ids['complete'][] = $id;
+
+			$this->mapping->update_items_to_sync( $ids, $this->direction );
+
+			// If we have more items
+			if ( ! empty( $ids['pending'] ) ) {
+				// Then trigger the next async request
+				do_action( "gc_{$this->direction}_items", $this->mapping );
+			}
+
+		} catch ( Exception $e ) {
+			$result = new WP_Error( "gc_{$this->direction}_item_fail_" . $e->getCode(), $e->getMessage(), $e->get_data() );
+		}
+
+		return $result;
 	}
 
 	protected function get_post( $post_id ) {
@@ -90,18 +125,7 @@ abstract class Base extends Plugin_Base {
 		return $post;
 	}
 
-	protected function get_post_item_id( $post_id ) {
-		$item_id = \GatherContent\Importer\get_post_item_id( $post_id );
-
-		if ( ! $item_id ) {
-			throw new Exception( sprintf( __( 'No GatherContent item id for that id: %d', 'gathercontent-import' ), $post_id ), __LINE__ );
-		}
-
-		return $item_id;
-	}
-
 	protected function set_item( $item_id ) {
-		// $this->item = $this->api->get_item( $item_id );
 		$this->item = $this->api->uncached()->get_item( $item_id );
 
 		if ( ! isset( $this->item->id ) ) {
@@ -112,20 +136,8 @@ abstract class Base extends Plugin_Base {
 		return $this->item;
 	}
 
-	protected function get_item_mapping( $item ) {
-		$mapping = Template_Mappings::get_by_project_template( $item->project_id, $item->template_id );
-
-		if ( ! $mapping->have_posts() ) {
-			throw new Exception( sprintf( __( 'Could not find an existing project (%s) template (%s) mapping for this item: %d', 'gathercontent-import' ), $item->project_id, $item->template_id, $item->id ), __LINE__, $item );
-		}
-
-		$this->mapping = Mapping_Post::get( $mapping, true );
-
-		return $this->mapping;
-	}
-
-	protected function get_items_to_pull() {
-		$items = $this->mapping->get_items_to_pull();
+	protected function get_items_to_sync() {
+		$items = $this->mapping->get_items_to_sync( $this->direction );
 
 		if ( empty( $items['pending'] ) ) {
 			throw new Exception( sprintf( __( 'No items to pull for: %s', 'gathercontent-import' ), $this->mapping->ID ), __LINE__ );

@@ -182,27 +182,51 @@ class Mapping_Post extends Base {
 	}
 
 	public function get_items_to_pull() {
-		$items = $this->get_meta( '_gc_sync_items' );
-		return is_array( $items ) ? $items : array();
+		return $this->get_items_to_sync();
 	}
 
-	public function update_items_to_sync( $items ) {
-		if ( empty( $items ) || empty( $items['pending'] ) ) {
-			return $this->delete_meta( '_gc_sync_items' );
-		}
-
-		return $this->update_meta( '_gc_sync_items', $items );
+	public function update_items_to_pull( $items ) {
+		return $this->update_items_to_sync( $items );
 	}
 
 	public function get_pull_percent() {
+		return $this->get_sync_percent();
+	}
+
+	public function get_items_to_push() {
+		return $this->get_items_to_sync( 'push' );
+	}
+
+	public function update_items_to_push( $items ) {
+		return $this->update_items_to_sync( $items, 'push' );
+	}
+
+	public function get_push_percent() {
+		return $this->get_sync_percent( 'push' );
+	}
+
+	public function get_items_to_sync( $direction = 'pull'  ) {
+		$items = $this->get_meta( "_gc_{$direction}_items" );
+		return is_array( $items ) ? $items : array();
+	}
+
+	public function update_items_to_sync( $items, $direction = 'pull' ) {
+		if ( empty( $items ) || empty( $items['pending'] ) ) {
+			return $this->delete_meta( "_gc_{$direction}_items" );
+		}
+
+		return $this->update_meta( "_gc_{$direction}_items", $items );
+	}
+
+	public function get_sync_percent( $direction = 'pull'  ) {
 		$percent = 1;
 
-		$items = $this->get_items_to_pull();
+		$items = $this->get_items_to_sync( $direction );
 
 		if ( ! empty( $items ) ) {
 
 			if ( empty( $items['pending'] ) ) {
-				$this->delete_meta( '_gc_sync_items' );
+				$this->delete_meta( "_gc_{$direction}_items" );
 			} else {
 
 				$pending_count = count( $items['pending'] );

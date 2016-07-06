@@ -1,9 +1,24 @@
 <?php
 namespace GatherContent\Importer\Sync;
 use GatherContent\Importer\Post_Types\Template_Mappings;
+use GatherContent\Importer\Mapping_Post;
 use GatherContent\Importer\API;
 
 class Push extends Base {
+
+	/**
+	 * Sync direction.
+	 *
+	 * @var string
+	 */
+	protected $direction = 'push';
+
+	/**
+	 * Post object to push.
+	 *
+	 * @var int
+	 */
+	protected $post = null;
 
 	/**
 	 * Creates an instance of this class.
@@ -17,20 +32,21 @@ class Push extends Base {
 	}
 
 	public function init_hooks() {
-		add_action( 'wp_async_gc_push_items', array( $this, 'push_items' ) );
+		add_action( 'wp_async_gc_push_items', array( $this, 'sync_items' ) );
+
+		if ( isset( $_GET['test_push'] ) ) {
+
+			wp_die( '<xmp>maybe_push_item: '. print_r( $this->maybe_push_item( 38 ), true ) .'</xmp>' );
+		}
+
 	}
 
-	public function push_items( $mapping ) {
-		// @todo Use mapping to map WP data to GC data
-		throw new Exception( '@todo' );
-
+	public function maybe_push_item( $post_id ) {
 		try {
-
-			$result = $this->push_item( $post_id );
-
-			// Then trigger the next async request
-			do_action( 'gc_push_items', $mapping );
-
+			$post = $this->get_post( $post_id );
+			$mapping_id = \GatherContent\Importer\get_post_mapping_id( $post->ID );
+			$this->mapping = Mapping_Post::get( $mapping_id, true );
+			$result = $this->do_item( $post->ID );
 		} catch ( Exception $e ) {
 			$result = new WP_Error( 'gc_push_item_fail_' . $e->getCode(), $e->getMessage(), $e->get_data() );
 		}
@@ -38,25 +54,72 @@ class Push extends Base {
 		return $result;
 	}
 
-	public function maybe_push_item( $post_id ) {
-		try {
-			return $this->push_item( $post_id );
-		} catch ( Exception $e ) {
-			return new WP_Error( 'gc_push_item_fail_' . $e->getCode(), $e->getMessage(), $e->get_data() );
+	protected function do_item( $id ) {
+		$this->post = $this->get_post( $id );
+
+		$this->check_mapping_data( $this->mapping );
+
+		$this->set_item( \GatherContent\Importer\get_post_item_id( $this->post->ID ) );
+		wp_die( '<xmp>'. __LINE__ .') $this->item: '. print_r( $this->item, true ) .'</xmp>' );
+
+		$config = $this->map_wp_data_to_gc_data( $post_data );
+
+		return $post_id;
+	}
+
+	protected function set_item( $item_id ) {
+		if ( isset( $_GET['test_push'] ) ) {
+			echo '<xmp>$item_id: '. print_r( $item_id, true ) .'</xmp>';
 		}
+
+		// Let's create an item, if it doesn't exist.
+		if ( ! $item_id ) {
+			$item_id = $this->api->create_item(
+				$this->mapping->get_project(),
+				$this->mapping->get_template(),
+				$this->post->post_title
+			);
+
+			if ( $item_id ) {
+				// Let's map the new item back to the post.
+				\GatherContent\Importer\update_post_item_id( $this->post->ID, $item_id );
+			}
+		}
+
+		if ( ! $item_id ) {
+			// @todo maybe check if error was temporary and try again?
+			throw new Exception( sprintf( __( 'No item found or created for that post ID:', 'gathercontent-import' ), $this->post->ID ), __LINE__, array(
+				'post_id'    => $this->post->ID,
+				'mapping_id' => $this->mapping->ID,
+			) );
+		}
+
+		$item = parent::set_item( $item_id );
+
+		\GatherContent\Importer\update_post_item_meta( $item_id, array(
+			'created_at' => $item->created_at,
+			'updated_at' => $item->updated_at,
+		) );
+
+		return $item;
 	}
 
-	protected function push_item( $post_id ) {
-		$post = $this->get_post( $post_id );
+	// protected function do_item( $post_id ) {
+	// 	$post = $this->get_post( $post_id );
 
-		$item_id = $this->get_post_item_id( $post->ID );
+	// 	$data = $this->map_wp_data_to_gc_data( $mapping->posts[0], $post, $item );
 
-		$item = $this->get_item( $item_id );
+	// 	$item = $this->api->save_item( $item_id, $data );
+	// }
 
-		$mapping = $this->get_item_mapping( $item );
+	protected function map_wp_data_to_gc_data( WP_Post $mapping, WP_Post $post, $item ) {
+		$config = $this->item->config;
 
-		$data = $this->map_wp_data_to_gc_data( $mapping->posts[0], $post, $item );
+		// @todo Use mapping to map WP data to GC data
+		throw new Exception( '@todo' );
 
-		$item = $this->api->save_item( $item_id, $data );
+
+		return $config;
 	}
+
 }
