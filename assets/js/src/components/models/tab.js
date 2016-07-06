@@ -1,11 +1,13 @@
-module.exports = function( app ) {
+module.exports = function( app, table_headings ) {
 	return app.models.base.extend({
 		defaults: {
-			id         : '',
-			label      : '',
-			hidden     : false,
-			navClasses : '',
-			rows       : [],
+			id           : '',
+			label        : '',
+			hidden       : false,
+			navClasses   : '',
+			rows         : [],
+			table_id     : '',
+			col_headings : table_headings.default,
 		},
 
 		initialize: function() {

@@ -171,14 +171,11 @@ ul.gc-radio-desc li, ul.gc-reveal-items-list li {
 	border-radius: 100%;
 	line-height: 1.1em;
 	margin-bottom: -2px;
-	float: right;
+	float: left;
+	margin-right: 5px;
 }
 #sync-tabs {
 	margin-bottom: 1.5em;
-	.gc-status-color {
-		float: left;
-		margin-right: 5px;
-	}
 	.check-column {
 		width: 20px;
 		padding: 6px 0 6px 6px;
@@ -188,13 +185,15 @@ ul.gc-radio-desc li, ul.gc-reveal-items-list li {
 		width: 20px;
 	}
 }
-.select2-gc_status {
+.select2-gc_status, .select2-post_status_mapping_after {
+	.gc-status-color {
+		float: right;
+		margin-right: 0;
+	}
 	&.select2-container--default {
 		.gc-status-color {
 			position: relative;
 			top: .4em;
-			float: left;
-			margin-right: 5px;
 		}
 	}
 }
@@ -252,9 +251,7 @@ ul.gc-radio-desc li, ul.gc-reveal-items-list li {
 
 .column-gathercontent {
 	.gc-status-color {
-		float: left;
 		margin-top: 2px;
-		margin-right: 3px;
 	}
 }
 

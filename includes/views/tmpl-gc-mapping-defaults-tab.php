@@ -34,19 +34,3 @@
 		</select>
 	</td>
 </tr>
-<tr id="default-mapping-gc_status">
-	<td>
-		<a title="<?php _ex( 'Click to show additional details', 'About the GatherContent object', 'gathercontent-import' ); ?>" href="#" class="gc-reveal-items dashicons-before dashicons-arrow-<# if ( data.expanded ) { #>down<# } else { #>right<# } #>"><strong><?php _e( 'GatherContent Status', 'gathercontent-import' ); ?></strong></a>
-		<ul class="gc-reveal-items-list <# if ( ! data.expanded ) { #>hidden<# } #>">
-			<li><?php _e( 'Optionally change the GatherContent Status when content is imported.', 'gathercontent-import' ); ?></li>
-		</ul>
-	</td>
-	<td>
-		<select class="gc-default-mapping-select gc-select2" data-column="gc_status" name="<?php $this->output( 'option_base' ); ?>[gc_status]">
-			<option data-color="" data-description="<?php esc_attr_e( 'Select if GatherContent should not change when items are imported.' ); ?>" <# if ( ! data.gc_status ) { #>selected="selected"<# } #> value=""><?php _e( 'Do not change' ); ?></option>
-			<?php foreach ( $this->get( 'gc_status_options' ) as $status ) : ?>
-				<option data-color="<?php echo esc_attr( $status->color ); ?>" data-description="<?php echo esc_attr( $status->description ); ?>" <# if ( '<?php echo esc_attr( $status->id ); ?>' === data.gc_status ) { #>selected="selected"<# } #> value="<?php echo esc_attr( $status->id ); ?>"><?php echo esc_attr( $status->name ); ?></option>
-			<?php endforeach; ?>
-		</select>
-	</td>
-</tr>

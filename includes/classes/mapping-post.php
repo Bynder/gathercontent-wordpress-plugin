@@ -117,7 +117,7 @@ class Mapping_Post extends Base {
 		}
 	}
 
-	public function data( $arg = null ) {
+	public function data( $arg = null, $sub_arg = null ) {
 		if ( null === $arg ) {
 			return $this->data;
 		}
@@ -134,7 +134,31 @@ class Mapping_Post extends Base {
 			$destination['type'] = $type[0];
 		}
 
+		if ( $sub_arg ) {
+			return is_array( $destination ) && isset( $destination[ $sub_arg ] ) ? $destination[ $sub_arg ] : false;
+		}
+
 		return $destination;
+	}
+
+	public function get_wp_status_for_item( $item ) {
+		$status_id = isset( $item->custom_state_id ) ? $item->custom_state_id : $item;
+		if ( $gc_status = $this->data( 'gc_status', $status_id ) ) {
+			if ( ! empty( $gc_status['wp'] ) ) {
+				return sanitize_text_field( $gc_status['wp'] );
+			}
+		}
+		return false;
+	}
+
+	public function get_item_new_status( $item ) {
+		$status_id = isset( $item->custom_state_id ) ? $item->custom_state_id : $item;
+		if ( $gc_status = $this->data( 'gc_status', $status_id ) ) {
+			if ( ! empty( $gc_status['after'] ) ) {
+				return absint( $gc_status['after'] );
+			}
+		}
+		return false;
 	}
 
 	protected function update_meta( $key, $value ) {

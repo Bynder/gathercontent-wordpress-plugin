@@ -104,6 +104,32 @@ class Template_Mapper extends Base {
 		return array(
 			'_tabs'      => $this->get_tabs(),
 			'_meta_keys' => $this->custom_field_keys(),
+			'_table_headings' => array(
+				'default' => array(
+					'gc' => array(
+						'id' => 'gc-field-th',
+						'label' => __( 'GatherContent Field', 'gathercontent-import' ),
+					),
+					'wp' => array(
+						'id' => 'wp-field-th',
+						'label' => __( 'Mapped WordPress Field', 'gathercontent-import' ),
+					),
+				),
+				'status' => array(
+					'gc' => array(
+						'id' => 'gc-status-th',
+						'label' => __( 'GatherContent Status', 'gathercontent-import' ),
+					),
+					'wp' => array(
+						'id' => 'wp-status-th',
+						'label' => __( 'Mapped WordPress Status', 'gathercontent-import' ),
+					),
+					'gcafter' => array(
+						'id' => 'gcafter-status-th',
+						'label' => __( 'On Import, Change GatherContent Status', 'gathercontent-import' ),
+					),
+				),
+			),
 		);
 	}
 
@@ -115,6 +141,8 @@ class Template_Mapper extends Base {
 	 * @return array
 	 */
 	protected function get_underscore_templates() {
+		$post_status_options = $this->get_default_field_options( 'post_status' );
+
 		return array(
 			'tmpl-gc-tabs-wrapper' => array(),
 			'tmpl-gc-tab-wrapper' => array(),
@@ -124,12 +152,17 @@ class Template_Mapper extends Base {
 			),
 			'tmpl-gc-mapping-defaults-tab' => array(
 				'post_author_label'   => $this->post_column_label( 'post_author' ),
-				'post_status_options' => $this->get_default_field_options( 'post_status' ),
-				'post_status_label'   => $this->post_column_label( 'post_status' ),
+				'post_status_options' => $post_status_options,
+				'post_status_label'   => __( 'Default Post Status', 'gathercontent-import' ),
 				'post_type_label'     => $this->post_column_label( 'post_type' ),
 				'post_type_options'   => $this->get_default_field_options( 'post_type' ),
 				'gc_status_options'   => $this->statuses,
 				'option_base'         => $this->option_name,
+			),
+			'tmpl-gc-mapping-defaults-tab-status-mappings' => array(
+				'option_base'         => $this->option_name,
+				'gc_status_options'   => $this->statuses,
+				'post_status_options' => $post_status_options,
 			),
 			'tmpl-gc-select2-item' => array(),
 		);
@@ -200,7 +233,7 @@ class Template_Mapper extends Base {
 			'post_author' => $this->get_value( 'post_author', 'absint', 1 ),
 			'post_status' => $this->get_value( 'post_status', 'esc_attr', 'draft' ),
 			'post_type'   => $this->get_value( 'post_type', 'esc_attr', 'post' ),
-			'gc_status'   => $this->get_value( 'gc_status', 'esc_attr' ),
+			'gc_status'   => $this->get_gc_statuses(),
 		);
 
 		$default_tab[ 'select2:post_author:' . $default_tab['post_author'] ] = $this->get_default_field_options( 'post_author' );
@@ -208,6 +241,17 @@ class Template_Mapper extends Base {
 		$tabs[] = $default_tab;
 
 		return $tabs;
+	}
+
+	public function get_gc_statuses() {
+		$statuses = $this->get_value( 'gc_status' );
+		$statuses = is_array( $statuses ) ? $statuses : array();
+
+		foreach ( $this->statuses as $status ) {
+			$statuses[ $status->id ] = isset( $statuses[ $status->id ] ) ? $statuses[ $status->id ] : array();
+		}
+
+		return $statuses;
 	}
 
 }

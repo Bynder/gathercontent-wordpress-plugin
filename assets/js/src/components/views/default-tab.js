@@ -1,11 +1,12 @@
-module.exports = function( app ) {
+module.exports = function( app, table_headings ) {
 	return app.views.tab.extend({
 		events : {
 			'change select'          : 'changeDefault',
 			'click .gc-reveal-items' : 'toggleExpanded'
 		},
 
-		defaultTabTemplate  : wp.template( 'gc-mapping-defaults-tab' ),
+		defaultTabTemplate     : wp.template( 'gc-mapping-defaults-tab' ),
+		statusMappingsTemplate : wp.template( 'gc-mapping-defaults-tab-status-mappings' ),
 
 		changeDefault: function( evt ) {
 			var $this = jQuery( evt.target );
@@ -26,13 +27,26 @@ module.exports = function( app ) {
 		render : function() {
 			var json = this.model.toJSON();
 
-			this.$el.html( this.template( json ) );
-
-			this.$el.find( 'tbody' ).html( this.defaultTabTemplate( json ) );
+			this.$el.html( this.wrapHtml( json ) );
+			this.$el.find( 'tbody' ).first().html( this.defaultTabTemplate( json ) );
+			this.$el.find( '#gc-status-mappings tbody' ).html( this.statusMappingsTemplate( json ) );
 
 			this.renderSelect2();
 
 			return this;
+		},
+
+		wrapHtml: function( json ) {
+			var html = this.template( json );
+
+			json.table_id = 'gc-status-mappings';
+			delete json.label;
+			json.col_headings = table_headings.status;
+
+			html += '<br>';
+			html += this.template( json );
+
+			return html;
 		},
 
 		select2Args: function( data ) {

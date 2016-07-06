@@ -22,13 +22,13 @@ window.GatherContent = window.GatherContent || {};
 	 * Tab setup
 	 */
 
-	app.models.tab = require( './models/tab.js' )( app );
+	app.models.tab = require( './models/tab.js' )( app, gc._table_headings );
 	app.collections.tabs = require( './collections/tabs.js' )( app );
 	app.views.tab = require( './views/tab.js' )( app );
 
 	app.views.tabLink = require( './views/tab-link.js' )( app );
 
-	app.views.defaultTab = require( './views/default-tab.js' )( app );
+	app.views.defaultTab = require( './views/default-tab.js' )( app, gc._table_headings );
 
 	/*
 	 * Overall view setup
