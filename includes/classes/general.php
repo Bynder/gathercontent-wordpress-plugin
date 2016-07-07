@@ -48,6 +48,13 @@ class General extends Base {
 	protected $bulk_ui;
 
 	/**
+	 * GatherContent\Importer\Admin\Single instance
+	 *
+	 * @var GatherContent\Importer\Admin\Single
+	 */
+	protected $single_ui;
+
+	/**
 	 * Creates or returns an instance of this class.
 	 * @since  3.0.0
 	 * @return General A single instance of this class.
@@ -73,6 +80,10 @@ class General extends Base {
 				$this->api,
 				$this->admin->mapping_wizzard->mappings
 			);
+			$this->single_ui = new Admin\Single(
+				$this->api,
+				$this->admin->mapping_wizzard->mappings
+			);
 		}
 	}
 
@@ -83,6 +94,7 @@ class General extends Base {
 		$this->ajax_handler->init_hooks();
 		if ( $this->bulk_ui ) {
 			$this->bulk_ui->init_hooks();
+			$this->single_ui->init_hooks();
 		}
 	}
 

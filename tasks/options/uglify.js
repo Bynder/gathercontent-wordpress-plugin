@@ -3,6 +3,7 @@ module.exports = {
 		files: {
 			'assets/js/gathercontent.min.js'         : ['assets/js/gathercontent.js'],
 			'assets/js/gathercontent-general.min.js' : ['assets/js/gathercontent-general.js'],
+			'assets/js/gathercontent-single.min.js'  : ['assets/js/gathercontent-single.js'],
 			'assets/js/gathercontent-mapping.min.js' : ['assets/js/gathercontent-mapping.js'],
 			'assets/js/gathercontent-sync.min.js'    : ['assets/js/gathercontent-sync.js']
 		},

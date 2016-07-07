@@ -209,7 +209,7 @@ class Bulk extends UI_Base {
 			<?php wp_nonce_field( __CLASS__, 'gc-edit-nonce' ); ?>
 			<div class="inline-edit-col column-<?php echo $column_name; ?>">
 				<label class="inline-edit-group">
-					<span class="title">GatherContent Status</span>
+					<span class="title"><?php esc_html_e( 'GatherContent Status', 'gathercontent-importer' ); ?></span>
 					<span class="gc-status-select2"><span class="spinner"></span></span>
 				</label>
 			</div>
@@ -231,7 +231,7 @@ class Bulk extends UI_Base {
 			<?php echo \GatherContent\Importer\refresh_connection_link(); ?>
 		</div>
 		<p class="submit inline-edit-save">
-			<button id="gc-sync-modal" type="button" class="button gc-button-primary alignright">GatherContent Sync</button>
+			<button id="gc-sync-modal" type="button" class="button gc-button-primary alignright"><?php esc_html_e( 'GatherContent Sync', 'gathercontent-importer' ); ?></button>
 		</p>
 		<?php
 	}
