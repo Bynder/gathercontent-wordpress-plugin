@@ -30,6 +30,7 @@ class Admin extends Base {
 	 * @param $api API object
 	 */
 	public function __construct( API $api ) {
+		global $pagenow;
 		parent::set_api( $api );
 		parent::__construct();
 
@@ -45,7 +46,18 @@ class Admin extends Base {
 			// Get 'me'. If that fails, try again w/o cached response, to flush "fail" response cache.
 			if ( ! $this->api()->get_me() && ! $this->api()->get_me( 1 ) ) {
 
-				$this->add_settings_error( $this->option_name, 'gc-api-connect-fail', __( 'We had trouble connecting to the GatherContent API. Please check your settings.', 'gathercontent-import' ), 'error' );
+				if ( 'admin.php' === $pagenow && self::SLUG === $this->_get_val( 'page' ) ) {
+
+					$response = $this->api()->get_last_response();
+
+					$message = __( 'We had trouble connecting to the GatherContent API. Please check your settings.', 'gathercontent-import' );
+
+					if ( is_wp_error( $response ) ) {
+						$message .= '</p><p>' . sprintf( esc_html__( 'The error received: %s', 'gathercontent-import' ), $response->get_error_message() );
+					}
+
+					$this->add_settings_error( $this->option_name, 'gc-api-connect-fail', $message, 'error' );
+				}
 
 				$this->step = 0;
 			}

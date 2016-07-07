@@ -10,6 +10,7 @@ class API extends Base {
 	protected $only_cached = false;
 	protected $reset_request_cache = false;
 	protected $disable_cache = false;
+	protected $last_response = false;
 
 	/**
 	 * WP_Http instance
@@ -376,20 +377,29 @@ class API extends Base {
 
 		if ( is_wp_error( $response ) ) {
 			return $response;
+		} else {
+
+			$code     = $response['response']['code'];
+			$success  = $code >= 200 && $code < 300;
+
+			if ( 500 === $response['response']['code'] && ( $error = wp_remote_retrieve_body( $response ) ) ) {
+
+				$error = json_decode( $error );
+				$message = isset( $error->message ) ? $error->message : __( 'Unknown Error', 'gathercontent-import' );
+				$response = new WP_Error( 'gc_api_error', $message, array( 'error' => $error, 'code' => 500 ) );
+
+			} elseif ( 401 === $response['response']['code'] && ( $error = wp_remote_retrieve_body( $response ) ) ) {
+
+				$message = $error ? $error : __( 'Unknown Error', 'gathercontent-import' );
+				$response = new WP_Error( 'gc_api_error', $message, array( 'error' => $error, 'code' => 401 ) );
+
+			} elseif ( 'GET' === $method ) {
+				$response = $success ? json_decode( wp_remote_retrieve_body( $response ) ) : $response;
+			}
+
 		}
 
-		$code     = $response['response']['code'];
-		$success  = $code >= 200 && $code < 300;
-
-		if ( 'GET' === $method ) {
-			return $success ? json_decode( wp_remote_retrieve_body( $response ) ) : $response;
-		}
-
-		if ( 500 === $response['response']['code'] && ( $error = wp_remote_retrieve_body( $response ) ) ) {
-			$error = json_decode( $error );
-			$message = isset( $error->message ) ? $error->message : __( 'Unknown Error', 'gathercontent-import' );
-			$response = new WP_Error( 'gc_api_error', $message, $error );
-		}
+		$this->last_response = $response;
 
 		return $response;
 	}
@@ -444,6 +454,17 @@ class API extends Base {
 	public function uncached() {
 		$this->reset_request_cache = true;
 		return $this;
+	}
+
+	/**
+	 * Some methods return false if response is not found. This allows retrieving the last response.
+	 *
+	 * @since  3.0.0
+	 *
+	 * @return mixed  The last request response.
+	 */
+	public function get_last_response() {
+		return $this->last_response;
 	}
 
 	/**
