@@ -204,17 +204,7 @@ class Bulk extends UI_Base {
 			return;
 		}
 
-		?>
-		<fieldset class="inline-edit-col-right inline-edit-gc-status">
-			<?php wp_nonce_field( __CLASS__, 'gc-edit-nonce' ); ?>
-			<div class="inline-edit-col column-<?php echo $column_name; ?>">
-				<label class="inline-edit-group">
-					<span class="title"><?php esc_html_e( 'GatherContent Status', 'gathercontent-importer' ); ?></span>
-					<span class="gc-status-select2"><span class="spinner"></span></span>
-				</label>
-			</div>
-		</fieldset>
-		<?php
+		$this->view( 'quick-edit-field', compact( 'column_name' ) );
 	}
 
 	/**
@@ -226,14 +216,9 @@ class Bulk extends UI_Base {
 			return;
 		}
 
-		?>
-		<div style="display:none;">
-			<?php echo \GatherContent\Importer\refresh_connection_link(); ?>
-		</div>
-		<p class="submit inline-edit-save">
-			<button id="gc-sync-modal" type="button" class="button gc-button-primary alignright"><?php esc_html_e( 'GatherContent Sync', 'gathercontent-importer' ); ?></button>
-		</p>
-		<?php
+		$this->view( 'bulk-edit-field', array(
+			'refresh_link' => \GatherContent\Importer\refresh_connection_link(),
+		) );
 	}
 
 	public function set_gc_status( $post_id, $post ) {
@@ -241,7 +226,7 @@ class Bulk extends UI_Base {
 			wp_is_post_autosave( $post )
 			|| wp_is_post_revision( $post )
 			|| ! $this->_post_val( 'gc-edit-nonce' )
-			|| ! wp_verify_nonce( $this->_post_val( 'gc-edit-nonce' ), __CLASS__ )
+			|| ! wp_verify_nonce( $this->_post_val( 'gc-edit-nonce' ), GATHERCONTENT_SLUG )
 			|| ! ( $status_id = $this->_post_val( 'gc_status' ) )
 			|| ! ( $item_id = absint( \GatherContent\Importer\get_post_item_id( $post_id ) ) )
 			|| ! ( $mapping_id = absint( \GatherContent\Importer\get_post_mapping_id( $post_id ) ) )
