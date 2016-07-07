@@ -192,7 +192,7 @@ class Template_Mappings extends Base {
 		return wp_insert_post( $post_data, $wp_error );
 	}
 
-	public static function get_mapping( $args = array() ) {
+	public static function get_mappings( $args = array() ) {
 		$args['post_type'] = self::SLUG;
 
 		return new WP_Query( $args );
@@ -210,7 +210,7 @@ class Template_Mappings extends Base {
 			? $args['meta_query'] + $meta_query
 			: $meta_query;
 
-		return self::get_mapping( $args );
+		return self::get_mappings( $args );
 	}
 
 	public static function get_by_project_template( $project_id, $template_id, $args = array() ) {
