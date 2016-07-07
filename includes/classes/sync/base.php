@@ -4,6 +4,7 @@ use GatherContent\Importer\Base as Plugin_Base;
 use GatherContent\Importer\Post_Types\Template_Mappings;
 use GatherContent\Importer\Mapping_Post;
 use GatherContent\Importer\API;
+use WP_Error;
 
 class Exception extends \Exception {
 	protected $data;

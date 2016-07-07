@@ -10,17 +10,6 @@ class Sync_Bulk extends Sync_Items {
 
 	public function push_callback() {
 		$this->direction = 'push';
-
-
-
-		/**
-		 * Setup PUSH
-		 */
-
-
-
-		wp_send_json_error( __METHOD__ );
-
 		$this->callback();
 	}
 
@@ -58,7 +47,7 @@ class Sync_Bulk extends Sync_Items {
 			return false;
 		}
 
-		$mappings = array();
+		$mappings = $done = array();
 		foreach ( $data['check'] as $mapping_id ) {
 			$mapping = Mapping_Post::get( $mapping_id, true );
 			$percent = $mapping->get_sync_percent( $this->direction );
@@ -102,12 +91,12 @@ class Sync_Bulk extends Sync_Items {
 	protected function start_sync( $posts ) {
 		foreach ( $posts as $mapping_id => $posts ) {
 			$mapping = $this->mappings[ $mapping_id ];
-			$items = wp_list_pluck( $posts, 'item' );
+			$items = wp_list_pluck( $posts, 'pull' === $this->direction ? 'item' : 'id' );
 
 			// Start the sync and bump percent value.
 			$mapping->update_items_to_sync( array( 'pending' => $items ), $this->direction );
 
-			do_action( "wp_async_gc_{$this->direction}_items", $mapping );
+			do_action( "gc_{$this->direction}_items", $mapping );
 		}
 
 		wp_send_json_success( array(

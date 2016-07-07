@@ -76,6 +76,8 @@ class Sync_Items extends Plugin_Base {
 
 		$percent = $this->mapping->get_pull_percent();
 
+		do_action( 'gc_pull_items', $this->mapping );
+
 		wp_send_json_success( compact( 'percent' ) );
 	}
 
@@ -116,7 +118,7 @@ class Sync_Items extends Plugin_Base {
 		// Start the sync and bump percent value.
 		$this->mapping->update_items_to_pull( array( 'pending' => $fields['import'] ) );
 
-		do_action( 'wp_async_gc_pull_items', $this->mapping );
+		do_action( 'gc_pull_items', $this->mapping );
 
 		$percent = 0.1;
 

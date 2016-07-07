@@ -13,7 +13,7 @@ window.GatherContent = window.GatherContent || {};
 	 * Posts
 	 */
 
-	app.models.post = require( './models/post.js' )( app, gc );
+	app.models.post = require( './models/post.js' )( gc );
 	app.collections.posts = require( './collections/posts.js' )( app );
 	app.views.postRow = require( './views/post-row.js' )( app, gc );
 	app.views.statusSelect2 = require( './views/status-select2.js' )( app );

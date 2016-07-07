@@ -130,7 +130,7 @@ class Pull extends Base {
 
 		$backup = array();
 		foreach ( $this->get_append_types() as $key ) {
-			$backup[ $key ] = $post_data[ $key ];
+			$backup[ $key ] = isset( $post_data[ $key ] ) ? $post_data[ $key ] : '';
 			$post_data[ $key ] = 'gcinitial';
 		}
 
@@ -154,9 +154,9 @@ class Pull extends Base {
 		}
 
 		if ( ! empty( $post_data['ID'] ) ) {
-			$post_data = apply_filters( 'gc_update_wp_post_data', $post_data );
+			$post_data = apply_filters( 'gc_update_wp_post_data', $post_data, $this );
 		} else {
-			$post_data = apply_filters( 'gc_new_wp_post_data', $post_data );
+			$post_data = apply_filters( 'gc_new_wp_post_data', $post_data, $this );
 		}
 
 		return $post_data;
@@ -259,16 +259,6 @@ class Pull extends Base {
 		}
 
 		return $post_data;
-	}
-
-	protected function get_append_types() {
-		return array( 'post_content', 'post_title', 'post_excerpt' );
-	}
-
-	protected function type_can_append( $field ) {
-		$can_append = in_array( $field, $this->get_append_types(), 1 );
-
-		return apply_filters( "gc_can_append_{$field}", $can_append, $this->element, $this->item );
 	}
 
 	protected function maybe_append( $field, $value, $array ) {
