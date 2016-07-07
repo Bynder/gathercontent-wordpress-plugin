@@ -247,7 +247,21 @@ class Admin extends Base {
 
 				if ( $user = $this->api()->get_me() ) {
 					if ( isset( $user->first_name ) ) {
-						$this->view( 'user-profile', (array) $user );
+
+						$data = (array) $user;
+
+						$data['message'] = esc_html__( "You've successfully connected to the GatherContent API", 'gathercontent-import' );
+
+						$data['avatar'] = ! empty( $data['avatar'] )
+							? 'https://gathercontent-production-avatars.s3-us-west-2.amazonaws.com/' . $data['avatar']
+							: 'https://app.gathercontent.com/assets/img/avatar.png';
+
+						if ( $this->set_my_account() ) {
+
+							$data['message'] .= ' '. sprintf( esc_html__( "and the %s account.", 'gathercontent-import' ), '<a href="'. esc_url( $this->get_setting( 'platform_url' ) ) .'">'. esc_html( $this->account->name ) .'</a>' );
+						}
+
+						$this->view( 'user-profile', $data );
 					}
 				}
 			},

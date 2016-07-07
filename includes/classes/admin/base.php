@@ -13,6 +13,13 @@ abstract class Base extends Enqueue {
 	public $menu_priority      = 9;
 
 	/**
+	 * The account object. Uses the platform_url.
+	 *
+	 * @var null|object
+	 */
+	public $account = null;
+
+	/**
 	 * GatherContent\Importer\API instance
 	 *
 	 * @var GatherContent\Importer\API
@@ -180,6 +187,62 @@ abstract class Base extends Enqueue {
 
 	protected function set_api( API $api ) {
 		return self::$api = $api;
+	}
+
+	/**
+	 * Uses the platform URL to determine which account in the accounts object
+	 * (from the API) to set as the account.
+	 *
+	 * @since 3.0.0
+	 *
+	 * @return  bool Whether account was successfully set.
+	 */
+	public function set_my_account() {
+		$accounts = $this->api()->get_accounts();
+		$account_slug = $this->get_saved_account_slug();
+
+		if ( ! $accounts || ! $account_slug ) {
+			return false;
+		}
+
+		foreach ( $accounts as $index => $account ) {
+			if ( $account_slug === $account->slug ) {
+				$this->account = $account;
+				return true;
+			}
+		}
+
+		return false;
+	}
+
+	/**
+	 * Get the saved account slug from the platform url.
+	 *
+	 * @since  3.0.0
+	 *
+	 * @return string  The account slug derrived from the platform url.
+	 */
+	public function get_saved_account_slug() {
+		$url = $this->get_setting( 'platform_url' );
+		$slug = '';
+
+		if ( ! $url ) {
+			return $slug;
+		}
+
+		$parts = explode( '//', $url );
+		if ( ! isset( $parts[1] ) ) {
+			return $slug;
+		}
+
+		$parts = explode( '.gathercontent', $parts[1] );
+		if ( ! isset( $parts[0] ) ) {
+			return $slug;
+		}
+
+		$slug = $parts[0];
+
+		return $slug;
 	}
 
 }
