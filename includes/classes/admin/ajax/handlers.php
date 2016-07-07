@@ -48,6 +48,7 @@ class Handlers extends Plugin_Base {
 		add_action( 'wp_ajax_gc_push_items', array( $this->sync_bulk, 'push_callback' ) );
 		add_action( 'wp_ajax_gc_get_items', array( $this, 'get_items_callback' ) );
 		add_action( 'wp_ajax_gc_get_post_statuses', array( $this, 'post_statuses_callback' ) );
+		add_action( 'wp_ajax_gc_fetch_js_post', array( $this, 'fetch_js_post' ) );
 	}
 
 	public function select2_field_data_callback() {
@@ -133,6 +134,13 @@ class Handlers extends Plugin_Base {
 		wp_send_json_success( compact( 'postId', 'statuses' ) );
 	}
 
+	public function fetch_js_post() {
+		if ( $post_id = $this->_get_val( 'id' ) ) {
+			$js_post = \GatherContent\Importer\get_post_for_js( absint( $post_id ) );
+			wp_send_json( $js_post );
+		}
+	}
+
 	/*
 	 * Non-callback methods.
 	 */
@@ -156,4 +164,5 @@ class Handlers extends Plugin_Base {
 
 		return array( 'results' => $users );
 	}
+
 }

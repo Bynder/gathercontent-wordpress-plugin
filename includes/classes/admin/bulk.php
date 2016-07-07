@@ -117,13 +117,6 @@ class Bulk extends UI_Base {
 			return;
 		}
 
-		add_action( 'all_admin_notices', function() {
-			echo '<div id="message" class="updated"><p>';
-
-				echo '<xmp>$this->post_types: '. print_r( $this->post_types, true ) .'</xmp>';
-
-			echo '</p></div>';
-		} );
 		if ( ! isset( $this->post_types[ $screen->post_type ] ) ) {
 			return;
 		}
@@ -163,33 +156,11 @@ class Bulk extends UI_Base {
 		}
 		global $post;
 
-		$js_post = array_change_key_case( (array) $post );
-
-
-		$js_post['item'] = absint( \GatherContent\Importer\get_post_item_id( $post_id ) );
-		$js_post['mapping'] = absint( \GatherContent\Importer\get_post_mapping_id( $post_id ) );
+		$js_post = \GatherContent\Importer\get_post_for_js( $post );
 
 		if ( $this->doing_ajax ) {
 			return $this->ajax_view( $post_id, $js_post['item'], $js_post['mapping'] );
 		}
-
-		$js_post['status'] = (object) array();
-		$js_post['itemName'] = __( 'N/A', 'gathercontent-importer' );
-
-		if ( $js_post['item'] ) {
-			$item = $this->api->only_cached()->get_item( $js_post['item'] );
-			// error_log( '$item: '. print_r( $item, true ) );
-
-			if ( isset( $item->name ) ) {
-				$js_post['itemName'] = $item->name;
-			}
-
-			$js_post['status'] = isset( $item->status->data )
-				? $item->status->data
-				: (object) array();
-		}
-
-		$js_post['mappingLink'] = get_edit_post_link( $js_post['mapping'] );
 
 		printf(
 			'<span class="gc-status-column" data-id="%d" data-item="%d" data-mapping="%d">&mdash;</span>',

@@ -172,6 +172,47 @@ function update_post_mapping_id( $post_id, $mapping_post_id ) {
 }
 
 /**
+ * Get a an array of data from a WP_Post object to be used as a backbone model.
+ *
+ * @since  3.0.0
+ *
+ * @param  mixed  $post WP_Post or post ID.
+ *
+ * @return array        JS post array.
+ */
+function get_post_for_js( $post ) {
+	$post = $post instanceof WP_Post ? $post : get_post( $post );
+	if ( ! $post ) {
+		return false;
+	}
+
+	$post_id = $post->ID;
+
+	$js_post = array_change_key_case( (array) $post );
+
+	$js_post['item']        = absint( \GatherContent\Importer\get_post_item_id( $post_id ) );
+	$js_post['mapping']     = absint( \GatherContent\Importer\get_post_mapping_id( $post_id ) );
+
+	$js_post['mappingLink'] = $js_post['mapping'] ? get_edit_post_link( $js_post['mapping'] ) : '';
+	$js_post['status']      = (object) array();
+	$js_post['itemName']    = __( 'N/A', 'gathercontent-importer' );
+
+	if ( $js_post['item'] ) {
+		$item = General::get_instance()->api->only_cached()->get_item( $js_post['item'] );
+
+		if ( isset( $item->name ) ) {
+			$js_post['itemName'] = $item->name;
+		}
+
+		$js_post['status'] = isset( $item->status->data )
+			? $item->status->data
+			: (object) array();
+	}
+
+	return $js_post;
+}
+
+/**
  * A button for flushing the cached connection to GC's API.
  *
  * @since  3.0.0

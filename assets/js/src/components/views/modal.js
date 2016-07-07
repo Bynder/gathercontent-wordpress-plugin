@@ -137,6 +137,8 @@
  			$( document ).off( 'focusin' );
  			$( document.body ).removeClass( 'gc-modal-open' );
  			this.remove();
+
+ 			gc.$id( 'bulk-edit' ).find( 'button.cancel' ).trigger( 'click' );
  			app.modalView = undefined;
  		},
 
@@ -227,6 +229,9 @@
 				} else {
 					model.set( 'checked', false );
 					model.set( 'mappingStatus', 'complete' );
+					model.fetch().done( function() {
+						model.trigger( 'render' );
+					} );
 				}
 			} );
 

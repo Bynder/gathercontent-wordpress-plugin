@@ -1,5 +1,5 @@
-module.exports = function( app, gc ) {
-	return app.models.base.extend({
+module.exports = function( gc ) {
+	return Backbone.Model.extend({
 		defaults: {
 			id              : 0,
 			item            : 0,
@@ -13,6 +13,10 @@ module.exports = function( app, gc ) {
 			statuses        : [],
 			statusesChecked : false,
 			statusSetting   : {},
+		},
+
+		url: function() {
+			return window.ajaxurl +'?action=gc_fetch_js_post&id='+ this.get( 'id' );
 		},
 
 		_get : function( value, attribute ) {
@@ -29,12 +33,12 @@ module.exports = function( app, gc ) {
 		},
 
 		get : function( attribute ) {
-			return this._get( app.models.base.prototype.get.call( this, attribute ), attribute );
+			return this._get( Backbone.Model.prototype.get.call( this, attribute ), attribute );
 		},
 
 		// hijack the toJSON method and overwrite the data that is sent back to the view.
 		toJSON: function() {
-			return _.mapObject( app.models.base.prototype.toJSON.call( this ), _.bind( this._get, this ) );
+			return _.mapObject( Backbone.Model.prototype.toJSON.call( this ), _.bind( this._get, this ) );
 		}
 
 	});
