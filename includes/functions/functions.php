@@ -42,7 +42,7 @@ function array_map_recursive( $callback, $array ) {
 function enqueue_style( $handle, $filename, $deps = [], $ver = GATHERCONTENT_VERSION ) {
 	$suffix = defined( 'SCRIPT_DEBUG' ) && SCRIPT_DEBUG ? '' : '.min';
 
-	wp_enqueue_style( $handle, GATHERCONTENT_URL . "assets/css/{$filename}.{$suffix}css", $deps, $ver );
+	wp_enqueue_style( $handle, GATHERCONTENT_URL . "assets/css/{$filename}{$suffix}.css", $deps, $ver );
 }
 
 /**
