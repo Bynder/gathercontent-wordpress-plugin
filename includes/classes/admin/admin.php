@@ -17,7 +17,7 @@ class Admin extends Base {
 	 * @var array
 	 */
 	public $default_options = array(
-		'account_owner' => '',
+		'account_email' => '',
 		'platform_url'  => '',
 		'api_key'       => '',
 	);
@@ -33,14 +33,13 @@ class Admin extends Base {
 		global $pagenow;
 		parent::set_api( $api );
 		parent::__construct();
-
 		if (
-			$this->get_setting( 'account_owner_email' )
+			$this->get_setting( 'account_email' )
 			&& $this->get_setting( 'platform_url' )
 			&& $this->get_setting( 'api_key' )
 		) {
 			$this->step = 1;
-			$this->api()->set_user( $this->get_setting( 'account_owner_email' ) );
+			$this->api()->set_user( $this->get_setting( 'account_email' ) );
 			$this->api()->set_api_key( $this->get_setting( 'api_key' ) );
 
 			// Get 'me'. If that fails, try again w/o cached response, to flush "fail" response cache.
@@ -83,6 +82,40 @@ class Admin extends Base {
 		if ( $this->mapping_wizzard ) {
 			$this->mapping_wizzard->init_hooks();
 		}
+	}
+
+	public function sanitize_settings( $settings ) {
+		$settings = parent::sanitize_settings( $settings );
+
+		if ( ! is_array( $settings ) ) {
+			return $settings;
+		}
+
+		foreach ( $settings as $key => $value ) {
+
+			switch ( $key ) {
+				case 'platform_url':
+					if ( $value ) {
+						$value = trailingslashit( esc_url_raw( $settings[ $key ] ) );
+					}
+					break;
+				case 'account_email':
+					$value = is_email( $value ) ? sanitize_text_field( $value ) : '';
+					break;
+				default:
+					$value = is_scalar( $value ) ? sanitize_text_field( $value ) : '';
+					break;
+			}
+
+
+			$settings[ $key ] = $value;
+		}
+
+		if ( isset( $settings['account_owner_email'] ) ) {
+			unset( $settings['account_owner_email'] );
+		}
+
+		return $settings;
 	}
 
 	/**
@@ -158,8 +191,8 @@ class Admin extends Base {
 		);
 
 		$section->add_field(
-			'account_owner_email',
-			__( 'Account Owner Email Address', 'gathercontent-import' ),
+			'account_email',
+			__( 'GatherContent Email Address', 'gathercontent-import' ),
 			function( $field ) {
 				$id = $field->param( 'id' );
 
@@ -207,7 +240,6 @@ class Admin extends Base {
 	}
 
 	public function api_setup_complete() {
-
 		$section = new Form_Section(
 			'steps_complete',
 			'',
