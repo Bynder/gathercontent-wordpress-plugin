@@ -1,5 +1,6 @@
 <?php
 namespace GatherContent\Importer;
+use WP_Error;
 
 class API extends Base {
 
@@ -219,11 +220,11 @@ class API extends Base {
 	public function save_item( $item_id, $config ) {
 		$response = $this->post( 'items/'. absint( $item_id ) .'/save', array(
 			'body' => array(
-				'config' => $config,
+				'config' => base64_encode( wp_json_encode( $config ) ),
 			),
 		) );
 
-		return 202 === $response['response']['code'];
+		return is_wp_error( $response ) ? $response : 202 === $response['response']['code'];
 	}
 
 	/**
@@ -382,6 +383,12 @@ class API extends Base {
 
 		if ( 'GET' === $method ) {
 			return $success ? json_decode( wp_remote_retrieve_body( $response ) ) : $response;
+		}
+
+		if ( 500 === $response['response']['code'] && ( $error = wp_remote_retrieve_body( $response ) ) ) {
+			$error = json_decode( $error );
+			$message = isset( $error->message ) ? $error->message : __( 'Unknown Error', 'gathercontent-import' );
+			$response = new WP_Error( 'gc_api_error', $message, $error );
 		}
 
 		return $response;
