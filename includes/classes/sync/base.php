@@ -81,6 +81,12 @@ abstract class Base extends Plugin_Base {
 	abstract protected function do_item( $id );
 
 	public function sync_items( $mapping ) {
+		$result = $this->_sync_items( $mapping );
+		error_log( '_sync_items $result: '. print_r( $result, true ) );
+		return $result;
+	}
+
+	protected function _sync_items( $mapping ) {
 		try {
 			$this->mapping = Mapping_Post::get( $mapping, true );
 
@@ -88,30 +94,32 @@ abstract class Base extends Plugin_Base {
 			$ids = $this->get_items_to_sync( $this->direction );
 
 		} catch ( Exception $e ) {
-			$error = new WP_Error( "gc_{$this->direction}_items_fail_" . $e->getCode(), $e->getMessage(), $e->get_data() );
-			// @todo remove
-			wp_die( '<xmp>$error: '. print_r( $error, true ) .'</xmp>' );
+			return new WP_Error( "gc_{$this->direction}_items_fail_" . $e->getCode(), $e->getMessage(), $e->get_data() );
+		}
+
+		$id = array_shift( $ids['pending'] );
+
+		if ( get_option( "gc_{$this->direction}_item_{$id}" ) ) {
+			return new WP_Error( "gc_{$this->direction}_item_in_progress", sprintf( __( 'Currently in progress: %d', 'gathercontent-import' ), $id ) );
 		}
 
 		try {
-
-			$id = array_shift( $ids['pending'] );
-
+			update_option( "gc_{$this->direction}_item_{$id}", time(), false );
 			$result = $this->do_item( $id );
-
-			$ids['complete'] = isset( $ids['complete'] ) ? $ids['complete'] : array();
-			$ids['complete'][] = $id;
-
-			$this->mapping->update_items_to_sync( $ids, $this->direction );
-
-			// If we have more items
-			if ( ! empty( $ids['pending'] ) ) {
-				// Then trigger the next async request
-				do_action( "gc_{$this->direction}_items", $this->mapping );
-			}
-
 		} catch ( Exception $e ) {
 			$result = new WP_Error( "gc_{$this->direction}_item_fail_" . $e->getCode(), $e->getMessage(), $e->get_data() );
+		}
+
+		$ids['complete'] = isset( $ids['complete'] ) ? $ids['complete'] : array();
+		$ids['complete'][] = $id;
+
+		$this->mapping->update_items_to_sync( $ids, $this->direction );
+		delete_option( "gc_{$this->direction}_item_{$id}" );
+
+		// If we have more items
+		if ( ! empty( $ids['pending'] ) ) {
+			// Then trigger the next async request
+			do_action( "gc_{$this->direction}_items", $this->mapping );
 		}
 
 		return $result;
@@ -127,7 +135,12 @@ abstract class Base extends Plugin_Base {
 	}
 
 	protected function set_item( $item_id ) {
-		$this->item = $this->api->uncached()->get_item( $item_id );
+		// if ( isset( $_GET['test_push'] ) ) {
+		// 	$this->item = $this->api->get_item( $item_id );
+		// } else {
+			$this->item = $this->api->uncached()->get_item( $item_id );
+		// }
+
 
 		if ( ! isset( $this->item->id ) ) {
 			// @todo maybe check if error was temporary.
@@ -155,14 +168,19 @@ abstract class Base extends Plugin_Base {
 		}
 	}
 
-	protected function set_element_value() {
+	protected function get_element_value() {
+		$val = $this->get_value_for_element( $this->element );
+		return apply_filters( 'gc_get_element_value', $val, $this->element, $this->item );
+	}
+
+	protected function get_value_for_element( $element ) {
 		$val = false;
 
-		switch ( $this->element->type ) {
+		switch ( $element->type ) {
 			case 'text':
-				$val = $this->element->value;
+				$val = $element->value;
 				$val = trim( str_replace( "\xE2\x80\x8B", '', $val ) );
-				if ( ! $this->element->plain_text ) {
+				if ( ! $element->plain_text ) {
 					$val = preg_replace_callback(
 						'#\<p\>(.+?)\<\/p\>#s',
 						function ( $matches ) {
@@ -191,7 +209,7 @@ abstract class Base extends Plugin_Base {
 
 			case 'choice_radio':
 				$val = '';
-				foreach ( $this->element->options as $idx => $option ) {
+				foreach ( $element->options as $idx => $option ) {
 					if ( $option->selected ) {
 						if ( isset( $option->value ) ) {
 							$val = sanitize_text_field( $option->value );
@@ -205,7 +223,7 @@ abstract class Base extends Plugin_Base {
 
 			case 'choice_checkbox':
 				$val = array();
-				foreach ( $this->element->options as $option ) {
+				foreach ( $element->options as $option ) {
 					if ( $option->selected ) {
 						$val = sanitize_text_field( $option->label );
 					}
@@ -213,19 +231,34 @@ abstract class Base extends Plugin_Base {
 				break;
 
 			case 'files':
-				if ( is_array( $this->item->files ) && isset( $this->item->files[ $this->element->name ] ) ) {
-					$val = $this->item->files[ $this->element->name ];
+				if ( is_array( $this->item->files ) && isset( $this->item->files[ $element->name ] ) ) {
+					$val = $this->item->files[ $element->name ];
 				}
 				break;
 
 			default:
-				if ( isset( $this->element->value ) ) {
+				if ( isset( $element->value ) ) {
 					$val = sanitize_text_field( $option->label );
 				}
 				break;
 		}
 
-		$this->element->value = apply_filters( 'gc_get_element_value', $val, $this->element, $this->item );
+		return $val;
 	}
+
+	protected function set_element_value() {
+		$this->element->value = $this->get_element_value();
+	}
+
+	protected function get_append_types() {
+		return array( 'post_content', 'post_title', 'post_excerpt' );
+	}
+
+	protected function type_can_append( $field ) {
+		$can_append = in_array( $field, $this->get_append_types(), 1 );
+
+		return apply_filters( "gc_can_append_{$field}", $can_append, $this->element, $this->item );
+	}
+
 
 }

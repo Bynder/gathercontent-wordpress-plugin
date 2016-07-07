@@ -1,5 +1,5 @@
 /**
- * GatherContent Importer - v3.0.0 - 2016-07-06
+ * GatherContent Importer - v3.0.0 - 2016-07-07
  * http://www.gathercontent.com
  *
  * Copyright (c) 2016 GatherContent
@@ -143,7 +143,7 @@ window.GatherContent = window.GatherContent || {};
   * Posts
   */
 
-	app.models.post = require('./models/post.js')(app, gc);
+	app.models.post = require('./models/post.js')(gc);
 	app.collections.posts = require('./collections/posts.js')(app);
 	app.views.postRow = require('./views/post-row.js')(app, gc);
 	app.views.statusSelect2 = require('./views/status-select2.js')(app);
@@ -302,8 +302,8 @@ module.exports = function (app) {
 },{}],10:[function(require,module,exports){
 'use strict';
 
-module.exports = function (app, gc) {
-	return app.models.base.extend({
+module.exports = function (gc) {
+	return Backbone.Model.extend({
 		defaults: {
 			id: 0,
 			item: 0,
@@ -317,6 +317,10 @@ module.exports = function (app, gc) {
 			statuses: [],
 			statusesChecked: false,
 			statusSetting: {}
+		},
+
+		url: function url() {
+			return window.ajaxurl + '?action=gc_fetch_js_post&id=' + this.get('id');
 		},
 
 		_get: function _get(value, attribute) {
@@ -333,12 +337,12 @@ module.exports = function (app, gc) {
 		},
 
 		get: function get(attribute) {
-			return this._get(app.models.base.prototype.get.call(this, attribute), attribute);
+			return this._get(Backbone.Model.prototype.get.call(this, attribute), attribute);
 		},
 
 		// hijack the toJSON method and overwrite the data that is sent back to the view.
 		toJSON: function toJSON() {
-			return _.mapObject(app.models.base.prototype.toJSON.call(this), _.bind(this._get, this));
+			return _.mapObject(Backbone.Model.prototype.toJSON.call(this), _.bind(this._get, this));
 		}
 
 	});
@@ -400,7 +404,7 @@ module.exports = function (app) {
 },{}],13:[function(require,module,exports){
 'use strict';
 
-module.exports = function (app) {
+module.exports = function (app, gc) {
 	var item = require('./../views/item.js')(app);
 	return item.extend({
 		template: wp.template('gc-modal-item'),
@@ -418,13 +422,23 @@ module.exports = function (app) {
 			'click .gc-modal-item-wp-post-title': 'toggleCheckAndRender'
 		},
 
+		initialize: function initialize() {
+			this.listenTo(this.model, 'change:post_title', this.renderTitle);
+			this.listenTo(this.model, 'change:mappingStatus', this.render);
+			this.listenTo(this.model, 'render', this.render);
+		},
+
+		renderTitle: function renderTitle() {
+			var title = this.model.get('post_title');
+			var id = this.model.get('id');
+			gc.$id('post-' + id).find('.column-title .row-title').text(title);
+			gc.$id('edit-' + id).find('[name="post_title"]').text(title);
+			gc.$id('inline_' + id).find('.post_title').text(title);
+		},
+
 		toggleCheckAndRender: function toggleCheckAndRender(evt) {
 			this.toggleCheck();
 			this.render();
-		},
-
-		initialize: function initialize() {
-			this.listenTo(this.model, 'change:mappingStatus', this.render);
 		}
 	});
 };
@@ -568,6 +582,8 @@ module.exports = function (app, gc, $) {
 			$(document).off('focusin');
 			$(document.body).removeClass('gc-modal-open');
 			this.remove();
+
+			gc.$id('bulk-edit').find('button.cancel').trigger('click');
 			app.modalView = undefined;
 		},
 
@@ -654,6 +670,9 @@ module.exports = function (app, gc, $) {
 				} else {
 					model.set('checked', false);
 					model.set('mappingStatus', 'complete');
+					model.fetch().done(function () {
+						model.trigger('render');
+					});
 				}
 			});
 
