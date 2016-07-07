@@ -53,13 +53,18 @@ abstract class Base extends Enqueue {
 	 * @return void
 	 */
 	public function init_hooks() {
-		if ( did_action( 'admin_menu' ) ) {
-			$this->admin_menu();
-		} else {
-			add_action( 'admin_menu', array( $this, 'admin_menu' ), $this->menu_priority );
-		}
+		$callbacks = array(
+			'admin_menu' => 'admin_menu',
+			'admin_init' => 'initialize_settings_sections',
+		);
 
-		$this->initialize_settings_sections();
+		foreach ( $callbacks as $hook => $cb ) {
+			if ( did_action( $hook ) ) {
+				$this->{$cb}();
+			} else {
+				add_action( $hook, array( $this, $cb ), $this->menu_priority );
+			}
+		}
 	}
 
 	/**
