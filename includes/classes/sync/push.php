@@ -414,16 +414,4 @@ class Push extends Base {
 		// Check if the values have been updated.
 		return $pre_options != $post_options;
 	}
-
-	/**
-	 * Removes faulty "zero width space", which seems to come through the GC API.
-	 * @link http://stackoverflow.com/questions/11305797/remove-zero-width-space-characters-from-a-javascript-string
-	 * U+200B zero width space
-	 * U+200C zero width non-joiner Unicode code point
-	 * U+200D zero width joiner Unicode code point
-	 * U+FEFF zero width no-break space Unicode code point
-	 */
-	public static function remove_zero_width( $string ) {
-		return preg_replace( '/[\x{200B}-\x{200D}]/u', '', $string );
-	}
 }

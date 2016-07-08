@@ -203,6 +203,13 @@ abstract class Base extends Plugin_Base {
 
 					$val = preg_replace( '/<mark[^>]*>/i', '', $val );
 					$val = preg_replace( '/<\/mark>/i', '', $val );
+
+					// Replace encoded ampersands in html entities.
+					// http://regexr.com/3dpcf
+					$val = preg_replace_callback( '~(&amp;)(?:[a-z,A-Z,0-9]+|#\d+|#x[0-9a-f]+);~', function( $matches ) {
+						return str_replace( '&amp;', '&', $matches[0] );
+					}, $val );
+
 				}
 				$val = wp_kses_post( $val );
 				break;
@@ -260,5 +267,16 @@ abstract class Base extends Plugin_Base {
 		return apply_filters( "gc_can_append_{$field}", $can_append, $this->element, $this->item );
 	}
 
+	/**
+	 * Removes faulty "zero width space", which seems to come through the GC API.
+	 * @link http://stackoverflow.com/questions/11305797/remove-zero-width-space-characters-from-a-javascript-string
+	 * U+200B zero width space
+	 * U+200C zero width non-joiner Unicode code point
+	 * U+200D zero width joiner Unicode code point
+	 * U+FEFF zero width no-break space Unicode code point
+	 */
+	public static function remove_zero_width( $string ) {
+		return preg_replace( '/[\x{200B}-\x{200D}]/u', '', $string );
+	}
 
 }
