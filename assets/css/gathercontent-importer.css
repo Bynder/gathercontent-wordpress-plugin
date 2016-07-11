@@ -21,6 +21,24 @@
   padding: 1em;
   overflow: hidden; }
 
+.platform-url-wrap {
+  position: relative;
+  display: inline-block; }
+
+.platform-url-help {
+  position: absolute;
+  top: 0;
+  right: 6px;
+  line-height: 2em; }
+  .platform-url-help.gc-domain-prefix {
+    left: 6px;
+    right: 0;
+    width: 35px; }
+
+#platform_url_slug {
+  padding-right: 138px;
+  padding-left: 55px; }
+
 .gc-refresh-connection.button {
   width: 2em;
   font-size: 2em;
@@ -123,6 +141,8 @@ ul.gc-radio-desc li, ul.gc-reveal-items-list li {
   margin-bottom: -2px;
   float: left;
   margin-right: 5px; }
+  .gc-status-color.gc-status-color-white {
+    border: 1px solid #b1b1b1; }
 
 #sync-tabs {
   margin-bottom: 1.5em; }

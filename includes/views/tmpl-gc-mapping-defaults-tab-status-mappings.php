@@ -2,7 +2,7 @@
 	<tr id="gc-status-<?php echo esc_attr( $status->id ); ?>">
 		<td>
 			<div class="gc-item-status">
-				<span class="gc-status-color" style="background-color:<?php echo esc_attr( $status->color ); ?>;"></span>
+				<span class="gc-status-color <?php if ( '#ffffff' === $status->color ) : ?> gc-status-color-white<?php endif; ?>" style="background-color:<?php echo esc_attr( $status->color ); ?>;"></span>
 				<?php echo esc_attr( $status->name ); ?>
 			</div>
 		</td>

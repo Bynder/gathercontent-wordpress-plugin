@@ -9,7 +9,7 @@
 	{{ data.itemName }}
 </td>
 <td class="gc-status-column">
-	<span class="gc-status-color" style="background-color:{{ data.status.color }};"></span>
+	<span class="gc-status-color <# if ( '#ffffff' === data.status.color ) { #> gc-status-color-white<# } #>" style="background-color:{{ data.status.color }};"></span>
 	{{ data.status.name }}
 </td>
 <td class="gc-status-column">

@@ -197,6 +197,9 @@ ul.gc-radio-desc li, ul.gc-reveal-items-list li {
 	margin-bottom: -2px;
 	float: left;
 	margin-right: 5px;
+	&.gc-status-color-white {
+		border: 1px solid #b1b1b1;
+	}
 }
 #sync-tabs {
 	margin-bottom: 1.5em;
