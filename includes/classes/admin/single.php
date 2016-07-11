@@ -1,7 +1,7 @@
 <?php
 namespace GatherContent\Importer\Admin;
 use GatherContent\Importer\Post_Types\Template_Mappings;
-use GatherContent\Importer\General;
+use GatherContent\Importer\Mapping_Post;
 use GatherContent\Importer\API;
 use GatherContent\Importer\Admin\Mapping\Base as UI_Base;
 use GatherContent\Importer\Admin\Enqueue;
@@ -109,87 +109,43 @@ class Single extends UI_Base {
 			return;
 		}
 
-		if ( ! isset( $this->post_types[ $screen->post_type ] ) ) {
+		if ( ! isset( $this->post_types[ $screen->post_type ] ) || ! $this->_get_val( 'post' ) ) {
 			return;
 		}
 
+
+		// $accounts = $this->api->get_accounts();
+		// wp_die( '<xmp>'. __LINE__ .') $accounts: '. print_r( $accounts, true ) .'</xmp>' );
+		// $mapping_id = \GatherContent\Importer\get_post_mapping_id( absint( $this->_get_val( 'post' ) ) );
+
+		// $mappings = $this->mappings->get_all();
+		// wp_die( '<xmp>'. __LINE__ .') $mappings: '. print_r( $mappings, true ) .'</xmp>' );
+
+
 		$this->enqueue->admin_enqueue_style();
 		$this->enqueue->admin_enqueue_script();
-
 		add_meta_box( 'gc-manage', 'GatherContent', array( $this, 'meta_box' ), $screen, 'side', 'high' );
-		// add_meta_box( 'submitdiv', __( 'Publish' ), 'post_submit_meta_box', null, 'side', 'core', $publish_callback_args );
 	}
 
 	public function meta_box( $post, $box ) {
-		?>
-		<?php wp_nonce_field( __CLASS__, 'gc-edit-nonce' ); ?>
+		$post_id = $post->ID;
+		$mapping_id = absint( \GatherContent\Importer\get_post_mapping_id( $post_id ) );
+		$item_id = absint( \GatherContent\Importer\get_post_item_id( $post_id ) );
 
-		<div class="misc-pub-section misc-pub-post-status">
-			<span class="dashicons dashicons-post-status"></span>
+		$message = '';
 
-			<?php esc_html_e( 'Remote Status:', 'gathercontent-importer' ); ?>
-			<strong>Pending Review</strong>
-			<a href="#post_status" class="edit-post-status hide-if-no-js"><span aria-hidden="true">Edit</span> <span class="screen-reader-text">Edit status</span></a>
-		</div>
+		// if ( ! $mapping_id ) {
+		// 	$accounts = $this->api()->get_accounts();
 
-		<div class="misc-pub-section curtime misc-pub-curtime">
-			<span id="timestamp">
-			Last Updated: <b>Jun 24, 2016 @ 06:13</b></span>
-			<a href="#edit_timestamp" class="edit-timestamp hide-if-no-js"><span aria-hidden="true">Edit</span> <span class="screen-reader-text">Edit date and time</span></a>
-		</div>
+		// 	if ( ! $accounts ) {
+		// 		$message = sprintf( __( 'We couldn\'t find any accounts associated with your GatherContent API credentials. Please <a href="%s">check your settings</a>.', 'gathercontent-import' ), admin_url( 'admin.php?page='. GATHERCONTENT_SLUG ) );
+		// 	} else {
+		// 		$message = esc_html__( 'To associtiate a mapping, please select an Account.', 'gathercontent-import' );
+		// 	}
+		// }
 
-		<div class="misc-pub-section misc-pub-post-status">
-			<span class="dashicons dashicons-media-document"></span>
-
-			<?php esc_html_e( 'Template:', 'gathercontent-importer' ); ?>
-			<strong>Blah</strong>
-			<a href="#post_status" class="edit-post-status hide-if-no-js"><span aria-hidden="true">Edit</span> <span class="screen-reader-text">Edit status</span></a>
-		</div>
-
-		<div class="misc-pub-section misc-pub-post-status">
-			<span class="dashicons dashicons-edit"></span>
-			<a href="#">Edit in GatherContent</a>
-		</div>
-
-		<!-- <fieldset class="inline-edit-col-right inline-edit-gc-status">
-			<div class="inline-edit-col column-gathercontent">
-				<label class="inline-edit-group">
-					<span class="title"><?php esc_html_e( 'GatherContent Status', 'gathercontent-importer' ); ?></span>
-					<span class="gc-status-select2"><span class="spinner"></span></span>
-				</label>
-			</div>
-		</fieldset> -->
-
-		<div class="gc-major-publishing-actions">
-			<div class="gc-publishing-action">
-				<button id="gc-sync-modal" type="button" class="button gc-button-primary alignright"><?php esc_html_e( 'GatherContent Sync', 'gathercontent-importer' ); ?></button>
-			</div>
-			<div class="clear"></div>
-		</div>
-		<?php
+		$this->view( 'metabox', compact( 'post_id', 'item_id', 'mapping_id', 'message' ) );
 	}
-
-	// public function set_gc_status( $post_id, $post ) {
-	// 	if (
-	// 		wp_is_post_autosave( $post )
-	// 		|| wp_is_post_revision( $post )
-	// 		|| ! $this->_post_val( 'gc-edit-nonce' )
-	// 		|| ! wp_verify_nonce( $this->_post_val( 'gc-edit-nonce' ), __CLASS__ )
-	// 		|| ! ( $status_id = $this->_post_val( 'gc_status' ) )
-	// 		|| ! ( $item_id = absint( \GatherContent\Importer\get_post_item_id( $post_id ) ) )
-	// 		|| ! ( $mapping_id = absint( \GatherContent\Importer\get_post_mapping_id( $post_id ) ) )
-	// 		|| ! ( $item = $this->api->get_item( $item_id ) )
-	// 		|| ( isset( $item->status->data->id ) && $status_id == $item->status->data->id )
-	// 	) {
-	// 		return;
-	// 	}
-
-	// 	if ( isset( $item->status->data->id ) && $status_id == $item->status->data->id ) {
-	// 		return;
-	// 	}
-
-	// 	$this->api->set_item_status( $item_id, $status_id );
-	// }
 
 	/**
 	 * Gets the underscore templates array.

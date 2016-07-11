@@ -80,10 +80,10 @@ class General extends Base {
 				$this->api,
 				$this->admin->mapping_wizzard->mappings
 			);
-			// $this->single_ui = new Admin\Single(
-			// 	$this->api,
-			// 	$this->admin->mapping_wizzard->mappings
-			// );
+			$this->single_ui = new Admin\Single(
+				$this->api,
+				$this->admin->mapping_wizzard->mappings
+			);
 		}
 	}
 
@@ -94,7 +94,7 @@ class General extends Base {
 		$this->ajax_handler->init_hooks();
 		if ( $this->bulk_ui ) {
 			$this->bulk_ui->init_hooks();
-			// $this->single_ui->init_hooks();
+			$this->single_ui->init_hooks();
 		}
 	}
 
