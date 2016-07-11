@@ -17,9 +17,9 @@ class Admin extends Base {
 	 * @var array
 	 */
 	public $default_options = array(
-		'account_email' => '',
-		'platform_url'  => '',
-		'api_key'       => '',
+		'account_email'     => '',
+		'platform_url_slug' => '',
+		'api_key'           => '',
 	);
 
 	/**
@@ -35,7 +35,7 @@ class Admin extends Base {
 		parent::__construct();
 		if (
 			$this->get_setting( 'account_email' )
-			&& $this->get_setting( 'platform_url' )
+			&& $this->get_setting( 'platform_url_slug' )
 			&& $this->get_setting( 'api_key' )
 		) {
 			$this->step = 1;
@@ -94,11 +94,6 @@ class Admin extends Base {
 		foreach ( $settings as $key => $value ) {
 
 			switch ( $key ) {
-				case 'platform_url':
-					if ( $value ) {
-						$value = trailingslashit( esc_url_raw( $settings[ $key ] ) );
-					}
-					break;
 				case 'account_email':
 					$value = is_email( $value ) ? sanitize_text_field( $value ) : '';
 					break;
@@ -206,18 +201,25 @@ class Admin extends Base {
 		);
 
 		$section->add_field(
-			'platform_url',
+			'platform_url_slug',
 			__( 'Platform URL', 'gathercontent-import' ),
 			function( $field ) {
 				$id = $field->param( 'id' );
+
+				echo '<div class="platform-url-wrap">';
+
+				echo '<div class="platform-url-help gc-domain-prefix">https://</div>';
 
 				$this->view( 'input', array(
 					'id' => $id,
 					'name' => $this->option_name .'['. $id .']',
 					'value' => esc_attr( $this->get_setting( $id ) ),
-					'placeholder' => 'https://your-account.gathercontent.com/',
+					'placeholder' => 'your-account',
 				) );
 
+				echo '<div class="platform-url-help gc-domain">.gathercontent.com</div>';
+
+				echo '</div>';
 			}
 		);
 
@@ -258,7 +260,7 @@ class Admin extends Base {
 
 						if ( $this->set_my_account() ) {
 
-							$data['message'] .= ' '. sprintf( esc_html__( "and the %s account.", 'gathercontent-import' ), '<a href="'. esc_url( $this->get_setting( 'platform_url' ) ) .'">'. esc_html( $this->account->name ) .'</a>' );
+							$data['message'] .= ' '. sprintf( esc_html__( "and the %s account.", 'gathercontent-import' ), '<a href="'. esc_url( $this->platform_url() ) .'" target="_blank">'. esc_html( $this->account->name ) .'</a>' );
 						}
 
 						$this->view( 'user-profile', $data );

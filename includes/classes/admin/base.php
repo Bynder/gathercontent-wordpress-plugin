@@ -13,7 +13,7 @@ abstract class Base extends Enqueue {
 	public $menu_priority      = 9;
 
 	/**
-	 * The account object. Uses the platform_url.
+	 * The account object. Uses the platform_url_slug.
 	 *
 	 * @var null|object
 	 */
@@ -199,7 +199,7 @@ abstract class Base extends Enqueue {
 	 */
 	public function set_my_account() {
 		$accounts = $this->api()->get_accounts();
-		$account_slug = $this->get_saved_account_slug();
+		$account_slug = $this->get_setting( 'platform_url_slug' );
 
 		if ( ! $accounts || ! $account_slug ) {
 			return false;
@@ -216,31 +216,27 @@ abstract class Base extends Enqueue {
 	}
 
 	/**
-	 * Get the saved account slug from the platform url.
+	 * Get the platform URL using the saved account slug.
 	 *
 	 * @since  3.0.0
 	 *
-	 * @return string  The account slug derrived from the platform url.
+	 * @param string $path Optionally append a path to the platform URL.
+	 *
+	 * @return string  The account platform url.
 	 */
-	public function get_saved_account_slug() {
-		$url = $this->get_setting( 'platform_url' );
-		$slug = '';
+	public function platform_url( $path = '' ) {
+		return 'https://'. $this->_get_account_slug() .'.gathercontent.com/' . $path;
+	}
 
-		if ( ! $url ) {
-			return $slug;
+	protected function _get_account_slug() {
+		$slug = $this->get_setting( 'platform_url_slug' );
+
+		if ( $project = $this->_get_val( 'project' ) ) {
+			$parts = explode( ':', $project );
+			if ( isset( $parts[1] ) ) {
+				$slug = sanitize_text_field( $parts[1] );
+			}
 		}
-
-		$parts = explode( '//', $url );
-		if ( ! isset( $parts[1] ) ) {
-			return $slug;
-		}
-
-		$parts = explode( '.gathercontent', $parts[1] );
-		if ( ! isset( $parts[0] ) ) {
-			return $slug;
-		}
-
-		$slug = $parts[0];
 
 		return $slug;
 	}

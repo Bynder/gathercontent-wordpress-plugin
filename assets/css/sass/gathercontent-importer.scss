@@ -30,6 +30,28 @@ $dkblue: #11284A;
 	overflow: hidden;
 }
 
+.platform-url-wrap {
+	position: relative;
+	display: inline-block;
+}
+
+.platform-url-help {
+	position: absolute;
+	top: 0;
+	right: 6px;
+	line-height: 2em;
+	&.gc-domain-prefix {
+		left: 6px;
+		right: 0;
+		width: 35px;
+	}
+}
+
+#platform_url_slug {
+	padding-right: 138px;
+	padding-left: 55px;
+}
+
 .gc-refresh-connection.button {
 	width: 2em;
 	font-size: 2em;

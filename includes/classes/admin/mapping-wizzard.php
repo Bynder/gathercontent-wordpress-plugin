@@ -236,7 +236,7 @@ class Mapping_Wizzard extends Base {
 
 	public function select_project_fields_ui( $field ) {
 		$field_id = $field->param( 'id' );
-		$my_account = $this->get_saved_account_slug();
+		$my_account_slug =  $this->get_setting( 'platform_url_slug' );
 
 		$accounts = $this->api()->get_accounts();
 
@@ -245,7 +245,20 @@ class Mapping_Wizzard extends Base {
 		}
 
 		$tabs = array();
-		$indexes = 9999;
+		$my_account = false;
+		$first = true;
+
+		foreach ( $accounts as $index => $account ) {
+			if ( $my_account_slug === $account->slug ) {
+				$my_account = $account;
+				unset( $accounts[ $index ] );
+			}
+		}
+
+		if ( $my_account ) {
+			array_unshift( $accounts, $my_account );
+		}
+
 		foreach ( $accounts as $account ) {
 			if ( ! isset( $account->id ) ) {
 				continue;
@@ -264,11 +277,11 @@ class Mapping_Wizzard extends Base {
 				}
 			}
 
-			$index = $my_account === $account->slug ? 0 : $indexes--;
-
-			$tabs[ $index ] = array(
+			$tabs[] = array(
 				'id' => $account->id,
 				'label' => sprintf( __( '%s', 'gathercontent-import' ), isset( $account->name ) ? $account->name : '' ),
+				'nav_class' => $first ? 'nav-tab-active' : '',
+				'tab_class' => $first ? '' : 'hidden',
 				'content' => $this->view( 'radio', array(
 					'id'      => $field_id . '-' . $account->id,
 					'name'    => $this->option_name .'['. $field_id .']',
@@ -276,9 +289,9 @@ class Mapping_Wizzard extends Base {
 					'options' => $options,
 				), false ),
 			);
-		}
 
-		ksort( $tabs );
+			$first = false;
+		}
 
 		$this->view( 'tabs-wrapper', array(
 			'tabs' => $tabs,
@@ -566,7 +579,7 @@ class Mapping_Wizzard extends Base {
 		$project_name = '';
 
 		if ( $project->name ) {
-			$url = $this->get_setting( 'platform_url' ) . 'templates/' . $project->id;
+			$url = $this->platform_url( 'templates/' . $project->id );
 			$project_name = '<p class="gc-project-name description">' . sprintf( _x( 'Project: %s', 'GatherContent project name', 'gathercontent-import' ), $project->name ) . ' | <a href="'. esc_url( $url ) .'" target="_blank">'. __( 'edit project templates', 'gathercontent-import' ) .'</a></p>';
 		}
 
@@ -579,9 +592,9 @@ class Mapping_Wizzard extends Base {
 		$list = '';
 		if ( ! empty( $items ) ) {
 			$list = $this->view( 'gc-items-list', array(
-				'class'        => $class,
-				'platform_url' => $this->get_setting( 'platform_url' ),
-				'items'        => array_slice( $items, 0, 5 ),
+				'class'         => $class,
+				'item_base_url' => $this->platform_url( 'item/' ),
+				'items'         => array_slice( $items, 0, 5 ),
 			), false );
 		}
 
