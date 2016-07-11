@@ -204,6 +204,9 @@ class Template_Mapper extends Base {
 
 			$rows = array();
 			foreach ( $tab->elements as $element ) {
+				if ( 'section' === $element->type ) {
+					continue;
+				}
 
 				if ( $this->get_value( $element->name ) ) {
 					$val = $this->get_value( $element->name );

@@ -236,6 +236,8 @@ class Mapping_Wizzard extends Base {
 
 	public function select_project_fields_ui( $field ) {
 		$field_id = $field->param( 'id' );
+		$my_account = $this->get_saved_account_slug();
+
 		$accounts = $this->api()->get_accounts();
 
 		if ( ! $accounts ) {
@@ -243,6 +245,7 @@ class Mapping_Wizzard extends Base {
 		}
 
 		$tabs = array();
+		$indexes = 9999;
 		foreach ( $accounts as $account ) {
 			if ( ! isset( $account->id ) ) {
 				continue;
@@ -261,9 +264,11 @@ class Mapping_Wizzard extends Base {
 				}
 			}
 
-			$tabs[] = array(
+			$index = $my_account === $account->slug ? 0 : $indexes--;
+
+			$tabs[ $index ] = array(
 				'id' => $account->id,
-				'label' => sprintf( __( 'Account: %s', 'gathercontent-import' ), isset( $account->name ) ? $account->name : '' ),
+				'label' => sprintf( __( '%s', 'gathercontent-import' ), isset( $account->name ) ? $account->name : '' ),
 				'content' => $this->view( 'radio', array(
 					'id'      => $field_id . '-' . $account->id,
 					'name'    => $this->option_name .'['. $field_id .']',
@@ -272,6 +277,8 @@ class Mapping_Wizzard extends Base {
 				), false ),
 			);
 		}
+
+		ksort( $tabs );
 
 		$this->view( 'tabs-wrapper', array(
 			'tabs' => $tabs,
