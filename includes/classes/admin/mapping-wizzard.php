@@ -220,11 +220,9 @@ class Mapping_Wizzard extends Base {
 	 * @return void
 	 */
 	public function select_project() {
-		$this->set_my_account();
-
 		$section = new Form_Section(
 			'select_project',
-			__( 'First, choose a project.', 'gathercontent-import' ),
+			__( 'First, choose a project from an account.', 'gathercontent-import' ),
 			'',
 			self::SLUG
 		);
@@ -238,30 +236,47 @@ class Mapping_Wizzard extends Base {
 
 	public function select_project_fields_ui( $field ) {
 		$field_id = $field->param( 'id' );
+		$accounts = $this->api()->get_accounts();
 
-		if ( ! $this->account || ! isset( $this->account->id ) ) {
+		if ( ! $accounts ) {
 			return $this->add_settings_error( $this->option_name, 'gc-missing-accounts', sprintf( __( 'We couldn\'t find any accounts associated with your GatherContent API credentials. Please <a href="%s">check your settings</a>.', 'gathercontent-import' ), $this->parent_url ) );
 		}
 
-		$options = array();
-		$value = '';
+		$tabs = array();
+		foreach ( $accounts as $account ) {
+			if ( ! isset( $account->id ) ) {
+				continue;
+			}
 
-		if ( $projects = $this->api()->get_account_projects( $this->account->id ) ) {
-			foreach ( $projects as $project ) {
-				$val = esc_attr( $project->id );
-				$options[ $val ] = esc_attr( $project->name );
-				if ( ! $value ) {
-					$value = $val;
+			$options = array();
+			$value = '';
+
+			if ( $projects = $this->api()->get_account_projects( $account->id ) ) {
+				foreach ( $projects as $project ) {
+					$val = esc_attr( $project->id );
+					$options[ $val ] = esc_attr( $project->name );
+					if ( ! $value ) {
+						$value = $val;
+					}
 				}
 			}
+
+			$tabs[] = array(
+				'id' => $account->id,
+				'label' => sprintf( __( 'Account: %s', 'gathercontent-import' ), isset( $account->name ) ? $account->name : '' ),
+				'content' => $this->view( 'radio', array(
+					'id'      => $field_id . '-' . $account->id,
+					'name'    => $this->option_name .'['. $field_id .']',
+					'value'   => $value,
+					'options' => $options,
+				), false ),
+			);
 		}
 
-		$this->view( 'radio', array(
-			'id'      => $field_id . '-' . $this->account->id,
-			'name'    => $this->option_name .'['. $field_id .']',
-			'value'   => $value,
-			'options' => $options,
+		$this->view( 'tabs-wrapper', array(
+			'tabs' => $tabs,
 		) );
+
 	}
 
 	/**
@@ -544,7 +559,7 @@ class Mapping_Wizzard extends Base {
 		$project_name = '';
 
 		if ( $project->name ) {
-			$url = trailingslashit( $this->get_setting( 'platform_url' ) ) . 'templates/' . $project->id;
+			$url = $this->get_setting( 'platform_url' ) . 'templates/' . $project->id;
 			$project_name = '<p class="gc-project-name description">' . sprintf( _x( 'Project: %s', 'GatherContent project name', 'gathercontent-import' ), $project->name ) . ' | <a href="'. esc_url( $url ) .'" target="_blank">'. __( 'edit project templates', 'gathercontent-import' ) .'</a></p>';
 		}
 
@@ -558,7 +573,7 @@ class Mapping_Wizzard extends Base {
 		if ( ! empty( $items ) ) {
 			$list = $this->view( 'gc-items-list', array(
 				'class'        => $class,
-				'platform_url' => trailingslashit( $this->get_setting( 'platform_url' ) ),
+				'platform_url' => $this->get_setting( 'platform_url' ),
 				'items'        => array_slice( $items, 0, 5 ),
 			), false );
 		}
