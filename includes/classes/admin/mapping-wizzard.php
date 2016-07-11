@@ -269,7 +269,7 @@ class Mapping_Wizzard extends Base {
 
 			if ( $projects = $this->api()->get_account_projects( $account->id ) ) {
 				foreach ( $projects as $project ) {
-					$val = esc_attr( $project->id );
+					$val = esc_attr( $project->id ) . ':' . esc_attr( $account->slug );
 					$options[ $val ] = esc_attr( $project->name );
 					if ( ! $value ) {
 						$value = $val;
@@ -425,8 +425,9 @@ class Mapping_Wizzard extends Base {
 
 			$this->template_mapper = new Mapping\Template_Mapper( array(
 				'mapping_id'  => $mapping_id,
-				'template'    => $template,
+				'account'     => $this->_get_account_slug(),
 				'project'     => $project,
+				'template'    => $template,
 				'statuses'    => $this->api()->get_project_statuses( absint( $this->_get_val( 'project' ) ) ),
 				'option_name' => $this->option_name,
 			) );
@@ -440,11 +441,12 @@ class Mapping_Wizzard extends Base {
 		} else {
 
 			$this->items_sync = new Mapping\Items_Sync( array(
-				'mapping_id'        => $mapping_id,
-				'template'          => $template,
-				'project'           => $project,
-				'mappings'          => $this->mappings,
-				'items'             => $this->filter_items_by_template( $project->id, $template->id ),
+				'mapping_id' => $mapping_id,
+				'account'    => $this->_get_account_slug(),
+				'project'    => $project,
+				'template'   => $template,
+				'mappings'   => $this->mappings,
+				'items'      => $this->filter_items_by_template( $project->id, $template->id ),
 			) );
 
 			$section->add_field( 'mapping', '', array( $this->items_sync, 'ui' ) );

@@ -71,9 +71,16 @@ class Template_Mapper extends Base {
 
 		$this->view( 'input', array(
 			'type'    => 'hidden',
-			'id'      => 'gc-project-id',
+			'id'      => 'gc-template-title',
 			'name'    => $this->option_name .'[title]',
 			'value'   => esc_attr( isset( $this->template->name ) ? $this->template->name : __( 'Mapped Template', 'gathercontent-import' ) ),
+		) );
+
+		$this->view( 'input', array(
+			'type'    => 'hidden',
+			'id'      => 'gc-account-id',
+			'name'    => $this->option_name .'[account]',
+			'value'   => $this->account,
 		) );
 
 		$this->view( 'input', array(

@@ -66,6 +66,13 @@ class Template_Mappings extends Base {
 			echo '<strong>' . __( 'Project ID:', 'gathercontent-import' ) . '</strong> '. get_post_meta( get_the_id(), '_gc_project', 1 );
 			echo ',&nbsp;';
 			echo '<strong>' . __( 'Template ID:', 'gathercontent-import' ) . '</strong> '. get_post_meta( get_the_id(), '_gc_template', 1 );
+
+			if ( $account = get_post_meta( get_the_id(), '_gc_account', 1 ) ) {
+				$account = 'https://'. $account .'.gathercontent.com/';
+				echo ',&nbsp;';
+				echo '<strong>' . __( 'Account:', 'gathercontent-import' ) . '</strong> <a href="'. esc_url( $account ) .'" target="_blank">'. esc_url( $account ) .'</a>';
+			}
+
 			echo '</p>';
 
 			$content = $post->post_content;
@@ -168,6 +175,7 @@ class Template_Mappings extends Base {
 		$mapping_args = wp_parse_args( $mapping_args, array(
 			'title'    => '',
 			'content'  => '',
+			'account'  => null,
 			'project'  => null,
 			'template' => null,
 		) );
@@ -178,6 +186,7 @@ class Template_Mappings extends Base {
 			'post_status'  => 'publish',
 			'post_type'    => self::SLUG,
 			'meta_input'   => array(
+				'_gc_account'  => $mapping_args['account'],
 				'_gc_project'  => $mapping_args['project'],
 				'_gc_template' => $mapping_args['template'],
 			),
