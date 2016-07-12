@@ -12,7 +12,7 @@ class Meta extends Base implements Type {
 	 * @since 3.0.0
 	 */
 	public function __construct() {
-		$this->option_label = __( 'Metadata', 'gathercontent-import' );
+		$this->option_label = __( 'Custom Fields', 'gathercontent-import' );
 	}
 
 	public function underscore_template( View $view ) {
