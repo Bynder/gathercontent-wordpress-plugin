@@ -8,7 +8,7 @@
 		</td>
 		<td>
 			<select class="gc-default-mapping-select" data-column="post_status_mapping" name="<?php $this->output( 'option_base' ); ?>[gc_status][<?php echo esc_attr( $status->id ); ?>][wp]">
-				<option <# if ( ! data.gc_status[<?php echo esc_attr( $status->id ); ?>].wp ) { #>selected="selected"<# } #> value=""><?php _e( 'Use Default Post Status' ); ?></option>
+				<option <# if ( ! data.gc_status[<?php echo esc_attr( $status->id ); ?>].wp ) { #>selected="selected"<# } #> value=""><?php _e( 'Use Default Status' ); ?></option>
 				<?php foreach ( $this->get( 'post_status_options' ) as $option_val => $option_label ) : ?>
 					<option <# if ( '<?php echo $option_val; ?>' == data.gc_status[<?php echo esc_attr( $status->id ); ?>].wp ) { #>selected="selected"<# } #> value="<?php echo $option_val; ?>"><?php echo $option_label; ?></option>
 				<?php endforeach; ?>
