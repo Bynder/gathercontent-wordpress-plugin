@@ -88,7 +88,7 @@ class Single extends UI_Base {
 		}
 
 		// Handle quick-edit/bulk-edit ajax-post-saving
-		add_action( 'save_post', array( $this, 'set_gc_status' ), 10, 2 );
+		// add_action( 'save_post', array( $this, 'set_gc_status' ), 10, 2 );
 	}
 
 	/**
