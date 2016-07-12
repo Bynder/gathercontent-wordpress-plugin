@@ -34,6 +34,8 @@ class Pull extends Base {
 		add_action( 'wp_async_gc_pull_items', array( $this, 'sync_items' ) );
 
 		if ( isset( $_GET['test_pull'] ) ) {
+			echo '<xmp>mapping-id: '. print_r( 33, true ) .'</xmp>';
+			echo '<xmp>item-id: '. print_r( 2861687, true ) .'</xmp>';
 			wp_die( '<xmp>maybe_pull_item: '. print_r( $this->maybe_pull_item( 33, 2861687 ), true ) .'</xmp>' );
 		}
 
@@ -55,12 +57,25 @@ class Pull extends Base {
 
 		$this->set_item( $id );
 
-		// @todo Check item updated_at value to determine if pull is necessary.
-
 		$post_data = array();
 		$attachments = false;
 
 		if ( $existing = \GatherContent\Importer\get_post_by_item_id( $id ) ) {
+
+			// Check if item is up-to-date and if pull is necessary.
+			$meta = \GatherContent\Importer\get_post_item_meta( $existing->ID );
+
+			if (
+				// Check if we have updated_at values to compare
+				isset( $this->item->updated_at, $meta['updated_at'] ) && ! empty( $meta['updated_at'] )
+				// And if we do, compare them to see if GC item is newer.
+				&& ( $is_up_to_date = strtotime( $this->item->updated_at->date ) <= strtotime( $meta['updated_at'] ) )
+				// If it's not newer, then don't update (unless asked to via filter).
+				&& $is_up_to_date && apply_filters( 'gc_only_update_if_newer', true )
+			) {
+				throw new Exception( sprintf( __( 'WordPress has most recent changes for:', 'gathercontent-import' ), $this->item->id ), __LINE__, array( 'post' => $existing->ID, 'item' => $this->item->id ) );
+			}
+
 			$post_data = (array) $existing;
 		} else {
 			$post_data['ID'] = 0;
@@ -83,8 +98,8 @@ class Pull extends Base {
 		\GatherContent\Importer\update_post_item_id( $post_id, $id );
 		\GatherContent\Importer\update_post_mapping_id( $post_id, $this->mapping->ID );
 		\GatherContent\Importer\update_post_item_meta( $post_id, array(
-			'created_at' => $this->item->created_at,
-			'updated_at' => $this->item->updated_at,
+			'created_at' => $this->item->created_at->date,
+			'updated_at' => $this->item->updated_at->date,
 		) );
 
 		if ( $attachments ) {
@@ -383,8 +398,8 @@ class Pull extends Base {
 						'url'        => $media->url,
 						'filename'   => $media->filename,
 						'size'       => $media->size,
-						'created_at' => $media->created_at,
-						'updated_at' => $media->updated_at,
+						'created_at' => isset( $media->created_at->date ) ? $media->created_at->date : $media->created_at,
+						'updated_at' => isset( $media->updated_at->date ) ? $media->updated_at->date : $media->updated_at,
 					) );
 				}
 			}
@@ -417,7 +432,7 @@ class Pull extends Base {
 		if ( $meta = \GatherContent\Importer\get_post_item_meta( $attach_id ) ) {
 
 			$meta = (object) $meta;
-			$new_updated = strtotime( $media->updated_at );
+			$new_updated = strtotime( isset( $media->updated_at->date ) ? $media->updated_at->date : $media->updated_at );
 			$old_updated = strtotime( $meta->updated_at );
 
 			// Check if updated time-stamp is newer than previous updated timestamp
