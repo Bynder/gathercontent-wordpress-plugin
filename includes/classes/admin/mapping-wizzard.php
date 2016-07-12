@@ -106,10 +106,10 @@ class Mapping_Wizzard extends Base {
 		add_filter( 'admin_body_class', array( $this, 'body_class' ) );
 		add_action( 'admin_print_styles-' . $page, array( $this, 'admin_enqueue_style' ) );
 		add_action( 'admin_print_styles-' . $page, array( $this, 'admin_enqueue_script' ) );
-		add_action( 'load-' . $page, array( $this, 'help' ) );
+		add_action( 'load-' . $page, array( $this, 'add_help_tabs' ) );
 	}
 
-	public function help() {
+	public function add_help_tabs() {
 		$screen = get_current_screen();
 
 		$screen->add_help_tab( array(
@@ -117,13 +117,22 @@ class Mapping_Wizzard extends Base {
 			'title'   => __( 'GatherContent', 'gathercontent-import' ),
 			'content' => __( '<p>Thank you for using the GatherContent WordPress plugin!</p>' .
 			'<p>To make the plugin more speedy, we cache the requests to GatherContent for 1 day, but if you find that you need to update the data from GatherContent, just hit the "Refresh" button.</p>', 'gathercontent-import' ) . '<p>'. $this->refresh_connection_link() .'</p>',
-		));
+		) );
 
 		$screen->set_help_sidebar(
 			'<p><strong>' . __( 'For more information:', 'gathercontent-import' ) . '</strong></p>' .
 			'<p><a href="https://gathercontent.com/support/wordpress-integration/" target="_blank">' . _( 'GatherContent WordPress Integration' ) . '</a></p>' .
 			'<p><a href="https://wordpress.org/support/plugin/gathercontent-import" target="_blank">' . _( 'Support Forums' ) . '</a></p>'
 		);
+
+		if ( self::TEMPLATE === $this->step ) {
+
+			$screen->add_help_tab( array(
+				'id'      => 'gc-field-details',
+				'title'   => __( 'Mapping Fields', 'gathercontent-import' ),
+				'content' => __( '<p><b>Note:</b> If mapping more than one GatherContent field to one WordPress field, you will not be able to "push" that content back to GatherContent, as there is not currently a way to split the fields back to individual fields.</p>', 'gathercontent-import' ),
+			) );
+		}
 	}
 
 	public function admin_page() {
