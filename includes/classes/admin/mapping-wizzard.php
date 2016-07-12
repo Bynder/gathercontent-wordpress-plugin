@@ -454,6 +454,7 @@ class Mapping_Wizzard extends Base {
 				'account'    => $this->_get_account_slug(),
 				'project'    => $project,
 				'template'   => $template,
+				'url'        => $this->platform_url(),
 				'mappings'   => $this->mappings,
 				'items'      => $this->filter_items_by_template( $project->id, $template->id ),
 			) );

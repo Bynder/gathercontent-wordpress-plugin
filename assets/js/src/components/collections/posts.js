@@ -19,6 +19,9 @@ module.exports = function( app ) {
 					if ( data[ id ].itemName ) {
 						model.set( 'itemName', data[ id ].itemName );
 					}
+					if ( data[ id ].updated ) {
+						model.set( 'updated', data[ id ].updated );
+					}
 				}
 			} );
 		}

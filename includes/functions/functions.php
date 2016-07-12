@@ -1,6 +1,8 @@
 <?php
 namespace GatherContent\Importer;
 use WP_Query;
+use DateTime;
+use DateTimeZone;
 
 /**
  * Utility function for doing array_map recursively.
@@ -172,6 +174,44 @@ function update_post_mapping_id( $post_id, $mapping_post_id ) {
 }
 
 /**
+ * Augment a GatherContent item object with additional data for JS templating.
+ *
+ * @since  3.0.0
+ *
+ * @param  object  $item GatherContent item object
+ *
+ * @return array         Object prepared for JS.
+ */
+function prepare_item_for_js( $item, $mapping_id = 0 ) {
+	$post = \GatherContent\Importer\get_post_by_item_id( $item->id );
+
+	if ( ! $mapping_id && $post ) {
+		$mapping_id = \GatherContent\Importer\get_post_mapping_id( $post->ID );
+	}
+
+	if ( isset( $item->status->data ) ) {
+		$item->status = $item->status->data;
+	}
+
+	$item->itemName = $item->name;
+	$item->updated = isset( $item->updated_at )
+		? \GatherContent\Importer\relative_date( $item->updated_at->date )
+		: __( '&mdash;', 'gathercontent-importer' );
+
+	$item->mappingLink = $mapping_id ? get_edit_post_link( $mapping_id ) : '';
+	$item->mappingName = $mapping_id ? get_the_title( $mapping_id ) : __( '&mdash;', 'gathercontent-importer' );
+
+	if ( $post ) {
+		$item->editLink = get_edit_post_link( $post->ID );
+		$item->post_title = get_the_title( $post->ID );
+	} else {
+		$item->post_title = __( '&mdash;', 'gathercontent-importer' );
+	}
+
+	return $item;
+}
+
+/**
  * Get a an array of data from a WP_Post object to be used as a backbone model.
  *
  * @since  3.0.0
@@ -194,8 +234,12 @@ function get_post_for_js( $post ) {
 	$js_post['mapping']     = absint( \GatherContent\Importer\get_post_mapping_id( $post_id ) );
 
 	$js_post['mappingLink'] = $js_post['mapping'] ? get_edit_post_link( $js_post['mapping'] ) : '';
+	$js_post['mappingName'] = $js_post['mapping'] ? get_the_title( $js_post['mapping'] ) : '';
 	$js_post['status']      = (object) array();
 	$js_post['itemName']    = __( 'N/A', 'gathercontent-importer' );
+	$js_post['updated']     = __( '&mdash;', 'gathercontent-importer' );
+	$js_post['editLink']    = get_edit_post_link( $post_id );
+
 
 	if ( $js_post['item'] ) {
 		$item = General::get_instance()->api->only_cached()->get_item( $js_post['item'] );
@@ -207,6 +251,10 @@ function get_post_for_js( $post ) {
 		$js_post['status'] = isset( $item->status->data )
 			? $item->status->data
 			: (object) array();
+
+		$js_post['updated'] = isset( $item->updated_at->date )
+			? \GatherContent\Importer\relative_date( $item->updated_at->date )
+			: __( '&mdash;', 'gathercontent-importer' );
 	}
 
 	return $js_post;
@@ -255,4 +303,52 @@ function user_allowed() {
  */
 function view_capability() {
 	return apply_filters( 'gathercontent_settings_view_capability', 'publish_pages' );
+}
+
+/**
+ * Convert a UTC date to human readable date using the WP timezone.
+ *
+ * @since  3.0.0
+ *
+ * @param  string $utc_date UTC date
+ *
+ * @return string           Human readable relative date.
+ */
+function relative_date( $utc_date ) {
+	static $tzstring = null;
+
+	// Get the WP timezone string.
+	if ( null === $tzstring ) {
+		$current_offset = get_option( 'gmt_offset' );
+		$tzstring       = get_option( 'timezone_string' );
+
+		// Remove old Etc mappings. Fallback to gmt_offset.
+		if ( false !== strpos( $tzstring, 'Etc/GMT' ) ) {
+			$tzstring = '';
+		}
+
+		if ( empty( $tzstring ) ) { // Create a UTC+- zone if no timezone string exists
+			if ( 0 == $current_offset ) {
+				$tzstring = 'UTC+0';
+			} elseif ( $current_offset < 0 ) {
+				$tzstring = 'UTC' . $current_offset;
+			} else {
+				$tzstring = 'UTC+' . $current_offset;
+			}
+		}
+	}
+
+	$date = new DateTime( $utc_date, new DateTimeZone( 'UTC' ) );
+	$date->setTimeZone( new DateTimeZone( $tzstring ) );
+
+	$time = $date->getTimestamp();
+	$time_diff = time() - $time;
+
+	if ( $time_diff > 0 && $time_diff < DAY_IN_SECONDS ) {
+		$date = sprintf( __( '%s ago' ), human_time_diff( $time ) );
+	} else {
+		$date = mysql2date( __( 'Y/m/d' ), $time );
+	}
+
+	return $date;
 }

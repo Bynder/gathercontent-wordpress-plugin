@@ -1,7 +1,7 @@
 module.exports = function( app, gc ) {
 	var item = require( './../views/item.js' )( app );
 	return item.extend({
-		template : wp.template( 'gc-modal-item' ),
+		template : wp.template( 'gc-item' ),
 
 		id : function() {
 			return 'gc-modal-post-' + this.model.get( 'id' );
@@ -12,8 +12,8 @@ module.exports = function( app, gc ) {
 		},
 
  		events: {
-			'change .check-column input'         : 'toggleCheck',
-			'click .gc-modal-item-wp-post-title' : 'toggleCheckAndRender',
+			'change .check-column input' : 'toggleCheck',
+			'click .gc-status-column'    : 'toggleCheckAndRender',
  		},
 
 		initialize: function () {

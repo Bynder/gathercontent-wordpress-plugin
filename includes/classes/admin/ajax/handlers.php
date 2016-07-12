@@ -106,6 +106,9 @@ class Handlers extends Plugin_Base {
 				'id'       => $post['id'],
 				'status'   => $status,
 				'itemName' => isset( $item->name ) ? $item->name : __( 'N/A', 'gathercontent-importer' ),
+				'updated' => isset( $item->updated_at )
+					? \GatherContent\Importer\relative_date( $item->updated_at->date )
+					: __( '&mdash;', 'gathercontent-importer' ),
 			);
 		}
 

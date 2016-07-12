@@ -270,7 +270,7 @@ module.exports = function (app, $, gc) {
 		el: '#sync-tabs',
 		template: wp.template('gc-items-sync'),
 		progressTemplate: wp.template('gc-items-sync-progress'),
-		spinnerRow: '<tr><td colspan="3"><span class="gc-loader spinner is-active"></span></td></tr>',
+		spinnerRow: '<tr><td colspan="6"><span class="gc-loader spinner is-active"></span></td></tr>',
 		$wrap: $('.gc-admin-wrap'),
 		intervalID: null,
 		ajax: null,

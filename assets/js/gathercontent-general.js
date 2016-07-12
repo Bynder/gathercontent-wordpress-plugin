@@ -119,6 +119,9 @@ module.exports = function (app) {
 					if (data[id].itemName) {
 						model.set('itemName', data[id].itemName);
 					}
+					if (data[id].updated) {
+						model.set('updated', data[id].updated);
+					}
 				}
 			});
 		}
@@ -308,7 +311,10 @@ module.exports = function (gc) {
 			id: 0,
 			item: 0,
 			itemName: 0,
+			updated: '',
+			editLink: '',
 			mapping: 0,
+			mappingName: 0,
 			mappingLink: '',
 			mappingStatus: '',
 			status: {},
@@ -407,7 +413,7 @@ module.exports = function (app) {
 module.exports = function (app, gc) {
 	var item = require('./../views/item.js')(app);
 	return item.extend({
-		template: wp.template('gc-modal-item'),
+		template: wp.template('gc-item'),
 
 		id: function id() {
 			return 'gc-modal-post-' + this.model.get('id');
@@ -419,7 +425,7 @@ module.exports = function (app, gc) {
 
 		events: {
 			'change .check-column input': 'toggleCheck',
-			'click .gc-modal-item-wp-post-title': 'toggleCheckAndRender'
+			'click .gc-status-column': 'toggleCheckAndRender'
 		},
 
 		initialize: function initialize() {

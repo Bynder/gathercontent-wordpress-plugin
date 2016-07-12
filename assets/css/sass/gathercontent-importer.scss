@@ -131,6 +131,7 @@ ul.gc-radio-desc li, ul.gc-reveal-items-list li {
 .gathercontent-admin {
 
 	.form-table th {
+		font-weight: normal;
 		padding: 20px 10px;
 	}
 
@@ -149,8 +150,6 @@ ul.gc-radio-desc li, ul.gc-reveal-items-list li {
 	}
 
 	.gc-field-th {
-		width: 40%;
-
 		&.check-column {
 			width: 20px;
 			padding: 6px 0 6px 6px;

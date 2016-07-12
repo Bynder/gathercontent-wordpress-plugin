@@ -95,6 +95,7 @@ ul.gc-radio-desc li, ul.gc-reveal-items-list li {
   display: none; }
 
 .gathercontent-admin .form-table th {
+  font-weight: normal;
   padding: 20px 10px; }
 
 .gathercontent-admin.gc-sync .form-table th {
@@ -106,12 +107,10 @@ ul.gc-radio-desc li, ul.gc-reveal-items-list li {
 .gathercontent-admin .wp-field-th {
   width: 60%; }
 
-.gathercontent-admin .gc-field-th {
-  width: 40%; }
-  .gathercontent-admin .gc-field-th.check-column {
-    width: 20px;
-    padding: 6px 0 6px 6px;
-    vertical-align: middle; }
+.gathercontent-admin .gc-field-th.check-column {
+  width: 20px;
+  padding: 6px 0 6px 6px;
+  vertical-align: middle; }
 
 .gathercontent-admin .select2-results__option, .gathercontent-admin-select2 .select2-results__option {
   border-bottom: 1px solid #eee;
@@ -304,10 +303,10 @@ ul.gc-radio-desc li, ul.gc-reveal-items-list li {
 .gc-modal-tabs .hidden {
   display: none; }
 
-.gc-modal-tabs .gc-disabled {
+.gc-modal-tabs .gc-disabled td {
   opacity: 0.4; }
 
-.gc-modal-item-wp-post-title {
+.gc-status-column {
   cursor: pointer; }
 
 #poststuff #gc-manage .inside {

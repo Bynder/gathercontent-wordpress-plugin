@@ -256,7 +256,9 @@ class Bulk extends UI_Base {
 			'tmpl-gc-status-select2' => array(),
 			'tmpl-gc-select2-item' => array(),
 			'tmpl-gc-modal-window' => array(),
-			'tmpl-gc-modal-item' => array(),
+			'tmpl-gc-item' => array(
+				'url' => General::get_instance()->admin->platform_url(),
+			),
 		);
 	}
 

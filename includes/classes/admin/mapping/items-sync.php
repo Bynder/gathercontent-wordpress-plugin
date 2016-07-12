@@ -14,11 +14,17 @@ class Items_Sync extends Base {
 	public $mappings;
 
 	protected $items = array();
+	protected $url = '';
 
 	public function __construct( array $args ) {
 		parent::__construct( $args );
 		$this->mappings = $args['mappings'];
-		$this->items    = $args['items'];
+		$this->items    = array_values( array_map( array( $this, 'prepare_for_js' ), $args['items'] ) );
+		$this->url      = $args['url'];
+	}
+
+	public function prepare_for_js( $item ) {
+		return \GatherContent\Importer\prepare_item_for_js( $item, $this->mapping_id );
 	}
 
 	/**
@@ -62,7 +68,7 @@ class Items_Sync extends Base {
 	 */
 	protected function get_localize_data() {
 		return array(
-			'_items'  => array_values( $this->items ),
+			'_items'  => $this->items,
 			'percent' => $this->mappings->get_pull_percent( $this->mapping_id ),
 		);
 	}
@@ -77,7 +83,9 @@ class Items_Sync extends Base {
 	protected function get_underscore_templates() {
 		return array(
 			'tmpl-gc-items-sync' => array(),
-			'tmpl-gc-item' => array(),
+			'tmpl-gc-item' => array(
+				'url' => $this->url,
+			),
 			'tmpl-gc-items-sync-progress' => array(),
 		);
 	}
