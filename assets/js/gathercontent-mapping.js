@@ -1,5 +1,5 @@
 /**
- * GatherContent Importer - v3.0.0 - 2016-07-07
+ * GatherContent Importer - v3.0.0 - 2016-07-12
  * http://www.gathercontent.com
  *
  * Copyright (c) 2016 GatherContent
@@ -19,7 +19,7 @@ module.exports = Backbone.Collection.extend({
 });
 
 },{}],2:[function(require,module,exports){
-'use strict';
+"use strict";
 
 module.exports = function (app) {
 	return app.collections.base.extend({
@@ -27,38 +27,16 @@ module.exports = function (app) {
 
 		initialize: function initialize(models, options) {
 			this.tab = options.tab;
-		},
-
-		showTab: function showTab(id) {
-			var model = this.getById(id);
-
-			if (model) {
-				this.invoke('set', { 'hidden': true });
-				model.set('hidden', false);
-				this.trigger('render');
-			}
 		}
-
 	});
 };
 
 },{}],3:[function(require,module,exports){
-'use strict';
+"use strict";
 
 module.exports = function (app) {
 	return app.collections.base.extend({
-		model: app.models.tab,
-
-		showTab: function showTab(id) {
-			var model = this.getById(id);
-
-			if (model) {
-				this.invoke('set', { 'hidden': true });
-				model.set('hidden', false);
-				this.trigger('render');
-			}
-		}
-
+		model: app.models.tab
 	});
 };
 
@@ -110,7 +88,7 @@ window.GatherContent = window.GatherContent || {};
   * Overall view setup
   */
 
-	app.views.tabs = require('./views/tabs.js')(app);
+	app.views.tabs = require('./views/tabs.js')(app, $, gc);
 
 	app.init = function () {
 		// Kick it off.
@@ -250,7 +228,7 @@ module.exports = function (app, table_headings) {
 		render: function render() {
 			var json = this.model.toJSON();
 
-			this.$el.html(this.wrapHtml(json));
+			this.$el.html(this.htmlWrap(json));
 			this.$el.find('tbody').first().html(this.defaultTabTemplate(json));
 			this.$el.find('#gc-status-mappings tbody').html(this.statusMappingsTemplate(json));
 
@@ -259,15 +237,18 @@ module.exports = function (app, table_headings) {
 			return this;
 		},
 
-		wrapHtml: function wrapHtml(json) {
+		htmlWrap: function htmlWrap(json) {
 			var html = this.template(json);
 
-			json.table_id = 'gc-status-mappings';
-			delete json.label;
-			json.col_headings = table_headings.status;
+			// Only add the GatherContent status => WP status table if initialized.
+			if (!this.model.get('initial')) {
+				json.table_id = 'gc-status-mappings';
+				delete json.label;
+				json.col_headings = table_headings.status;
 
-			html += '<br>';
-			html += this.template(json);
+				html += '<br>';
+				html += this.template(json);
+			}
 
 			return html;
 		},
@@ -484,67 +465,175 @@ module.exports = function (app) {
 },{}],15:[function(require,module,exports){
 'use strict';
 
-module.exports = function (app) {
+module.exports = function (app, $, gc) {
 	return app.views.base.extend({
+		initial: gc._initial,
 		el: '#mapping-tabs',
 
 		template: wp.template('gc-tabs-wrapper'),
-
-		initialize: function initialize() {
-			this.listenTo(this.collection, 'render', this.render);
-			this.listenTo(this, 'render', this.render);
-
-			this.defaultTab = this.collection.getById('mapping-defaults');
-			this.render();
-		},
 
 		events: {
 			'click .nav-tab': 'tabClick',
 			'click .nav-tab-link': 'triggerClick'
 		},
 
+		initialize: function initialize() {
+			this.listenTo(this.collection, 'render', this.render);
+			this.listenTo(this, 'render', this.render);
+			this.listenTo(this, 'saveEnabled', this.enableSave);
+			this.listenTo(this, 'saveDisabled', this.disableSave);
+
+			if (this.initial) {
+
+				// Listen for initialization
+				this.listenTo(this.collection, 'change', this.maybeInitMapping);
+
+				// 'initMapping' only fires when an un-saved mapping is first 'modified'.
+				// It enables saving, viewing tabs, etc.
+				this.listenTo(this, 'initMapping', this.initMapping);
+			}
+
+			this.defaultTab = this.collection.getById('mapping-defaults');
+			this.render();
+		},
+
+		maybeInitMapping: function maybeInitMapping(model) {
+			if ('post_type' in model.changed) {
+				this.trigger('initMapping');
+			}
+		},
+
+		initMapping: function initMapping() {
+			this.initial = false;
+
+			this.stopListening(this.collection, 'change', this.maybeInitMapping);
+			this.stopListening(this, 'initMapping', this.initMapping);
+
+			this.defaultTab.set('initial', this.initial);
+			this.render();
+
+			if (gc._pointers.select_tab_how_to) {
+				this.pointer('.gc-nav-tab-wrapper-bb', 'select_tab_how_to');
+				this.pointer('#gc-status-mappings', 'map_status_how_to');
+			}
+
+			this.trigger('saveEnabled');
+		},
+
 		triggerClick: function triggerClick(evt) {
 			evt.preventDefault();
 
-			this.$('.nav-tab[href="' + jQuery(evt.target).attr('href') + '"]').trigger('click');
+			this.$('.nav-tab[href="' + $(evt.target).attr('href') + '"]').trigger('click');
 		},
 
 		tabClick: function tabClick(evt) {
 			evt.preventDefault();
+			this.setTab($(evt.target).attr('href').substring(1));
+			this.render();
+		},
 
-			var id = jQuery(evt.target).attr('href').substring(1);
-
+		setTab: function setTab(id) {
 			this.$el.attr('class', id);
-			this.collection.showTab(id);
+			this.collection.invoke('set', { 'hidden': true });
+			this.collection.getById(id).set('hidden', false);
 		},
 
 		render: function render() {
 			this.$('.gc-select2').each(function () {
-				jQuery(this).select2('destroy');
+				$(this).select2('destroy');
 			});
 
 			this.$el.html(this.template());
 
 			// Add tab links
-			this.$el.find('.nav-tab-wrapper').append(this.getRenderedModels(app.views.tabLink));
+			this.renderNav();
 
 			// Add tab content
 			this.renderTabs();
 
+			if (this.initial) {
+				this.renderInitial();
+			}
+
 			return this;
+		},
+
+		renderNav: function renderNav() {
+			var toAppend;
+
+			if (this.initial) {
+				this.setTab(this.defaultTab.get('id'));
+				toAppend = new app.views.tabLink({ model: this.defaultTab }).render().el;
+			} else {
+				toAppend = this.getRenderedModels(app.views.tabLink);
+			}
+
+			this.$el.find('.nav-tab-wrapper').append(toAppend);
 		},
 
 		renderTabs: function renderTabs() {
 			var frag = document.createDocumentFragment();
+			if (this.initial) {
 
-			this.collection.each(function (model) {
-				var viewid = 'mapping-defaults' === model.get('id') ? 'defaultTab' : 'tab';
-				var view = new app.views[viewid]({ model: model });
-
+				this.defaultTab.set('initial', this.initial);
+				var view = new app.views.defaultTab({ model: this.defaultTab });
 				frag.appendChild(view.render().el);
-			});
+			} else {
+
+				this.collection.each(function (model) {
+					var viewid = 'mapping-defaults' === model.get('id') ? 'defaultTab' : 'tab';
+					var view = new app.views[viewid]({ model: model });
+
+					frag.appendChild(view.render().el);
+				});
+			}
 
 			this.$el.find('.gc-template-tab-group').append(frag);
+		},
+
+		renderInitial: function renderInitial() {
+			// Show the "select post-type" pointer.
+			this.pointer('[data-column="post_type"]', 'select_type', {
+				dismissable: false,
+				position: {
+					edge: 'bottom',
+					align: 'left'
+				}
+			});
+
+			this.trigger('saveDisabled');
+		},
+
+		enableSave: function enableSave() {
+			// Enable save button.
+			$('.submit .button-primary').prop('disabled', false);
+		},
+
+		disableSave: function disableSave() {
+			// Disable save button.
+			$('.submit .button-primary').prop('disabled', true);
+		},
+
+		pointer: function pointer(selector, key, args) {
+			args = args || {};
+			var defaults = {
+				content: gc._pointers[key]
+			};
+
+			if (false !== args.dismissable) {
+				defaults.close = function () {
+					$.post(window.ajaxurl, {
+						pointer: 'gc_' + key,
+						action: 'dismiss-wp-pointer'
+					});
+				};
+			}
+
+			if (args.position) {
+				defaults.position = args.position;
+			}
+
+			this.$(selector).pointer(defaults).pointer('open');
 		}
 
 	});

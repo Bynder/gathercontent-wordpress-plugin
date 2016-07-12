@@ -27,7 +27,7 @@ module.exports = function( app, table_headings ) {
 		render : function() {
 			var json = this.model.toJSON();
 
-			this.$el.html( this.wrapHtml( json ) );
+			this.$el.html( this.htmlWrap( json ) );
 			this.$el.find( 'tbody' ).first().html( this.defaultTabTemplate( json ) );
 			this.$el.find( '#gc-status-mappings tbody' ).html( this.statusMappingsTemplate( json ) );
 
@@ -36,15 +36,18 @@ module.exports = function( app, table_headings ) {
 			return this;
 		},
 
-		wrapHtml: function( json ) {
+		htmlWrap: function( json ) {
 			var html = this.template( json );
 
-			json.table_id = 'gc-status-mappings';
-			delete json.label;
-			json.col_headings = table_headings.status;
+			// Only add the GatherContent status => WP status table if initialized.
+			if ( ! this.model.get( 'initial' ) ) {
+				json.table_id = 'gc-status-mappings';
+				delete json.label;
+				json.col_headings = table_headings.status;
 
-			html += '<br>';
-			html += this.template( json );
+				html += '<br>';
+				html += this.template( json );
+			}
 
 			return html;
 		},

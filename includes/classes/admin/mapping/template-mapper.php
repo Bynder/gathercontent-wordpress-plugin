@@ -108,9 +108,13 @@ class Template_Mapper extends Base {
 	 * @return array Array of localizable data
 	 */
 	protected function get_localize_data() {
+		$initial = ! $this->mapping_id;
+
 		return array(
-			'_tabs'      => $this->get_tabs(),
-			'_meta_keys' => $this->custom_field_keys(),
+			'_initial'        => $initial,
+			'_pointers'       => $this->get_pointers( $initial ),
+			'_tabs'           => $this->get_tabs(),
+			'_meta_keys'      => $this->custom_field_keys(),
 			'_table_headings' => array(
 				'default' => array(
 					'gc' => array(
@@ -160,7 +164,7 @@ class Template_Mapper extends Base {
 			'tmpl-gc-mapping-defaults-tab' => array(
 				'post_author_label'   => $this->post_column_label( 'post_author' ),
 				'post_status_options' => $post_status_options,
-				'post_status_label'   => __( 'Default Post Status', 'gathercontent-import' ),
+				'post_status_label'   => __( 'Default Status', 'gathercontent-import' ),
 				'post_type_label'     => $this->post_column_label( 'post_type' ),
 				'post_type_options'   => $this->get_default_field_options( 'post_type' ),
 				'gc_status_options'   => $this->statuses,
@@ -196,6 +200,51 @@ class Template_Mapper extends Base {
 		}
 
 		return ( new Field_Types\Types( $core_field_types ) )->register();
+	}
+
+	/**
+	 * Gets the Help Pointers array.
+	 *
+	 * @since  3.0.0
+	 *
+	 * @param  bool  $initial Whether we have a mapping ID.
+	 *
+	 * @return array  Array of Pointers.
+	 */
+	protected function get_pointers( $initial ) {
+		if ( $initial ) {
+			wp_enqueue_script( 'wp-pointer' );
+			wp_enqueue_style( 'wp-pointer' );
+		}
+
+		$dismissed = get_user_meta( get_current_user_id(), 'dismissed_wp_pointers', true );
+		// $dismissed = preg_replace( array( '~gc_select_tab_how_to,?~', '~gc_map_status_how_to,?~' ), '', $dismissed );
+		// update_user_meta( get_current_user_id(), 'dismissed_wp_pointers', $dismissed );
+		$dismissed = explode( ',', (string) $dismissed );
+
+		$pointers = array(
+			'select_type' => '<h3>'. __( 'Select your Post Type', 'gathercontent-import' ) .'</h3><p>' . __( 'To get started, select your default Post Type for this mapping.', 'gathercontent-import' ) . '</p>',
+			'select_tab_how_to' => '',
+			'map_status_how_to' => '',
+		);
+
+		if ( $initial ) {
+			if ( ! in_array( 'gc_select_tab_how_to', $dismissed, 1 ) ) {
+				$content = '<h3>'. __( 'Template Tabs and Fields', 'gathercontent-import' ) .'</h3>';
+				$content .= '<p>' . __( 'You\'ll find the tabs from the GatherContent Template here. Select a tab to start mapping the Template fields.', 'gathercontent-import' ) . '</p>';
+
+				$pointers['select_tab_how_to'] = $content;
+			}
+
+			if ( ! in_array( 'gc_map_status_how_to', $dismissed, 1 ) ) {
+				$content = '<h3>'. __( 'GatherContent Status &Rarr; WordPress Status', 'gathercontent-import' ) .'</h3>';
+				$content .= '<p>' . __( 'Here you\'ll be able to map each individual GatherContent status to a WordPress status, and optionally, change the GatherContent status when your items are imported to WordPress.', 'gathercontent-import' ) . '</p>';
+
+				$pointers['map_status_how_to'] = $content;
+			}
+		}
+
+		return $pointers;
 	}
 
 	/**
@@ -242,7 +291,7 @@ class Template_Mapper extends Base {
 			'rows'        => $this->post_options(),
 			'post_author' => $this->get_value( 'post_author', 'absint', 1 ),
 			'post_status' => $this->get_value( 'post_status', 'esc_attr', 'draft' ),
-			'post_type'   => $this->get_value( 'post_type', 'esc_attr', 'post' ),
+			'post_type'   => $this->get_value( 'post_type', 'esc_attr' ),
 			'gc_status'   => $this->get_gc_statuses(),
 		);
 

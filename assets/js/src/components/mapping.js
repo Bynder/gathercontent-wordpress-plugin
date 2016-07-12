@@ -34,7 +34,7 @@ window.GatherContent = window.GatherContent || {};
 	 * Overall view setup
 	 */
 
-	app.views.tabs = require( './views/tabs.js' )( app );
+	app.views.tabs = require( './views/tabs.js' )( app, $, gc );
 
 	app.init = function() {
 		// Kick it off.
