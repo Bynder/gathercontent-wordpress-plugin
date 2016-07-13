@@ -4,6 +4,8 @@ use GatherContent\Importer\Base as Plugin_Base;
 use GatherContent\Importer\Post_Types\Template_Mappings;
 use GatherContent\Importer\Mapping_Post;
 use GatherContent\Importer\API;
+use GatherContent\Importer\Dom;
+
 use WP_Error;
 
 class Exception extends \Exception {
@@ -268,7 +270,7 @@ abstract class Base extends Plugin_Base {
 
 	/**
 	 * Check for existence of image/media shortcodes in the GC content, and parse the attributes.
-	 * `[media|image-$number align=left|right|center|none linkto=file|attachment-page size=thumbnail|medium|large|etc]`
+	 * `[media-$number align=left|right|center|none linkto=file|attachment-page size=thumbnail|medium|large|etc]`
 	 *
 	 * @since  3.0.0
 	 * @uses   get_shortcode_regex
@@ -281,7 +283,7 @@ abstract class Base extends Plugin_Base {
 	public function get_media_shortcode_attributes( $content, $position ) {
 		preg_match_all( '@\[([^<>&/\[\]\x00-\x20=]++)@', $content, $matches );
 
-		$to_find = array( "media-{$position}", "image-{$position}" );
+		$to_find = array( "media-{$position}" );
 		$tagnames = array_intersect( $to_find, $matches[1] );
 
 		if ( empty( $tagnames ) ) {
@@ -358,7 +360,7 @@ abstract class Base extends Plugin_Base {
 
 		$args = array(
 			'data-gcid'   => $media_id,
-			'data-gcatts' => wp_json_encode( $atts ),
+			'data-gcatts' => wp_json_encode( array_filter( $atts ) ),
 			'class'       => "gathercontent-image $alignclass attachment-$size_class size-$size_class wp-image-$attach_id",
 		);
 
@@ -376,6 +378,66 @@ abstract class Base extends Plugin_Base {
 		}
 
 		return $image;
+	}
+
+	/**
+	 * Parses content for media with data-gcid and data-gcatts attributes,
+	 * and converts them to GC shortcodes. This is intended for PUSHING
+	 * content to GatherContent.
+	 *
+	 * @since  3.0.0
+	 *
+	 * @param  string  $content HTML content
+	 *
+	 * @return string           Updated content.
+	 */
+	public function convert_media_to_shortcodes( $content ) {
+		$dom          = new Dom( $content );
+		$images       = $dom->getElementsByTagName( 'img' );
+		$replacements = array();
+		$index        = 0;
+		$ids          = array();
+
+		foreach ( $images as $img ) {
+			$gcid = $img->getAttribute( 'data-gcid' );
+			$data = $img->getAttribute( 'data-gcatts' );
+			if ( empty( $gcid ) && empty( $data ) ) {
+				continue;
+			}
+
+			// It's possible GC media shortcodes could be used more than once
+			// Only increase the index if the gcid (gc media id) is unique.
+			if ( ! isset( $ids[ $gcid ] ) ) {
+				$index++;
+			}
+
+			// Mark this gc media id
+			$ids[ $gcid ] = 1;
+
+			$string = '';
+			$node_to_replace = $dom->saveHTML( $img );
+
+			if ( ! empty( $data ) ) {
+				$data = json_decode( $data, true );
+				if ( is_array( $data ) ) {
+					foreach ( $data as $key => $value ) {
+						$string .= " $key=$value";
+					}
+
+					// If wrapped in a link, need to get that too.
+					if ( isset( $data['linkto'] ) && in_array( $data['linkto'], array( 'attachment-page', 'file' ), 1 ) ) {
+						if ( 'a' === $img->parentNode->tagName ) {
+							$node_to_replace = $dom->saveHTML( $img->parentNode );
+						}
+					}
+				}
+			}
+
+			$shortcode = "[media-$index$string]";
+			$replacements[ $node_to_replace ] = $shortcode;
+		}
+
+		return strtr( $dom->get_content(), $replacements );
 	}
 
 	/**

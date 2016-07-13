@@ -288,15 +288,17 @@ class Push extends Base {
 	protected function set_post_field_value( $post_column ) {
 		$updated = false;
 		$el_value = $this->element->value;
-		$value = ! empty( $this->post->{$post_column} ) ? $this->post->{$post_column} : false;
 		$value = ! empty( $this->post->{$post_column} ) ? self::remove_zero_width( $this->post->{$post_column} ) : false;
+		$value = apply_filters( "gc_get_{$post_column}", $value, $this );
 
+		// Make element value match the WP versions formatting, to see if they are equal.
 		switch ( $post_column ) {
 			case 'post_title':
+				$el_value = wp_kses_post( $this->get_element_value() );
+				break;
 			case 'post_content':
 			case 'post_excerpt':
-				// Make element value match the WP versions formatting, to see if they are equal.
-				$el_value = wp_kses_post( $this->get_element_value() );
+				$el_value = $this->convert_media_to_shortcodes( wp_kses_post( $this->get_element_value() ) );
 				break;
 		}
 
