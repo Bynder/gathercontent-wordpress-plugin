@@ -135,12 +135,11 @@ abstract class Base extends Plugin_Base {
 	}
 
 	protected function set_item( $item_id ) {
-		// if ( isset( $_GET['test_push'] ) ) {
+		// if ( isset( $_GET['test_pull'] ) ) {
 		// 	$this->item = $this->api->get_item( $item_id );
 		// } else {
 			$this->item = $this->api->uncached()->get_item( $item_id );
 		// }
-
 
 		if ( ! isset( $this->item->id ) ) {
 			// @todo maybe check if error was temporary.
@@ -265,6 +264,118 @@ abstract class Base extends Plugin_Base {
 		$can_append = in_array( $field, $this->get_append_types(), 1 );
 
 		return apply_filters( "gc_can_append_{$field}", $can_append, $this->element, $this->item );
+	}
+
+	/**
+	 * Check for existence of image/media shortcodes in the GC content, and parse the attributes.
+	 * `[media|image-$number align=left|right|center|none linkto=file|attachment-page size=thumbnail|medium|large|etc]`
+	 *
+	 * @since  3.0.0
+	 * @uses   get_shortcode_regex
+	 *
+	 * @param  string $content  The GC content
+	 * @param  int    $position Image positional argument.
+	 *
+	 * @return false|array      Array of attributes on success.
+	 */
+	public function get_media_shortcode_attributes( $content, $position ) {
+		preg_match_all( '@\[([^<>&/\[\]\x00-\x20=]++)@', $content, $matches );
+
+		$to_find = array( "media-{$position}", "image-{$position}" );
+		$tagnames = array_intersect( $to_find, $matches[1] );
+
+		if ( empty( $tagnames ) ) {
+			return false;
+		}
+
+		$pattern = get_shortcode_regex( $tagnames );
+
+		$matches = array();
+		preg_match_all( "/$pattern/", $content, $matches );
+
+		if ( isset( $matches[3], $matches[0] ) && is_array( $matches[3] ) ) {
+			$replace = array();
+			foreach ( $matches[0] as $index => $shortcode ) {
+				$replace[ $shortcode ] = shortcode_parse_atts( $matches[3][ $index ] );
+			}
+
+			return $replace;
+		}
+
+		return false;
+	}
+
+	/**
+	 * If a GC "shortcode" is found, we'll parse the attributes and retun an image for insertion.
+	 *
+	 * @since  3.0.0
+	 *
+	 * @param  array  $atts    Array of attributes.
+	 * @param  int  $media_id  The GC media object id.
+	 * @param  int  $attach_id The WP media id.
+	 *
+	 * @return string          Image markup, if successful.
+	 */
+	public function get_requested_media( $atts, $media_id, $attach_id ) {
+		$image = '';
+
+		$atts = wp_parse_args( $atts, array(
+			'align'  => '',
+			'linkto' => '',
+			'size'   => 'full',
+		) );
+
+		if ( ! $atts['linkto'] && ! ( $atts['size'] || $atts['align'] ) ) {
+			return $image;
+		}
+
+		switch ( $atts['align'] ) {
+			case 'alignleft':
+			case 'left':
+				$alignclass = 'alignleft';
+				break;
+			case 'aligncenter':
+			case 'center':
+				$alignclass = 'aligncenter';
+				break;
+			case 'alignright':
+			case 'right':
+				$alignclass = 'alignright';
+				break;
+			case 'alignnone':
+			case 'none':
+				$alignclass = 'alignnone';
+				break;
+			default:
+				$alignclass = '';
+				break;
+		}
+
+		$size_class = $atts['size'];
+		if ( is_array( $size_class ) ) {
+			$size_class = join( 'x', $size_class );
+		}
+
+		$args = array(
+			'data-gcid'   => $media_id,
+			'data-gcatts' => wp_json_encode( $atts ),
+			'class'       => "gathercontent-image $alignclass attachment-$size_class size-$size_class wp-image-$attach_id",
+		);
+
+		if ( $atts['linkto'] ) {
+			$image = wp_get_attachment_link(
+				$attach_id,
+				$atts['size'],
+				'attachment-page' === $atts['linkto'],
+				false,
+				false,
+				$args
+			);
+		} elseif ( $atts['size'] || $atts['align'] ) {
+			$image = wp_get_attachment_image( $attach_id, $atts['size'], false, $args );
+		}
+
+		return $image;
 	}
 
 	/**

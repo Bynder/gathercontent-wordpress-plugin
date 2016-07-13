@@ -94,6 +94,8 @@ class Pull extends Base {
 			throw new Exception( $post_id->get_error_message(), __LINE__, $post_id->get_error_data() );
 		}
 
+		$post_data['ID'] = $post_id;
+
 		// Store item ID reference to post-meta.
 		\GatherContent\Importer\update_post_item_id( $post_id, $id );
 		\GatherContent\Importer\update_post_mapping_id( $post_id, $this->mapping->ID );
@@ -104,10 +106,9 @@ class Pull extends Base {
 
 		if ( $attachments ) {
 			$attachments = apply_filters( 'gc_media_objects', $attachments, $post_data );
-			$replacements = $this->sideload_attachments( $post_id, $attachments );
+			$replacements = $this->sideload_attachments( $attachments, $post_data );
 
 			if ( ! empty( $replacements ) ) {
-
 				// Do replacements
 				if ( ! empty( $replacements['post_content'] ) ) {
 					$post_data['post_content'] = strtr( $post_data['post_content'], $replacements['post_content'] );
@@ -149,8 +150,11 @@ class Pull extends Base {
 			$post_data[ $key ] = 'gcinitial';
 		}
 
-		// $files = $this->api->get_item_files( $this->item->id );
-		$files = $this->api->uncached()->get_item_files( $this->item->id );
+		if ( isset( $_GET['test_pull'] ) ) {
+			$files = $this->api->get_item_files( $this->item->id );
+		} else {
+			$files = $this->api->uncached()->get_item_files( $this->item->id );
+		}
 
 		$this->item->files = array();
 		if ( is_array( $files ) ) {
@@ -261,17 +265,23 @@ class Pull extends Base {
 	protected function set_media_field_value( $destination, $post_data ) {
 		$media_items = $this->sanitize_element_media();
 
+		if ( in_array( $destination, array( 'gallery', 'content_image', 'excerpt_image' ), 1 ) && is_array( $media_items ) ) {
+			$position = 0;
+			foreach ( $media_items as $index => $media ) {
+				$media_items[ $index ]->position = ++$position;
+
+				$token = '#_gc_media_id_' . $media->id . '#';
+				$field = 'excerpt_image' === $destination ? 'post_excerpt' : 'post_content';
+
+				$post_data = $this->maybe_append( $field, $token, $post_data );
+			}
+
+		}
+
 		$post_data['attachments'][] = array(
 			'destination' => $destination,
 			'media'       => $media_items,
 		);
-
-		if ( in_array( $destination, array( 'gallery', 'content_image', 'excerpt_image' ), 1 ) && is_array( $media_items ) ) {
-			foreach ( $media_items as $media ) {
-				$field = 'excerpt_image' === $destination ? 'post_excerpt' : 'post_content';
-				$post_data = $this->maybe_append( $field, '#_gc_media_id_' . $media->id . '#', $post_data );
-			}
-		}
 
 		return $post_data;
 	}
@@ -356,53 +366,93 @@ class Pull extends Base {
 		return apply_filters( 'gc_sanitize_media_field', $this->element->value, $this->element, $this->item );
 	}
 
-	protected function sideload_attachments( $post_id, $attachments ) {
+	protected function sideload_attachments( $attachments, $post_data ) {
+		$post_id = $post_data['ID'];
 		$featured_img_id = false;
+
 		$replacements = $gallery_ids = array();
+
 		foreach ( $attachments as $attachment ) {
-			if ( is_array( $attachment['media'] ) ) {
-				foreach ( $attachment['media'] as $media ) {
-					$attach_id = $this->maybe_sideload_image( $media, $post_id );
-
-					if ( ! $attach_id || is_wp_error( $attach_id ) ) {
-						// @todo How to handle failures?
-						continue;
-					}
-
-					if ( 'featured_image' === $attachment['destination'] ) {
-						$featured_img_id = $attach_id;
-					} elseif ( in_array( $attachment['destination'], array( 'content_image', 'excerpt_image' ), 1 ) ) {
-
-						$image = wp_get_attachment_image( $attach_id, 'full' );
-						$image = apply_filters( 'gc_content_image', $image, $media, $attach_id, $post_id );
-
-						$field = 'excerpt_image' === $attachment['destination'] ? 'post_excerpt' : 'post_content';
-						$replacements[ $field ]['#_gc_media_id_' . $media->id . '#'] = $image;
-
-					} elseif ( 'gallery' === $attachment['destination'] ) {
-
-						$gallery_ids[] = $attach_id;
-						$replacements['post_content']['#_gc_media_id_' . $media->id . '#'] = '';
-					}
-
-					// Store media item ID reference to attachment post-meta.
-					\GatherContent\Importer\update_post_item_id( $attach_id, $media->id );
-					\GatherContent\Importer\update_post_mapping_id( $attach_id, $this->mapping->ID );
-
-					// Store other media item meta to attachment post-meta.
-					\GatherContent\Importer\update_post_item_meta( $attach_id, array(
-						'user_id'    => $media->user_id,
-						'item_id'    => $media->item_id,
-						'field'      => $media->field,
-						'type'       => $media->type,
-						'url'        => $media->url,
-						'filename'   => $media->filename,
-						'size'       => $media->size,
-						'created_at' => isset( $media->created_at->date ) ? $media->created_at->date : $media->created_at,
-						'updated_at' => isset( $media->updated_at->date ) ? $media->updated_at->date : $media->updated_at,
-					) );
-				}
+			if ( ! is_array( $attachment['media'] ) ) {
+				continue;
 			}
+
+			foreach ( $attachment['media'] as $media ) {
+				$attach_id = $this->maybe_sideload_image( $media, $post_id );
+
+				if ( ! $attach_id || is_wp_error( $attach_id ) ) {
+					// @todo How to handle failures?
+					continue;
+				}
+
+				$token = '#_gc_media_id_' . $media->id . '#';
+
+				if ( 'featured_image' === $attachment['destination'] ) {
+					$featured_img_id = $attach_id;
+				} elseif ( in_array( $attachment['destination'], array( 'content_image', 'excerpt_image' ), 1 ) ) {
+					$field = 'excerpt_image' === $attachment['destination'] ? 'post_excerpt' : 'post_content';
+
+					$image = wp_get_attachment_image( $attach_id, 'full', false, array(
+						'data-gcid' => $media->id,
+						'class'     => 'attachment-full size-full gathercontent-image',
+					) );
+
+					// If we've found a GC "shortcode"
+					if ( $media_replace = $this->get_media_shortcode_attributes( $post_data[ $field ], $media->position ) ) {
+
+						foreach ( $media_replace as $replace_val => $atts ) {
+
+							$maybe_image = ! empty( $atts )
+								// Attempt to get requested image/link.
+								? $this->get_requested_media( $atts, $media->id, $attach_id )
+								: false;
+
+							$img = $maybe_image ? $maybe_image : $image;
+
+							// Replace the GC "shortcode" with the image/link.
+							$img = apply_filters( 'gc_content_image', $img, $media, $attach_id, $post_data );
+							$replacements[ $field ][ $replace_val ] = $img;
+						}
+
+						// The token should be removed from the content.
+						$replacements[ $field ][ $token ] = '';
+
+					} else {
+
+						// Replace the token with the image.
+						$image = apply_filters( 'gc_content_image', $image, $media, $attach_id, $post_data );
+						$replacements[ $field ][ $token ] = $image;
+
+					}
+
+
+				} elseif ( 'gallery' === $attachment['destination'] ) {
+
+					$gallery_ids[] = $attach_id;
+					$gallery_token = $token;
+
+					// The token should be removed from the content.
+					$replacements['post_content'][ $token ] = '';
+				}
+
+				// Store media item ID reference to attachment post-meta.
+				\GatherContent\Importer\update_post_item_id( $attach_id, $media->id );
+				\GatherContent\Importer\update_post_mapping_id( $attach_id, $this->mapping->ID );
+
+				// Store other media item meta to attachment post-meta.
+				\GatherContent\Importer\update_post_item_meta( $attach_id, array(
+					'user_id'    => $media->user_id,
+					'item_id'    => $media->item_id,
+					'field'      => $media->field,
+					'type'       => $media->type,
+					'url'        => $media->url,
+					'filename'   => $media->filename,
+					'size'       => $media->size,
+					'created_at' => isset( $media->created_at->date ) ? $media->created_at->date : $media->created_at,
+					'updated_at' => isset( $media->updated_at->date ) ? $media->updated_at->date : $media->updated_at,
+				) );
+			}
+
 		}
 
 		if ( $featured_img_id ) {
@@ -412,12 +462,12 @@ class Pull extends Base {
 		if ( ! empty( $gallery_ids ) ) {
 
 			$shortcode = '[gallery link="file" size="full" ids="'. implode( ',', $gallery_ids ) .'"]';
-			$shortcode = apply_filters( 'gc_content_gallery_shortcode', $shortcode, $gallery_ids, $post_id );
+			$shortcode = apply_filters( 'gc_content_gallery_shortcode', $shortcode, $gallery_ids, $post_data );
 
-			$replacements['post_content'][ key( $replacements['post_content'] ) ] = $shortcode;
+			$replacements['post_content'][ $gallery_token ] = $shortcode;
 		}
 
-		return $replacements;
+		return apply_filters( 'gc_media_replacements', $replacements, $attachments, $post_data );
 	}
 
 	protected function maybe_sideload_image( $media, $post_id ) {
