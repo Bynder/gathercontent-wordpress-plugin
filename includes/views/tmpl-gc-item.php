@@ -7,7 +7,7 @@
 	{{ data.status.name }}
 </td>
 <td>
-	<a href="<?php $this->output( 'url' ); ?>item/{{ data.id }}" target="_blank">{{ data.itemName }}</a>
+	<a href="<?php $this->output( 'url' ); ?>item/{{ data.item }}" target="_blank">{{ data.itemName }}</a>
 </td>
 <td>
 	{{ data.updated }}

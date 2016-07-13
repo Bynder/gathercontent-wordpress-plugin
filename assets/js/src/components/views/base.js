@@ -18,5 +18,13 @@ module.exports = Backbone.View.extend({
 	render : function() {
 		this.$el.html( this.template( this.model.toJSON() ) );
 		return this;
+	},
+
+	close : function() {
+		this.remove();
+		this.unbind();
+		if ( this.onClose ) {
+			this.onClose();
+		}
 	}
 });

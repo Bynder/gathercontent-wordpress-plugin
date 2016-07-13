@@ -323,6 +323,24 @@ ul.gc-radio-desc li, ul.gc-reveal-items-list li {
   text-align: right;
   float: right;
   line-height: 23px; }
+  .gc-publishing-action button.button, .gc-publishing-action .button {
+    margin-left: .5em; }
 
 #gc-manage .dashicons {
   color: #82878c; }
+
+#gc-status-selec2 {
+  padding: 5px 0; }
+
+#gc-related-data {
+  overflow: hidden; }
+  #gc-related-data.no-js {
+    text-align: center; }
+  #gc-related-data .spinner {
+    float: none;
+    margin: .2em; }
+
+.misc-pub-post-status .gc-status-color {
+  display: block;
+  margin-top: 2px;
+  margin-left: 4px; }

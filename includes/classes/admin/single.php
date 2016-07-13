@@ -2,6 +2,7 @@
 namespace GatherContent\Importer\Admin;
 use GatherContent\Importer\Post_Types\Template_Mappings;
 use GatherContent\Importer\Mapping_Post;
+use GatherContent\Importer\General;
 use GatherContent\Importer\API;
 use GatherContent\Importer\Admin\Mapping\Base as UI_Base;
 use GatherContent\Importer\Admin\Enqueue;
@@ -124,7 +125,7 @@ class Single extends UI_Base {
 
 		$this->enqueue->admin_enqueue_style();
 		$this->enqueue->admin_enqueue_script();
-		add_meta_box( 'gc-manage', 'GatherContent', array( $this, 'meta_box' ), $screen, 'side', 'high' );
+		add_meta_box( 'gc-manage', 'GatherContent <span class="dashicons dashicons-randomize"></span>', array( $this, 'meta_box' ), $screen, 'side', 'high' );
 	}
 
 	public function meta_box( $post, $box ) {
@@ -156,11 +157,13 @@ class Single extends UI_Base {
 	 */
 	protected function get_underscore_templates() {
 		return array(
-			// 'tmpl-gc-post-column-row' => array(),
+			'tmpl-gc-metabox' => array(
+				'url' => General::get_instance()->admin->platform_url(),
+				// 'refresh_link' => \GatherContent\Importer\refresh_connection_link(),
+			),
+			'tmpl-gc-metabox-statuses' => array(),
 			'tmpl-gc-status-select2' => array(),
-			// 'tmpl-gc-select2-item' => array(),
-			// 'tmpl-gc-modal-window' => array(),
-			// 'tmpl-gc-item' => array(),
+			'tmpl-gc-select2-item' => array(),
 		);
 	}
 
@@ -172,6 +175,8 @@ class Single extends UI_Base {
 	 * @return array Array of localizable data
 	 */
 	protected function get_localize_data() {
+		$object = get_post_type_object( get_post_type() );
+		$label = isset( $object->labels->singular_name ) ? $object->labels->singular_name : $object->name;
 		return array(
 			'_post' => \GatherContent\Importer\get_post_for_js( get_the_id() ),
 			'_statuses' => array(
@@ -179,6 +184,13 @@ class Single extends UI_Base {
 				'syncing'  => __( 'Syncing', 'gathercontent-importer' ),
 				'complete' => __( 'Sync Complete', 'gathercontent-importer' ),
 				'failed'   => __( 'Sync Failed', 'gathercontent-importer' ),
+			),
+			'_sure' => array(
+				'push' => sprintf( __( 'Are you sure you want to push this %s to GatherContent? Any unsaved changes in GatherContent will be overwritten.', 'gathercontent-importer' ), $label ),
+				'pull'  => sprintf( __( 'Are you sure you want to pull this %s from GatherContent? Any local changes will be overwritten.', 'gathercontent-importer' ), $label ),
+			),
+			'_errors' => array(
+				'unknown' => __( 'There was an unknown error', 'gathercontent-importer' ),
 			),
 		);
 	}

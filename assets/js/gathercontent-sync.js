@@ -1,5 +1,5 @@
 /**
- * GatherContent Importer - v3.0.0 - 2016-07-12
+ * GatherContent Importer - v3.0.0 - 2016-07-13
  * http://www.gathercontent.com
  *
  * Copyright (c) 2016 GatherContent
@@ -227,6 +227,14 @@ module.exports = Backbone.View.extend({
 	render: function render() {
 		this.$el.html(this.template(this.model.toJSON()));
 		return this;
+	},
+
+	close: function close() {
+		this.remove();
+		this.unbind();
+		if (this.onClose) {
+			this.onClose();
+		}
 	}
 });
 

@@ -14,9 +14,33 @@
 	text-align: right;
 	float: right;
 	line-height: 23px;
+	button.button, .button {
+		margin-left: .5em;
+	}
 }
 #gc-manage {
 	.dashicons {
 		color: #82878c;
 	}
+}
+
+#gc-status-selec2 {
+	padding: 5px 0;
+}
+
+#gc-related-data {
+	overflow: hidden;
+	&.no-js {
+		text-align: center;
+	}
+	.spinner {
+		float: none;
+		margin: .2em;
+	}
+}
+
+.misc-pub-post-status .gc-status-color {
+	display: block;
+	margin-top: 2px;
+	margin-left: 4px;
 }

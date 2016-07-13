@@ -10,6 +10,5 @@
 		<?php _e( 'N\A', 'gathercontent-import' ); ?>
 	</span>
 <# } #>
-
 <?php
 	// echo "<# console.log( 'data', data ); #>";

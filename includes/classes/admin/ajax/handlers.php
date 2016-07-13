@@ -48,6 +48,7 @@ class Handlers extends Plugin_Base {
 		add_action( 'wp_ajax_gc_push_items', array( $this->sync_bulk, 'push_callback' ) );
 		add_action( 'wp_ajax_gc_get_items', array( $this, 'get_items_callback' ) );
 		add_action( 'wp_ajax_gc_get_post_statuses', array( $this, 'post_statuses_callback' ) );
+		add_action( 'wp_ajax_set_gc_status', array( $this, 'set_gc_status' ) );
 		add_action( 'wp_ajax_gc_fetch_js_post', array( $this, 'fetch_js_post' ) );
 	}
 
@@ -135,6 +136,28 @@ class Handlers extends Plugin_Base {
 		}
 
 		wp_send_json_success( compact( 'postId', 'statuses' ) );
+	}
+
+	public function set_gc_status() {
+		$post_data = $this->_post_val( 'post' );
+		$status = absint( $this->_post_val( 'status' ) );
+		$nonce = $this->_post_val( 'nonce' );
+
+		if ( empty( $post_data ) || empty( $status ) || ! wp_verify_nonce( $this->_post_val( 'nonce' ), GATHERCONTENT_SLUG ) ) {
+			wp_send_json_error();
+		}
+
+		$item_id = isset( $post_data['item'] ) ? absint( $post_data['item'] ) : 0;
+
+		if ( ! $item_id ) {
+			wp_send_json_error();
+		}
+
+		if ( $this->api->set_item_status( $item_id, $status ) ) {
+			wp_send_json_success( compact( 'status' ) );
+		}
+
+		wp_send_json_error();
 	}
 
 	public function fetch_js_post() {
