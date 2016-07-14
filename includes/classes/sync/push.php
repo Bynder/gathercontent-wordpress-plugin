@@ -52,7 +52,7 @@ class Push extends Base {
 
 		if ( isset( $_GET['test_push'] ) ) {
 			// wp_die( '<xmp>'. __LINE__ .') create_item $item_id: '. print_r( $this->api->create_item( 73849, 347939, 'HEYO!' ), true ) .'</xmp>' );
-			wp_die( '<xmp>maybe_push_item $result: '. print_r( $this->maybe_push_item( 138 ), true ) .'</xmp>' );
+			wp_die( '<xmp>maybe_push_item $result: '. print_r( $this->maybe_push_item( 6 ), true ) .'</xmp>' );
 		}
 
 	}
@@ -300,6 +300,9 @@ class Push extends Base {
 			case 'post_excerpt':
 				$el_value = wp_kses_post( $this->get_element_value() );
 				$value = $this->convert_media_to_shortcodes( $value );
+				if ( 'post_content' === $post_column ) {
+					$value = apply_filters( 'the_content', $value );
+				}
 				break;
 		}
 
