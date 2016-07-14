@@ -2,11 +2,35 @@ module.exports = {
 	main: {
 		options: {
 			mode: 'zip',
-			archive: './release/gathercontent.<%= pkg.version %>.zip'
+			archive: 'gathercontent-importer.zip'
 		},
 		expand: true,
-		cwd: 'release/<%= pkg.version %>/',
-		src: ['**/*'],
-		dest: 'gathercontent/'
+		src: [
+			'**',
+			'!**/**.xml',
+			'!**/**.DS_Store',
+			'!**/Dockunit.json',
+			'!**/package.json',
+			'!**/node_modules/**',
+			'!**/.git/**',
+			'!**/bin/**',
+			'!**/tests/**',
+			'!**/sass/**',
+			'!**.zip',
+			'!**.gitignore',
+			'!**.jshintrc',
+			'!**.log',
+			'!**.dist',
+			'!**/**.orig',
+			'!**/**.map',
+			'!**/**Gruntfile.js',
+			'!**/**composer.json',
+			'!**/**composer.lock',
+			'!**/**bower.json',
+			'!**/**bower.json',
+			'!assets/js/src/**',
+			'!tasks/**'
+		],
+		dest: 'gathercontent-importer/'
 	}
 };

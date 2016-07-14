@@ -1,3 +1,3 @@
 module.exports = function (grunt) {
-	grunt.registerTask( 'default', ['css', 'js'] );
+	grunt.registerTask( 'default', ['css', 'js', 'compress'] );
 };
