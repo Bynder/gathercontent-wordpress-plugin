@@ -1,5 +1,6 @@
 <?php
 namespace GatherContent\Importer;
+use GatherContent\Importer\General;
 use WP_Error;
 
 class API extends Base {
@@ -375,7 +376,11 @@ class API extends Base {
 	 */
 	public function request( $endpoint, $args = array(), $method = 'GET' ) {
 		$uri = $this->base_url . $endpoint;
-		$args = $this->request_args( $args );
+		try {
+			$args = $this->request_args( $args );
+		} catch ( \Exception $e ) {
+			return new WP_Error( 'gc_api_setup_fail', $e->getMessage() );
+		}
 
 		error_log( '$uri: '. print_r( add_query_arg( array(
 			'disable_cache' => $this->disable_cache,
@@ -424,6 +429,20 @@ class API extends Base {
 	 * @return array        Modified array of request args.
 	 */
 	public function request_args( $args ) {
+		if ( ! $this->user || ! $this->api_key ) {
+			$settings = get_option( General::OPTION_NAME, array() );
+			if (
+				is_array( $settings )
+				&& isset( $settings['account_email'] )
+				&& isset( $settings['api_key'] )
+			) {
+				$this->set_user( $settings['account_email'] );
+				$this->set_api_key( $settings['api_key'] );
+			} else {
+				throw new \Exception( __( 'The GatherContent API connection is not set up.', 'gathercontent-import' ) );
+			}
+		}
+
 		$headers = array(
 			'Authorization' => 'Basic ' . base64_encode( $this->user . ':' . $this->api_key ),
 			'Accept'        => 'application/vnd.gathercontent.v0.5+json',

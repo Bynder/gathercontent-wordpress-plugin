@@ -1,14 +1,15 @@
 <?php
 namespace GatherContent\Importer\Admin;
 use GatherContent\Importer\API;
+use GatherContent\Importer\General;
 use GatherContent\Importer\Settings\Setting;
 use GatherContent\Importer\Settings\Form_Section;
 use GatherContent\Importer\Post_Types\Template_Mappings;
 
 class Admin extends Base {
 
-	public $option_name      = 'gathercontent_importer';
-	public $option_group     = 'gathercontent_importer_settings';
+	public $option_name  = General::OPTION_NAME;
+	public $option_group = 'gathercontent_importer_settings';
 	public $mapping_wizzard;
 
 	/**

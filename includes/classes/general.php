@@ -54,6 +54,8 @@ class General extends Base {
 	 */
 	protected $single_ui;
 
+	const OPTION_NAME = 'gathercontent_importer';
+
 	/**
 	 * Creates or returns an instance of this class.
 	 * @since  3.0.0
