@@ -29,7 +29,10 @@ class API extends Base {
 		parent::__construct();
 
 		$this->http = $http;
-		$this->disable_cache = $this->_get_val( 'flush_cache' ) || $this->_post_val( 'flush_cache' );
+		$this->disable_cache = $this->_get_val( 'flush_cache' ) && 'false' !== $this->_get_val( 'flush_cache' );
+		if ( ! $this->disable_cache ) {
+			$this->disable_cache = $this->_post_val( 'flush_cache' ) && 'false' !== $this->_post_val( 'flush_cache' );
+		}
 	}
 
 	public function set_user( $email ) {
