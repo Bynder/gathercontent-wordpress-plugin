@@ -303,6 +303,12 @@ class Push extends Base {
 				if ( 'post_content' === $post_column ) {
 					$value = apply_filters( 'the_content', $value );
 				}
+
+				// There are super minor encoding issues we want to ignore.
+				similar_text( $value, $el_value, $percent_similarity );
+				if ( $percent_similarity > 99.9 ) {
+					$value = $el_value;
+				}
 				break;
 		}
 
