@@ -20,6 +20,7 @@ class Admin extends Base {
 		'account_email'     => '',
 		'platform_url_slug' => '',
 		'api_key'           => '',
+		'migrated'          => false,
 	);
 
 	/**
@@ -33,11 +34,18 @@ class Admin extends Base {
 		global $pagenow;
 		parent::set_api( $api );
 		parent::__construct();
+
 		if (
 			$this->get_setting( 'account_email' )
 			&& $this->get_setting( 'platform_url_slug' )
 			&& $this->get_setting( 'api_key' )
 		) {
+
+			if ( $this->should_migrate() ) {
+				$this->settings()->options['migrated'] = true;
+				$this->settings()->update();
+			}
+
 			$this->step = 1;
 			$this->api()->set_user( $this->get_setting( 'account_email' ) );
 			$this->api()->set_api_key( $this->get_setting( 'api_key' ) );
@@ -134,27 +142,15 @@ class Admin extends Base {
 	}
 
 	public function admin_page() {
-
-		if ( $key = $this->should_migrate() ) {
-
-			// @todo implement migration wizzard.
-			$this->view( 'migrate-from-old', array(
-				'settings'       => get_option( $key . '_saved_settings' ),
-				'media_files'    => get_option( $key . '_media_files' ),
-				'selected_items' => get_option( $key . '_selected_items' ),
-				'project_id'     => get_option( $key . '_project_id' ),
-				'api_key'        => get_option( $key . '_api_key' ),
-				'api_url'        => get_option( $key . '_api_url' ),
-				'version'        => get_option( 'gathercontent_version' ),
-			) );
-
-		} else {
-			$this->view( 'admin-page', array(
-				'logo'              => $this->logo,
-				'option_group'      => $this->option_group,
-				'settings_sections' => Form_Section::get_sections( self::SLUG ),
-			) );
+		if ( version_compare( get_option( 'gathercontent_version' ), GATHERCONTENT_VERSION, '<' ) ) {
+			update_option( 'gathercontent_version', GATHERCONTENT_VERSION );
 		}
+
+		$this->view( 'admin-page', array(
+			'logo'              => $this->logo,
+			'option_group'      => $this->option_group,
+			'settings_sections' => Form_Section::get_sections( self::SLUG ),
+		) );
 	}
 
 	/**
@@ -180,7 +176,17 @@ class Admin extends Base {
 			'step_1',
 			__( 'API Credentials', 'gathercontent-import' ),
 			function() {
-				echo '<p>' . sprintf( __( 'Enter you GatherContent API credentials. Instructions for getting your API key can be found <a href="%s" target="_blank">here</a>.', 'gathercontent-import' ), 'https://gathercontent.com/developers/authentication/' ) . '</p>';
+				if ( $key = $this->should_migrate() ) {
+					echo '<p><strong>' . __( 'NOTE:', 'gathercontent-import' ) . '</strong> ' . sprintf( __( 'It looks like you are migrating from a previous version of the GatherContent plugin.<br>You will need to set up new GatherContent API credentials to continue. Instructions for getting your API key can be found <a href="%s" target="_blank">here</a>.', 'gathercontent-import' ), 'https://gathercontent.com/developers/authentication/' ) . '</p>';
+
+					if ( $slug = get_option( $key . '_api_url' ) ) {
+						$this->settings()->options['platform_url_slug'] = $slug;
+					}
+
+				} else {
+					echo '<p>' . sprintf( __( 'Enter you GatherContent API credentials. Instructions for getting your API key can be found <a href="%s" target="_blank">here</a>.', 'gathercontent-import' ), 'https://gathercontent.com/developers/authentication/' ) . '</p>';
+				}
+
 			},
 			self::SLUG
 		);
@@ -237,6 +243,13 @@ class Admin extends Base {
 					'desc' => '<a href="https://gathercontent.com/developers/authentication/" target="_blank">'. __( 'How to get your API key', 'gathercontent-import' ) . '</a>',
 				) );
 
+				$this->view( 'input', array(
+					'type'    => 'hidden',
+					'id'      => 'gc-is-migrated',
+					'name'    => $this->option_name .'[migrated]',
+					'value'   => $this->get_setting( 'migrated' ),
+				) );
+
 			}
 		);
 	}
@@ -282,11 +295,15 @@ class Admin extends Base {
 	 * @return mixed Settings key prefix, if old settings are found.
 	 */
 	public function should_migrate() {
+		if ( $this->get_setting( 'migrated' ) ) {
+			return false;
+		}
+
 		$prefixes = array(
 			'gathercontent-import', // from wordpress.org/plugins/gathercontent-import
 			'wordpress-plugin', // from github.com/gathercontent/wordpress-plugin
 
-			// 'gathercontent-import-old', // local copy
+			'gathercontent-import-old', // local copy
 		);
 
 		foreach ( $prefixes as $prefix ) {

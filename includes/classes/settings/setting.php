@@ -4,6 +4,7 @@ namespace GatherContent\Importer\Settings;
 class Setting {
 
 	protected $option_name;
+	public $options;
 
 	public function __construct( $option_name, $default_options = array() ) {
 		$this->option_name = $option_name;
@@ -37,6 +38,10 @@ class Setting {
 		}
 
 		return false;
+	}
+
+	public function update() {
+		update_option( $this->option_name, $this->options, false );
 	}
 
 	public function all() {
