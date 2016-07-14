@@ -30,46 +30,6 @@ class API extends Base {
 
 		$this->http = $http;
 		$this->disable_cache = $this->_get_val( 'flush_cache' ) || $this->_post_val( 'flush_cache' );
-
-		// Do Ajax API requests:
-		if (
-			defined( 'DOING_AJAX' )
-			&& isset( $_REQUEST['action'], $_REQUEST['nonce'] )
-			&& 0 === strpos( $_REQUEST['action'], 'gc_api_request_' )
-		) {
-
-			if ( ! $this->verify_nonce( $_REQUEST['nonce'] ) ) {
-				wp_send_json_error();
-			}
-
-			$args = isset( $_REQUEST['args'] ) && is_array( $_REQUEST['args'] )
-				? array_map( 'sanitize_text_field', $_REQUEST['args'] )
-				: false;
-
-			$this->ajax_api_request( $_REQUEST['action'], $args );
-		}
-	}
-
-	public function ajax_api_request( $action, $args = false ) {
-		$method = str_replace( 'gc_api_request_', '', $action );
-
-		if ( ! method_exists( $this, $method ) ) {
-			wp_send_json_error();
-		}
-
-		if ( $args ) {
-			$result = call_user_func_array( array( $this, $method ), $args );
-		} else {
-			$result = call_user_func( array( $this, $method ) );
-		}
-
-		if ( $result && ! is_wp_error( $result ) ) {
-			wp_send_json_success( $result );
-		} elseif ( is_wp_error( $result ) ) {
-			wp_send_json_error( $result->get_error_message() );
-		} else {
-			wp_send_json_error( $result );
-		}
 	}
 
 	public function set_user( $email ) {
