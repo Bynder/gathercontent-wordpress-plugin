@@ -64,12 +64,14 @@ class Pull extends Base {
 
 			// Check if item is up-to-date and if pull is necessary.
 			$meta = \GatherContent\Importer\get_post_item_meta( $existing->ID );
+			$updated_at = isset( $meta['updated_at'] ) ? $meta['updated_at'] : 0;
+			$updated_at = is_object( $updated_at ) ? $updated_at->date : $updated_at;
 
 			if (
 				// Check if we have updated_at values to compare
-				isset( $this->item->updated_at, $meta['updated_at'] ) && ! empty( $meta['updated_at'] )
+				isset( $this->item->updated_at ) && ! empty( $updated_at )
 				// And if we do, compare them to see if GC item is newer.
-				&& ( $is_up_to_date = strtotime( $this->item->updated_at->date ) <= strtotime( $meta['updated_at'] ) )
+				&& ( $is_up_to_date = strtotime( $this->item->updated_at->date ) <= strtotime( $updated_at ) )
 				// If it's not newer, then don't update (unless asked to via filter).
 				&& $is_up_to_date && apply_filters( 'gc_only_update_if_newer', true )
 			) {
