@@ -149,6 +149,7 @@ module.exports = function (app) {
 	return app.models.base.extend({
 		defaults: {
 			id: 0,
+			item: 0,
 			project_id: 0,
 			parent_id: 0,
 			template_id: 0,
@@ -167,7 +168,26 @@ module.exports = function (app) {
 			due_dates: null,
 			expanded: false,
 			checked: false
+		},
+		_get: function _get(value, attribute) {
+			switch (attribute) {
+				case 'item':
+					value = this.get('id');
+					break;
+			}
+
+			return value;
+		},
+
+		get: function get(attribute) {
+			return this._get(app.models.base.prototype.get.call(this, attribute), attribute);
+		},
+
+		// hijack the toJSON method and overwrite the data that is sent back to the view.
+		toJSON: function toJSON() {
+			return _.mapObject(app.models.base.prototype.toJSON.call(this), _.bind(this._get, this));
 		}
+
 	});
 };
 
@@ -252,7 +272,8 @@ module.exports = function (app) {
 
 		events: {
 			'change .check-column input': 'toggleCheck',
-			'click .gc-reveal-items': 'toggleExpanded'
+			'click .gc-reveal-items': 'toggleExpanded',
+			'click .gc-status-column': 'toggleCheckAndRender'
 		},
 
 		initialize: function initialize() {
@@ -261,6 +282,12 @@ module.exports = function (app) {
 
 		toggleCheck: function toggleCheck() {
 			this.model.set('checked', !this.model.get('checked'));
+		},
+
+		toggleCheckAndRender: function toggleCheckAndRender(evt) {
+			console.warn('toggleCheckAndRender');
+			this.toggleCheck();
+			this.render();
 		}
 	});
 };

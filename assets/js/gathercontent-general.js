@@ -412,7 +412,8 @@ module.exports = function (app) {
 
 		events: {
 			'change .check-column input': 'toggleCheck',
-			'click .gc-reveal-items': 'toggleExpanded'
+			'click .gc-reveal-items': 'toggleExpanded',
+			'click .gc-status-column': 'toggleCheckAndRender'
 		},
 
 		initialize: function initialize() {
@@ -421,6 +422,12 @@ module.exports = function (app) {
 
 		toggleCheck: function toggleCheck() {
 			this.model.set('checked', !this.model.get('checked'));
+		},
+
+		toggleCheckAndRender: function toggleCheckAndRender(evt) {
+			console.warn('toggleCheckAndRender');
+			this.toggleCheck();
+			this.render();
 		}
 	});
 };
@@ -458,12 +465,8 @@ module.exports = function (app, gc) {
 			gc.$id('post-' + id).find('.column-title .row-title').text(title);
 			gc.$id('edit-' + id).find('[name="post_title"]').text(title);
 			gc.$id('inline_' + id).find('.post_title').text(title);
-		},
-
-		toggleCheckAndRender: function toggleCheckAndRender(evt) {
-			this.toggleCheck();
-			this.render();
 		}
+
 	});
 };
 

@@ -627,7 +627,7 @@ module.exports = function (app, $, gc) {
 			this.clearTimeout();
 			this.model.set('mappingStatus', 'complete');
 			if ('push' === direction) {
-				setTimeout(function () {
+				window.setTimeout(function () {
 					// Give DB time to catch up, and avoid race condtions.
 					thisView.refreshData();
 				}, 800);

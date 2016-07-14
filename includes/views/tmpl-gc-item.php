@@ -26,7 +26,7 @@
 	<# } #>
 </td>
 <td class="gc-item-wp-post-title">
-	<# if ( data.editLink ) { #><a href="{{ data.editLink }}"><# } #>
+	<# if ( data.editLink ) { #><a href="{{{ data.editLink }}}"><# } #>
 	{{{ data.post_title }}}
 	<# if ( data.editLink ) { #></a><# } #>
 </td>

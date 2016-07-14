@@ -9,7 +9,8 @@ module.exports = function( app ) {
 
 		events : {
 			'change .check-column input' : 'toggleCheck',
-			'click .gc-reveal-items'     : 'toggleExpanded'
+			'click .gc-reveal-items'     : 'toggleExpanded',
+			'click .gc-status-column'    : 'toggleCheckAndRender'
 		},
 
 		initialize: function() {
@@ -18,6 +19,12 @@ module.exports = function( app ) {
 
 		toggleCheck : function() {
 			this.model.set( 'checked', ! this.model.get( 'checked' ) );
+		},
+
+		toggleCheckAndRender: function( evt ) {
+			console.warn('toggleCheckAndRender');
+			this.toggleCheck();
+			this.render();
 		}
 	});
 };

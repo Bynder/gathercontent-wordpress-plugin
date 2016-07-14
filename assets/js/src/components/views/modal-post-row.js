@@ -11,7 +11,7 @@ module.exports = function( app, gc ) {
 			return 'gc-item ' + ( this.model.get( 'disabled' ) ? 'gc-disabled' : '' );
 		},
 
- 		events: {
+		events: {
 			'change .check-column input' : 'toggleCheck',
 			'click .gc-status-column'    : 'toggleCheckAndRender',
  		},
@@ -30,9 +30,5 @@ module.exports = function( app, gc ) {
 			gc.$id( 'inline_'+ id ).find( '.post_title' ).text( title );
 		},
 
- 		toggleCheckAndRender: function( evt ) {
- 			this.toggleCheck();
- 			this.render();
- 		}
 	});
 };
