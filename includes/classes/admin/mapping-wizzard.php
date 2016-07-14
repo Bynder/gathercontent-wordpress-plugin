@@ -188,6 +188,18 @@ class Mapping_Wizzard extends Base {
 	}
 
 	public function body_class( $classes ) {
+		if ( ! function_exists( 'get_current_screen' ) ) {
+			return $classes;
+		}
+
+		$screen = get_current_screen();
+		if (
+			'gathercontent_page_' . self::SLUG !== $screen->id
+			&& 'toplevel_page_' . Admin::SLUG !== $screen->id
+		) {
+			return $classes;
+		}
+
 		$classes .= ' gathercontent-admin '. $this->slugs[ $this->step ] .' ';
 		return $classes;
 	}
