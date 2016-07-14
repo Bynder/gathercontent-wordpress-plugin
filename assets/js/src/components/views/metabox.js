@@ -1,9 +1,9 @@
 module.exports = function( app, $, gc ) {
 	var thisView;
+	var base = require( './../views/metabox-base.js' )( app, $, gc );
 	var StatusesView = require( './../views/metabox-statuses.js' )( app, $, gc );
 
-	return app.views.base.extend({
-		el : '#gc-related-data',
+	return base.extend({
 		template : wp.template( 'gc-metabox' ),
 		statusesView : null,
 		timeoutID : null,
@@ -111,7 +111,8 @@ module.exports = function( app, $, gc ) {
 		},
 
 		push: function() {
-			if ( window.confirm( gc._sure.push ) ) {
+			var msg = this.model.get( 'item' ) ? gc._sure.push : gc._sure.push_no_item;
+			if ( window.confirm( msg ) ) {
 				thisView.model.set( 'mappingStatus', 'starting' );
 				this.doSync( 'push' );
 			}
@@ -155,7 +156,10 @@ module.exports = function( app, $, gc ) {
 			this.clearTimeout();
 			this.model.set( 'mappingStatus', 'complete' );
 			if ( 'push' === direction ) {
-				this.refreshData();
+				window.setTimeout( function() {
+					// Give DB time to catch up, and avoid race condtions.
+					thisView.refreshData();
+				}, 800 );
 			} else {
 				window.location.href = window.location.href;
 			}
@@ -171,15 +175,6 @@ module.exports = function( app, $, gc ) {
 		clearTimeout: function() {
 			window.clearTimeout( this.timeoutID );
 			this.timeoutID = null;
-		},
-
-		ajax: function( args, successcb ) {
-			return $.post( window.ajaxurl, $.extend( {
-				action      : '',
-				post        : this.model.toJSON(),
-				nonce       : gc.$id( 'gc-edit-nonce' ).val(),
-				flush_cache : !! gc.queryargs.flush_cache
-			}, args ), successcb.bind( this ) );
 		},
 
 		render : function() {

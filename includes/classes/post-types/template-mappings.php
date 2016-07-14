@@ -1,20 +1,32 @@
 <?php
 namespace GatherContent\Importer\Post_Types;
 use GatherContent\Importer\Mapping_Post;
+use GatherContent\Importer\API;
 use WP_Query;
+use WP_Error;
 
 class Template_Mappings extends Base {
 	const SLUG = 'gc_templates';
 	public $slug = self::SLUG;
 
 	/**
+	 * GatherContent\Importer\API instance
+	 *
+	 * @var GatherContent\Importer\API
+	 */
+	protected $api;
+
+	/**
 	 * Creates an instance of this class.
 	 *
 	 * @since 3.0.0
 	 *
+	 * @param $parent_menu_slug
 	 * @param $api API object
 	 */
-	public function __construct( $parent_menu_slug ) {
+	public function __construct( $parent_menu_slug, API $api ) {
+		$this->api = $api;
+
 		parent::__construct(
 			array(
 				'name'                  => _x( 'Template Mappings', 'post type general name', 'gathercontent-import' ),
@@ -207,6 +219,51 @@ class Template_Mappings extends Base {
 		return new WP_Query( $args );
 	}
 
+	public static function get_by_account_id( $account_id, $args = array() ) {
+		$meta_query = array(
+			array(
+				'key'   => '_gc_account_id',
+				'value' => $account_id,
+			),
+		);
+
+		$args['meta_query'] = isset( $args['meta_query'] )
+			? $args['meta_query'] + $meta_query
+			: $meta_query;
+
+		return self::get_mappings( $args );
+	}
+
+	public static function get_by_account( $account_slug, $args = array() ) {
+		$meta_query = array(
+			array(
+				'key'   => '_gc_account',
+				'value' => $account_slug,
+			),
+		);
+
+		$args['meta_query'] = isset( $args['meta_query'] )
+			? $args['meta_query'] + $meta_query
+			: $meta_query;
+
+		return self::get_mappings( $args );
+	}
+
+	public static function get_by_account_project( $account_id, $project_id, $args = array() ) {
+		$meta_query = array(
+			array(
+				'key'   => '_gc_project',
+				'value' => $project_id,
+			),
+		);
+
+		$args['meta_query'] = isset( $args['meta_query'] )
+			? $args['meta_query'] + $meta_query
+			: $meta_query;
+
+		return self::get_by_account( $account_id, $args );
+	}
+
 	public static function get_by_project( $project_id, $args = array() ) {
 		$meta_query = array(
 			array(
@@ -242,6 +299,122 @@ class Template_Mappings extends Base {
 		return self::get_by_project( $project_id, $args );
 	}
 
+	public function get_project_mappings( $project_id, $mapping_ids = array() ) {
+		$args = array(
+			'posts_per_page' => 500,
+			'no_found_rows'  => true,
+		);
+
+		if ( ! empty( $mapping_ids ) ) {
+			$args['post__in'] = $mapping_ids;
+		}
+
+		$gotten = $this->get_by_project( $project_id, $args );
+
+		$objects = array();
+
+		if ( $gotten->have_posts() ) {
+			foreach ( $gotten->posts as $post ) {
+				$objects[] = array(
+					'id' => $post->ID,
+					'name' => $post->post_title,
+				);
+			}
+		}
+
+		return $objects;
+	}
+
+	public function get_account_projects_with_mappings( $account_id, $mapping_ids = array() ) {
+		$projects = $this->api->get_account_projects( $account_id );
+		if ( is_wp_error( $projects ) ) {
+			return $projects;
+		}
+
+		if ( empty( $projects ) ) {
+			new WP_Error( 'gc_no_projects', esc_html__( 'No projects were found for this account.', 'gathercontent-importer' ) );
+		}
+
+		$all_projects = array();
+		foreach ( $projects as $project ) {
+			$all_projects[ $project->id ] = array(
+				'id'   => $project->id,
+				'name' => $project->name,
+			);
+		}
+
+		$args = array(
+			'posts_per_page' => 500,
+			'fields'         => 'ids',
+			'no_found_rows'  => true,
+		);
+
+		if ( ! empty( $mapping_ids ) ) {
+			$args['post__in'] = $mapping_ids;
+		}
+
+		$gotten = $this->get_by_account_id( $account_id, $args );
+
+
+		$objects = array();
+
+		if ( $gotten->have_posts() ) {
+			$objects = $this->get_objects( $gotten, '_gc_project', $all_projects );
+		}
+
+		return $objects;
+	}
+
+	public function get_accounts_with_mappings() {
+		$accounts = $this->api->get_accounts();
+		if ( is_wp_error( $accounts ) ) {
+			return $accounts;
+		}
+
+		if ( empty( $accounts ) ) {
+			new WP_Error( 'gc_no_accounts', esc_html__( 'No accounts were found.', 'gathercontent-importer' ) );
+		}
+
+		$all_accounts = array();
+		foreach ( $accounts as $key => $account ) {
+			$all_accounts[ $account->slug ] = (array) $account;
+		}
+
+		$gotten = $this->get_mappings( array(
+			'posts_per_page' => 500,
+			'fields'         => 'ids',
+			'no_found_rows'  => true,
+		) );
+
+		$objects = array();
+
+		if ( $gotten->have_posts() ) {
+			$objects = $this->get_objects( $gotten, '_gc_account', $all_accounts );
+		}
+
+		return $objects;
+	}
+
+	protected function get_objects( $gotten, $meta_key, $all ) {
+		$objects = array();
+		foreach ( $gotten->posts as $post_id ) {
+
+			$object_id = get_post_meta( $post_id, $meta_key, 1 );
+
+			if ( ! $object_id || ! isset( $all[ $object_id ] ) ) {
+				continue;
+			}
+
+			if ( ! isset( $objects[ $object_id ] ) ) {
+				$objects[ $object_id ] = $all[ $object_id ] + array( 'mappings' => array( $post_id ) );
+			} else {
+				$objects[ $object_id ]['mappings'][] = $post_id;
+			}
+
+		}
+		return $objects;
+	}
+
 	public function get_mapping_post_types() {
 		$all_types = get_option( 'gc_post_types', array() );
 		return is_array( $all_types ) ? $all_types : array();
@@ -263,6 +436,41 @@ class Template_Mappings extends Base {
 	public function get_mapping_project( $post_id ) {
 		$mapping = Mapping_Post::get( $post_id );
 		return $mapping ? $mapping->get_project() : false;
+	}
+
+	public function get_mapping_account_id( $post_id ) {
+		$mapping = Mapping_Post::get( $post_id );
+		if ( ! $mapping ) {
+			return false;
+		}
+
+		if ( $account_id = $mapping->get_account_id() ) {
+			return $account_id;
+		}
+
+		$account_slug = $this->get_mapping_account_slug( $post_id );
+		if ( ! $account_slug ) {
+			return $account_id;
+		}
+		$accounts = $this->api->get_accounts();
+
+		$all_accounts = array();
+		foreach ( $accounts as $key => $account ) {
+			if ( $account_slug === $account->slug ) {
+				$account_id = $account->id;
+			}
+		}
+
+		if ( $account_id ) {
+			$mapping->update_meta( '_gc_account_id', $account_id );
+		}
+
+		return $account_id;
+	}
+
+	public function get_mapping_account_slug( $post_id ) {
+		$mapping = Mapping_Post::get( $post_id );
+		return $mapping ? $mapping->get_account_slug() : false;
 	}
 
 	public function get_items_to_pull( $post_id ) {

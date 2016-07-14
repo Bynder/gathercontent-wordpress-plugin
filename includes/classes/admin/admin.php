@@ -4,7 +4,6 @@ use GatherContent\Importer\API;
 use GatherContent\Importer\General;
 use GatherContent\Importer\Settings\Setting;
 use GatherContent\Importer\Settings\Form_Section;
-use GatherContent\Importer\Post_Types\Template_Mappings;
 
 class Admin extends Base {
 

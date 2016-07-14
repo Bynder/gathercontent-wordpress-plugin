@@ -334,11 +334,13 @@ ul.gc-radio-desc li, ul.gc-reveal-items-list li {
 
 #gc-related-data {
   overflow: hidden; }
-  #gc-related-data.no-js {
+  #gc-related-data.no-js, #gc-related-data.gc-mapping-metabox:not(.gc-mapping-started) {
     text-align: center; }
   #gc-related-data .spinner {
     float: none;
     margin: .2em; }
+  #gc-related-data > p {
+    text-align: center; }
 
 .misc-pub-post-status .gc-status-color {
   display: block;
@@ -361,3 +363,11 @@ ul.gc-radio-desc li, ul.gc-reveal-items-list li {
   float: none; }
   .gc-no-mapping .gc-publishing-action button.button, .gc-no-mapping .gc-publishing-action .button {
     margin-left: 0; }
+
+.gc-mapping-started label {
+  margin-bottom: .2em;
+  display: block; }
+
+.gc-metabox-status {
+  display: inline-block;
+  position: relative; }

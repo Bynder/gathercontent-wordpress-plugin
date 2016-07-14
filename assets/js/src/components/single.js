@@ -15,15 +15,34 @@ window.GatherContent = window.GatherContent || {};
 
 	app.models.post = require( './models/post.js' )( gc );
 	app.views.statusSelect2 = require( './views/status-select2.js' )( app );
-	app.views.metabox = require( './views/metabox.js' )( app, $, gc );
 
 	app.init = function() {
-		// Kick it off.
+		if ( gc._post.mapping ) {
+			app.views.metabox = require( './views/metabox.js' )( app, $, gc );
+			app.metaboxView = new app.views.metabox( {
+				model : new app.models.post( gc._post )
+			} );
+		} else {
+			app.views.metabox = require( './views/mapping-metabox.js' )( app, $, gc );
+			app.metaboxView = new app.views.metabox( {
+				model : new app.models.post( gc._post )
+			} );
+		}
+	};
+
+	app.reinit = function( model ) {
+		app.metaboxView.unbind();
+		if ( app.metaboxView.onClose ) {
+			app.metaboxView.onClose();
+		}
+
+		app.views.metabox = require( './views/metabox.js' )( app, $, gc );
 		app.metaboxView = new app.views.metabox( {
-			model : new app.models.post( gc._post )
+			model : model
 		} );
 	};
 
+	// Kick it off.
 	$( app.init );
 
 } )( window, document, jQuery, window.GatherContent );

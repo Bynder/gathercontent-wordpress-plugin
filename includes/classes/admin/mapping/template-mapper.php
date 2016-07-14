@@ -79,8 +79,15 @@ class Template_Mapper extends Base {
 		$this->view( 'input', array(
 			'type'    => 'hidden',
 			'id'      => 'gc-account-id',
+			'name'    => $this->option_name .'[account_id]',
+			'value'   => $this->account_id,
+		) );
+
+		$this->view( 'input', array(
+			'type'    => 'hidden',
+			'id'      => 'gc-account-slug',
 			'name'    => $this->option_name .'[account]',
-			'value'   => $this->account,
+			'value'   => $this->account_slug,
 		) );
 
 		$this->view( 'input', array(

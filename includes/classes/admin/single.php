@@ -33,6 +33,20 @@ class Single extends UI_Base {
 	protected $enqueue = null;
 
 	/**
+	 * This JS post array.
+	 *
+	 * @var array
+	 */
+	protected $post = array();
+
+	/**
+	 * This post's post-type label.
+	 *
+	 * @var string
+	 */
+	protected $post_type_label = '';
+
+	/**
 	 * Creates an instance of this class.
 	 *
 	 * @since 3.0.0
@@ -106,11 +120,6 @@ class Single extends UI_Base {
 	}
 
 	public function meta_box( $post, $box ) {
-		$post_id    = $post->ID;
-		$mapping_id = absint( \GatherContent\Importer\get_post_mapping_id( $post_id ) );
-		$item_id    = absint( \GatherContent\Importer\get_post_item_id( $post_id ) );
-		$object     = get_post_type_object( $post->post_type );
-		$label      = isset( $object->labels->singular_name ) ? $object->labels->singular_name : $object->name;
 		// $message = '';
 
 		// if ( ! $mapping_id ) {
@@ -123,7 +132,17 @@ class Single extends UI_Base {
 		// 	}
 		// }
 
-		$this->view( 'metabox', compact( 'post_id', 'item_id', 'mapping_id', 'label' ) );
+		$object = get_post_type_object( $post->post_type );
+		$this->post_type_label = isset( $object->labels->singular_name ) ? $object->labels->singular_name : $object->name;
+
+		$this->post = \GatherContent\Importer\get_post_for_js( $post );
+
+		$this->view( 'metabox', array(
+			'post_id'    => $this->post['id'],
+			'item_id'    => $this->post['item'],
+			'mapping_id' => $this->post['mapping'],
+			'label'      => $this->post_type_label,
+		) );
 	}
 
 	/**
@@ -140,6 +159,9 @@ class Single extends UI_Base {
 				// 'refresh_link' => \GatherContent\Importer\refresh_connection_link(),
 			),
 			'tmpl-gc-metabox-statuses' => array(),
+			'tmpl-gc-mapping-metabox' => array(
+				'label' => $this->post_type_label,
+			),
 			'tmpl-gc-status-select2' => array(),
 			'tmpl-gc-select2-item' => array(),
 		);
@@ -153,10 +175,8 @@ class Single extends UI_Base {
 	 * @return array Array of localizable data
 	 */
 	protected function get_localize_data() {
-		$object = get_post_type_object( get_post_type() );
-		$label = isset( $object->labels->singular_name ) ? $object->labels->singular_name : $object->name;
 		return array(
-			'_post' => \GatherContent\Importer\get_post_for_js( get_the_id() ),
+			'_post' => $this->post,
 			'_statuses' => array(
 				'starting' => __( 'Starting Sync', 'gathercontent-importer' ),
 				'syncing'  => __( 'Syncing', 'gathercontent-importer' ),
@@ -164,11 +184,17 @@ class Single extends UI_Base {
 				'failed'   => __( 'Sync Failed', 'gathercontent-importer' ),
 			),
 			'_sure' => array(
-				'push' => sprintf( __( 'Are you sure you want to push this %s to GatherContent? Any unsaved changes in GatherContent will be overwritten.', 'gathercontent-importer' ), $label ),
-				'pull'  => sprintf( __( 'Are you sure you want to pull this %s from GatherContent? Any local changes will be overwritten.', 'gathercontent-importer' ), $label ),
+				'push_no_item' => sprintf( __( 'Push this %s to GatherContent?', 'gathercontent-importer' ), $this->post_type_label ),
+				'push' => sprintf( __( 'Are you sure you want to push this %s to GatherContent? Any unsaved changes in GatherContent will be overwritten.', 'gathercontent-importer' ), $this->post_type_label ),
+				'pull'  => sprintf( __( 'Are you sure you want to pull this %s from GatherContent? Any local changes will be overwritten.', 'gathercontent-importer' ), $this->post_type_label ),
 			),
 			'_errors' => array(
 				'unknown' => __( 'There was an unknown error', 'gathercontent-importer' ),
+			),
+			'_step_labels' => array(
+				'accounts' => esc_html__( 'Select an account:', 'gathercontent-importer' ),
+				'projects' => esc_html__( 'Select a project:', 'gathercontent-importer' ),
+				'mappings' => sprintf( esc_html_x( 'Select a %s:', 'Select a template mapping', 'gathercontent-importer' ), $this->mappings->args->labels->singular_name ),
 			),
 			'_edit_nonce' => wp_create_nonce( General::get_instance()->admin->mapping_wizzard->option_group . '-options' ),
 		);

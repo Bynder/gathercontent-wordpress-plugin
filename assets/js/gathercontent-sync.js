@@ -1,5 +1,5 @@
 /**
- * GatherContent Importer - v3.0.0 - 2016-07-13
+ * GatherContent Importer - v3.0.0 - 2016-07-14
  * http://www.gathercontent.com
  *
  * Copyright (c) 2016 GatherContent
@@ -314,7 +314,7 @@ module.exports = function (app, $, gc) {
 				time: 500,
 				nonce: gc.el('_wpnonce').value,
 				id: gc.el('gc-input-mapping_id').value,
-				flush_cache: !!gc.queryargs.flush_cache
+				flush_cache: gc.queryargs.flush_cache ? 1 : 0
 			});
 
 			this.ajax = new Ajax({

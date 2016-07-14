@@ -1,5 +1,5 @@
 /**
- * GatherContent Importer - v3.0.0 - 2016-07-13
+ * GatherContent Importer - v3.0.0 - 2016-07-14
  * http://www.gathercontent.com
  *
  * Copyright (c) 2016 GatherContent
@@ -527,7 +527,7 @@ module.exports = function (app, gc, $) {
 			var Ajax = require('./../models/ajax.js')(app, {
 				action: 'gc_pull_items',
 				nonce: gc._edit_nonce,
-				flush_cache: !!gc.queryargs.flush_cache
+				flush_cache: gc.queryargs.flush_cache ? 1 : 0
 			});
 
 			this.ajax = new Ajax();
@@ -797,7 +797,7 @@ module.exports = function (app, gc, $) {
 			$.post(window.ajaxurl, {
 				action: 'gc_get_items',
 				posts: gc._posts,
-				flush_cache: !!gc.queryargs.flush_cache
+				flush_cache: gc.queryargs.flush_cache ? 1 : 0
 			}, function (response) {
 				if ((response.success, response.data)) {
 					thisView.collection.trigger('updateItems', response.data);
@@ -835,7 +835,7 @@ module.exports = function (app, gc, $) {
 			$.post(window.ajaxurl, {
 				action: 'gc_get_post_statuses',
 				postId: postId,
-				flush_cache: !!gc.queryargs.flush_cache
+				flush_cache: gc.queryargs.flush_cache ? 1 : 0
 			}, this.ajaxResponse).done(function () {
 				thisView.renderStatuses(model);
 			});

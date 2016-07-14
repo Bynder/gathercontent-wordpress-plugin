@@ -1,5 +1,6 @@
 <span class="dashicons dashicons-post-status"></span> <?php echo esc_html_x( 'Status:', 'GatherContent item status', 'gathercontent-importer' ); ?>
-<span style="display:inline-block; position:relative;">
+<# if ( data.status && data.status.name ) { #>
+<span class="gc-metabox-status">
 	<span class="gc-status-color <# if ( '#ffffff' === data.status.color ) { #> gc-status-color-white<# } #>" style="background-color:{{ data.status.color }};"></span>
 	<b>{{ data.status.name }}</b>
 </span>
@@ -9,3 +10,6 @@
 	<button type="button" class="save-gc-status button"><?php echo esc_html_x( 'Update', 'Update the GatherContent item status', 'gathercontent-importer' ); ?></button>
 	<a href="#gc-set-status" class="cancel-gc-status button-cancel"><?php echo esc_html_x( 'Cancel', 'Cancel editing the GatherContent item status', 'gathercontent-importer' ); ?></a>
 </div>
+<# } else { #>
+<?php esc_html_e( 'N/A', 'gathercontent-importer' ); ?>
+<# } #>

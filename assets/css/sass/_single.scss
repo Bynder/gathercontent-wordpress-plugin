@@ -30,12 +30,15 @@
 
 #gc-related-data {
 	overflow: hidden;
-	&.no-js {
+	&.no-js, &.gc-mapping-metabox:not( .gc-mapping-started ) {
 		text-align: center;
 	}
 	.spinner {
 		float: none;
 		margin: .2em;
+	}
+	> p {
+		text-align: center;
 	}
 }
 
@@ -68,4 +71,14 @@
 			margin-left: 0;
 		}
 	}
+}
+.gc-mapping-started {
+	label {
+		margin-bottom: .2em;
+		display: block;
+	}
+}
+.gc-metabox-status {
+	display: inline-block;
+	position: relative;
 }

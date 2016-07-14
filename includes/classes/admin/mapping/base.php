@@ -13,10 +13,11 @@ abstract class Base extends Plugin_Base {
 	protected $template;
 
 	public function __construct( array $args ) {
-		$this->mapping_id = $args['mapping_id'];
-		$this->account    = $args['account'];
-		$this->project    = $args['project'];
-		$this->template   = $args['template'];
+		$this->mapping_id   = $args['mapping_id'];
+		$this->account_id   = $args['account_id'];
+		$this->account_slug = $args['account_slug'];
+		$this->project      = $args['project'];
+		$this->template     = $args['template'];
 	}
 
 	/**
@@ -218,6 +219,7 @@ abstract class Base extends Plugin_Base {
 			'_edit_last'               => 1,
 			'_wp_page_template'        => 1,
 			'_gc_account'              => 1,
+			'_gc_account_id'           => 1,
 			'_gc_project'              => 1,
 			'_gc_template'             => 1,
 			'_gc_pull_items'           => 1,

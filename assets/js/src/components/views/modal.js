@@ -56,7 +56,7 @@
  			var Ajax = require( './../models/ajax.js' )( app, {
 				action      : 'gc_pull_items',
 				nonce       : gc._edit_nonce,
-				flush_cache : !! gc.queryargs.flush_cache,
+				flush_cache : gc.queryargs.flush_cache ? 1 : 0,
  			} );
 
  			this.ajax = new Ajax();

@@ -130,7 +130,8 @@ function update_post_item_id( $post_id, $item_id ) {
  * @return mixed         Result of get_post_meta.
  */
 function get_post_item_meta( $post_id ) {
-	return get_post_meta( $post_id, '_gc_mapped_meta', 1 );
+	$meta = get_post_meta( $post_id, '_gc_mapped_meta', 1 );
+	return $meta;
 }
 
 /**
@@ -266,7 +267,8 @@ function get_post_for_js( $post, $uncached = false ) {
 					$meta['updated_at'] = $meta['updated_at']->date;
 				}
 
-				if ( strtotime( $item->updated_at->date ) > strtotime( $meta['updated_at'] ) ) {
+				$diff = strtotime( $item->updated_at->date ) - strtotime( $meta['updated_at'] );
+				if ( $diff > 10 ) {
 					$js_post['current'] = false;
 				}
 			} else {
@@ -361,9 +363,10 @@ function relative_date( $utc_date ) {
 	$date->setTimeZone( new DateTimeZone( $tzstring ) );
 
 	$time = $date->getTimestamp();
-	$time_diff = time() - $time;
+	$currtime = time();
+	$time_diff = $currtime - $time;
 
-	if ( $time_diff > 0 && $time_diff < DAY_IN_SECONDS ) {
+	if ( $time_diff >= 0 && $time_diff < DAY_IN_SECONDS ) {
 		$date = sprintf( __( '%s ago' ), human_time_diff( $time ) );
 	} else {
 		$date = mysql2date( __( 'Y/m/d' ), $time );

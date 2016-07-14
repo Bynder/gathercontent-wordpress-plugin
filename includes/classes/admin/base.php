@@ -13,7 +13,7 @@ abstract class Base extends Enqueue {
 	public $menu_priority      = 9;
 
 	/**
-	 * The account object. Uses the platform_url_slug.
+	 * The account id.
 	 *
 	 * @var null|object
 	 */
@@ -239,6 +239,18 @@ abstract class Base extends Enqueue {
 		}
 
 		return $slug;
+	}
+
+	protected function _get_account_id() {
+		$id = 0;
+		if ( $project = $this->_get_val( 'project' ) ) {
+			$parts = explode( ':', $project );
+			if ( isset( $parts[2] ) ) {
+				$id = absint( $parts[2] );
+			}
+		}
+
+		return $id;
 	}
 
 }

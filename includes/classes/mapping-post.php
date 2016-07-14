@@ -161,7 +161,7 @@ class Mapping_Post extends Base {
 		return false;
 	}
 
-	protected function update_meta( $key, $value ) {
+	public function update_meta( $key, $value ) {
 		return update_post_meta( $this->post->ID, $key, $value );
 	}
 
@@ -179,6 +179,14 @@ class Mapping_Post extends Base {
 
 	public function get_project() {
 		return $this->get_meta( '_gc_project' );
+	}
+
+	public function get_account_id() {
+		return $this->get_meta( '_gc_account_id' );
+	}
+
+	public function get_account_slug() {
+		return $this->get_meta( '_gc_account' );
 	}
 
 	public function get_items_to_pull() {

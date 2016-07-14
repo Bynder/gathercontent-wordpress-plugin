@@ -84,7 +84,7 @@ abstract class Base extends Plugin_Base {
 
 	public function sync_items( $mapping ) {
 		$result = $this->_sync_items( $mapping );
-		error_log( '_sync_items $result: '. print_r( $result, true ) );
+		// error_log( '_sync_items $result: '. print_r( $result, true ) );
 		return $result;
 	}
 

@@ -1,5 +1,5 @@
 /**
- * GatherContent Importer - v3.0.0 - 2016-07-13
+ * GatherContent Importer - v3.0.0 - 2016-07-14
  * http://www.gathercontent.com
  *
  * Copyright (c) 2016 GatherContent
@@ -118,19 +118,38 @@ window.GatherContent = window.GatherContent || {};
 
 	app.models.post = require('./models/post.js')(gc);
 	app.views.statusSelect2 = require('./views/status-select2.js')(app);
-	app.views.metabox = require('./views/metabox.js')(app, $, gc);
 
 	app.init = function () {
-		// Kick it off.
+		if (gc._post.mapping) {
+			app.views.metabox = require('./views/metabox.js')(app, $, gc);
+			app.metaboxView = new app.views.metabox({
+				model: new app.models.post(gc._post)
+			});
+		} else {
+			app.views.metabox = require('./views/mapping-metabox.js')(app, $, gc);
+			app.metaboxView = new app.views.metabox({
+				model: new app.models.post(gc._post)
+			});
+		}
+	};
+
+	app.reinit = function (model) {
+		app.metaboxView.unbind();
+		if (app.metaboxView.onClose) {
+			app.metaboxView.onClose();
+		}
+
+		app.views.metabox = require('./views/metabox.js')(app, $, gc);
 		app.metaboxView = new app.views.metabox({
-			model: new app.models.post(gc._post)
+			model: model
 		});
 	};
 
+	// Kick it off.
 	$(app.init);
 })(window, document, jQuery, window.GatherContent);
 
-},{"./initiate-objects.js":2,"./models/post.js":4,"./views/metabox.js":8,"./views/status-select2.js":9}],6:[function(require,module,exports){
+},{"./initiate-objects.js":2,"./models/post.js":4,"./views/mapping-metabox.js":7,"./views/metabox.js":10,"./views/status-select2.js":11}],6:[function(require,module,exports){
 'use strict';
 
 module.exports = Backbone.View.extend({
@@ -165,6 +184,195 @@ module.exports = Backbone.View.extend({
 });
 
 },{}],7:[function(require,module,exports){
+'use strict';
+
+module.exports = function (app, $, gc) {
+	var thisView;
+	var base = require('./../views/metabox-base.js')(app, $, gc);
+	return base.extend({
+		template: wp.template('gc-mapping-metabox'),
+		stepArgs: false,
+		events: {
+			'click #gc-map': 'step',
+			'change #select-gc-next-step': 'setProperty'
+		},
+
+		initialize: function initialize() {
+			thisView = this;
+			this.listenTo(this.model, 'change:waiting', this.toggleWaitingRender);
+			this.listenTo(this.model, 'change', this.maybeEnableAndRender);
+			this.listenTo(this.model, 'change:step', this.startedClass);
+			this.render();
+			this.$el.removeClass('no-js').addClass('gc-mapping-metabox');
+		},
+
+		startedClass: function startedClass(model) {
+			if ('accounts' === model.changed.step) {
+				this.$el.addClass('gc-mapping-started');
+			}
+
+			this.stepArgs = this['step_' + model.changed.step]();
+		},
+
+		setProperty: function setProperty(evt) {
+			var value = $(evt.target).val();
+
+			this.model.set(this.stepArgs.property, value);
+		},
+
+		setMapping: function setMapping() {
+			var success = function success(response) {
+				if (response.success) {
+
+					this.model.set('waiting', false);
+
+					// Goodbye
+					app.reinit(this.model);
+				} else {
+					this.failMsg(response.data);
+				}
+			};
+
+			this.ajax({
+				action: 'gc_save_mapping_id'
+			}, success).fail(function () {
+				this.failMsg();
+			});
+		},
+
+		maybeEnableAndRender: function maybeEnableAndRender(model) {
+			if (model.changed.account || model.changed.project || model.changed.mapping) {
+				this.model.set('btnDisabled', false);
+				this.render();
+			}
+		},
+
+		toggleWaitingRender: function toggleWaitingRender(model) {
+			if (model.changed.waiting) {
+				this.model.set('btnDisabled', true);
+			}
+			this.render();
+		},
+
+		step: function step() {
+			this.model.set('waiting', true);
+
+			if ('mapping' === this.stepArgs.property) {
+				return this.setMapping();
+			}
+
+			this.setStep();
+
+			var success = function success(response) {
+				if (response.success) {
+
+					var cb = this.stepArgs.success || this.successHandler;
+					cb.call(this, response.data);
+
+					this.model.set('waiting', false);
+				} else {
+					this.failMsg(response.data);
+				}
+			};
+
+			this.ajax({
+				action: 'gc_wp_filter_mappings',
+				property: this.stepArgs.property
+			}, success).fail(function () {
+				this.failMsg();
+			});
+		},
+
+		failMsg: function failMsg(msg) {
+			msg = msg || gc._errors.unknown;
+			window.alert(msg);
+			thisView.model.set('waiting', false);
+		},
+
+		successHandler: function successHandler(objects) {
+			// var objects = this.get_objects( data );
+			this.model.set(this.stepArgs.properties, objects);
+			if (objects.length < 2) {
+				this.model.set('btnDisabled', false);
+			}
+		},
+
+		setStep: function setStep() {
+			if (!this.model.get('step')) {
+				return this.model.set('step', 'accounts');
+			}
+
+			if ('accounts' === this.model.get('step')) {
+				return this.model.set('step', 'projects');
+			}
+
+			if ('projects' === this.model.get('step')) {
+				return this.model.set('step', 'mappings');
+			}
+		},
+
+		step_accounts: function step_accounts() {
+			return {
+				property: 'account',
+				properties: 'accounts'
+			};
+		},
+
+		step_projects: function step_projects() {
+			return {
+				property: 'project',
+				properties: 'projects'
+			};
+		},
+
+		step_mappings: function step_mappings() {
+			return {
+				property: 'mapping',
+				properties: 'mappings'
+			};
+		},
+
+		// get_objects: function( data ) {
+		// 	 return _.map( data, function( object ) {
+		// 		return {
+		// 			id   : object.id,
+		// 			name : object.name,
+		// 		};
+		// 	} );
+		// },
+
+		render: function render() {
+			var json = this.model.toJSON();
+			if (this.stepArgs) {
+				json.label = gc._step_labels[json.step];
+				json.property = this.stepArgs.property;
+			}
+			this.$el.html(this.template(json));
+			return this;
+		}
+
+	});
+};
+
+},{"./../views/metabox-base.js":8}],8:[function(require,module,exports){
+'use strict';
+
+module.exports = function (app, $, gc) {
+	return app.views.base.extend({
+		el: '#gc-related-data',
+
+		ajax: function ajax(args, successcb) {
+			return $.post(window.ajaxurl, $.extend({
+				action: '',
+				post: this.model.toJSON(),
+				nonce: gc.$id('gc-edit-nonce').val(),
+				flush_cache: gc.queryargs.flush_cache ? 1 : 0
+			}, args), successcb.bind(this));
+		}
+	});
+};
+
+},{}],9:[function(require,module,exports){
 'use strict';
 
 module.exports = function (app, $, gc) {
@@ -205,7 +413,7 @@ module.exports = function (app, $, gc) {
 			$.post(window.ajaxurl, {
 				action: 'gc_get_post_statuses',
 				postId: this.model.get('id'),
-				flush_cache: !!gc.queryargs.flush_cache
+				flush_cache: gc.queryargs.flush_cache ? 1 : 0
 			}, this.ajaxResponse.bind(this)).done(function () {
 				thisView.firstToRender();
 			}).fail(function () {
@@ -259,15 +467,15 @@ module.exports = function (app, $, gc) {
 	});
 };
 
-},{}],8:[function(require,module,exports){
+},{}],10:[function(require,module,exports){
 'use strict';
 
 module.exports = function (app, $, gc) {
 	var thisView;
+	var base = require('./../views/metabox-base.js')(app, $, gc);
 	var StatusesView = require('./../views/metabox-statuses.js')(app, $, gc);
 
-	return app.views.base.extend({
-		el: '#gc-related-data',
+	return base.extend({
 		template: wp.template('gc-metabox'),
 		statusesView: null,
 		timeoutID: null,
@@ -375,7 +583,8 @@ module.exports = function (app, $, gc) {
 		},
 
 		push: function push() {
-			if (window.confirm(gc._sure.push)) {
+			var msg = this.model.get('item') ? gc._sure.push : gc._sure.push_no_item;
+			if (window.confirm(msg)) {
 				thisView.model.set('mappingStatus', 'starting');
 				this.doSync('push');
 			}
@@ -418,7 +627,10 @@ module.exports = function (app, $, gc) {
 			this.clearTimeout();
 			this.model.set('mappingStatus', 'complete');
 			if ('push' === direction) {
-				this.refreshData();
+				setTimeout(function () {
+					// Give DB time to catch up, and avoid race condtions.
+					thisView.refreshData();
+				}, 800);
 			} else {
 				window.location.href = window.location.href;
 			}
@@ -434,15 +646,6 @@ module.exports = function (app, $, gc) {
 		clearTimeout: function clearTimeout() {
 			window.clearTimeout(this.timeoutID);
 			this.timeoutID = null;
-		},
-
-		ajax: function ajax(args, successcb) {
-			return $.post(window.ajaxurl, $.extend({
-				action: '',
-				post: this.model.toJSON(),
-				nonce: gc.$id('gc-edit-nonce').val(),
-				flush_cache: !!gc.queryargs.flush_cache
-			}, args), successcb.bind(this));
 		},
 
 		render: function render() {
@@ -461,7 +664,7 @@ module.exports = function (app, $, gc) {
 	});
 };
 
-},{"./../views/metabox-statuses.js":7}],9:[function(require,module,exports){
+},{"./../views/metabox-base.js":8,"./../views/metabox-statuses.js":9}],11:[function(require,module,exports){
 'use strict';
 
 module.exports = function (app) {

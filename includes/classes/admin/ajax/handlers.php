@@ -1,6 +1,7 @@
 <?php
 namespace GatherContent\Importer\Admin\Ajax;
 use GatherContent\Importer\Base as Plugin_Base;
+use GatherContent\Importer\General;
 use GatherContent\Importer\Post_Types\Template_Mappings;
 use GatherContent\Importer\Mapping_Post;
 use GatherContent\Importer\API;
@@ -50,6 +51,8 @@ class Handlers extends Plugin_Base {
 		add_action( 'wp_ajax_gc_get_post_statuses', array( $this, 'post_statuses_callback' ) );
 		add_action( 'wp_ajax_set_gc_status', array( $this, 'set_gc_status' ) );
 		add_action( 'wp_ajax_gc_fetch_js_post', array( $this, 'fetch_js_post' ) );
+		add_action( 'wp_ajax_gc_wp_filter_mappings', array( $this, 'filter_mappings' ) );
+		add_action( 'wp_ajax_gc_save_mapping_id', array( $this, 'save_mapping_id' ) );
 	}
 
 	public function select2_field_data_callback() {
@@ -143,7 +146,7 @@ class Handlers extends Plugin_Base {
 		$status = absint( $this->_post_val( 'status' ) );
 		$nonce = $this->_post_val( 'nonce' );
 
-		if ( empty( $post_data ) || empty( $status ) || ! wp_verify_nonce( $this->_post_val( 'nonce' ), GATHERCONTENT_SLUG ) ) {
+		if ( empty( $post_data ) || empty( $status ) || ! $this->verify_nonce( $nonce ) ) {
 			wp_send_json_error();
 		}
 
@@ -169,6 +172,88 @@ class Handlers extends Plugin_Base {
 		}
 	}
 
+	public function save_mapping_id() {
+		$post_data = $this->_post_val( 'post' );
+
+		if ( empty( $post_data['id'] ) || empty( $post_data['mapping'] ) || ! $this->verify_nonce( $this->_post_val( 'nonce' ) ) ) {
+			wp_send_json_error();
+		}
+
+		try {
+			$mapping = Mapping_Post::get( absint( $post_data['mapping'] ), true );
+		} catch ( \Exception $e ) {
+			wp_send_json_error( $e->getMessage() );
+		}
+
+		if ( \GatherContent\Importer\update_post_mapping_id( absint( $post_data['id'] ), $mapping->ID ) ) {
+			wp_send_json_success();
+		}
+
+		wp_send_json_error();
+	}
+
+	public function filter_mappings() {
+		$post_data = $this->_post_val( 'post' );
+		$property = $this->_post_val( 'property' );
+
+		if ( empty( $post_data['id'] ) || empty( $property ) || ! $this->verify_nonce( $this->_post_val( 'nonce' ) ) ) {
+			wp_send_json_error();
+		}
+
+		$mappings = General::get_instance()->admin->mapping_wizzard->mappings;
+		$objects = array();
+
+		switch ( $property ) {
+			case 'mapping':
+				if ( ! isset( $post_data['project'], $post_data['projects'] ) ) {
+					wp_send_json_error( esc_html__( 'Missing required project id.', 'gathercontent-importer' ) );
+				}
+
+				$mapping_ids = array();
+				foreach ( $post_data['projects'] as $project ) {
+					$mapping_ids = array_merge( $mapping_ids, $project['mappings'] );
+				}
+
+				$objects = $mappings->get_project_mappings(
+					absint( $post_data['project'] ),
+					array_unique( $mapping_ids )
+				);
+				break;
+
+			case 'project':
+				if ( ! isset( $post_data['account'], $post_data['accounts'] ) ) {
+					wp_send_json_error( esc_html__( 'Missing required account id.', 'gathercontent-importer' ) );
+				}
+
+				$mapping_ids = array();
+				foreach ( $post_data['accounts'] as $account ) {
+					$mapping_ids = array_merge( $mapping_ids, $account['mappings'] );
+				}
+
+				$objects = $mappings->get_account_projects_with_mappings(
+					absint( $post_data['account'] ),
+					array_unique( $mapping_ids )
+				);
+
+				break;
+
+			case 'account':
+			default:
+				$objects = $mappings->get_accounts_with_mappings();
+				break;
+		}
+
+		if ( is_wp_error( $objects ) ) {
+			wp_send_json_error( $objects->get_error_message() );
+		}
+
+		if ( ! empty( $objects ) ) {
+			wp_send_json_success( array_values( $objects ) );
+		}
+
+		wp_send_json_error();
+	}
+
 	/*
 	 * Non-callback methods.
 	 */
@@ -191,6 +276,10 @@ class Handlers extends Plugin_Base {
 		}, $users );
 
 		return array( 'results' => $users );
+	}
+
+	public function verify_nonce( $nonce ) {
+		return wp_verify_nonce( $nonce, GATHERCONTENT_SLUG );
 	}
 
 }

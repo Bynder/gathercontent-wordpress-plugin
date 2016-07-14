@@ -63,7 +63,6 @@ class Sync_Items extends Plugin_Base {
 			return false;
 		}
 
-		error_log( 'delete meta and cancel' );
 		$this->mapping->update_items_to_pull( false );
 
 		wp_send_json_success();

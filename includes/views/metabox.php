@@ -1,6 +1,6 @@
 <?php wp_nonce_field( GATHERCONTENT_SLUG, 'gc-edit-nonce' ); ?>
 
-<div id="gc-related-data" data-id="<?php $this->output( 'post_id' ); ?>" data-item="<?php $this->output( 'item_id' ); ?>" data-mapping="<?php $this->output( 'mapping_id' ); ?>" class="no-js">
+<div id="gc-related-data" data-id="<?php $this->output( 'post_id' ); ?>" data-item="<?php $this->output( 'item_id' ); ?>" data-mapping="<?php $this->output( 'mapping_id' ); ?>" class="no-js gathercontent-admin">
 	<?php if ( $this->get( 'mapping_id' ) ) : ?>
 		<p><span class="spinner is-active"></span>  <?php esc_html_e( 'Loading...', 'gathercontent-importer' ); ?></p>
 	<?php else: ?>

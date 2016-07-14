@@ -67,7 +67,7 @@ class Mapping_Wizzard extends Base {
 		$this->parent_page_slug = parent::SLUG;
 		$this->parent_url       = $parent->url;
 		$this->settings         = new Setting( $parent->option_name, $parent->default_options );
-		$this->mappings         = new Template_Mappings( parent::SLUG );
+		$this->mappings         = new Template_Mappings( parent::SLUG, $this->api() );
 
 		if ( $this->_get_val( 'project' ) ) {
 			$this->step = self::PROJECT;
@@ -290,7 +290,7 @@ class Mapping_Wizzard extends Base {
 
 			if ( $projects = $this->api()->get_account_projects( $account->id ) ) {
 				foreach ( $projects as $project ) {
-					$val = esc_attr( $project->id ) . ':' . esc_attr( $account->slug );
+					$val = esc_attr( $project->id ) . ':' . esc_attr( $account->slug ) . ':' . esc_attr( $account->id );
 					$options[ $val ] = esc_attr( $project->name );
 					if ( ! $value ) {
 						$value = $val;
@@ -442,15 +442,24 @@ class Mapping_Wizzard extends Base {
 			self::SLUG
 		);
 
+		if ( $mapping_id ) {
+			$account_id = $this->mappings->get_mapping_account_id( $mapping_id );
+			$account_slug = $this->mappings->get_mapping_account_slug( $mapping_id );
+		} else {
+			$account_id = $this->_get_account_id();
+			$account_slug = $this->_get_account_slug();
+		}
+
 		if ( ! $sync_items ) {
 
 			$this->template_mapper = new Mapping\Template_Mapper( array(
-				'mapping_id'  => $mapping_id,
-				'account'     => $this->_get_account_slug(),
-				'project'     => $project,
-				'template'    => $template,
-				'statuses'    => $this->api()->get_project_statuses( absint( $this->_get_val( 'project' ) ) ),
-				'option_name' => $this->option_name,
+				'mapping_id'   => $mapping_id,
+				'account_id'   => $account_id,
+				'account_slug' => $account_slug,
+				'project'      => $project,
+				'template'     => $template,
+				'statuses'     => $this->api()->get_project_statuses( absint( $this->_get_val( 'project' ) ) ),
+				'option_name'  => $this->option_name,
 			) );
 
 			$callback = isset( $project->id, $template->id )
@@ -462,13 +471,14 @@ class Mapping_Wizzard extends Base {
 		} else {
 
 			$this->items_sync = new Mapping\Items_Sync( array(
-				'mapping_id' => $mapping_id,
-				'account'    => $this->_get_account_slug(),
-				'project'    => $project,
-				'template'   => $template,
-				'url'        => $this->platform_url(),
-				'mappings'   => $this->mappings,
-				'items'      => $this->filter_items_by_template( $project->id, $template->id ),
+				'mapping_id'   => $mapping_id,
+				'account_id'   => $account_id,
+				'account_slug' => $account_slug,
+				'project'      => $project,
+				'template'     => $template,
+				'url'          => $this->platform_url(),
+				'mappings'     => $this->mappings,
+				'items'        => $this->filter_items_by_template( $project->id, $template->id ),
 			) );
 
 			$section->add_field( 'mapping', '', array( $this->items_sync, 'ui' ) );
@@ -661,6 +671,8 @@ class Mapping_Wizzard extends Base {
 
 		unset( $options['create_mapping'] );
 		unset( $options['title'] );
+		unset( $options['account'] );
+		unset( $options['account_id'] );
 		unset( $options['project'] );
 		unset( $options['template'] );
 
