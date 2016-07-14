@@ -349,13 +349,22 @@ abstract class Base extends Plugin_Base {
 				$alignclass = 'alignnone';
 				break;
 			default:
-				$alignclass = '';
+				$alignclass = $atts['align'] = '';
 				break;
 		}
 
-		$size_class = $atts['size'];
-		if ( is_array( $size_class ) ) {
-			$size_class = join( 'x', $size_class );
+		if ( is_array( $atts['size'] ) ) {
+			$atts['size'] = array_map( 'absint', $atts['size'] );
+			$size_class = join( 'x', $atts['size'] );
+		} else {
+			$atts['size'] = $size_class = sanitize_text_field( $atts['size'] );
+			if ( 'full' === $atts['size'] ) {
+				$atts['size'] = '';
+			}
+		}
+
+		if ( $atts['linkto'] ) {
+			$atts['linkto'] = 'attachment-page' === $atts['linkto'] ? $atts['linkto'] : 1;
 		}
 
 		$args = array(
@@ -367,7 +376,7 @@ abstract class Base extends Plugin_Base {
 		if ( $atts['linkto'] ) {
 			$image = wp_get_attachment_link(
 				$attach_id,
-				$atts['size'],
+				$atts['size'] ? $atts['size'] : 'full',
 				'attachment-page' === $atts['linkto'],
 				false,
 				false,
