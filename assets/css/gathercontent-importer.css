@@ -344,3 +344,20 @@ ul.gc-radio-desc li, ul.gc-reveal-items-list li {
   display: block;
   margin-top: 2px;
   margin-left: 4px; }
+
+.misc-gc-updated .current {
+  color: green; }
+
+.misc-gc-updated .not-current {
+  color: red; }
+
+.gc-no-mapping .spinner {
+  display: none; }
+  .gc-no-mapping .spinner.is-active {
+    display: inline-block; }
+
+.gc-no-mapping .gc-publishing-action {
+  text-align: center;
+  float: none; }
+  .gc-no-mapping .gc-publishing-action button.button, .gc-no-mapping .gc-publishing-action .button {
+    margin-left: 0; }

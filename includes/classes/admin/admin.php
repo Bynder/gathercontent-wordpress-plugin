@@ -43,7 +43,7 @@ class Admin extends Base {
 			$this->api()->set_api_key( $this->get_setting( 'api_key' ) );
 
 			// Get 'me'. If that fails, try again w/o cached response, to flush "fail" response cache.
-			if ( ! $this->api()->get_me() && ! $this->api()->get_me( 1 ) ) {
+			if ( ! defined( 'DOING_AJAX' ) && ! $this->api()->get_me() && ! $this->api()->get_me( 1 ) ) {
 
 				if ( 'admin.php' === $pagenow && self::SLUG === $this->_get_val( 'page' ) ) {
 

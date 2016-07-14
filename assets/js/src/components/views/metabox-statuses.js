@@ -5,6 +5,7 @@ module.exports = function( app, $, gc ) {
 		select2template : wp.template( 'gc-status-select2' ),
 		template        : wp.template( 'gc-metabox-statuses' ),
 		isOpen          : false,
+		rendered        : false,
 
 		initialize: function() {
 			thisView = this;
@@ -31,12 +32,13 @@ module.exports = function( app, $, gc ) {
 		},
 
 		asyncInit: function() {
+			this.rendered = false;
 			$.post( window.ajaxurl, {
 				action      : 'gc_get_post_statuses',
 				postId      : this.model.get( 'id' ),
 				flush_cache : !! gc.queryargs.flush_cache
 			}, this.ajaxResponse.bind( this ) ).done( function() {
-				thisView.renderStatuses();
+				thisView.firstToRender();
 			} ).fail( function() {
 				thisView.model.set( 'statusesChecked', false );
 			});
@@ -58,9 +60,15 @@ module.exports = function( app, $, gc ) {
 					$( this ).select2( 'destroy' );
 				} );
 
-				thisView.renderStatuses();
+				thisView.firstToRender();
 			}
+		},
 
+		firstToRender: function() {
+			if ( ! thisView.rendered ) {
+				thisView.renderStatuses();
+				thisView.rendered = true;
+			}
 		},
 
 		renderStatuses: function() {
@@ -69,7 +77,15 @@ module.exports = function( app, $, gc ) {
 			if ( this.model.get( 'statuses' ).length ) {
 				this.renderSelect2( this.$el );
 			}
-		}
+		},
+
+		render : function() {
+			this.$el.html( this.template( this.model.toJSON() ) );
+			if ( this.model.get( 'statusesChecked' ) ) {
+				thisView.renderStatuses();
+			}
+			return this;
+		},
 
 	});
 };

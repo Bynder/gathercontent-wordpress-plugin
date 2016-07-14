@@ -52,7 +52,7 @@ class Push extends Base {
 
 		if ( isset( $_GET['test_push'] ) ) {
 			// wp_die( '<xmp>'. __LINE__ .') create_item $item_id: '. print_r( $this->api->create_item( 73849, 347939, 'HEYO!' ), true ) .'</xmp>' );
-			wp_die( '<xmp>maybe_push_item $result: '. print_r( $this->maybe_push_item( 38 ), true ) .'</xmp>' );
+			wp_die( '<xmp>maybe_push_item $result: '. print_r( $this->maybe_push_item( 138 ), true ) .'</xmp>' );
 		}
 
 	}
@@ -121,8 +121,8 @@ class Push extends Base {
 
 			// and update the meta.
 			\GatherContent\Importer\update_post_item_meta( $this->post->ID, array(
-				'created_at' => $this->item->created_at,
-				'updated_at' => $this->item->updated_at,
+				'created_at' => $this->item->created_at->date,
+				'updated_at' => $this->item->updated_at->date,
 			) );
 		}
 
@@ -156,8 +156,8 @@ class Push extends Base {
 		$item = parent::set_item( $item_id );
 
 		\GatherContent\Importer\update_post_item_meta( $item_id, array(
-			'created_at' => $item->created_at,
-			'updated_at' => $item->updated_at,
+			'created_at' => $item->created_at->date,
+			'updated_at' => $item->updated_at->date,
 		) );
 
 		// Clone the config, to be used as a reference later.
@@ -298,7 +298,8 @@ class Push extends Base {
 				break;
 			case 'post_content':
 			case 'post_excerpt':
-				$el_value = $this->convert_media_to_shortcodes( wp_kses_post( $this->get_element_value() ) );
+				$el_value = wp_kses_post( $this->get_element_value() );
+				$value = $this->convert_media_to_shortcodes( $value );
 				break;
 		}
 

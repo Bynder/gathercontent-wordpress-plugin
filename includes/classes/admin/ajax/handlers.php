@@ -162,8 +162,10 @@ class Handlers extends Plugin_Base {
 
 	public function fetch_js_post() {
 		if ( $post_id = $this->_get_val( 'id' ) ) {
-			$js_post = \GatherContent\Importer\get_post_for_js( absint( $post_id ) );
-			wp_send_json( $js_post );
+			wp_send_json( \GatherContent\Importer\get_post_for_js(
+				absint( $post_id ),
+				'force' === $this->_get_val( 'flush_cache' )
+			) );
 		}
 	}
 

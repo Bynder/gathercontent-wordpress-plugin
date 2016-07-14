@@ -4,9 +4,13 @@
 	<?php if ( $this->get( 'mapping_id' ) ) : ?>
 		<p><span class="spinner is-active"></span>  <?php esc_html_e( 'Loading...', 'gathercontent-importer' ); ?></p>
 	<?php else: ?>
-		<p><?php esc_html_e( 'This post does not have an associated GatherContent item.', 'gathercontent-importer' ); ?></p>
-		<?php if ( $this->get( 'message' ) ) : ?>
-		<p><?php $this->output( 'message' ); ?></p>
-		<?php endif; ?>
+		<p><?php printf( esc_html__( 'This %s does not have an associated GatherContent item.', 'gathercontent-importer' ), $this->get( 'label' ) ); ?></p>
+		<div class="gc-major-publishing-actions gc-no-mapping">
+			<div class="gc-publishing-action">
+				<span class="spinner"></span>
+				<button id="gc-map" type="button" class="button gc-button-primary aligncenter"><?php esc_html_e( 'Map to GatherContent Template', 'gathercontent-importer' ); ?></button>
+			</div>
+			<div class="clear"></div>
+		</div>
 	<?php endif; ?>
 </div>

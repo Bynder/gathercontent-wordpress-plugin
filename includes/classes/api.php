@@ -202,7 +202,17 @@ class API extends Base {
 			),
 		) );
 
-		return 202 === $response['response']['code'];
+		if ( 202 === $response['response']['code'] ) {
+			$data = json_decode( wp_remote_retrieve_body( $response ) );
+
+			if ( isset( $data->data ) ) {
+				return $data->data;
+			}
+
+			return true;
+		}
+
+		return false;
 	}
 
 	/**

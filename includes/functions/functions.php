@@ -216,11 +216,12 @@ function prepare_item_for_js( $item, $mapping_id = 0 ) {
  *
  * @since  3.0.0
  *
- * @param  mixed  $post WP_Post or post ID.
+ * @param  mixed  $post     WP_Post or post ID.
+ * @param  bool   $uncached Whether to fetch item data uncached. Default is to ONLY fetch from cache.
  *
- * @return array        JS post array.
+ * @return array            JS post array.
  */
-function get_post_for_js( $post ) {
+function get_post_for_js( $post, $uncached = false ) {
 	$post = $post instanceof WP_Post ? $post : get_post( $post );
 	if ( ! $post ) {
 		return false;
@@ -239,10 +240,12 @@ function get_post_for_js( $post ) {
 	$js_post['itemName']    = __( 'N/A', 'gathercontent-importer' );
 	$js_post['updated']     = __( '&mdash;', 'gathercontent-importer' );
 	$js_post['editLink']    = get_edit_post_link( $post_id );
-
+	$js_post['current']     = true;
 
 	if ( $js_post['item'] ) {
-		$item = General::get_instance()->api->only_cached()->get_item( $js_post['item'] );
+		$item = $uncached
+			? General::get_instance()->api->uncached()->get_item( $js_post['item'] )
+			: General::get_instance()->api->only_cached()->get_item( $js_post['item'] );
 
 		if ( isset( $item->name ) ) {
 			$js_post['itemName'] = $item->name;
@@ -252,9 +255,25 @@ function get_post_for_js( $post ) {
 			? $item->status->data
 			: (object) array();
 
-		$js_post['updated'] = isset( $item->updated_at->date )
-			? \GatherContent\Importer\relative_date( $item->updated_at->date )
-			: __( '&mdash;', 'gathercontent-importer' );
+		if ( isset( $item->updated_at->date ) ) {
+			$js_post['updated'] = \GatherContent\Importer\relative_date( $item->updated_at->date );
+
+			$meta = \GatherContent\Importer\get_post_item_meta( $post_id );
+
+			if ( isset( $meta['updated_at'] ) ) {
+
+				if ( is_object( $meta['updated_at'] ) ) {
+					$meta['updated_at'] = $meta['updated_at']->date;
+				}
+
+				if ( strtotime( $item->updated_at->date ) > strtotime( $meta['updated_at'] ) ) {
+					$js_post['current'] = false;
+				}
+			} else {
+				$js_post['current'] = false;
+			}
+
+		}
 	}
 
 	return $js_post;

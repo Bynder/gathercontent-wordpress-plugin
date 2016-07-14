@@ -33,13 +33,6 @@ class Single extends UI_Base {
 	protected $enqueue = null;
 
 	/**
-	 * A flag to check if this is an ajax request.
-	 *
-	 * @var boolean
-	 */
-	protected $doing_ajax = false;
-
-	/**
 	 * Creates an instance of this class.
 	 *
 	 * @since 3.0.0
@@ -48,10 +41,9 @@ class Single extends UI_Base {
 	 * @param $mappings Template_Mappings object
 	 */
 	public function __construct( API $api, Template_Mappings $mappings ) {
-		$this->api        = $api;
-		$this->mappings   = $mappings;
-		$this->enqueue    = new Single_Enqueue;
-		$this->doing_ajax = defined( 'DOING_AJAX' ) && DOING_AJAX;
+		$this->api      = $api;
+		$this->mappings = $mappings;
+		$this->enqueue  = new Single_Enqueue;
 	}
 
 	/**
@@ -87,9 +79,6 @@ class Single extends UI_Base {
 			) {
 			add_action( 'admin_enqueue_scripts', array( $this, 'ui' ) );
 		}
-
-		// Handle quick-edit/bulk-edit ajax-post-saving
-		// add_action( 'save_post', array( $this, 'set_gc_status' ), 10, 2 );
 	}
 
 	/**
@@ -102,26 +91,14 @@ class Single extends UI_Base {
 	public function ui_page() {
 		$screen = get_current_screen();
 
-		if (
-			'post' !== $screen->base
-			|| ! $screen->post_type
-			// || ! isset( $this->post_types[ $screen->post_type ] )
-		) {
+		if ( 'post' !== $screen->base || ! $screen->post_type ) {
 			return;
 		}
 
+		// Do not show GC metabox if there is no mapping for this post-type, or if this is a new post.
 		if ( ! isset( $this->post_types[ $screen->post_type ] ) || ! $this->_get_val( 'post' ) ) {
 			return;
 		}
-
-
-		// $accounts = $this->api->get_accounts();
-		// wp_die( '<xmp>'. __LINE__ .') $accounts: '. print_r( $accounts, true ) .'</xmp>' );
-		// $mapping_id = \GatherContent\Importer\get_post_mapping_id( absint( $this->_get_val( 'post' ) ) );
-
-		// $mappings = $this->mappings->get_all();
-		// wp_die( '<xmp>'. __LINE__ .') $mappings: '. print_r( $mappings, true ) .'</xmp>' );
-
 
 		$this->enqueue->admin_enqueue_style();
 		$this->enqueue->admin_enqueue_script();
@@ -129,11 +106,12 @@ class Single extends UI_Base {
 	}
 
 	public function meta_box( $post, $box ) {
-		$post_id = $post->ID;
+		$post_id    = $post->ID;
 		$mapping_id = absint( \GatherContent\Importer\get_post_mapping_id( $post_id ) );
-		$item_id = absint( \GatherContent\Importer\get_post_item_id( $post_id ) );
-
-		$message = '';
+		$item_id    = absint( \GatherContent\Importer\get_post_item_id( $post_id ) );
+		$object     = get_post_type_object( $post->post_type );
+		$label      = isset( $object->labels->singular_name ) ? $object->labels->singular_name : $object->name;
+		// $message = '';
 
 		// if ( ! $mapping_id ) {
 		// 	$accounts = $this->api()->get_accounts();
@@ -141,11 +119,11 @@ class Single extends UI_Base {
 		// 	if ( ! $accounts ) {
 		// 		$message = sprintf( __( 'We couldn\'t find any accounts associated with your GatherContent API credentials. Please <a href="%s">check your settings</a>.', 'gathercontent-import' ), admin_url( 'admin.php?page='. GATHERCONTENT_SLUG ) );
 		// 	} else {
-		// 		$message = esc_html__( 'To associtiate a mapping, please select an Account.', 'gathercontent-import' );
+		// 		$message = esc_html__( 'To associate a mapping, please select an Account.', 'gathercontent-import' );
 		// 	}
 		// }
 
-		$this->view( 'metabox', compact( 'post_id', 'item_id', 'mapping_id', 'message' ) );
+		$this->view( 'metabox', compact( 'post_id', 'item_id', 'mapping_id', 'label' ) );
 	}
 
 	/**
@@ -192,6 +170,7 @@ class Single extends UI_Base {
 			'_errors' => array(
 				'unknown' => __( 'There was an unknown error', 'gathercontent-importer' ),
 			),
+			'_edit_nonce' => wp_create_nonce( General::get_instance()->admin->mapping_wizzard->option_group . '-options' ),
 		);
 	}
 

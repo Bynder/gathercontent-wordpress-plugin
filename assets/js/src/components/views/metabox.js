@@ -6,6 +6,7 @@ module.exports = function( app, $, gc ) {
 		el : '#gc-related-data',
 		template : wp.template( 'gc-metabox' ),
 		statusesView : null,
+		timeoutID : null,
 		events : {
 			'click .edit-gc-status'   : 'editStatus',
 			'click .cancel-gc-status' : 'cancelEditStatus',
@@ -17,6 +18,13 @@ module.exports = function( app, $, gc ) {
 		initialize: function() {
 			thisView = this;
 			this.listenTo( this.model, 'change:status', this.renderStatusView );
+			this.listenTo( this.model, 'change:mappingStatus', this.render );
+			this.listenTo( this.model, 'render', this.render );
+
+			this.statusesView = new StatusesView( {
+				model : this.model
+			} );
+
 			this.render();
 			this.$el.removeClass( 'no-js' );
 
@@ -24,14 +32,12 @@ module.exports = function( app, $, gc ) {
 		},
 
 		refreshData: function() {
-			console.log('refreshData');
 			// Trigger an un-cached update for the item data
-			this.ajax( {
-				action      : 'gc_get_items',
-				posts       : [ thisView.model.toJSON() ],
-			}, function( response ) {
-				if ( response.success && response.data && ! thisView.statusesView.isOpen ) {
-					this.updateModel( response.data );
+			this.model.set( 'uncached', true );
+			this.model.fetch().done( function( data ) {
+				console.warn('this.model', thisView.model.toJSON());
+				if ( ! thisView.statusesView.isOpen ) {
+					thisView.render();
 				}
 			} );
 		},
@@ -84,7 +90,6 @@ module.exports = function( app, $, gc ) {
 			};
 
 			success = function( response ) {
-				console.warn('set_gc_status response',response);
 				if ( response.success ) {
 					this.refreshData();
 				} else {
@@ -99,42 +104,73 @@ module.exports = function( app, $, gc ) {
 		},
 
 		pull: function() {
-			this.doSync( 'pull' );
+			if ( window.confirm( gc._sure.pull ) ) {
+				thisView.model.set( 'mappingStatus', 'starting' );
+				this.doSync( 'pull' );
+			}
 		},
 
 		push: function() {
-			this.doSync( 'push' );
+			if ( window.confirm( gc._sure.push ) ) {
+				thisView.model.set( 'mappingStatus', 'starting' );
+				this.doSync( 'push' );
+			}
 		},
 
-		doSync: function( direction ) {
-			if ( ! window.confirm( gc._sure[ direction ] ) ) {
-				return;
-			}
+		syncFail: function( msg ) {
+			msg = msg || gc._errors.unknown;
+			window.alert( msg );
+			thisView.model.set( 'mappingStatus', 'failed' );
+			thisView.clearTimeout();
+		},
 
-			this.$( '.gc-publishing-action .spinner' ).addClass( 'is-active' );
+		syncResponse: function( response ) {
+			if ( response.success && response.data.mappings ) {
+				var mappings = response.data.mappings;
+				if ( mappings.length && -1 !== _.indexOf( mappings, this.model.get( 'mapping' ) ) ) {
 
-			var fail = function( msg ) {
-				msg = msg || gc._errors.unknown;
-				window.alert( msg );
-			};
+					this.model.set( 'mappingStatus', 'syncing' );
+					this.checkStatus( response.data.direction );
 
-			var success = function( response ) {
-				console.warn('do '+ direction +' response', response);
-				this.$( '.gc-publishing-action .spinner' ).removeClass( 'is-active' );
-
-				if ( response.success ) {
-					this.refreshData();
 				} else {
-					fail( response.data );
+					this.finishedSync( response.data.direction );
 				}
-			};
+			} else {
+				this.syncFail( response.data );
+			}
+		},
 
+		doSync: function( direction, data ) {
 			this.ajax( {
-				// action : 'gc_'+ direction +'_items',
-				action : 'gc_do_' + direction,
-			}, success ).fail( function() {
-				fail();
+				action : 'gc_'+ direction +'_items',
+				// action : 'glsjlfjs',
+				data   : data || [ this.model.toJSON() ],
+				nonce  : gc._edit_nonce,
+			}, this.syncResponse ).fail( function() {
+				thisView.syncFail();
 			} );
+		},
+
+		finishedSync: function( direction ) {
+			this.clearTimeout();
+			this.model.set( 'mappingStatus', 'complete' );
+			if ( 'push' === direction ) {
+				this.refreshData();
+			} else {
+				window.location.href = window.location.href;
+			}
+		},
+
+		checkStatus: function( direction ) {
+			this.clearTimeout();
+			this.timeoutID = window.setTimeout( function() {
+				thisView.doSync( direction, { check : [ thisView.model.get( 'mapping' ) ] } );
+			}, 1000 );
+		},
+
+		clearTimeout: function() {
+			window.clearTimeout( this.timeoutID );
+			this.timeoutID = null;
 		},
 
 		ajax: function( args, successcb ) {
@@ -146,20 +182,10 @@ module.exports = function( app, $, gc ) {
 			}, args ), successcb.bind( this ) );
 		},
 
-		initStatusView: function() {
-			if ( this.statusesView ) {
-				this.statusesView.close();
-			}
-			this.statusesView = new StatusesView( {
-				model : this.model
-			} );
-		},
-
 		render : function() {
 			this.$el.html( this.template( this.model.toJSON() ) );
 
 			// This needs to happen after rendering.
-			this.initStatusView();
 			this.$( '.misc-pub-section.gc-item-name' ).after( this.statusesView.render().el );
 
 			return this;

@@ -312,11 +312,13 @@ module.exports = function (gc) {
 			item: 0,
 			itemName: 0,
 			updated: '',
+			current: true,
 			editLink: '',
 			mapping: 0,
 			mappingName: 0,
 			mappingLink: '',
 			mappingStatus: '',
+			mappingStatusId: '',
 			status: {},
 			checked: false,
 			disabled: false,
@@ -326,7 +328,12 @@ module.exports = function (gc) {
 		},
 
 		url: function url() {
-			return window.ajaxurl + '?action=gc_fetch_js_post&id=' + this.get('id');
+			var url = window.ajaxurl + '?action=gc_fetch_js_post&id=' + this.get('id');
+			if (this.get('uncached')) {
+				this.set('uncached', false);
+				url += '&flush_cache=force';
+			}
+			return url;
 		},
 
 		_get: function _get(value, attribute) {
@@ -336,6 +343,9 @@ module.exports = function (gc) {
 					break;
 				case 'mappingStatus':
 					value = gc._statuses[value] ? gc._statuses[value] : '';
+					break;
+				case 'mappingStatusId':
+					value = Backbone.Model.prototype.get.call(this, 'mappingStatus');
 					break;
 			}
 
