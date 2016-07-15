@@ -436,6 +436,26 @@ class Template_Mappings extends Base {
 		return self::get_by_project( $project_id, $args );
 	}
 
+	public function get_by_item_id( $item_id ) {
+		$mapping_id = 0;
+
+		$item = $this->api->get_item( $item_id );
+		if ( ! $item || empty( $item->project_id ) || empty( $item->project_id ) ) {
+			return $mapping_id;
+		}
+
+		$mapping = $this->get_by_project_template(
+			absint( $item->project_id ),
+			absint( $item->template_id )
+		);
+
+		if ( $mapping->have_posts() ) {
+			$mapping_id = $mapping->posts[0];
+		}
+
+		return $mapping_id;
+	}
+
 	public function get_project_mappings( $project_id, $mapping_ids = array() ) {
 		$args = array(
 			'posts_per_page' => 500,

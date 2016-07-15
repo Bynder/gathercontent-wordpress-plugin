@@ -9,7 +9,7 @@
 	</select>
 </div>
 <# } else { #>
-<p><?php printf( esc_html__( 'This %s does not have an associated GatherContent item.', 'gathercontent-importer' ), $this->get( 'label' ) ); ?></p>
+<p><?php printf( esc_html__( 'This %s does not have an associated item or Template Mapping.', 'gathercontent-importer' ), $this->get( 'label' ) ); ?></p>
 <# } #>
 <div class="gc-major-publishing-actions gc-no-mapping">
 	<div class="gc-publishing-action">
@@ -19,9 +19,9 @@
 			<# if ( data.step ) { #>
 			<button <# if ( data.btnDisabled ) { #>disabled="disabled"<# } #>id="gc-map" type="button" class="button gc-button-primary aligncenter">
 				<# if ( 'mappings' === data.step ) { #>
-				<?php esc_html_e( 'Save Mapping', 'gathercontent-importer' ); ?>	
+				<?php esc_html_e( 'Save Mapping', 'gathercontent-importer' ); ?>
 				<# } else { #>
-				<?php esc_html_e( 'Next', 'gathercontent-importer' ); ?>	
+				<?php esc_html_e( 'Next', 'gathercontent-importer' ); ?>
 				<# } #>
 			</button>
 			<# } else { #>

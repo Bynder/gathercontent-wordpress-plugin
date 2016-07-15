@@ -120,18 +120,6 @@ class Single extends UI_Base {
 	}
 
 	public function meta_box( $post, $box ) {
-		// $message = '';
-
-		// if ( ! $mapping_id ) {
-		// 	$accounts = $this->api()->get_accounts();
-
-		// 	if ( ! $accounts ) {
-		// 		$message = sprintf( __( 'We couldn\'t find any accounts associated with your GatherContent API credentials. Please <a href="%s">check your settings</a>.', 'gathercontent-import' ), admin_url( 'admin.php?page='. GATHERCONTENT_SLUG ) );
-		// 	} else {
-		// 		$message = esc_html__( 'To associate a mapping, please select an Account.', 'gathercontent-import' );
-		// 	}
-		// }
-
 		$object = get_post_type_object( $post->post_type );
 		$this->post_type_label = isset( $object->labels->singular_name ) ? $object->labels->singular_name : $object->name;
 

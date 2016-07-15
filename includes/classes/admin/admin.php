@@ -142,6 +142,10 @@ class Admin extends Base {
 	}
 
 	public function admin_page() {
+		if ( $this->should_migrate() ) {
+			add_action( 'admin_footer', array( $this, 'migrate_settings' ) );
+		}
+
 		if ( version_compare( get_option( 'gathercontent_version' ), GATHERCONTENT_VERSION, '<' ) ) {
 			update_option( 'gathercontent_version', GATHERCONTENT_VERSION );
 		}
@@ -315,4 +319,35 @@ class Admin extends Base {
 		return false;
 	}
 
+	public function migrate_settings( $settings ) {
+		$key = $this->should_migrate();
+		if ( ! $key ) {
+			return;
+		}
+
+		$settings = get_option( $key . '_saved_settings' );
+
+		if ( empty( $settings ) || ! is_array( $settings ) ) {
+			return;
+		}
+
+		$mapped = array();
+		foreach ( $settings as $project_id => $items ) {
+			if ( empty( $items ) || ! is_array( $items ) ) {
+				continue;
+			}
+
+			foreach ( $items as $item_id => $setting_data ) {
+
+				if (
+					isset( $setting_data['overwrite'] )
+					&& $setting_data['overwrite'] > 0
+					&& ( $post = get_post( absint( $setting_data['overwrite'] ) ) )
+				) {
+					// We'll set the mapped item ID, but mappings will still need to be created.
+					\GatherContent\Importer\update_post_item_id( $post->ID, absint( $item_id ) );
+				}
+			}
+		}
+	}
 }
