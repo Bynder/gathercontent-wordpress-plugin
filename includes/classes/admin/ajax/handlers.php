@@ -43,19 +43,19 @@ class Handlers extends Plugin_Base {
 	}
 
 	public function init_hooks() {
-		add_action( 'wp_ajax_gc_get_option_data', array( $this, 'select2_field_data_callback' ) );
-		add_action( 'wp_ajax_gc_sync_items', array( $this->sync_items, 'callback' ) );
-		add_action( 'wp_ajax_gc_pull_items', array( $this->sync_bulk, 'pull_callback' ) );
-		add_action( 'wp_ajax_gc_push_items', array( $this->sync_bulk, 'push_callback' ) );
-		add_action( 'wp_ajax_gc_get_items', array( $this, 'get_items_callback' ) );
-		add_action( 'wp_ajax_gc_get_post_statuses', array( $this, 'post_statuses_callback' ) );
-		add_action( 'wp_ajax_set_gc_status', array( $this, 'set_gc_status' ) );
-		add_action( 'wp_ajax_gc_fetch_js_post', array( $this, 'fetch_js_post' ) );
-		add_action( 'wp_ajax_gc_wp_filter_mappings', array( $this, 'filter_mappings' ) );
-		add_action( 'wp_ajax_gc_save_mapping_id', array( $this, 'save_mapping_id' ) );
+		add_action( 'wp_ajax_gc_get_option_data', array( $this, 'gc_get_option_data_cb' ) );
+		add_action( 'wp_ajax_gc_sync_items', array( $this->sync_items, 'gc_sync_items_cb' ) );
+		add_action( 'wp_ajax_gc_pull_items', array( $this->sync_bulk, 'gc_pull_items_cb' ) );
+		add_action( 'wp_ajax_gc_push_items', array( $this->sync_bulk, 'gc_push_items_cb' ) );
+		add_action( 'wp_ajax_gc_get_items', array( $this, 'gc_get_items_cb' ) );
+		add_action( 'wp_ajax_gc_get_post_statuses', array( $this, 'gc_get_post_statuses_cb' ) );
+		add_action( 'wp_ajax_set_gc_status', array( $this, 'set_gc_status_cb' ) );
+		add_action( 'wp_ajax_gc_fetch_js_post', array( $this, 'gc_fetch_js_post_cb' ) );
+		add_action( 'wp_ajax_gc_wp_filter_mappings', array( $this, 'gc_wp_filter_mappings_cb' ) );
+		add_action( 'wp_ajax_gc_save_mapping_id', array( $this, 'gc_save_mapping_id_cb' ) );
 	}
 
-	public function select2_field_data_callback() {
+	public function gc_get_option_data_cb() {
 		if ( ! $this->_get_val( 'q' ) || ! $this->_get_val( 'column' ) ) {
 			wp_send_json_error();
 		}
@@ -79,7 +79,7 @@ class Handlers extends Plugin_Base {
 		wp_send_json_error();
 	}
 
-	public function get_items_callback() {
+	public function gc_get_items_cb() {
 		$posts = $this->_post_val( 'posts' );
 		if ( empty( $posts ) || ! is_array( $posts ) ) {
 			wp_send_json_error();
@@ -119,7 +119,7 @@ class Handlers extends Plugin_Base {
 		wp_send_json_success( $post_statuses );
 	}
 
-	public function post_statuses_callback() {
+	public function gc_get_post_statuses_cb() {
 		$postId = $this->_post_val( 'postId' );
 		if ( empty( $postId ) || ! ( $post = get_post( $postId ) ) ) {
 			wp_send_json_error( compact( 'postId' ) );
@@ -141,7 +141,7 @@ class Handlers extends Plugin_Base {
 		wp_send_json_success( compact( 'postId', 'statuses' ) );
 	}
 
-	public function set_gc_status() {
+	public function set_gc_status_cb() {
 		$post_data = $this->_post_val( 'post' );
 		$status = absint( $this->_post_val( 'status' ) );
 		$nonce = $this->_post_val( 'nonce' );
@@ -163,7 +163,7 @@ class Handlers extends Plugin_Base {
 		wp_send_json_error();
 	}
 
-	public function fetch_js_post() {
+	public function gc_fetch_js_post_cb() {
 		if ( $post_id = $this->_get_val( 'id' ) ) {
 			wp_send_json( \GatherContent\Importer\get_post_for_js(
 				absint( $post_id ),
@@ -172,7 +172,7 @@ class Handlers extends Plugin_Base {
 		}
 	}
 
-	public function save_mapping_id() {
+	public function gc_save_mapping_id_cb() {
 		$post_data = $this->_post_val( 'post' );
 
 		if ( empty( $post_data['id'] ) || empty( $post_data['mapping'] ) || ! $this->verify_nonce( $this->_post_val( 'nonce' ) ) ) {
@@ -192,7 +192,7 @@ class Handlers extends Plugin_Base {
 		wp_send_json_error();
 	}
 
-	public function filter_mappings() {
+	public function gc_wp_filter_mappings_cb() {
 		$post_data = $this->_post_val( 'post' );
 		$property = $this->_post_val( 'property' );
 

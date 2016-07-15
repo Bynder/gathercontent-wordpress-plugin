@@ -6,7 +6,7 @@ use GatherContent\Importer\Mapping_Post;
 
 class Sync_Items extends Plugin_Base {
 
-	public function callback() {
+	public function gc_sync_items_cb() {
 		$this->verify_request();
 
 		$this->verify_nonce();

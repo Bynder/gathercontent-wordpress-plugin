@@ -8,13 +8,13 @@ class Sync_Bulk extends Sync_Items {
 	protected $mappings = array();
 	protected $direction = 'pull';
 
-	public function push_callback() {
-		$this->direction = 'push';
+	public function gc_pull_items_cb() {
+		$this->direction = 'pull';
 		$this->callback();
 	}
 
-	public function pull_callback() {
-		$this->direction = 'pull';
+	public function gc_push_items_cb() {
+		$this->direction = 'push';
 		$this->callback();
 	}
 
