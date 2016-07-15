@@ -22,7 +22,6 @@ module.exports = function( app ) {
 		},
 
 		toggleCheckAndRender: function( evt ) {
-			console.warn('toggleCheckAndRender');
 			this.toggleCheck();
 			this.render();
 		}

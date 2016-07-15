@@ -185,7 +185,6 @@
 				this.setSelectedMappingStatus( 'starting' )
 			);
 
-			console.warn('pull selected', selected);
 			this.doAjax( selected, 'pull' );
 		},
 
@@ -196,7 +195,6 @@
 				this.setSelectedMappingStatus( 'starting' )
 			);
 
-			console.warn('push selected', selected);
 			this.doAjax( selected, 'push' );
 		},
 
@@ -215,8 +213,6 @@
 		},
 
 		ajaxSuccess: function( response ) {
-			console.log('ajaxSuccess response.data',response.data);
-
 			if ( ! response.data.mappings ) {
 				return this.ajaxFail();
 			}
@@ -243,7 +239,6 @@
 		},
 
 		ajaxFail: function( response ) {
-			console.warn('response',response);
 			this.setSelectedMappingStatus( 'failed' );
 			this.clearTimeout();
 		},

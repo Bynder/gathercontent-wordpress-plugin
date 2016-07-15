@@ -31,7 +31,6 @@ module.exports = function( app, _meta_keys ) {
 
 		changeValue: function( evt ) {
 			var value = jQuery( evt.target ).val();
-			// console.log('value',value);
 			if ( '' === value ) {
 				this.model.set( 'field_value', '' );
 				this.model.set( 'field_type', '' );
