@@ -135,7 +135,7 @@ class Single extends UI_Base {
 		$object = get_post_type_object( $post->post_type );
 		$this->post_type_label = isset( $object->labels->singular_name ) ? $object->labels->singular_name : $object->name;
 
-		$this->post = \GatherContent\Importer\get_post_for_js( $post );
+		$this->post = \GatherContent\Importer\prepare_post_for_js( $post );
 
 		$this->view( 'metabox', array(
 			'post_id'    => $this->post['id'],
@@ -155,7 +155,8 @@ class Single extends UI_Base {
 	protected function get_underscore_templates() {
 		return array(
 			'tmpl-gc-metabox' => array(
-				'url' => General::get_instance()->admin->platform_url(),
+				'url'   => General::get_instance()->admin->platform_url(),
+				'label' => $this->post_type_label,
 				// 'refresh_link' => \GatherContent\Importer\refresh_connection_link(),
 			),
 			'tmpl-gc-metabox-statuses' => array(),

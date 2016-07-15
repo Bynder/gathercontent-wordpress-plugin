@@ -1,5 +1,6 @@
 <?php
 namespace GatherContent\Importer\Admin;
+use GatherContent\Importer\Utils;
 use GatherContent\Importer\Settings\Setting;
 use GatherContent\Importer\Settings\Form_Section;
 use GatherContent\Importer\Post_Types\Template_Mappings;
@@ -667,7 +668,7 @@ class Mapping_Wizzard extends Base {
 	protected function create_or_update_mapping_post( $options ) {
 		$post_args = $mapping_args = array();
 
-		$mapping_args = \GatherContent\Importer\array_map_recursive( 'sanitize_text_field', $options );
+		$mapping_args = Utils::array_map_recursive( 'sanitize_text_field', $options );
 
 		unset( $options['create_mapping'] );
 		unset( $options['title'] );

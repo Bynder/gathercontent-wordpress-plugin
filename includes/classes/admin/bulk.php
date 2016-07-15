@@ -156,7 +156,7 @@ class Bulk extends UI_Base {
 		}
 		global $post;
 
-		$js_post = \GatherContent\Importer\get_post_for_js( $post );
+		$js_post = \GatherContent\Importer\prepare_post_for_js( $post );
 
 		if ( $this->doing_ajax ) {
 			return $this->ajax_view( $post_id, $js_post['item'], $js_post['mapping'] );
@@ -253,13 +253,17 @@ class Bulk extends UI_Base {
 	 * @return array
 	 */
 	protected function get_underscore_templates() {
+		$object = get_post_type_object( get_post_type() );
+		$label = isset( $object->labels->singular_name ) ? $object->labels->singular_name : $object->name;
+
 		return array(
 			'tmpl-gc-post-column-row' => array(),
 			'tmpl-gc-status-select2' => array(),
 			'tmpl-gc-select2-item' => array(),
 			'tmpl-gc-modal-window' => array(),
 			'tmpl-gc-item' => array(
-				'url' => General::get_instance()->admin->platform_url(),
+				'url'   => General::get_instance()->admin->platform_url(),
+				'label' => $label,
 			),
 		);
 	}

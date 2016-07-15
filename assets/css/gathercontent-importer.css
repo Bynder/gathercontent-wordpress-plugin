@@ -112,6 +112,9 @@ ul.gc-radio-desc li, ul.gc-reveal-items-list li {
   padding: 6px 0 6px 6px;
   vertical-align: middle; }
 
+.gc-table .gc-status-column {
+  cursor: pointer; }
+
 .gathercontent-admin .select2-results__option, .gathercontent-admin-select2 .select2-results__option {
   border-bottom: 1px solid #eee;
   margin: 0; }
@@ -151,6 +154,8 @@ ul.gc-radio-desc li, ul.gc-reveal-items-list li {
     vertical-align: middle; }
   #sync-tabs #gc-edit {
     width: 20px; }
+  #sync-tabs th:nth-child(5), #sync-tabs td:nth-child(5) {
+    display: none; }
 
 .select2-gc_status .gc-status-color, .select2-post_status_mapping_after .gc-status-color {
   float: right;
@@ -306,9 +311,6 @@ ul.gc-radio-desc li, ul.gc-reveal-items-list li {
 .gc-modal-tabs .gc-disabled td {
   opacity: 0.4; }
 
-.gc-status-column {
-  cursor: pointer; }
-
 #poststuff #gc-manage .inside {
   margin: 0;
   padding: 0; }
@@ -347,11 +349,14 @@ ul.gc-radio-desc li, ul.gc-reveal-items-list li {
   margin-top: 2px;
   margin-left: 4px; }
 
-.misc-gc-updated .current {
-  color: green; }
+.misc-pub-post-status .gc-status-name {
+  font-weight: 600; }
 
-.misc-gc-updated .not-current {
-  color: red; }
+.gc-status-status.current {
+  color: #49ab00; }
+
+.gc-status-status.not-current {
+  color: #c12c2f; }
 
 .gc-no-mapping .spinner {
   display: none; }

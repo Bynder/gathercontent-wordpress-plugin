@@ -506,7 +506,6 @@ module.exports = function (app, $, gc) {
 			// Trigger an un-cached update for the item data
 			this.model.set('uncached', true);
 			this.model.fetch().done(function (data) {
-				console.warn('this.model', thisView.model.toJSON());
 				if (!thisView.statusesView.isOpen) {
 					thisView.render();
 				}

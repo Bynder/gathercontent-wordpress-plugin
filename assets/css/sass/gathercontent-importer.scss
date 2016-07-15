@@ -10,6 +10,10 @@ $yellow: #ffa200;
 $dkyellow: #cc8200;
 $gcblue: #00ABBD;
 $dkblue: #11284A;
+$green: #4ab545;
+$greendk: #49ab00;
+$red: #dc393c;
+$reddk: #c12c2f;
 
 .gc-avatar {
 	border-radius: 50px;
@@ -156,7 +160,10 @@ ul.gc-radio-desc li, ul.gc-reveal-items-list li {
 			vertical-align: middle;
 		}
 	}
+}
 
+.gc-table .gc-status-column {
+	cursor: pointer;
 }
 
 .gathercontent-admin, .gathercontent-admin-select2 {
@@ -209,6 +216,10 @@ ul.gc-radio-desc li, ul.gc-reveal-items-list li {
 	}
 	#gc-edit {
 		width: 20px;
+	}
+	// For now, until we can have more than one mapping on this page.
+	th:nth-child( 5 ), td:nth-child( 5 ) {
+		display: none;
 	}
 }
 .select2-gc_status, .select2-post_status_mapping_after {

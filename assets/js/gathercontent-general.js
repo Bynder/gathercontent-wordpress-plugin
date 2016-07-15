@@ -203,7 +203,7 @@ window.GatherContent = window.GatherContent || {};
 		$(document.body).addClass('gathercontent-admin-select2').on('click', '#gc-sync-modal', app.triggerModal);
 
 		$(document).ajaxSend(function (evt, request, settings) {
-			if (-1 !== settings.data.indexOf('&action=inline-save')) {
+			if (settings.data && -1 !== settings.data.indexOf('&action=inline-save')) {
 				app.generalView.trigger('quickEditSend', request, settings);
 			}
 		});
@@ -430,7 +430,6 @@ module.exports = function (app) {
 		},
 
 		toggleCheckAndRender: function toggleCheckAndRender(evt) {
-			console.warn('toggleCheckAndRender');
 			this.toggleCheck();
 			this.render();
 		}
@@ -660,7 +659,6 @@ module.exports = function (app, gc, $) {
 			evt.preventDefault();
 			var selected = this.modelsToJSON(this.setSelectedMappingStatus('starting'));
 
-			console.warn('pull selected', selected);
 			this.doAjax(selected, 'pull');
 		},
 
@@ -669,7 +667,6 @@ module.exports = function (app, gc, $) {
 
 			var selected = this.modelsToJSON(this.setSelectedMappingStatus('starting'));
 
-			console.warn('push selected', selected);
 			this.doAjax(selected, 'push');
 		},
 
@@ -688,8 +685,6 @@ module.exports = function (app, gc, $) {
 		},
 
 		ajaxSuccess: function ajaxSuccess(response) {
-			console.log('ajaxSuccess response.data', response.data);
-
 			if (!response.data.mappings) {
 				return this.ajaxFail();
 			}
@@ -716,7 +711,6 @@ module.exports = function (app, gc, $) {
 		},
 
 		ajaxFail: function ajaxFail(response) {
-			console.warn('response', response);
 			this.setSelectedMappingStatus('failed');
 			this.clearTimeout();
 		},
@@ -798,9 +792,9 @@ module.exports = function (app, gc, $) {
 			this.listenTo(this, 'quickEditSend', this.sending);
 			this.render();
 
-			// Trigger an un-cached update for the statuses
+			// Trigger an un-cached update for the posts
 			$.post(window.ajaxurl, {
-				action: 'gc_get_items',
+				action: 'gc_get_posts',
 				posts: gc._posts,
 				flush_cache: gc.queryargs.flush_cache ? 1 : 0
 			}, function (response) {

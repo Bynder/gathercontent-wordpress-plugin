@@ -1,31 +1,6 @@
 <?php
 namespace GatherContent\Importer;
 use WP_Query;
-use DateTime;
-use DateTimeZone;
-
-/**
- * Utility function for doing array_map recursively.
- *
- * @since  3.0.0
- *
- * @param  callable $callback Callable function
- * @param  array    $array    Array to recurse
- *
- * @return array              Updated array.
- */
-function array_map_recursive( $callback, $array ) {
-	foreach ( $array as $key => $value) {
-		if ( is_array( $array[ $key ] ) ) {
-			$array[ $key ] = array_map_recursive( $callback, $array[ $key ] );
-		}
-		else {
-			$array[ $key ] = call_user_func( $callback, $array[ $key ] );
-		}
-	}
-	return $array;
-}
-
 
 /**
  * Style enqueue helper w/ GC defaults.
@@ -42,8 +17,7 @@ function array_map_recursive( $callback, $array ) {
  * @return void
  */
 function enqueue_style( $handle, $filename, $deps = [], $ver = GATHERCONTENT_VERSION ) {
-	$suffix = defined( 'SCRIPT_DEBUG' ) && SCRIPT_DEBUG ? '' : '.min';
-
+	$suffix = Utils::js_suffix();
 	wp_enqueue_style( $handle, GATHERCONTENT_URL . "assets/css/{$filename}{$suffix}.css", $deps, $ver );
 }
 
@@ -62,8 +36,7 @@ function enqueue_style( $handle, $filename, $deps = [], $ver = GATHERCONTENT_VER
  * @return void
  */
 function enqueue_script( $handle, $filename, $deps = [], $ver = GATHERCONTENT_VERSION ) {
-	$suffix = defined( 'SCRIPT_DEBUG' ) && SCRIPT_DEBUG ? '' : '.min';
-
+	$suffix = Utils::js_suffix();
 	wp_enqueue_script( $handle, GATHERCONTENT_URL . "assets/js/{$filename}{$suffix}.js", $deps, $ver, 1 );
 }
 
@@ -186,30 +159,21 @@ function update_post_mapping_id( $post_id, $mapping_post_id ) {
 function prepare_item_for_js( $item, $mapping_id = 0 ) {
 	$post = \GatherContent\Importer\get_post_by_item_id( $item->id );
 
-	if ( ! $mapping_id && $post ) {
-		$mapping_id = \GatherContent\Importer\get_post_mapping_id( $post->ID );
-	}
-
-	if ( isset( $item->status->data ) ) {
-		$item->status = $item->status->data;
-	}
-
-	$item->itemName = $item->name;
-	$item->updated = isset( $item->updated_at )
-		? \GatherContent\Importer\relative_date( $item->updated_at->date )
-		: __( '&mdash;', 'gathercontent-importer' );
-
-	$item->mappingLink = $mapping_id ? get_edit_post_link( $mapping_id ) : '';
-	$item->mappingName = $mapping_id ? get_the_title( $mapping_id ) : __( '&mdash;', 'gathercontent-importer' );
+	$js_item = (array) $item;
+	$js_item['mapping'] = $mapping_id;
 
 	if ( $post ) {
-		$item->editLink = get_edit_post_link( $post->ID );
-		$item->post_title = get_the_title( $post->ID );
-	} else {
-		$item->post_title = __( '&mdash;', 'gathercontent-importer' );
+		$js_item['post_id']    = $post->ID;
+		$js_item['editLink']   = get_edit_post_link( $post->ID );
+		$js_item['post_title'] = get_the_title( $post->ID );
+		$js_item['current']    = \GatherContent\Importer\post_is_current( $post->ID, $item );
+
+		if ( ! $mapping_id ) {
+			$js_item['mapping'] = \GatherContent\Importer\get_post_mapping_id( $post->ID );
+		}
 	}
 
-	return $item;
+	return \GatherContent\Importer\prepare_js_data( $js_item, $item, 'item' );
 }
 
 /**
@@ -222,63 +186,106 @@ function prepare_item_for_js( $item, $mapping_id = 0 ) {
  *
  * @return array            JS post array.
  */
-function get_post_for_js( $post, $uncached = false ) {
+function prepare_post_for_js( $post, $uncached = false ) {
 	$post = $post instanceof WP_Post ? $post : get_post( $post );
 	if ( ! $post ) {
 		return false;
 	}
 
-	$post_id = $post->ID;
-
 	$js_post = array_change_key_case( (array) $post );
 
-	$js_post['item']        = absint( \GatherContent\Importer\get_post_item_id( $post_id ) );
-	$js_post['mapping']     = absint( \GatherContent\Importer\get_post_mapping_id( $post_id ) );
+	$js_post['item']     = absint( \GatherContent\Importer\get_post_item_id( $post->ID ) );
+	$js_post['mapping']  = absint( \GatherContent\Importer\get_post_mapping_id( $post->ID ) );
+	$js_post['current']  = true;
+	$js_post['post_id']  = $post->ID;
 
-	$js_post['mappingLink'] = $js_post['mapping'] ? get_edit_post_link( $js_post['mapping'] ) : '';
-	$js_post['mappingName'] = $js_post['mapping'] ? get_the_title( $js_post['mapping'] ) : '';
-	$js_post['status']      = (object) array();
-	$js_post['itemName']    = __( 'N/A', 'gathercontent-importer' );
-	$js_post['updated']     = __( '&mdash;', 'gathercontent-importer' );
-	$js_post['editLink']    = get_edit_post_link( $post_id );
-	$js_post['current']     = true;
-
+	$item = null;
 	if ( $js_post['item'] ) {
 		$item = $uncached
 			? General::get_instance()->api->uncached()->get_item( $js_post['item'] )
 			: General::get_instance()->api->only_cached()->get_item( $js_post['item'] );
+	}
 
+	return \GatherContent\Importer\prepare_js_data( $js_post, $item );
+}
+
+function prepare_js_data( $args, $item = null, $type = 'post' ) {
+	$args = wp_parse_args( $args, array(
+		'item'        => 0,
+		'itemName'    => __( 'N/A', 'gathercontent-importer' ),
+		'mapping'     => 0,
+		'post_id'     => 0,
+		'mappingLink' => '',
+		'mappingName' => __( '&mdash;', 'gathercontent-importer' ),
+		'status'      => (object) array(),
+		'itemName'    => __( 'N/A', 'gathercontent-importer' ),
+		'updated'     => __( '&mdash;', 'gathercontent-importer' ),
+		'editLink'    => '',
+		'post_title'  => __( '&mdash;', 'gathercontent-importer' ),
+	) );
+
+	if ( $mapping = Mapping_Post::get( $args['mapping'] ) ) {
+		$args['mappingLink'] = get_edit_post_link( $mapping->ID );
+		$account = $mapping->get_account_slug();
+		$args['mappingName'] = $mapping->post_title . ( $account ? " ($account)" : '' );
+	}
+
+	if ( $item && isset( $item->id ) ) {
+		$args['item'] = $item->id;
 		if ( isset( $item->name ) ) {
-			$js_post['itemName'] = $item->name;
+			$args['itemName'] = $item->name;
 		}
 
-		$js_post['status'] = isset( $item->status->data )
+		$args['status'] = isset( $item->status->data )
 			? $item->status->data
 			: (object) array();
 
 		if ( isset( $item->updated_at->date ) ) {
-			$js_post['updated'] = \GatherContent\Importer\relative_date( $item->updated_at->date );
-
-			$meta = \GatherContent\Importer\get_post_item_meta( $post_id );
-
-			if ( isset( $meta['updated_at'] ) ) {
-
-				if ( is_object( $meta['updated_at'] ) ) {
-					$meta['updated_at'] = $meta['updated_at']->date;
-				}
-
-				$diff = strtotime( $item->updated_at->date ) - strtotime( $meta['updated_at'] );
-				if ( $diff > 10 ) {
-					$js_post['current'] = false;
-				}
-			} else {
-				$js_post['current'] = false;
-			}
-
+			$args['updated'] = Utils::relative_date( $item->updated_at->date );
 		}
 	}
 
-	return $js_post;
+	if ( $args['post_id'] && $item ) {
+		$args['editLink'] = get_edit_post_link( $args['post_id'] );
+		$args['current']  = \GatherContent\Importer\post_is_current( $args['post_id'], $item );
+	}
+
+	return apply_filters( "gc_prepare_js_data_for_$type", $args, $type, $item );
+}
+
+/**
+ * Checks to see if a post is current with a GatherContent item.
+ *
+ * @since  3.0.0
+ *
+ * @param  int         $post_id Post ID
+ * @param  mixed $item GatherContent item object.
+ *
+ * @return bool        Whether post is current.
+ */
+function post_is_current( $post_id, $item ) {
+	$meta = \GatherContent\Importer\get_post_item_meta( $post_id );
+	// Default, no.
+	$is_current = false;
+
+	if ( ! empty( $meta['updated_at'] ) ) {
+
+		if ( isset( $item->updated_at->date ) ) {
+
+			if ( is_object( $meta['updated_at'] ) ) {
+				$meta['updated_at'] = $meta['updated_at']->date;
+			}
+
+			// Allowance of 10 milliseconds because of some possible race conditions.
+			$is_current = Utils::date_current_with( $meta['updated_at'], $item->updated_at->date, 10 );
+		} else {
+			// If we couldn't find an item date, then we'll say, yes, we're current.
+			$is_current = true;
+		}
+
+	}
+
+	return $is_current;
 }
 
 /**
@@ -324,53 +331,4 @@ function user_allowed() {
  */
 function view_capability() {
 	return apply_filters( 'gathercontent_settings_view_capability', 'publish_pages' );
-}
-
-/**
- * Convert a UTC date to human readable date using the WP timezone.
- *
- * @since  3.0.0
- *
- * @param  string $utc_date UTC date
- *
- * @return string           Human readable relative date.
- */
-function relative_date( $utc_date ) {
-	static $tzstring = null;
-
-	// Get the WP timezone string.
-	if ( null === $tzstring ) {
-		$current_offset = get_option( 'gmt_offset' );
-		$tzstring       = get_option( 'timezone_string' );
-
-		// Remove old Etc mappings. Fallback to gmt_offset.
-		if ( false !== strpos( $tzstring, 'Etc/GMT' ) ) {
-			$tzstring = '';
-		}
-
-		if ( empty( $tzstring ) ) { // Create a UTC+- zone if no timezone string exists
-			if ( 0 == $current_offset ) {
-				$tzstring = 'UTC+0';
-			} elseif ( $current_offset < 0 ) {
-				$tzstring = 'UTC' . $current_offset;
-			} else {
-				$tzstring = 'UTC+' . $current_offset;
-			}
-		}
-	}
-
-	$date = new DateTime( $utc_date, new DateTimeZone( 'UTC' ) );
-	$date->setTimeZone( new DateTimeZone( $tzstring ) );
-
-	$time = $date->getTimestamp();
-	$currtime = time();
-	$time_diff = $currtime - $time;
-
-	if ( $time_diff >= 0 && $time_diff < DAY_IN_SECONDS ) {
-		$date = sprintf( __( '%s ago' ), human_time_diff( $time ) );
-	} else {
-		$date = mysql2date( __( 'Y/m/d' ), $time );
-	}
-
-	return $date;
 }

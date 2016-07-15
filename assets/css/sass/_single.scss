@@ -42,18 +42,23 @@
 	}
 }
 
-.misc-pub-post-status .gc-status-color {
-	display: block;
-	margin-top: 2px;
-	margin-left: 4px;
+.misc-pub-post-status {
+	.gc-status-color {
+		display: block;
+		margin-top: 2px;
+		margin-left: 4px;
+	}
+	.gc-status-name {
+		font-weight: 600;
+	}
 }
 
-.misc-gc-updated {
-	.current {
-		color: green;
+.gc-status-status {
+	&.current {
+		color: $greendk;
 	}
-	.not-current {
-		color: red;
+	&.not-current {
+		color: $reddk;
 	}
 }
 

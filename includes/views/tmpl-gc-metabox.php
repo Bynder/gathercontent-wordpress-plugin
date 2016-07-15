@@ -3,26 +3,13 @@
 </div>
 
 <div class="misc-pub-section misc-gc-updated">
-	<span class="dashicons dashicons-calendar"></span> <?php echo esc_html_x( 'Last Updated:', 'GatherContent updated date', 'gathercontent-importer' ); ?> <b class="<# if ( ! data.current ) { #>not-<# } #>current" title="<# if ( data.current ) { #><?php esc_attr_e( 'Your post is current.', 'gathercontent-importer' ); ?><# } else { #><?php esc_attr_e( 'Your post is behind.', 'gathercontent-importer' ); ?><# } #>">{{{ data.updated }}}</b>
+	<span class="dashicons dashicons-calendar"></span> <?php echo esc_html_x( 'Last Updated:', 'GatherContent updated date', 'gathercontent-importer' ); ?> <b><?php echo new self( 'underscore-data-updated', $this->args ); ?></b>
 </div>
 
 <div class="misc-pub-section misc-pub-gc-mapping">
 	<span class="dashicons dashicons-media-document"></span>
-
 	<?php esc_html_e( 'Mapping Template:', 'gathercontent-importer' ); ?>
-	<strong>
-	<# if ( data.mappingLink ) { #>
-	<a href="{{ data.mappingLink }}">
-		<# if ( data.mappingStatus ) { #>
-		{{ data.mappingStatus }}
-		<# } else { #>
-		{{ data.mappingName }}
-		<# } #>
-	</a>
-	<# } else { #>
-	{{ data.mappingName }}
-	<# } #>
-	</strong>
+	<strong><?php echo new self( 'underscore-data-mapping-name' ); ?></strong>
 </div>
 
 <div class="gc-major-publishing-actions">
@@ -35,4 +22,4 @@
 	<div class="clear"></div>
 </div>
 <?php
-	echo "<# console.log( 'data', data ); #>";
+	// echo "<# console.log( 'data', data ); #>";

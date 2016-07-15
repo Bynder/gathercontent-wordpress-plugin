@@ -1,5 +1,5 @@
 <legend class="screen-reader-text"><?php _e( 'Import Items', 'gathercontent-import' ); ?></legend>
-<table class="widefat striped">
+<table class="widefat striped gc-table">
 	<thead>
 		<tr>
 			<td id="cb" class="gc-field-th manage-column column-cb check-column"><label class="screen-reader-text" for="cb-select-all-1"><?php _e( 'Select All', 'gathercontent-import' ); ?></label>

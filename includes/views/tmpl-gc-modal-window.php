@@ -45,7 +45,7 @@
 		<# } #>
 
 		<div class="media-frame-content gc-bb-modal-main">
-			<table id="gc-modal-{{ data.currID }}" class="gc-modal-tabs widefat striped">
+			<table id="gc-modal-{{ data.currID }}" class="gc-modal-tabs widefat striped gc-table">
 				<thead>
 					<tr>
 						<td id="cb" class="gc-field-th manage-column column-cb check-column"><label class="screen-reader-text" for="cb-select-all-1"><?php _e( 'Select All', 'gathercontent-import' ); ?></label>

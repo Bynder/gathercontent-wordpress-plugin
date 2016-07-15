@@ -2,6 +2,7 @@
 namespace GatherContent\Importer\Admin\Ajax;
 use GatherContent\Importer\Base as Plugin_Base;
 use GatherContent\Importer\General;
+use GatherContent\Importer\Utils;
 use GatherContent\Importer\Post_Types\Template_Mappings;
 use GatherContent\Importer\Mapping_Post;
 use GatherContent\Importer\API;
@@ -111,8 +112,9 @@ class Handlers extends Plugin_Base {
 				'status'   => $status,
 				'itemName' => isset( $item->name ) ? $item->name : __( 'N/A', 'gathercontent-importer' ),
 				'updated' => isset( $item->updated_at )
-					? \GatherContent\Importer\relative_date( $item->updated_at->date )
+					? Utils::relative_date( $item->updated_at->date )
 					: __( '&mdash;', 'gathercontent-importer' ),
+				'current' => \GatherContent\Importer\post_is_current( $post['id'], $item ),
 			);
 		}
 
@@ -165,7 +167,7 @@ class Handlers extends Plugin_Base {
 
 	public function gc_fetch_js_post_cb() {
 		if ( $post_id = $this->_get_val( 'id' ) ) {
-			wp_send_json( \GatherContent\Importer\get_post_for_js(
+			wp_send_json( \GatherContent\Importer\prepare_post_for_js(
 				absint( $post_id ),
 				'force' === $this->_get_val( 'flush_cache' )
 			) );

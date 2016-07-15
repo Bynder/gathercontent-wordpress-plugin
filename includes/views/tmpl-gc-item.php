@@ -3,27 +3,16 @@
 	<input id="cb-select-{{ data.id }}" type="checkbox" <# if ( data.checked ) { #>checked="checked"<# } #> name="import[]" value="{{ data.id }}" <# if ( data.disabled ) { #>disabled="disabled"<# } #>>
 </th>
 <td class="gc-status-column">
-	<span class="gc-status-color <# if ( '#ffffff' === data.status.color ) { #> gc-status-color-white<# } #>" style="background-color:{{ data.status.color }};" data-id="{{ data.status.id }}"></span>
-	{{ data.status.name }}
+	<?php echo new self( 'underscore-data-status' ); ?>
 </td>
 <td>
 	<a href="<?php $this->output( 'url' ); ?>item/{{ data.item }}" target="_blank">{{ data.itemName }}</a>
 </td>
 <td>
-	{{ data.updated }}
+	<?php echo new self( 'underscore-data-updated', $this->args ); ?>
 </td>
 <td>
-	<# if ( data.mappingLink ) { #>
-	<a href="{{ data.mappingLink }}">
-		<# if ( data.mappingStatus ) { #>
-		{{ data.mappingStatus }}
-		<# } else { #>
-		{{ data.mappingName }}
-		<# } #>
-	</a>
-	<# } else { #>
-	{{ data.mappingName }}
-	<# } #>
+	<?php echo new self( 'underscore-data-mapping-name' ); ?>
 </td>
 <td class="gc-item-wp-post-title">
 	<# if ( data.editLink ) { #><a href="{{{ data.editLink }}}"><# } #>

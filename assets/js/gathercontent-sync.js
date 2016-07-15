@@ -1,5 +1,5 @@
 /**
- * GatherContent Importer - v3.0.0 - 2016-07-14
+ * GatherContent Importer - v3.0.0 - 2016-07-15
  * http://www.gathercontent.com
  *
  * Copyright (c) 2016 GatherContent
@@ -285,7 +285,6 @@ module.exports = function (app) {
 		},
 
 		toggleCheckAndRender: function toggleCheckAndRender(evt) {
-			console.warn('toggleCheckAndRender');
 			this.toggleCheck();
 			this.render();
 		}
@@ -297,7 +296,6 @@ module.exports = function (app) {
 
 module.exports = function (app, $, gc) {
 	var percent = gc.percent;
-	var log = gc.log;
 	var thisView;
 	var masterCheckSelector = '.gc-field-th.check-column input';
 
@@ -307,7 +305,7 @@ module.exports = function (app, $, gc) {
 		progressTemplate: wp.template('gc-items-sync-progress'),
 		spinnerRow: '<tr><td colspan="6"><span class="gc-loader spinner is-active"></span></td></tr>',
 		$wrap: $('.gc-admin-wrap'),
-		intervalID: null,
+		timeoutID: null,
 		ajax: null,
 
 		events: function events() {
@@ -387,7 +385,6 @@ module.exports = function (app, $, gc) {
 		},
 
 		cancelSync: function cancelSync(url) {
-			console.warn('cancelSync');
 			percent = null;
 
 			this.ajax.reset();
@@ -425,7 +422,7 @@ module.exports = function (app, $, gc) {
 				this.ajax.set('time', 5000);
 			}
 
-			this.setInterval(this.checkProgress.bind(this));
+			this.setTimeout(this.checkProgress.bind(this));
 
 			if (percent > 99) {
 				this.cancelSync(window.location.href + '&updated=1&flush_cache=1&redirect=1');
@@ -434,17 +431,16 @@ module.exports = function (app, $, gc) {
 			}
 		},
 
-		setInterval: function setInterval(callback) {
-			this.intervalID = this.intervalID || window.setInterval(callback, this.ajax.get('time'));
+		setTimeout: function setTimeout(callback) {
+			this.timeoutID = window.setTimeout(callback, this.ajax.get('time'));
 		},
 
 		clearInterval: function clearInterval() {
-			window.clearInterval(this.intervalID);
-			this.intervalID = null;
+			window.clearTimeout(this.timeoutID);
+			this.timeoutID = null;
 		},
 
 		checkProgress: function checkProgress() {
-			console.log('checkProgress ' + this.checkHits() + ' ' + this.ajax.get('time'));
 			this.doAjax('check', percent);
 		},
 
@@ -453,11 +449,11 @@ module.exports = function (app, $, gc) {
 		},
 
 		ajaxResponse: function ajaxResponse(response, formData) {
-			log('warn', 'response', response);
+			gc.log('warn', 'hits/interval/response: ' + this.checkHits() + '/' + this.ajax.get('time') + '/', response.success ? response.data : response);
 
 			if ('check' === formData) {
 				this.ajax.set('checkHits', this.checkHits() + 1);
-			} else {
+			} else if (response.data) {
 				this.ajax.set('checkHits', 0);
 			}
 

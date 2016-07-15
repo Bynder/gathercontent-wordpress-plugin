@@ -1,5 +1,5 @@
 /**
- * GatherContent Importer - v3.0.0 - 2016-07-14
+ * GatherContent Importer - v3.0.0 - 2016-07-15
  * http://www.gathercontent.com
  *
  * Copyright (c) 2016 GatherContent
@@ -401,7 +401,6 @@ module.exports = function (app, _meta_keys) {
 
 		changeValue: function changeValue(evt) {
 			var value = jQuery(evt.target).val();
-			// console.log('value',value);
 			if ('' === value) {
 				this.model.set('field_value', '');
 				this.model.set('field_type', '');
