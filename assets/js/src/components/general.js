@@ -72,7 +72,7 @@ window.GatherContent = window.GatherContent || {};
 			.on( 'click', '#gc-sync-modal', app.triggerModal );
 
 		$( document ).ajaxSend( function( evt, request, settings ) {
-			if ( -1 !== settings.data.indexOf( '&action=inline-save' ) ) {
+			if ( settings.data && -1 !== settings.data.indexOf( '&action=inline-save' ) ) {
 				app.generalView.trigger( 'quickEditSend', request, settings );
 			}
 		} );
