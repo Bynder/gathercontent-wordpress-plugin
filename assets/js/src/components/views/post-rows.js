@@ -13,9 +13,9 @@ module.exports = function( app, gc, $ ) {
 			this.listenTo( this, 'quickEditSend', this.sending );
 			this.render();
 
-			// Trigger an un-cached update for the statuses
+			// Trigger an un-cached update for the posts
 			$.post( window.ajaxurl, {
-				action      : 'gc_get_items',
+				action      : 'gc_get_posts',
 				posts       : gc._posts,
 				flush_cache : gc.queryargs.flush_cache ? 1 : 0
 			}, function( response ) {

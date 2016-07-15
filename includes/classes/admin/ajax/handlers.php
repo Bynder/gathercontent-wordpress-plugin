@@ -47,7 +47,7 @@ class Handlers extends Plugin_Base {
 		add_action( 'wp_ajax_gc_sync_items', array( $this->sync_items, 'gc_sync_items_cb' ) );
 		add_action( 'wp_ajax_gc_pull_items', array( $this->sync_bulk, 'gc_pull_items_cb' ) );
 		add_action( 'wp_ajax_gc_push_items', array( $this->sync_bulk, 'gc_push_items_cb' ) );
-		add_action( 'wp_ajax_gc_get_items', array( $this, 'gc_get_items_cb' ) );
+		add_action( 'wp_ajax_gc_get_posts', array( $this, 'gc_get_posts_cb' ) );
 		add_action( 'wp_ajax_gc_get_post_statuses', array( $this, 'gc_get_post_statuses_cb' ) );
 		add_action( 'wp_ajax_set_gc_status', array( $this, 'set_gc_status_cb' ) );
 		add_action( 'wp_ajax_gc_fetch_js_post', array( $this, 'gc_fetch_js_post_cb' ) );
@@ -79,13 +79,13 @@ class Handlers extends Plugin_Base {
 		wp_send_json_error();
 	}
 
-	public function gc_get_items_cb() {
+	public function gc_get_posts_cb() {
 		$posts = $this->_post_val( 'posts' );
 		if ( empty( $posts ) || ! is_array( $posts ) ) {
 			wp_send_json_error();
 		}
 
-		$post_statuses = array();
+		$post_updates = array();
 
 		foreach ( $posts as $key => $post ) {
 			if ( empty( $post['id'] ) ) {
@@ -106,7 +106,7 @@ class Handlers extends Plugin_Base {
 				}
 			}
 
-			$post_statuses[ $post['id'] ] = array(
+			$post_updates[ $post['id'] ] = array(
 				'id'       => $post['id'],
 				'status'   => $status,
 				'itemName' => isset( $item->name ) ? $item->name : __( 'N/A', 'gathercontent-importer' ),
@@ -116,7 +116,7 @@ class Handlers extends Plugin_Base {
 			);
 		}
 
-		wp_send_json_success( $post_statuses );
+		wp_send_json_success( apply_filters( 'gc_prepare_js_update_data_for_posts', $post_updates ) );
 	}
 
 	public function gc_get_post_statuses_cb() {
