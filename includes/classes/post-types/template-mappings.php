@@ -62,6 +62,13 @@ class Template_Mappings extends Base {
 	public function register_post_type() {
 		parent::register_post_type();
 
+		$post_type = self::SLUG;
+		add_filter( "manage_{$post_type}_posts_columns", array( $this, 'register_column_headers' ) );
+		add_action( "manage_{$post_type}_posts_custom_column", array( $this, 'column_display' ), 10, 2 );
+		add_filter( "manage_edit-{$post_type}_sortable_columns", array( $this, 'register_sortable_columns' ) );
+
+		add_action( 'pre_get_posts', array( $this, 'orderby_meta' ) );
+
 		add_action( 'edit_form_after_title', array( $this, 'output_mapping_data' ) );
 
 		if ( ! isset( $_GET['gc_standard_edit_links'] ) ) {
@@ -70,6 +77,136 @@ class Template_Mappings extends Base {
 
 		add_filter( 'post_row_actions', array( $this, 'remove_quick_edit' ), 10, 2 );
 		add_action( 'gc_mapping_pre_post_update', array( $this, 'store_post_type_references' ) );
+	}
+
+	/**
+	 * Register the Template Mappings column headers.
+	 *
+	 * @since 3.0.0
+	 *
+	 * @param array $columns Array of registered columns for the mapping post-type.
+	 */
+	public function register_column_headers( $columns ) {
+		$columns['account'] = __( 'Account slug', 'gathercontent-import' );
+		$columns['project'] = __( 'Project id', 'gathercontent-import' );
+		$columns['template'] = __( 'Template id', 'gathercontent-import' );
+
+		return $columns;
+	}
+
+	/**
+	 * Register the Template Mappings sortable columns.
+	 *
+	 * @since 3.0.0
+	 *
+	 * @param array $columns Array of registered columns for the mapping post-type.
+	 */
+	public function register_sortable_columns( $columns ) {
+		$columns['account'] = '_gc_account';
+		$columns['project'] = '_gc_project';
+		$columns['template'] = '_gc_template';
+
+		return $columns;
+	}
+
+	/**
+	 * Make the Template Mapping sortable columns work.
+	 *
+	 * @since 3.0.0
+	 *
+	 * @param WP_Query $query
+	 */
+	public function orderby_meta( $query ) {
+		if ( ! is_admin() ) {
+			return;
+		}
+
+		$orderby = $query->get( 'orderby' );
+
+		if ( ! in_array( $orderby, array( '_gc_account', '_gc_project', '_gc_template' ), 1 ) ) {
+			return;
+		}
+
+		$query->set( 'meta_key', $orderby );
+		$query->set( 'orderby', '_gc_account' === $orderby ? 'meta_value' : 'meta_value_num' );
+	}
+
+	/**
+	 * The Template Mappings column display output.
+	 *
+	 * @since  3.0.0
+	 *
+	 * @param string $column  Column ID
+	 * @param int    $post_id Mapping post id
+	 */
+	public function column_display( $column, $post_id ) {
+		if ( ! in_array( $column, array( 'account', 'project', 'template' ), 1 ) ) {
+			return;
+		}
+
+		$data = $this->column_post_data( $post_id );
+		$url = $value = '';
+
+		switch ( $column ) {
+			case 'account':
+				$value = $data[ $column ] ?: __( '&mdash;' );
+				if ( $data['base_url'] && $data['account'] ) {
+					$url = $data['base_url'];
+				}
+				break;
+			case 'project':
+				$value = $data[ $column ] ?: __( '&mdash;' );
+				if ( $data['base_url'] && $value ) {
+					$url = esc_url( $data['base_url'] .'projects/view/'. $value );
+				}
+				break;
+			case 'template':
+				$value = $data[ $column ] ?: __( '&mdash;' );
+				if ( $data['base_url'] && $data['project'] && $value ) {
+					$url = esc_url( $data['base_url'] .'templates/'. $data['project'] );
+				}
+				break;
+		}
+
+		if ( $value ) {
+			if ( $url ) {
+				echo '<a href="'. esc_url( $url ) .'" target="_blank">';
+					print_r( $value );
+				echo '</a>';
+			} else {
+				print_r( $value );
+			}
+		}
+	}
+
+	/**
+	 * Collect meta data for mapping.
+	 *
+	 * @since  3.0.0
+	 *
+	 * @param  int  $post_id Mapping post id
+	 *
+	 * @return array         Array of meta dat.
+	 */
+	protected function column_post_data( $post_id ) {
+		static $posts_data = array();
+
+		if ( ! isset( $posts_data[ $post_id ] ) ) {
+			$post_data = array(
+				'account'  => get_post_meta( $post_id, '_gc_account', 1 ),
+				'project'  => get_post_meta( $post_id, '_gc_project', 1 ),
+				'template' => get_post_meta( $post_id, '_gc_template', 1 ),
+				'base_url' => '',
+			);
+
+			if ( $post_data['account'] ) {
+				$post_data['base_url'] = 'https://'. $post_data['account'] .'.gathercontent.com/';
+			}
+
+			$posts_data[ $post_id ] = $post_data;
+		}
+
+		return $posts_data[ $post_id ];
 	}
 
 	public function output_mapping_data( $post ) {
