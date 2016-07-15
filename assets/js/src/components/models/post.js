@@ -17,7 +17,6 @@ module.exports = function( gc ) {
 			disabled        : false,
 			statuses        : [],
 			statusesChecked : false,
-			statusSetting   : {},
 		},
 
 		url: function() {

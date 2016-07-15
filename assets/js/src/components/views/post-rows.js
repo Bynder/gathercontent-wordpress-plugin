@@ -7,13 +7,10 @@ module.exports = function( app, gc, $ ) {
 
 		width: '200px',
 
-		events : {
-			'change .gc-select2' : 'storeStatus'
-		},
-
 		initialize: function() {
 			thisView = this;
 			this.listenTo( this, 'quickEdit', this.edit );
+			this.listenTo( this, 'quickEditSend', this.sending );
 			this.render();
 
 			// Trigger an un-cached update for the statuses
@@ -26,15 +23,19 @@ module.exports = function( app, gc, $ ) {
 					thisView.collection.trigger( 'updateItems', response.data );
 				}
 			} );
-
 		},
 
-		storeStatus: function( evt ) {
-			var $this = jQuery( evt.target );
-			var val = $this.val();
-			var model = this.collection.getById( $this.data( 'id' ) );
+		sending: function( request, settings ) {
+			var data = this.parseQueryString( settings.data );
+			if ( data.post_ID && data.gc_status ) {
+				var model = this.collection.getById( data.post_ID );
 
-			model.set( 'setStatus', val );
+				var status = _.find( model.get( 'statuses' ), function( status ) {
+					return parseInt( status.id, 10 ) === parseInt( data.gc_status, 10 );
+				} );
+
+				model.set( 'status', status );
+			}
 		},
 
 		edit: function( id, inlineEdit ) {
@@ -113,5 +114,26 @@ module.exports = function( app, gc, $ ) {
 			} );
 			return this;
 		},
+
+		/**
+		 * Parse query string.
+		 * ?a=b&c=d to {a: b, c: d}
+		 * @param {String} (option) queryString
+		 * @return {Object} query params
+		 */
+		parseQueryString: function( string ) {
+			if ( ! string ) {
+				return {};
+			}
+			return _
+				.chain(string.split('&'))
+				.map(function(params) {
+					var p = params.split('=');
+					return [p[0], decodeURIComponent(p[1])];
+				})
+				.object()
+				.value();
+		}
+
 	});
 };

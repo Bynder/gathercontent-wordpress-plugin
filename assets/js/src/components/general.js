@@ -71,6 +71,12 @@ window.GatherContent = window.GatherContent || {};
 			.addClass( 'gathercontent-admin-select2' )
 			.on( 'click', '#gc-sync-modal', app.triggerModal );
 
+		$( document ).ajaxSend( function( evt, request, settings ) {
+			if ( -1 !== settings.data.indexOf( '&action=inline-save' ) ) {
+				app.generalView.trigger( 'quickEditSend', request, settings );
+			}
+		} );
+
 		app.generalView = new app.views.postRows( {
 			collection : new app.collections.posts( gc._posts )
 		} );
@@ -78,6 +84,7 @@ window.GatherContent = window.GatherContent || {};
 		app.monkeyPatchQuickEdit( function() {
 			app.generalView.trigger( 'quickEdit', arguments, this );
 		} );
+
 	};
 
 	$( app.init );

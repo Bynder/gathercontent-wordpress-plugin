@@ -1,5 +1,5 @@
 /**
- * GatherContent Importer - v3.0.0 - 2016-07-14
+ * GatherContent Importer - v3.0.0 - 2016-07-15
  * http://www.gathercontent.com
  *
  * Copyright (c) 2016 GatherContent
@@ -202,6 +202,12 @@ window.GatherContent = window.GatherContent || {};
 	app.init = function () {
 		$(document.body).addClass('gathercontent-admin-select2').on('click', '#gc-sync-modal', app.triggerModal);
 
+		$(document).ajaxSend(function (evt, request, settings) {
+			if (-1 !== settings.data.indexOf('&action=inline-save')) {
+				app.generalView.trigger('quickEditSend', request, settings);
+			}
+		});
+
 		app.generalView = new app.views.postRows({
 			collection: new app.collections.posts(gc._posts)
 		});
@@ -323,8 +329,7 @@ module.exports = function (gc) {
 			checked: false,
 			disabled: false,
 			statuses: [],
-			statusesChecked: false,
-			statusSetting: {}
+			statusesChecked: false
 		},
 
 		url: function url() {
@@ -787,13 +792,10 @@ module.exports = function (app, gc, $) {
 
 		width: '200px',
 
-		events: {
-			'change .gc-select2': 'storeStatus'
-		},
-
 		initialize: function initialize() {
 			thisView = this;
 			this.listenTo(this, 'quickEdit', this.edit);
+			this.listenTo(this, 'quickEditSend', this.sending);
 			this.render();
 
 			// Trigger an un-cached update for the statuses
@@ -808,12 +810,17 @@ module.exports = function (app, gc, $) {
 			});
 		},
 
-		storeStatus: function storeStatus(evt) {
-			var $this = jQuery(evt.target);
-			var val = $this.val();
-			var model = this.collection.getById($this.data('id'));
+		sending: function sending(request, settings) {
+			var data = this.parseQueryString(settings.data);
+			if (data.post_ID && data.gc_status) {
+				var model = this.collection.getById(data.post_ID);
 
-			model.set('setStatus', val);
+				var status = _.find(model.get('statuses'), function (status) {
+					return parseInt(status.id, 10) === parseInt(data.gc_status, 10);
+				});
+
+				model.set('status', status);
+			}
 		},
 
 		edit: function edit(id, inlineEdit) {
@@ -890,7 +897,24 @@ module.exports = function (app, gc, $) {
 				new app.views.postRow({ model: model }).render();
 			});
 			return this;
+		},
+
+		/**
+   * Parse query string.
+   * ?a=b&c=d to {a: b, c: d}
+   * @param {String} (option) queryString
+   * @return {Object} query params
+   */
+		parseQueryString: function parseQueryString(string) {
+			if (!string) {
+				return {};
+			}
+			return _.chain(string.split('&')).map(function (params) {
+				var p = params.split('=');
+				return [p[0], decodeURIComponent(p[1])];
+			}).object().value();
 		}
+
 	});
 };
 
