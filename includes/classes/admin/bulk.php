@@ -174,13 +174,14 @@ class Bulk extends UI_Base {
 	}
 
 	protected function ajax_view( $post_id, $item_id, $mapping_id ) {
-		$status_name = $status_color = '';
+		$status_name = $status_color = $status_id = '';
 
 		if ( $item_id ) {
 
 			$item = $this->api->uncached()->get_item( $item_id );
 
 			if ( isset( $item->status->data ) ) {
+				$status_id = $item->status->data->id;
 				$status_name = $item->status->data->name;
 				$status_color = $item->status->data->color;
 			}
@@ -190,6 +191,7 @@ class Bulk extends UI_Base {
 			'post_id'      => $post_id,
 			'item_id'      => $item_id,
 			'mapping_id'   => $mapping_id,
+			'status_id'    => $status_id,
 			'status_name'  => $status_name,
 			'status_color' => $status_color,
 		) );
