@@ -3,9 +3,9 @@
 	<# if ( data.mappingStatus ) { #>
 	{{ data.mappingStatus }}
 	<# } else { #>
-	{{ data.mappingName }}
+	{{{ data.mappingName }}}
 	<# } #>
 </a>
 <# } else { #>
-{{ data.mappingName }}
+{{{ data.mappingName }}}
 <# } #>

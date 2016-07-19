@@ -1,5 +1,5 @@
 /**
- * GatherContent Importer - v3.0.0 - 2016-07-15
+ * GatherContent Importer - v3.0.0 - 2016-07-19
  * http://www.gathercontent.com
  *
  * Copyright (c) 2016 GatherContent
@@ -44,7 +44,7 @@ module.exports = function (gc) {
 		defaults: {
 			id: 0,
 			item: 0,
-			itemName: 0,
+			itemName: '',
 			updated: '',
 			current: true,
 			editLink: '',

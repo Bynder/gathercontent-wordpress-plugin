@@ -99,7 +99,8 @@ class Handlers extends Plugin_Base {
 			) );
 
 			$status = (object) array();
-			if ( $post['item'] ) {
+			$item = false;
+			if ( $post['item'] && '&mdash;' !== $post['item'] ) {
 				$item = $this->api->uncached()->get_item( $post['item'] );
 
 				if ( isset( $item->status->data ) ) {
