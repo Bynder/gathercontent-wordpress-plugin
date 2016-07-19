@@ -93,6 +93,6 @@
 	}
 }
 
-.gc-modal-tabs .gc-disabled td {
+.gc-modal-tabs .gc-disabled td:not( .gc-item-wp-post-title ) {
 	opacity: 0.4;
 }

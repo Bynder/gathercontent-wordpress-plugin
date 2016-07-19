@@ -308,7 +308,7 @@ ul.gc-radio-desc li, ul.gc-reveal-items-list li {
 .gc-modal-tabs .hidden {
   display: none; }
 
-.gc-modal-tabs .gc-disabled td {
+.gc-modal-tabs .gc-disabled td:not(.gc-item-wp-post-title) {
   opacity: 0.4; }
 
 #poststuff #gc-manage .inside {
