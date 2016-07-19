@@ -285,8 +285,8 @@ class Template_Mappings extends Base {
 			$actions['sync-items'] = sprintf(
 				'<a href="%s" aria-label="%s">%s</a>',
 				add_query_arg( 'sync-items', 1,  get_edit_post_link( $post->ID, 'raw' ) ),
-				esc_attr( __( 'Import Items', 'gathercontent-import' ) ),
-				__( 'Import Items', 'gathercontent-import' )
+				esc_attr( __( 'Review Items for Import', 'gathercontent-import' ) ),
+				__( 'Review Items for Import', 'gathercontent-import' )
 			);
 		}
 
