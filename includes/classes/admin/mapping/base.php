@@ -217,6 +217,7 @@ abstract class Base extends Plugin_Base {
 			'_wp_attached_file'        => 1,
 			'_edit_lock'               => 1,
 			'_edit_last'               => 1,
+			'_thumbnail_id'            => 1,
 			'_wp_page_template'        => 1,
 			'_gc_account'              => 1,
 			'_gc_account_id'           => 1,
@@ -227,6 +228,8 @@ abstract class Base extends Plugin_Base {
 			'_gc_mapped_item_id'       => 1,
 			'_gc_mapping_id'           => 1,
 			'_gc_mapped_meta'          => 1,
+			// legacy
+			'gc_file_id'               => 1,
 		) );
 
 		$keys = array();
