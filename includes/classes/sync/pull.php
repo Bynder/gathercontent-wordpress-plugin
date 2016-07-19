@@ -120,6 +120,10 @@ class Pull extends Base {
 					$post_data['post_excerpt'] = strtr( $post_data['post_excerpt'], $replacements['post_excerpt'] );
 				}
 
+				if ( ! empty( $replacements['meta_input'] ) ) {
+					$post_data['meta_input'] = $replacements['meta_input'];
+				}
+
 				// And update post (but don't create a revision for it).
 				remove_action( 'post_updated', 'wp_save_post_revision' );
 				$post_id = wp_update_post( $post_data );
@@ -261,6 +265,10 @@ class Pull extends Base {
 
 		$post_data['meta_input'] = $this->maybe_append( $meta_key, $value, $post_data['meta_input'] );
 
+		if ( 'files' === $this->element->type ) {
+			$post_data = $this->set_media_field_value( $meta_key, $post_data );
+		}
+
 		return $post_data;
 	}
 
@@ -277,7 +285,6 @@ class Pull extends Base {
 
 				$post_data = $this->maybe_append( $field, $token, $post_data );
 			}
-
 		}
 
 		$post_data['attachments'][] = array(
@@ -435,6 +442,9 @@ class Pull extends Base {
 
 					// The token should be removed from the content.
 					$replacements['post_content'][ $token ] = '';
+
+				} else {
+					$replacements['meta_input'][ $attachment['destination'] ][] = $attach_id;
 				}
 
 				// Store media item ID reference to attachment post-meta.
