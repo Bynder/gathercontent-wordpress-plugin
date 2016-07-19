@@ -3,7 +3,7 @@ module.exports = function( gc ) {
 		defaults: {
 			id              : 0,
 			item            : 0,
-			itemName        : 0,
+			itemName        : '',
 			updated         : '',
 			current         : true,
 			editLink        : '',
