@@ -1,4 +1,10 @@
 <?php
+/**
+ * GatherContent Importer
+ *
+ * @package GatherContent Importer
+ */
+
 namespace GatherContent\Importer\Admin;
 use GatherContent\Importer\Post_Types\Template_Mappings;
 use GatherContent\Importer\General;
@@ -6,8 +12,14 @@ use GatherContent\Importer\API;
 use GatherContent\Importer\Admin\Mapping\Base as UI_Base;
 use GatherContent\Importer\Admin\Enqueue;
 
+/**
+ * Because Enqueue is abstract.
+ */
 class Bulk_Enqueue extends Enqueue {}
 
+/**
+ * Handles the UI for the bulk/quick-editing on post-listing page.
+ */
 class Bulk extends UI_Base {
 
 	/**
@@ -43,8 +55,8 @@ class Bulk extends UI_Base {
 	 *
 	 * @since 3.0.0
 	 *
-	 * @param $api      API object
-	 * @param $mappings Template_Mappings object
+	 * @param API               $api      API object.
+	 * @param Template_Mappings $mappings Template_Mappings object.
 	 */
 	public function __construct( API $api, Template_Mappings $mappings ) {
 		$this->api        = $api;
@@ -92,10 +104,9 @@ class Bulk extends UI_Base {
 				add_filter( "manage_{$post_type}_posts_columns", array( $this, 'register_column_headers' ), 8 );
 				add_action( "manage_{$post_type}_posts_custom_column", array( $this, 'column_display' ), 10, 2 );
 			}
-
 		}
 
-		// Handle quick-edit/bulk-edit ajax-post-saving
+		// Handle quick-edit/bulk-edit ajax-post-saving.
 		add_action( 'save_post', array( $this, 'set_gc_status' ), 10, 2 );
 	}
 
@@ -112,7 +123,6 @@ class Bulk extends UI_Base {
 		if (
 			'edit' !== $screen->base
 			|| ! $screen->post_type
-			// || ! isset( $this->post_types[ $screen->post_type ] )
 		) {
 			return;
 		}
@@ -129,6 +139,15 @@ class Bulk extends UI_Base {
 		$this->hook_columns( $screen->post_type );
 	}
 
+	/**
+	 * Hooks the column callbacks for the current screen's post-type.
+	 *
+	 * @since  3.0.0
+	 *
+	 * @param  string $post_type Current screen's post-type.
+	 *
+	 * @return void
+	 */
 	public function hook_columns( $post_type ) {
 		add_filter( "manage_{$post_type}_posts_columns", array( $this, 'register_column_headers' ), 8 );
 		add_action( "manage_{$post_type}_posts_custom_column", array( $this, 'column_display' ), 10, 2 );
@@ -138,17 +157,28 @@ class Bulk extends UI_Base {
 
 	/**
 	 * Register the GC column header.
+	 *
 	 * @since 3.0.0
+	 *
+	 * @param  array $columns Array of column header names.
+	 *
+	 * @return array
 	 */
 	public function register_column_headers( $columns ) {
-		$columns['gathercontent'] = '<div title="'. __( 'GatherContent Item Status', 'gathercontent-importer' ) .'" class="gc-column-header"><span class="gc-logo-column"><img src="'. GATHERCONTENT_URL . 'images/logo.svg" alt="GatherContent" /></span>'. _x( 'Status', 'GatherContent Item Status', 'gathercontent-importer' ) .'</div>';
+		$columns['gathercontent'] = '<div title="' . __( 'GatherContent Item Status', 'gathercontent-importer' ) . '" class="gc-column-header"><span class="gc-logo-column"><img src="' . GATHERCONTENT_URL . 'images/logo.svg" alt="GatherContent" /></span>' . _x( 'Status', 'GatherContent Item Status', 'gathercontent-importer' ) . '</div>';
 
 		return $columns;
 	}
 
 	/**
 	 * The GC field column display output.
-	 * @since 3.0.0
+	 *
+	 * @since  3.0.0
+	 *
+	 * @param  string $column_name Column name.
+	 * @param  int    $post_id     Post ID.
+	 *
+	 * @return void
 	 */
 	public function column_display( $column_name, $post_id ) {
 		if ( 'gathercontent' !== $column_name ) {
@@ -165,14 +195,25 @@ class Bulk extends UI_Base {
 		printf(
 			'<span class="gc-status-column" data-id="%d" data-item="%d" data-mapping="%d">&mdash;</span>',
 			absint( $post_id ),
-			$js_post['item'],
-			$js_post['mapping']
+			absint( $js_post['item'] ),
+			absint( $js_post['mapping'] )
 		);
 
 		// Save post object for backbone data.
 		$this->posts[] = $js_post;
 	}
 
+	/**
+	 * Handles the column view if it's being ajax-loaded.
+	 *
+	 * @since  3.0.0
+	 *
+	 * @param  int $post_id    Post ID.
+	 * @param  int $item_id    Item id.
+	 * @param  int $mapping_id Mapping id.
+	 *
+	 * @return void
+	 */
 	protected function ajax_view( $post_id, $item_id, $mapping_id ) {
 		$status_name = $status_color = $status_id = '';
 
@@ -199,7 +240,13 @@ class Bulk extends UI_Base {
 
 	/**
 	 * The GC field quick-edit display output.
+	 *
 	 * @since 3.0.0
+	 *
+	 * @param  string $column_name Column name.
+	 * @param  string $post_type   Post type.
+	 *
+	 * @return void
 	 */
 	public function quick_edit_box( $column_name, $post_type ) {
 		if ( 'gathercontent' !== $column_name ) {
@@ -211,7 +258,13 @@ class Bulk extends UI_Base {
 
 	/**
 	 * The GC field bulk-edit display output.
+	 *
 	 * @since 3.0.0
+	 *
+	 * @param  string $column_name Column name.
+	 * @param  string $post_type   Post type.
+	 *
+	 * @return void
 	 */
 	public function bulk_edit_box( $column_name, $post_type ) {
 		if ( 'gathercontent' !== $column_name ) {
@@ -223,6 +276,14 @@ class Bulk extends UI_Base {
 		) );
 	}
 
+	/**
+	 * Sets the GatherContent status if being requested via quick-edit box.
+	 *
+	 * @since 3.0.0
+	 *
+	 * @param int    $post_id Post ID.
+	 * @param object $post    Post object.
+	 */
 	public function set_gc_status( $post_id, $post ) {
 		if (
 			wp_is_post_autosave( $post )
@@ -233,12 +294,8 @@ class Bulk extends UI_Base {
 			|| ! ( $item_id = absint( \GatherContent\Importer\get_post_item_id( $post_id ) ) )
 			|| ! ( $mapping_id = absint( \GatherContent\Importer\get_post_mapping_id( $post_id ) ) )
 			|| ! ( $item = $this->api->get_item( $item_id ) )
-			|| ( isset( $item->status->data->id ) && $status_id == $item->status->data->id )
+			|| ( isset( $item->status->data->id ) && absint( $status_id ) === absint( $item->status->data->id ) )
 		) {
-			return;
-		}
-
-		if ( isset( $item->status->data->id ) && $status_id == $item->status->data->id ) {
 			return;
 		}
 
@@ -279,18 +336,6 @@ class Bulk extends UI_Base {
 		return array(
 			'mapping_post_types' => $this->post_types,
 			'_posts'             => $this->posts,
-			// '_nav_items'         => array(
-			// 	array(
-			// 		'label'  => __( 'Pull', 'gathercontent-importer' ),
-			// 		'id'     => 'pull',
-			// 		'hidden' => false,
-			// 	),
-			// 	array(
-			// 		'label'  => __( 'Push', 'gathercontent-importer' ),
-			// 		'id'     => 'push',
-			// 		'hidden' => true,
-			// 	),
-			// ),
 			'_modal_btns'         => array(
 				array(
 					'label'   => __( 'Push Items', 'gathercontent-importer' ),
