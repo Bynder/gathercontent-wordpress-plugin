@@ -1,4 +1,10 @@
 <?php
+/**
+ * GatherContent Importer
+ *
+ * @package GatherContent Importer
+ */
+
 namespace GatherContent\Importer;
 
 /**
@@ -6,24 +12,25 @@ namespace GatherContent\Importer;
  *
  * @since  3.0.0
  *
+ * @param  string $class_name Class name.
  * @return void
  */
 function autoload( $class_name ) {
 
-	// project-specific namespace prefix
-	$prefix = __NAMESPACE__. '\\';
+	// Project-specific namespace prefix.
+	$prefix = __NAMESPACE__ . '\\';
 
-	// does the class use the namespace prefix?
+	// Does the class use the namespace prefix?
 	$len = strlen( $prefix );
 	if ( 0 !== strncmp( $prefix, $class_name, $len ) ) {
-	    // no, move to the next registered autoloader
+	    // No, move to the next registered autoloader.
 	    return;
 	}
 
-	// base directory for the namespace prefix
+	// base directory for the namespace prefix.
 	$base_dir = GATHERCONTENT_INC . 'classes/';
 
-	// get the relative class name
+	// get the relative class name.
 	$relative_class = substr( $class_name, $len );
 
 	/*
@@ -34,7 +41,7 @@ function autoload( $class_name ) {
 	$path = strtolower( str_replace( array( '\\', '_' ), array( '/', '-' ), $relative_class ) );
 	$file = $base_dir . $path . '.php';
 
-	// if the file exists, require it
+	// if the file exists, require it.
 	if ( file_exists( $file ) ) {
 		require $file;
 	}
@@ -93,7 +100,7 @@ function init() {
  * @return void
  */
 function activate() {
-	// First load the init scripts in case any rewrite functionality is being loaded
+	// First load the init scripts in case any rewrite functionality is being loaded.
 	init();
 	flush_rewrite_rules();
 }
@@ -110,9 +117,9 @@ function activate() {
 function deactivate() {
 }
 
-// Activation/Deactivation
+// Activation/Deactivation.
 register_activation_hook( GATHERCONTENT_PLUGIN, '\GatherContent\Importer\activate' );
 register_deactivation_hook( GATHERCONTENT_PLUGIN, '\GatherContent\Importer\deactivate' );
 
-// Bootstrap
+// Bootstrap.
 setup();
