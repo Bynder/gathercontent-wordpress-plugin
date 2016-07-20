@@ -613,7 +613,7 @@ class Mapping_Wizzard extends Base {
 	public function project_name_and_edit_link( $project ) {
 		$project_name = '';
 
-		if ( $project->name ) {
+		if ( isset( $project->name ) ) {
 			$url = $this->platform_url( 'templates/' . $project->id );
 			$project_name = '<p class="gc-project-name description">' . sprintf( _x( 'Project: %s', 'GatherContent project name', 'gathercontent-import' ), $project->name ) . ' | <a href="'. esc_url( $url ) .'" target="_blank">'. __( 'edit project templates', 'gathercontent-import' ) .'</a></p>';
 		}
