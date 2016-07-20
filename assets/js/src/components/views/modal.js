@@ -78,7 +78,8 @@
 				} ) )
  				.append( this.backdrop );
 
-			this.$el.find( 'tbody' ).html( this.getRenderedSelected() );
+			// this.$el.find( 'tbody' ).html( this.getRenderedSelected() );
+			this.$el.find( 'tbody' ).html( this.getRenderedModels( app.views.modalPostRow ) );
 
 			// Make sync button enabled/disabled
 			this.buttonStatus( this.collection.syncEnabled );
@@ -104,18 +105,18 @@
  			} );
  		},
 
- 		getRenderedSelected: function() {
- 			var selected = this.getSelected();
+ 		// getRenderedSelected: function() {
+ 		// 	var selected = this.getSelected();
 
- 			var addedElements = document.createDocumentFragment();
+ 		// 	var addedElements = document.createDocumentFragment();
 
- 			_.each( selected, function( model ) {
- 				var view = ( new app.views.modalPostRow({ model: model }) ).render();
- 				addedElements.appendChild( view.el );
- 			});
+ 		// 	_.each( selected, function( model ) {
+ 		// 		var view = ( new app.views.modalPostRow({ model: model }) ).render();
+ 		// 		addedElements.appendChild( view.el );
+ 		// 	});
 
- 			return addedElements;
- 		},
+ 		// 	return addedElements;
+ 		// },
 
  		/**
  		 * Ensures that keyboard focus remains within the Modal dialog.

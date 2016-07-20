@@ -1,5 +1,5 @@
 /**
- * GatherContent Importer - v3.0.0 - 2016-07-19
+ * GatherContent Importer - v3.0.0 - 2016-07-20
  * http://www.gathercontent.com
  *
  * Copyright (c) 2016 GatherContent
@@ -554,7 +554,8 @@ module.exports = function (app, gc, $) {
 				currID: this.currNav ? this.currNav.get('id') : ''
 			})).append(this.backdrop);
 
-			this.$el.find('tbody').html(this.getRenderedSelected());
+			// this.$el.find( 'tbody' ).html( this.getRenderedSelected() );
+			this.$el.find('tbody').html(this.getRenderedModels(app.views.modalPostRow));
 
 			// Make sync button enabled/disabled
 			this.buttonStatus(this.collection.syncEnabled);
@@ -580,18 +581,18 @@ module.exports = function (app, gc, $) {
 			});
 		},
 
-		getRenderedSelected: function getRenderedSelected() {
-			var selected = this.getSelected();
+		// getRenderedSelected: function() {
+		// 	var selected = this.getSelected();
 
-			var addedElements = document.createDocumentFragment();
+		// 	var addedElements = document.createDocumentFragment();
 
-			_.each(selected, function (model) {
-				var view = new app.views.modalPostRow({ model: model }).render();
-				addedElements.appendChild(view.el);
-			});
+		// 	_.each( selected, function( model ) {
+		// 		var view = ( new app.views.modalPostRow({ model: model }) ).render();
+		// 		addedElements.appendChild( view.el );
+		// 	});
 
-			return addedElements;
-		},
+		// 	return addedElements;
+		// },
 
 		/**
    * Ensures that keyboard focus remains within the Modal dialog.
