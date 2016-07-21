@@ -272,6 +272,10 @@ class Bulk extends Post_Base {
 	 * @return array
 	 */
 	protected function get_underscore_templates() {
+		if ( empty( $this->posts ) ) {
+			return array();
+		}
+
 		$singular_label = isset( $this->post_type_object->labels->singular_name )
 			? $this->post_type_object->labels->singular_name
 			: $this->post_type_object->labels->name;
@@ -305,6 +309,10 @@ class Bulk extends Post_Base {
 	 * @return array Array of localizable data
 	 */
 	protected function get_localize_data() {
+		if ( empty( $this->posts ) ) {
+			return array();
+		}
+
 		$plural_label = $this->post_type_object->labels->name;
 
 		$data = parent::get_localize_data();
