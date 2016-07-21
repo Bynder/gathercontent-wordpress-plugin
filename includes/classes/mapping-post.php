@@ -161,6 +161,10 @@ class Mapping_Post extends Base {
 		return false;
 	}
 
+	public function get_edit_post_link() {
+		return get_edit_post_link( $this->post->ID );
+	}
+
 	public function update_meta( $key, $value ) {
 		return update_post_meta( $this->post->ID, $key, $value );
 	}

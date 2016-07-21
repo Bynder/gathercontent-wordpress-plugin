@@ -56,6 +56,8 @@ module.exports = function (gc) {
 			status: {},
 			checked: false,
 			disabled: false,
+			canPull: false,
+			canPush: false,
 			statuses: [],
 			statusesChecked: false
 		},
@@ -72,8 +74,17 @@ module.exports = function (gc) {
 		_get: function _get(value, attribute) {
 			switch (attribute) {
 				case 'disabled':
-					value = !this.get('item') || !this.get('mapping');
+					value = !this.get('mapping');
 					break;
+
+				case 'canPull':
+					value = this.get('item') > 0 && this.get('mapping') > 0;
+					break;
+
+				case 'canPush':
+					value = this.get('mapping') > 0;
+					break;
+
 				case 'mappingStatus':
 					value = gc._statuses[value] ? gc._statuses[value] : '';
 					break;
@@ -129,6 +140,7 @@ window.GatherContent = window.GatherContent || {};
 			app.metaboxView = new app.views.metabox({
 				model: new app.models.post(gc._post)
 			});
+			app.metaboxView.on('complete', app.reinit);
 		}
 	};
 
@@ -193,50 +205,52 @@ module.exports = function (app, $, gc) {
 		stepArgs: false,
 		events: {
 			'click #gc-map': 'step',
-			'change #select-gc-next-step': 'setProperty'
+			'change #select-gc-next-step': 'setProperty',
+			'click #gc-map-cancel': 'cancel'
 		},
 
 		initialize: function initialize() {
 			thisView = this;
 			this.listenTo(this.model, 'change:waiting', this.toggleWaitingRender);
 			this.listenTo(this.model, 'change', this.maybeEnableAndRender);
-			this.listenTo(this.model, 'change:step', this.startedClass);
+			this.listenTo(this.model, 'change:step', this.changeStep);
+			this.listenTo(this, 'cancel', this.resetAndRender);
 			this.render();
 			this.$el.removeClass('no-js').addClass('gc-mapping-metabox');
 		},
 
-		startedClass: function startedClass(model) {
+		changeStep: function changeStep(model) {
 			if ('accounts' === model.changed.step) {
 				this.$el.addClass('gc-mapping-started');
 			}
 
-			this.stepArgs = this['step_' + model.changed.step]();
+			if (model.changed.step) {
+				this.stepArgs = this['step_' + model.changed.step]();
+			}
 		},
 
 		setProperty: function setProperty(evt) {
 			var value = $(evt.target).val();
 
 			this.model.set(this.stepArgs.property, value);
+
+			if ('account' === this.stepArgs.property || 'project' === this.stepArgs.property) {
+				// Autoclick "next" for user.
+				this.step();
+			}
 		},
 
 		setMapping: function setMapping() {
-			var success = function success(response) {
-				if (response.success) {
+			var success = function success(data) {
+				this.model.set('waiting', false);
 
-					this.model.set('waiting', false);
-
-					// Goodbye
-					app.reinit(this.model);
-				} else {
-					this.failMsg(response.data);
-				}
+				// Goodbye
+				this.trigger('complete', this.model, data);
 			};
 
 			this.ajax({
 				action: 'gc_save_mapping_id'
-			}, success).fail(function () {
-				this.failMsg();
-			});
+			}, success, this.failMsg);
 		},
 
 		maybeEnableAndRender: function maybeEnableAndRender(model) {
@@ -262,38 +276,34 @@ module.exports = function (app, $, gc) {
 
 			this.setStep();
 
-			var success = function success(response) {
-				if (response.success) {
+			var properties = this.model.get(this.stepArgs.properties);
 
-					var cb = this.stepArgs.success || this.successHandler;
-					cb.call(this, response.data);
+			if (properties && properties.length) {
 
-					this.model.set('waiting', false);
-				} else {
-					this.failMsg(response.data);
-				}
-			};
+				this.successHandler(properties);
+			} else {
 
-			this.ajax({
-				action: 'gc_wp_filter_mappings',
-				property: this.stepArgs.property
-			}, success).fail(function () {
-				this.failMsg();
-			});
+				this.ajax({
+					action: 'gc_wp_filter_mappings',
+					property: this.stepArgs.property
+				}, this.successHandler, this.failMsg);
+			}
+
+			return this;
 		},
 
 		failMsg: function failMsg(msg) {
-			msg = msg || gc._errors.unknown;
+			msg = 'string' === typeof msg ? msg : gc._errors.unknown;
 			window.alert(msg);
 			thisView.model.set('waiting', false);
 		},
 
 		successHandler: function successHandler(objects) {
-			// var objects = this.get_objects( data );
 			this.model.set(this.stepArgs.properties, objects);
 			if (objects.length < 2) {
 				this.model.set('btnDisabled', false);
 			}
+			this.model.set('waiting', false);
 		},
 
 		setStep: function setStep() {
@@ -331,14 +341,25 @@ module.exports = function (app, $, gc) {
 			};
 		},
 
-		// get_objects: function( data ) {
-		// 	 return _.map( data, function( object ) {
-		// 		return {
-		// 			id   : object.id,
-		// 			name : object.name,
-		// 		};
-		// 	} );
-		// },
+		cancel: function cancel(evt) {
+			this.trigger('cancel', evt);
+		},
+
+		resetModel: function resetModel() {
+			this.stepArgs = false;
+			this.model.set({
+				'step': false,
+				'account': 0,
+				'project': 0,
+				'mapping': 0
+			});
+			return this.model;
+		},
+
+		resetAndRender: function resetAndRender() {
+			this.resetModel();
+			this.render();
+		},
 
 		render: function render() {
 			var json = this.model.toJSON();
@@ -360,13 +381,30 @@ module.exports = function (app, $, gc) {
 	return app.views.base.extend({
 		el: '#gc-related-data',
 
-		ajax: function ajax(args, successcb) {
-			return $.post(window.ajaxurl, $.extend({
+		ajax: function ajax(args, successcb, failcb) {
+			var view = this;
+			var success = function success(response) {
+				if (response.success) {
+					successcb.call(view, response.data);
+				} else if (failcb) {
+					failcb.call(view, response.data);
+				}
+			};
+
+			var promise = $.post(window.ajaxurl, $.extend({
 				action: '',
 				post: this.model.toJSON(),
 				nonce: gc.$id('gc-edit-nonce').val(),
 				flush_cache: gc.queryargs.flush_cache ? 1 : 0
-			}, args), successcb.bind(this));
+			}, args), success);
+
+			if (failcb) {
+				promise.fail(function () {
+					failcb.call(view);
+				});
+			}
+
+			return promise;
 		}
 	});
 };
@@ -541,7 +579,7 @@ module.exports = function (app, $, gc) {
 			var newStatusId = this.$('.gc-default-mapping-select').val();
 			var oldStatus = this.model.get('status');
 			var oldStatusId = oldStatus && oldStatus.id ? oldStatus.id : false;
-			var newStatus, statuses, fail, success;
+			var newStatus, statuses;
 
 			if (newStatusId === oldStatusId) {
 				return this.statusesView.trigger('statusesClose');
@@ -555,22 +593,12 @@ module.exports = function (app, $, gc) {
 			this.statusesView.trigger('statusesClose');
 			this.model.set('status', newStatus);
 
-			fail = function () {
-				thisView.model.set('status', oldStatus);
-			};
-
-			success = function (response) {
-				if (response.success) {
-					this.refreshData();
-				} else {
-					fail();
-				}
-			};
-
 			this.ajax({
 				action: 'set_gc_status',
 				status: newStatusId
-			}, success).fail(fail);
+			}, this.refreshData, function () {
+				this.model.set('status', oldStatus);
+			});
 		},
 
 		pull: function pull() {
@@ -589,24 +617,23 @@ module.exports = function (app, $, gc) {
 		},
 
 		syncFail: function syncFail(msg) {
-			msg = msg || gc._errors.unknown;
+			msg = 'string' === typeof msg ? msg : gc._errors.unknown;
 			window.alert(msg);
-			thisView.model.set('mappingStatus', 'failed');
-			thisView.clearTimeout();
+			this.model.set('mappingStatus', 'failed');
+			this.clearTimeout();
 		},
 
-		syncResponse: function syncResponse(response) {
-			if (response.success && response.data.mappings) {
-				var mappings = response.data.mappings;
-				if (mappings.length && -1 !== _.indexOf(mappings, this.model.get('mapping'))) {
+		syncResponse: function syncResponse(data) {
+			if (data.mappings) {
+				if (data.mappings.length && -1 !== _.indexOf(data.mappings, this.model.get('mapping'))) {
 
 					this.model.set('mappingStatus', 'syncing');
-					this.checkStatus(response.data.direction);
+					this.checkStatus(data.direction);
 				} else {
-					this.finishedSync(response.data.direction);
+					this.finishedSync(data.direction);
 				}
 			} else {
-				this.syncFail(response.data);
+				this.syncFail(data);
 			}
 		},
 
@@ -616,9 +643,7 @@ module.exports = function (app, $, gc) {
 				// action : 'glsjlfjs',
 				data: data || [this.model.toJSON()],
 				nonce: gc._edit_nonce
-			}, this.syncResponse).fail(function () {
-				thisView.syncFail();
-			});
+			}, this.syncResponse, this.syncFail);
 		},
 
 		finishedSync: function finishedSync(direction) {

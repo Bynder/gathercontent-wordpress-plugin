@@ -6,64 +6,22 @@
  */
 
 namespace GatherContent\Importer\Admin;
-use GatherContent\Importer\Post_Types\Template_Mappings;
 use GatherContent\Importer\General;
 use GatherContent\Importer\API;
-use GatherContent\Importer\Admin\Mapping\Base as UI_Base;
 use GatherContent\Importer\Admin\Enqueue;
-
-/**
- * Because Enqueue is abstract.
- */
-class Bulk_Enqueue extends Enqueue {}
+use GatherContent\Importer\Admin\Mapping_Wizzard;
 
 /**
  * Handles the UI for the bulk/quick-editing on post-listing page.
  */
-class Bulk extends UI_Base {
+class Bulk extends Post_Base {
 
 	/**
-	 * GatherContent\Importer\API instance
+	 * The current listing page's post-type object.
 	 *
-	 * @var GatherContent\Importer\API
+	 * @var object
 	 */
-	protected $api = null;
-
-	/**
-	 * GatherContent\Importer\Post_Types\Template_Mappings instance
-	 *
-	 * @var GatherContent\Importer\Post_Types\Template_Mappings
-	 */
-	protected $mappings = null;
-
-	/**
-	 * GatherContent\Importer\Admin\Enqueue instance
-	 *
-	 * @var GatherContent\Importer\Admin\Enqueue
-	 */
-	protected $enqueue = null;
-
-	/**
-	 * A flag to check if this is an ajax request.
-	 *
-	 * @var boolean
-	 */
-	protected $doing_ajax = false;
-
-	/**
-	 * Creates an instance of this class.
-	 *
-	 * @since 3.0.0
-	 *
-	 * @param API               $api      API object.
-	 * @param Template_Mappings $mappings Template_Mappings object.
-	 */
-	public function __construct( API $api, Template_Mappings $mappings ) {
-		$this->api        = $api;
-		$this->mappings   = $mappings;
-		$this->enqueue    = new Bulk_Enqueue;
-		$this->doing_ajax = defined( 'DOING_AJAX' ) && DOING_AJAX;
-	}
+	protected $post_type_object;
 
 	/**
 	 * The page-specific script ID to enqueue.
@@ -88,7 +46,7 @@ class Bulk extends UI_Base {
 			return;
 		}
 
-		$this->post_types = $this->mappings->get_mapping_post_types();
+		$this->post_types = $this->wizzard->mappings->get_mapping_post_types();
 
 		global $pagenow;
 		if (
@@ -153,6 +111,8 @@ class Bulk extends UI_Base {
 		add_action( "manage_{$post_type}_posts_custom_column", array( $this, 'column_display' ), 10, 2 );
 		add_action( 'quick_edit_custom_box', array( $this, 'quick_edit_box' ), 10, 2 );
 		add_action( 'bulk_edit_custom_box', array( $this, 'bulk_edit_box' ), 10, 2 );
+
+		$this->post_type_object = get_post_type_object( $post_type );
 	}
 
 	/**
@@ -310,17 +270,27 @@ class Bulk extends UI_Base {
 	 * @return array
 	 */
 	protected function get_underscore_templates() {
-		$object = get_post_type_object( get_post_type() );
-		$label = isset( $object->labels->singular_name ) ? $object->labels->singular_name : $object->name;
+		$singular_label = isset( $this->post_type_object->labels->singular_name )
+			? $this->post_type_object->labels->singular_name
+			: $this->post_type_object->labels->name;
 
 		return array(
 			'tmpl-gc-post-column-row' => array(),
 			'tmpl-gc-status-select2' => array(),
 			'tmpl-gc-select2-item' => array(),
-			'tmpl-gc-modal-window' => array(),
+			'tmpl-gc-modal-window' => array(
+				'nav' => array(
+					$this->wizzard->parent_url            => __( 'Settings', 'gathercontent-import' ),
+					$this->wizzard->mappings->listing_url => $this->wizzard->mappings->args->label,
+					$this->wizzard->url                   => $this->wizzard->mappings->args->labels->new_item,
+				),
+			),
 			'tmpl-gc-item' => array(
 				'url'   => General::get_instance()->admin->platform_url(),
-				'label' => $label,
+				'label' => $singular_label,
+			),
+			'tmpl-gc-mapping-metabox' => array(
+				'message' => esc_html__( 'Fetching GatherContent Accounts', 'gathercontent-importer' ),
 			),
 		);
 	}
@@ -333,29 +303,35 @@ class Bulk extends UI_Base {
 	 * @return array Array of localizable data
 	 */
 	protected function get_localize_data() {
-		return array(
-			'mapping_post_types' => $this->post_types,
-			'_posts'             => $this->posts,
-			'_modal_btns'         => array(
-				array(
-					'label'   => __( 'Push Items', 'gathercontent-importer' ),
-					'id'      => 'push',
-					'primary' => false,
-				),
-				array(
-					'label'   => __( 'Pull Items', 'gathercontent-importer' ),
-					'id'      => 'pull',
-					'primary' => true,
-				),
+		$plural_label = $this->post_type_object->labels->name;
+
+		$data = parent::get_localize_data();
+
+		$data['_posts']      = $this->posts;
+		$data['_modal_btns'] = array(
+			array(
+				'label'   => __( 'Assign Template Mapping', 'gathercontent-importer' ),
+				'id'      => 'assign-mapping',
+				'primary' => false,
 			),
-			'_edit_nonce' => wp_create_nonce( General::get_instance()->admin->mapping_wizzard->option_group . '-options' ),
-			'_statuses' => array(
-				'starting' => __( 'Starting Sync', 'gathercontent-importer' ),
-				'syncing'  => __( 'Syncing', 'gathercontent-importer' ),
-				'complete' => __( 'Sync Complete', 'gathercontent-importer' ),
-				'failed'   => __( 'Sync Failed', 'gathercontent-importer' ),
+			array(
+				'label'   => __( 'Push Items', 'gathercontent-importer' ),
+				'id'      => 'push',
+				'primary' => false,
+			),
+			array(
+				'label'   => __( 'Pull Items', 'gathercontent-importer' ),
+				'id'      => 'pull',
+				'primary' => true,
 			),
 		);
+
+		$data['_sure'] = array(
+			'push' => sprintf( __( 'Are you sure you want to push these %s to GatherContent? Any unsaved changes in GatherContent will be overwritten.', 'gathercontent-importer' ), $plural_label ),
+			'pull'  => sprintf( __( 'Are you sure you want to pull these %s from GatherContent? Any local changes will be overwritten.', 'gathercontent-importer' ), $plural_label ),
+		);
+
+		return $data;
 	}
 
 }

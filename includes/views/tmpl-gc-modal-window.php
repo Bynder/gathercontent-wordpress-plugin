@@ -19,12 +19,11 @@
 
 		<div class="media-frame-menu">
 			<div class="media-menu">
-				<a class="media-menu-item" href="<?php echo admin_url( '?page='. \GatherContent\Importer\Admin\Admin::SLUG ); ?>">
-					<?php _e( 'Settings', 'gathercontent-import' ); ?>
-				</a>
-				<a class="media-menu-item" href="<?php echo admin_url( '?page='. \GatherContent\Importer\Admin\Mapping_Wizzard::SLUG ); ?>">
-					<?php _e( 'New Mapping', 'gathercontent-import' ); ?>
-				</a>
+				<?php foreach ( $this->get( 'nav' ) as $url => $text ) { ?>
+					<a class="media-menu-item" href="<?php echo esc_url( $url ); ?>">
+						<?php echo $text; ?>
+					</a>
+				<?php } ?>
 			</div>
 		</div>
 
@@ -96,6 +95,9 @@
 				</div>
 			</div>
 		</div>
+
+		<div class="gc-cloak"></div>
+		<div id="gc-related-data"></div>
 
 	</div>
 </div>

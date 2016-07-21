@@ -20,6 +20,7 @@
  		currNav: false,
 		timeoutID : null,
 		ajax : null,
+		metaboxView : null,
 
  		events: {
 			'click .gc-bb-modal-close'               : 'closeModal',
@@ -28,7 +29,9 @@
 			'click .gc-bb-modal-nav-tabs a'          : 'clickSelectTab',
 			'change .gc-field-th.check-column input' : 'checkAll',
 			'click #gc-btn-pull'                     : 'startPull',
-			'click #gc-btn-push'                     : 'startPush'
+			'click #gc-btn-push'                     : 'startPush',
+			'click .gc-cloak'                        : 'maybeResetMetaboxView',
+			'click #gc-btn-assign-mapping'           : 'startAssignment',
  		},
 
 		/**
@@ -47,9 +50,28 @@
 
  			this.listenTo( this.navItems, 'render', this.render );
  			this.listenTo( this.collection, 'render', this.render );
- 			this.listenTo( this.collection, 'enabledChange', this.checkEnableButton );
  			this.listenTo( this.collection, 'notAllChecked', this.allCheckedStatus );
- 			this.listenTo( this.collection, 'updateItems', this.render );
+ 			this.listenTo( this.collection, 'updateItems', this.maybeRender );
+ 			this.listenTo( this.collection, 'change:checked', this.checkEnableButton );
+
+ 			this.initMetaboxView = require( './../views/modal-assign-mapping.js' )( app, $, gc );
+ 		},
+
+ 		checked: function( selected ) {
+ 			this.selected = selected;
+ 			if ( ! selected.length ) {
+ 				return;
+ 			}
+
+ 			if ( selected.length === this.collection.length ) {
+ 				return this.collection.trigger( 'checkAll', true );
+ 			}
+
+			this.collection.trigger( 'checkSome', function( model ) {
+ 				return -1 !== _.indexOf( thisView.selected, model.get( 'id' ) ) && ! model.get( 'disabled' );
+ 			} );
+
+ 			return this;
  		},
 
  		setupAjax: function() {
@@ -70,7 +92,7 @@
 
  			// Build the base window and backdrop, attaching them to the $el.
  			// Setting the tab index allows us to capture focus and redirect it in Application.preserveFocus
- 			this.$el.attr( 'tabindex', '0' )
+ 			this.$el.removeClass( 'gc-set-mapping' ).attr( 'tabindex', '0' )
  				.html( this.template( {
 						btns     : this.btns.toJSON(),
 						navItems : this.navItems.toJSON(),
@@ -97,12 +119,6 @@
  			// Set focus on the modal to prevent accidental actions in the underlying page
  			// Not strictly necessary, but nice to do.
  			this.$el.focus();
- 		},
-
- 		getSelected: function() {
- 			return this.collection.filter( function( model ) {
- 				return -1 !== _.indexOf( thisView.selected, model.get( 'id' ) ) && ! model.get( 'disabled' );
- 			} );
  		},
 
  		// getRenderedSelected: function() {
@@ -134,6 +150,7 @@
  		 */
  		closeModal: function ( evt ) {
  			evt.preventDefault();
+ 			this.resetMetaboxView();
  			this.undelegateEvents();
  			$( document ).off( 'focusin' );
  			$( document.body ).removeClass( 'gc-modal-open' );
@@ -169,7 +186,16 @@
 		},
 
 		buttonStatus: function( enable ) {
-			this.$( '.media-toolbar button' ).prop( 'disabled', ! enable );
+			if ( this.collection.processing ) {
+				return;
+			}
+			if ( ! enable ) {
+				this.$( '.media-toolbar button' ).prop( 'disabled', true );
+			} else {
+				this.$( '#gc-btn-assign-mapping' ).prop( 'disabled', ! this.collection.checkedCan( 'assign' ) );
+				this.$( '#gc-btn-push' ).prop( 'disabled', ! this.collection.checkedCan( 'push' ) );
+				this.$( '#gc-btn-pull' ).prop( 'disabled', ! this.collection.checkedCan( 'pull' ) );
+			}
 		},
 
 		allCheckedStatus: function( checked ) {
@@ -182,34 +208,95 @@
 
 		startPull: function( evt ) {
 			evt.preventDefault();
-			var selected = this.modelsToJSON(
-				this.setSelectedMappingStatus( 'starting' )
-			);
-
-			this.doAjax( selected, 'pull' );
+			this.startSync( 'pull' );
 		},
 
 		startPush: function( evt ) {
 			evt.preventDefault();
-
-			var selected = this.modelsToJSON(
-				this.setSelectedMappingStatus( 'starting' )
-			);
-
-			this.doAjax( selected, 'push' );
+			this.startSync( 'push' );
 		},
 
-		getSelectedAndChecked: function() {
-			var checked = _.filter( this.getSelected(), function( model ) {
-				return model.get( 'checked' );
-			});
+		startSync: function( direction ) {
+			var toCheck = 'push' === direction ? 'canPush' : 'canPull';
+			var selected = this.selectiveGet( toCheck );
 
-			return checked;
+			if ( window.confirm( gc._sure[ direction ] ) ) {
+				selected = _.map( selected, function( model ) {
+					model.set( 'mappingStatus', 'starting' );
+					return model.toJSON();
+				} );
+
+				this.doAjax( selected, direction );
+			}
 		},
 
-		modelsToJSON: function( models ) {
-			return _.map( models, function( model ) {
-				return model.toJSON();
+		startAssignment: function( evt ) {
+			var postIds = _.map( this.selectiveGet( 'disabled' ), function( model ) {
+				return model.get( 'id' );
+			} );
+
+			this.resetMetaboxView();
+
+			this.$el.addClass( 'gc-set-mapping' );
+
+			this.$( '#gc-btn-assign-mapping' ).prop( 'disabled', true );
+
+			this.metaboxView = this.initMetaboxView( postIds );
+			this.listenTo( this.metaboxView, 'cancel', this.maybeResetMetaboxView );
+			this.listenTo( this.metaboxView, 'complete', function( model, data ) {
+				model.set( 'waiting', true );
+
+				this.collection.map( function( model ) {
+					if ( model.get( 'id' ) in data.ids ) {
+						model.set( 'mapping', data.mapping );
+						model.set( 'mappingName', data.mappingName );
+						model.set( 'mappingLink', data.mappingLink );
+					}
+				} );
+
+				this.render();
+			} );
+
+		},
+
+		maybeResetMetaboxView: function() {
+			if ( this.metaboxView ) {
+				this.resetMetaboxView();
+				this.buttonStatus( true );
+			}
+		},
+
+		resetMetaboxView: function() {
+			if ( this.metaboxView ) {
+				this.stopListening( this.metaboxView );
+				this.metaboxView.close();
+				this.$el.removeClass( 'gc-set-mapping' );
+			}
+		},
+
+		selectiveGet: function( toCheck ) {
+			var selected = [];
+			var staysChecked;
+
+			this.collection.trigger( 'checkSome', function( model ) {
+				staysChecked = model.get( 'checked' ) && model.get( toCheck );
+				if ( staysChecked ) {
+					selected.push( model );
+				}
+
+ 				return staysChecked;
+ 			} );
+
+			return selected;
+		},
+
+		getChecked: function( cb ) {
+			this.collection.filter( function( model ) {
+				var shouldGet = model.get( 'checked' );
+				if ( shouldGet && cb ) {
+					cb( model );
+				}
+				return shouldGet;
 			} );
 		},
 
@@ -219,7 +306,13 @@
 			}
 
 			var mappings = [];
-			_.each( this.getSelectedAndChecked(), function( model ) {
+
+			var toCheck = 'push' === response.data.direction ? 'canPush' : 'canPull';
+			var checked = this.getChecked( function( model ) {
+				if ( ! model.get( toCheck ) ) {
+					return;
+				}
+
 				if ( response.data.mappings.length && -1 !== _.indexOf( response.data.mappings, model.get( 'mapping' ) ) ) {
 					model.set( 'mappingStatus', 'syncing' );
 					mappings.push( model.get( 'mapping' ) );
@@ -245,12 +338,9 @@
 		},
 
 		setSelectedMappingStatus: function( status ) {
-			var selectedChecked = this.getSelectedAndChecked();
-			_.each( selectedChecked, function( model ) {
+			return this.getChecked( function( model ) {
 				model.set( 'mappingStatus', status );
 			} );
-
-			return selectedChecked;
 		},
 
 		checkStatus: function( mappings, direction ) {
@@ -274,6 +364,12 @@
 				0,
 				this.ajaxFail.bind( this )
 			);
+		},
+
+		maybeRender: function() {
+			if ( ! this.metaboxView ) {
+				this.render();
+			}
 		},
 
  	});

@@ -1,4 +1,10 @@
 <?php
+/**
+ * GatherContent Importer
+ *
+ * @package GatherContent Importer
+ */
+
 namespace GatherContent\Importer\Admin\Ajax;
 use GatherContent\Importer\Base as Plugin_Base;
 use GatherContent\Importer\General;
@@ -7,6 +13,9 @@ use GatherContent\Importer\Post_Types\Template_Mappings;
 use GatherContent\Importer\Mapping_Post;
 use GatherContent\Importer\API;
 
+/**
+ * Sets up all plugin ajax callbacks.
+ */
 class Handlers extends Plugin_Base {
 
 	/**
@@ -35,7 +44,7 @@ class Handlers extends Plugin_Base {
 	 *
 	 * @since 3.0.0
 	 *
-	 * @param $api      API object
+	 * @param API $api API object.
 	 */
 	public function __construct( API $api ) {
 		$this->api = $api;
@@ -43,6 +52,13 @@ class Handlers extends Plugin_Base {
 		$this->sync_bulk = new Sync_Bulk();
 	}
 
+	/**
+	 * Initiates the ajax hook callbacks.
+	 *
+	 * @since  3.0.0
+	 *
+	 * @return void
+	 */
 	public function init_hooks() {
 		add_action( 'wp_ajax_gc_get_option_data', array( $this, 'gc_get_option_data_cb' ) );
 		add_action( 'wp_ajax_gc_sync_items', array( $this->sync_items, 'gc_sync_items_cb' ) );
@@ -56,6 +72,13 @@ class Handlers extends Plugin_Base {
 		add_action( 'wp_ajax_gc_save_mapping_id', array( $this, 'gc_save_mapping_id_cb' ) );
 	}
 
+	/**
+	 * Fetches select2 options.
+	 *
+	 * @since  3.0.0
+	 *
+	 * @return void
+	 */
 	public function gc_get_option_data_cb() {
 		if ( ! $this->_get_val( 'q' ) || ! $this->_get_val( 'column' ) ) {
 			wp_send_json_error();
@@ -80,6 +103,13 @@ class Handlers extends Plugin_Base {
 		wp_send_json_error();
 	}
 
+	/**
+	 * Fetches post item updates for the post-listing page.
+	 *
+	 * @since  3.0.0
+	 *
+	 * @return void
+	 */
 	public function gc_get_posts_cb() {
 		$posts = $this->_post_val( 'posts' );
 		if ( empty( $posts ) || ! is_array( $posts ) ) {
@@ -122,14 +152,21 @@ class Handlers extends Plugin_Base {
 		wp_send_json_success( apply_filters( 'gc_prepare_js_update_data_for_posts', $post_updates ) );
 	}
 
+	/**
+	 * Fetches post mapping project's available statuses.
+	 *
+	 * @since  3.0.0
+	 *
+	 * @return void
+	 */
 	public function gc_get_post_statuses_cb() {
-		$postId = $this->_post_val( 'postId' );
-		if ( empty( $postId ) || ! ( $post = get_post( $postId ) ) ) {
-			wp_send_json_error( compact( 'postId' ) );
+		$post_id = $this->_post_val( 'postId' );
+		if ( empty( $post_id ) || ! ( $post = get_post( $post_id ) ) ) {
+			wp_send_json_error( array( 'postId' => $post_id ) );
 		}
 
-		$item_id = absint( \GatherContent\Importer\get_post_item_id( $postId ) );
-		$mapping_id = absint( \GatherContent\Importer\get_post_mapping_id( $postId ) );
+		$item_id = absint( \GatherContent\Importer\get_post_item_id( $post_id ) );
+		$mapping_id = absint( \GatherContent\Importer\get_post_mapping_id( $post_id ) );
 
 		if (
 			empty( $item_id )
@@ -138,12 +175,22 @@ class Handlers extends Plugin_Base {
 			|| ! ( $project = $mapping->get_project() )
 			|| ! ( $statuses = $this->api->get_project_statuses( $project ) )
 		) {
-			wp_send_json_error( compact( 'postId' ) );
+			wp_send_json_error( array( 'postId' => $post_id ) );
 		}
 
-		wp_send_json_success( compact( 'postId', 'statuses' ) );
+		wp_send_json_success( array(
+			'postId'   => $post_id,
+			'statuses' => $statuses,
+		) );
 	}
 
+	/**
+	 * Sets the GatherContent status for an item.
+	 *
+	 * @since  3.0.0
+	 *
+	 * @return void
+	 */
 	public function set_gc_status_cb() {
 		$post_data = $this->_post_val( 'post' );
 		$status = absint( $this->_post_val( 'status' ) );
@@ -166,6 +213,13 @@ class Handlers extends Plugin_Base {
 		wp_send_json_error();
 	}
 
+	/**
+	 * Fetches fresh post-data for post model.
+	 *
+	 * @since  3.0.0
+	 *
+	 * @return void
+	 */
 	public function gc_fetch_js_post_cb() {
 		if ( $post_id = $this->_get_val( 'id' ) ) {
 			wp_send_json( \GatherContent\Importer\prepare_post_for_js(
@@ -175,6 +229,13 @@ class Handlers extends Plugin_Base {
 		}
 	}
 
+	/**
+	 * Sets mapping id for a post or posts.
+	 *
+	 * @since  3.0.0
+	 *
+	 * @return void
+	 */
 	public function gc_save_mapping_id_cb() {
 		$post_data = $this->_post_val( 'post' );
 
@@ -188,13 +249,36 @@ class Handlers extends Plugin_Base {
 			wp_send_json_error( $e->getMessage() );
 		}
 
-		if ( \GatherContent\Importer\update_post_mapping_id( absint( $post_data['id'] ), $mapping->ID ) ) {
+		if ( ! empty( $post_data['ids'] ) && is_array( $post_data['ids'] ) ) {
+			$done = array();
+			foreach ( $post_data['ids'] as $post_id ) {
+				if ( \GatherContent\Importer\update_post_mapping_id( absint( $post_id ), $mapping->ID ) ) {
+					$done[ $post_id ] = $post_id;
+				}
+			}
+
+			wp_send_json_success( array(
+				'ids'         => $done,
+				'mapping'     => $mapping->ID,
+				'mappingName' => $mapping->post_title,
+				'mappingLink' => $mapping->get_edit_post_link(),
+			) );
+
+		} elseif ( \GatherContent\Importer\update_post_mapping_id( absint( $post_data['id'] ), $mapping->ID ) ) {
 			wp_send_json_success();
 		}
 
 		wp_send_json_error();
 	}
 
+	/**
+	 * Gets listing of accounts, projects, or template-mappings, only if template-mapping
+	 * exists for that account/project.
+	 *
+	 * @since  3.0.0
+	 *
+	 * @return void
+	 */
 	public function gc_wp_filter_mappings_cb() {
 		$post_data = $this->_post_val( 'post' );
 		$property = $this->_post_val( 'property' );
@@ -261,6 +345,15 @@ class Handlers extends Plugin_Base {
 	 * Non-callback methods.
 	 */
 
+	/**
+	 * Ajax-search for a WP user.
+	 *
+	 * @since  3.0.0
+	 *
+	 * @param  string $search_term Search term.
+	 *
+	 * @return array               Array of results for select2.
+	 */
 	protected function post_author( $search_term ) {
 		if ( ! \GatherContent\Importer\user_allowed() ) {
 			wp_send_json_error();
@@ -281,6 +374,15 @@ class Handlers extends Plugin_Base {
 		return array( 'results' => $users );
 	}
 
+	/**
+	 * Nonce-verifier helper.
+	 *
+	 * @since  3.0.0
+	 *
+	 * @param  string $nonce Nonce value.
+	 *
+	 * @return bool         Whether nonce was verified.
+	 */
 	public function verify_nonce( $nonce ) {
 		return wp_verify_nonce( $nonce, GATHERCONTENT_SLUG );
 	}

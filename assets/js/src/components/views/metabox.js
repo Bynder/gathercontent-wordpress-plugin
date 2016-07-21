@@ -70,7 +70,7 @@ module.exports = function( app, $, gc ) {
 			var newStatusId = this.$( '.gc-default-mapping-select' ).val();
 			var oldStatus = this.model.get( 'status' );
 			var oldStatusId = oldStatus && oldStatus.id ? oldStatus.id : false;
-			var newStatus, statuses, fail, success;
+			var newStatus, statuses;
 
 			if ( newStatusId === oldStatusId ) {
 				return this.statusesView.trigger( 'statusesClose' );
@@ -84,22 +84,12 @@ module.exports = function( app, $, gc ) {
 			this.statusesView.trigger( 'statusesClose' );
 			this.model.set( 'status', newStatus );
 
-			fail = function() {
-				thisView.model.set( 'status', oldStatus );
-			};
-
-			success = function( response ) {
-				if ( response.success ) {
-					this.refreshData();
-				} else {
-					fail();
-				}
-			};
-
 			this.ajax( {
 				action : 'set_gc_status',
 				status : newStatusId,
-			}, success ).fail( fail );
+			}, this.refreshData, function() {
+				this.model.set( 'status', oldStatus );
+			} );
 		},
 
 		pull: function() {
@@ -118,25 +108,24 @@ module.exports = function( app, $, gc ) {
 		},
 
 		syncFail: function( msg ) {
-			msg = msg || gc._errors.unknown;
+			msg = 'string' === typeof msg ? msg : gc._errors.unknown;
 			window.alert( msg );
-			thisView.model.set( 'mappingStatus', 'failed' );
-			thisView.clearTimeout();
+			this.model.set( 'mappingStatus', 'failed' );
+			this.clearTimeout();
 		},
 
-		syncResponse: function( response ) {
-			if ( response.success && response.data.mappings ) {
-				var mappings = response.data.mappings;
-				if ( mappings.length && -1 !== _.indexOf( mappings, this.model.get( 'mapping' ) ) ) {
+		syncResponse: function( data ) {
+			if ( data.mappings ) {
+				if ( data.mappings.length && -1 !== _.indexOf( data.mappings, this.model.get( 'mapping' ) ) ) {
 
 					this.model.set( 'mappingStatus', 'syncing' );
-					this.checkStatus( response.data.direction );
+					this.checkStatus( data.direction );
 
 				} else {
-					this.finishedSync( response.data.direction );
+					this.finishedSync( data.direction );
 				}
 			} else {
-				this.syncFail( response.data );
+				this.syncFail( data );
 			}
 		},
 
@@ -146,9 +135,7 @@ module.exports = function( app, $, gc ) {
 				// action : 'glsjlfjs',
 				data   : data || [ this.model.toJSON() ],
 				nonce  : gc._edit_nonce,
-			}, this.syncResponse ).fail( function() {
-				thisView.syncFail();
-			} );
+			}, this.syncResponse, this.syncFail );
 		},
 
 		finishedSync: function( direction ) {

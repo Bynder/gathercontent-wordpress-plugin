@@ -1,36 +1,21 @@
 <?php
+/**
+ * GatherContent Importer
+ *
+ * @package GatherContent Importer
+ */
+
 namespace GatherContent\Importer\Admin;
-use GatherContent\Importer\Post_Types\Template_Mappings;
+use GatherContent\Importer\Admin\Mapping_Wizzard;
 use GatherContent\Importer\Mapping_Post;
 use GatherContent\Importer\General;
 use GatherContent\Importer\API;
-use GatherContent\Importer\Admin\Mapping\Base as UI_Base;
 use GatherContent\Importer\Admin\Enqueue;
 
-class Single_Enqueue extends Enqueue {}
-
-class Single extends UI_Base {
-
-	/**
-	 * GatherContent\Importer\API instance
-	 *
-	 * @var GatherContent\Importer\API
-	 */
-	protected $api = null;
-
-	/**
-	 * GatherContent\Importer\Post_Types\Template_Mappings instance
-	 *
-	 * @var GatherContent\Importer\Post_Types\Template_Mappings
-	 */
-	protected $mappings = null;
-
-	/**
-	 * GatherContent\Importer\Admin\Enqueue instance
-	 *
-	 * @var GatherContent\Importer\Admin\Enqueue
-	 */
-	protected $enqueue = null;
+/**
+ * Handles the UI for the metabox on the post-edit page.
+ */
+class Single extends Post_Base {
 
 	/**
 	 * This JS post array.
@@ -45,20 +30,6 @@ class Single extends UI_Base {
 	 * @var string
 	 */
 	protected $post_type_label = '';
-
-	/**
-	 * Creates an instance of this class.
-	 *
-	 * @since 3.0.0
-	 *
-	 * @param $api      API object
-	 * @param $mappings Template_Mappings object
-	 */
-	public function __construct( API $api, Template_Mappings $mappings ) {
-		$this->api      = $api;
-		$this->mappings = $mappings;
-		$this->enqueue  = new Single_Enqueue;
-	}
 
 	/**
 	 * The page-specific script ID to enqueue.
@@ -82,8 +53,8 @@ class Single extends UI_Base {
 		if ( ! is_admin() ) {
 			return;
 		}
-		// add_meta_box( 'submitdiv', __('Save'), 'attachment_submit_meta_box', null, 'side', 'core' );
-		$this->post_types = $this->mappings->get_mapping_post_types();
+
+		$this->post_types = $this->wizzard->mappings->get_mapping_post_types();
 
 		global $pagenow;
 		if (
@@ -119,7 +90,16 @@ class Single extends UI_Base {
 		add_meta_box( 'gc-manage', 'GatherContent <span class="dashicons dashicons-randomize"></span>', array( $this, 'meta_box' ), $screen, 'side', 'high' );
 	}
 
-	public function meta_box( $post, $box ) {
+	/**
+	 * Metabox callback for outputting the metabox contents.
+	 *
+	 * @since  3.0.0
+	 *
+	 * @param  object $post Post object.
+	 *
+	 * @return void
+	 */
+	public function meta_box( $post ) {
 		$object = get_post_type_object( $post->post_type );
 		$this->post_type_label = isset( $object->labels->singular_name ) ? $object->labels->singular_name : $object->name;
 
@@ -145,11 +125,10 @@ class Single extends UI_Base {
 			'tmpl-gc-metabox' => array(
 				'url'   => General::get_instance()->admin->platform_url(),
 				'label' => $this->post_type_label,
-				// 'refresh_link' => \GatherContent\Importer\refresh_connection_link(),
 			),
 			'tmpl-gc-metabox-statuses' => array(),
 			'tmpl-gc-mapping-metabox' => array(
-				'label' => $this->post_type_label,
+				'message' => sprintf( esc_html__( 'This %s does not have an associated item or Template Mapping.', 'gathercontent-importer' ), $this->post_type_label ),
 			),
 			'tmpl-gc-status-select2' => array(),
 			'tmpl-gc-select2-item' => array(),
@@ -164,29 +143,16 @@ class Single extends UI_Base {
 	 * @return array Array of localizable data
 	 */
 	protected function get_localize_data() {
-		return array(
-			'_post' => $this->post,
-			'_statuses' => array(
-				'starting' => __( 'Starting Sync', 'gathercontent-importer' ),
-				'syncing'  => __( 'Syncing', 'gathercontent-importer' ),
-				'complete' => __( 'Sync Complete', 'gathercontent-importer' ),
-				'failed'   => __( 'Sync Failed', 'gathercontent-importer' ),
-			),
-			'_sure' => array(
-				'push_no_item' => sprintf( __( 'Push this %s to GatherContent?', 'gathercontent-importer' ), $this->post_type_label ),
-				'push' => sprintf( __( 'Are you sure you want to push this %s to GatherContent? Any unsaved changes in GatherContent will be overwritten.', 'gathercontent-importer' ), $this->post_type_label ),
-				'pull'  => sprintf( __( 'Are you sure you want to pull this %s from GatherContent? Any local changes will be overwritten.', 'gathercontent-importer' ), $this->post_type_label ),
-			),
-			'_errors' => array(
-				'unknown' => __( 'There was an unknown error', 'gathercontent-importer' ),
-			),
-			'_step_labels' => array(
-				'accounts' => esc_html__( 'Select an account:', 'gathercontent-importer' ),
-				'projects' => esc_html__( 'Select a project:', 'gathercontent-importer' ),
-				'mappings' => sprintf( esc_html_x( 'Select a %s:', 'Select a template mapping', 'gathercontent-importer' ), $this->mappings->args->labels->singular_name ),
-			),
-			'_edit_nonce' => wp_create_nonce( General::get_instance()->admin->mapping_wizzard->option_group . '-options' ),
+		$data = parent::get_localize_data();
+
+		$data['_post'] = $this->post;
+		$data['_sure'] = array(
+			'push_no_item' => sprintf( __( 'Push this %s to GatherContent?', 'gathercontent-importer' ), $this->post_type_label ),
+			'push' => sprintf( __( 'Are you sure you want to push this %s to GatherContent? Any unsaved changes in GatherContent will be overwritten.', 'gathercontent-importer' ), $this->post_type_label ),
+			'pull'  => sprintf( __( 'Are you sure you want to pull this %s from GatherContent? Any local changes will be overwritten.', 'gathercontent-importer' ), $this->post_type_label ),
 		);
+
+		return $data;
 	}
 
 }

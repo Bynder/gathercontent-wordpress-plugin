@@ -15,6 +15,8 @@ module.exports = function( gc ) {
 			status          : {},
 			checked         : false,
 			disabled        : false,
+			canPull         : false,
+			canPush         : false,
 			statuses        : [],
 			statusesChecked : false,
 		},
@@ -31,8 +33,17 @@ module.exports = function( gc ) {
 		_get : function( value, attribute ) {
 			switch ( attribute ) {
 				case 'disabled':
-					value = ! this.get( 'item' ) || ! this.get( 'mapping' );
+					value = ! this.get( 'mapping' );
 					break;
+
+				case 'canPull':
+					value = this.get( 'item' ) > 0 && this.get( 'mapping' ) > 0;
+					break;
+
+				case 'canPush':
+					value = this.get( 'mapping' ) > 0;
+					break;
+
 				case 'mappingStatus':
 					value = gc._statuses[ value ] ? gc._statuses[ value ] : '';
 					break;

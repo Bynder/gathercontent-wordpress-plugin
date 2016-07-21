@@ -253,9 +253,12 @@ function prepare_js_data( $args, $item = null, $type = 'post' ) {
 		}
 	}
 
-	if ( $args['post_id'] && $item ) {
+	if ( $args['post_id'] ) {
 		$args['editLink'] = get_edit_post_link( $args['post_id'] );
-		$args['current']  = \GatherContent\Importer\post_is_current( $args['post_id'], $item );
+	}
+
+	if ( $args['post_id'] && $item ) {
+		$args['current'] = \GatherContent\Importer\post_is_current( $args['post_id'], $item );
 	}
 
 	return apply_filters( "gc_prepare_js_data_for_$type", $args, $type, $item );

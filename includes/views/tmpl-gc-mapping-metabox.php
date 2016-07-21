@@ -9,7 +9,7 @@
 	</select>
 </div>
 <# } else { #>
-<p><?php printf( esc_html__( 'This %s does not have an associated item or Template Mapping.', 'gathercontent-importer' ), $this->get( 'label' ) ); ?></p>
+<p><?php $this->output( 'message' ); ?></p>
 <# } #>
 <div class="gc-major-publishing-actions gc-no-mapping">
 	<div class="gc-publishing-action">
@@ -17,15 +17,18 @@
 		<span class="spinner is-active"></span>
 		<# } else { #>
 			<# if ( data.step ) { #>
-			<button <# if ( data.btnDisabled ) { #>disabled="disabled"<# } #>id="gc-map" type="button" class="button gc-button-primary aligncenter">
-				<# if ( 'mappings' === data.step ) { #>
-				<?php esc_html_e( 'Save Mapping', 'gathercontent-importer' ); ?>
-				<# } else { #>
-				<?php esc_html_e( 'Next', 'gathercontent-importer' ); ?>
-				<# } #>
-			</button>
+				<button id="gc-map-cancel" type="button" class="button gc-button-secondary aligncenter">
+					<?php esc_html_e( 'Cancel', 'gathercontent-importer' ); ?>
+				</button>
+				<button <# if ( data.btnDisabled ) { #>disabled="disabled"<# } #>id="gc-map" type="button" class="button gc-button-primary aligncenter">
+					<# if ( 'mappings' === data.step ) { #>
+					<?php esc_html_e( 'Save Mapping', 'gathercontent-importer' ); ?>
+					<# } else { #>
+					<?php esc_html_e( 'Next', 'gathercontent-importer' ); ?>
+					<# } #>
+				</button>
 			<# } else { #>
-			<button id="gc-map" type="button" class="button gc-button-primary aligncenter"><?php esc_html_e( 'Map to GatherContent Template', 'gathercontent-importer' ); ?></button>
+				<button id="gc-map" type="button" class="button gc-button-primary aligncenter"><?php esc_html_e( 'Map to GatherContent Template', 'gathercontent-importer' ); ?></button>
 			<# } #>
 		<# } #>
 	</div>

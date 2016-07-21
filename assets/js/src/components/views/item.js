@@ -2,7 +2,7 @@ module.exports = function( app ) {
 	return app.views.base.extend({
 		template : wp.template( 'gc-item' ),
 		tagName : 'tr',
-		className : 'gc-item',
+		className : 'gc-item gc-enabled',
 		id : function() {
 			return this.model.get( 'id' );
 		},

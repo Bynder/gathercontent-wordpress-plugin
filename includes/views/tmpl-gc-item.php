@@ -1,6 +1,6 @@
 <th scope="row" class="check-column">
 	<label class="screen-reader-text" for="cb-select-{{ data.id }}"><?php _e( 'Select Another Item', 'gatdercontent-import' ); ?></label>
-	<input id="cb-select-{{ data.id }}" type="checkbox" <# if ( data.checked ) { #>checked="checked"<# } #> name="import[]" value="{{ data.id }}" <# if ( data.disabled ) { #>disabled="disabled"<# } #>>
+	<input id="cb-select-{{ data.id }}" type="checkbox" <# if ( data.checked ) { #>checked="checked"<# } #> name="import[]" value="{{ data.id }}">
 </th>
 <td class="gc-status-column">
 	<?php echo new self( 'underscore-data-status' ); ?>
@@ -16,7 +16,11 @@
 </td>
 <td class="gc-item-wp-post-title">
 	<# if ( data.editLink ) { #><a href="{{{ data.editLink }}}"><# } #>
-	{{{ data.post_title }}}
+	<# if ( '&mdash;' === data.post_title ) { #>
+		&mdash;
+	<# } else { #>
+		{{ data.post_title }}
+	<# } #>
 	<# if ( data.editLink ) { #></a><# } #>
 </td>
 <?php

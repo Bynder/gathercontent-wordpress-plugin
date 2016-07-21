@@ -8,7 +8,7 @@ module.exports = function( app, gc ) {
 		},
 
 		className : function() {
-			return 'gc-item ' + ( this.model.get( 'disabled' ) ? 'gc-disabled' : '' );
+			return 'gc-item ' + ( this.model.get( 'disabled' ) ? 'gc-disabled' : 'gc-enabled' );
 		},
 
 		events: {

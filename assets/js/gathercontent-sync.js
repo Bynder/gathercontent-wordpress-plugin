@@ -24,12 +24,15 @@ module.exports = Backbone.Collection.extend({
 module.exports = function (app) {
 	return app.collections.base.extend({
 		model: app.models.item,
+
 		totalChecked: 0,
 		allChecked: false,
 		syncEnabled: false,
+		processing: false,
 
 		initialize: function initialize() {
 			this.listenTo(this, 'checkAll', this.toggleChecked);
+			this.listenTo(this, 'checkSome', this.toggleCheckedIf);
 			this.listenTo(this, 'change:checked', this.checkChecked);
 		},
 
@@ -58,13 +61,41 @@ module.exports = function (app) {
 			}
 		},
 
+		toggleCheckedIf: function toggleCheckedIf(cb) {
+			this.processing = true;
+			this.each(function (model) {
+				model.set('checked', Boolean('function' === typeof cb ? cb(model) : cb));
+			});
+			this.processing = false;
+			this.trigger('render');
+		},
+
 		toggleChecked: function toggleChecked(checked) {
 			this.allChecked = checked;
-			this.each(function (model) {
-				model.set('checked', checked ? true : false);
+			this.toggleCheckedIf(checked);
+		},
+
+		checkedCan: function checkedCan(pushOrPull) {
+			switch (pushOrPull) {
+				case 'pull':
+					pushOrPull = 'canPull';
+					break;
+				case 'assign':
+					pushOrPull = 'disabled';
+					break;
+				// case 'push':
+				default:
+					pushOrPull = 'canPush';
+					break;
+			}
+
+			var can = this.find(function (model) {
+				return model.get(pushOrPull) && model.get('checked');
 			});
-			this.trigger('render');
+
+			return can;
 		}
+
 	});
 };
 
@@ -265,7 +296,7 @@ module.exports = function (app) {
 	return app.views.base.extend({
 		template: wp.template('gc-item'),
 		tagName: 'tr',
-		className: 'gc-item',
+		className: 'gc-item gc-enabled',
 		id: function id() {
 			return this.model.get('id');
 		},

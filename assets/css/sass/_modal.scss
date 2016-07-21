@@ -96,3 +96,28 @@
 .gc-modal-tabs .gc-disabled td:not( .gc-item-wp-post-title ) {
 	opacity: 0.4;
 }
+
+.gc-set-mapping {
+	.gc-cloak {
+		position: absolute;
+		top: 84px;
+		left: 200px;
+		right: 0;
+		bottom: 0;
+		height: auto;
+		width: auto;
+		background: #fff;
+		opacity: .5;
+		z-index: 101;
+	}
+	.gc-mapping-metabox {
+		position: absolute;
+		right: 16px;
+		bottom: 41px;
+		width: 270px;
+		z-index: 102;
+		select {
+			width: 250px;
+		}
+	}
+}

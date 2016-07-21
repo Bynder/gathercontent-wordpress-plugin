@@ -27,6 +27,7 @@ window.GatherContent = window.GatherContent || {};
 			app.metaboxView = new app.views.metabox( {
 				model : new app.models.post( gc._post )
 			} );
+			app.metaboxView.on( 'complete', app.reinit );
 		}
 	};
 

@@ -162,8 +162,12 @@ ul.gc-radio-desc li, ul.gc-reveal-items-list li {
 	}
 }
 
-.gc-table .gc-status-column {
+.gc-enabled .gc-status-column {
 	cursor: pointer;
+}
+
+.gc-disabled input[type="checkbox"] {
+	cursor: default;
 }
 
 .gathercontent-admin, .gathercontent-admin-select2 {

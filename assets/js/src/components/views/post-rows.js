@@ -12,7 +12,10 @@ module.exports = function( app, gc, $ ) {
 			this.listenTo( this, 'quickEdit', this.edit );
 			this.listenTo( this, 'quickEditSend', this.sending );
 			this.render();
+			this.updatePosts();
+		},
 
+		updatePosts: function() {
 			// Trigger an un-cached update for the posts
 			$.post( window.ajaxurl, {
 				action      : 'gc_get_posts',

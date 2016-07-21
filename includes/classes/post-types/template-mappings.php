@@ -8,6 +8,7 @@ use WP_Error;
 class Template_Mappings extends Base {
 	const SLUG = 'gc_templates';
 	public $slug = self::SLUG;
+	public $listing_url = '';
 
 	/**
 	 * GatherContent\Importer\API instance
@@ -26,6 +27,7 @@ class Template_Mappings extends Base {
 	 */
 	public function __construct( $parent_menu_slug, API $api ) {
 		$this->api = $api;
+		$this->listing_url = admin_url( 'edit.php?post_type=' . self::SLUG );
 
 		parent::__construct(
 			array(

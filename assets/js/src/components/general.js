@@ -55,8 +55,8 @@ window.GatherContent = window.GatherContent || {};
 			app.modalView = new app.views.modal( {
 				collection : app.generalView.collection
 			} );
-			app.modalView.selected = posts;
-			app.modalView.render();
+			app.modalView.checked( posts );
+			app.generalView.listenTo( app.modalView, 'updateModels', app.generalView.updatePosts );
 		}
 	};
 

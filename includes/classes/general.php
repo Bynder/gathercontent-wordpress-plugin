@@ -81,11 +81,11 @@ class General extends Base {
 		if ( isset( $this->admin->mapping_wizzard->mappings ) ) {
 			$this->bulk_ui = new Admin\Bulk(
 				$this->api,
-				$this->admin->mapping_wizzard->mappings
+				$this->admin->mapping_wizzard
 			);
 			$this->single_ui = new Admin\Single(
 				$this->api,
-				$this->admin->mapping_wizzard->mappings
+				$this->admin->mapping_wizzard
 			);
 		}
 	}

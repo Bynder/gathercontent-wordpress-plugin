@@ -1,12 +1,40 @@
 <?php
+/**
+ * GatherContent Importer, Base Field Type
+ *
+ * @package GatherContent Importer
+ */
+
 namespace GatherContent\Importer\Admin\Mapping\Field_Types;
 use GatherContent\Importer\Base as Plugin_Base;
 use GatherContent\Importer\Views\View;
 
+/**
+ * GatherContent Importer, Base Field Type
+ */
 abstract class Base extends Plugin_Base implements Type {
+
+	/**
+	 * Id of field type
+	 *
+	 * @var string
+	 */
 	protected $type_id = '';
+
+	/**
+	 * Label for type
+	 *
+	 * @var string
+	 */
 	protected $option_label = '';
 
+	/**
+	 * Returns type_id property
+	 *
+	 * @since  [since]
+	 *
+	 * @return [type]  [description]
+	 */
 	public function type_id() {
 		return $this->type_id;
 	}

@@ -5,52 +5,53 @@ module.exports = function( app, $, gc ) {
 		template : wp.template( 'gc-mapping-metabox' ),
 		stepArgs : false,
 		events : {
-			'click #gc-map' : 'step',
-			'change #select-gc-next-step' : 'setProperty'
+			'click #gc-map'               : 'step',
+			'change #select-gc-next-step' : 'setProperty',
+			'click #gc-map-cancel'        : 'cancel'
 		},
 
 		initialize: function() {
 			thisView = this;
 			this.listenTo( this.model, 'change:waiting', this.toggleWaitingRender );
 			this.listenTo( this.model, 'change', this.maybeEnableAndRender );
-			this.listenTo( this.model, 'change:step', this.startedClass );
+			this.listenTo( this.model, 'change:step', this.changeStep );
+			this.listenTo( this, 'cancel', this.resetAndRender );
 			this.render();
 			this.$el.removeClass( 'no-js' ).addClass( 'gc-mapping-metabox' );
 		},
 
-		startedClass: function( model ) {
+		changeStep: function( model ) {
 			if ( 'accounts' === model.changed.step ) {
 				this.$el.addClass( 'gc-mapping-started' );
 			}
 
-			this.stepArgs = this[ 'step_'+ model.changed.step ]();
+			if ( model.changed.step ) {
+				this.stepArgs = this[ 'step_'+ model.changed.step ]();
+			}
 		},
 
 		setProperty: function( evt ) {
 			var value = $( evt.target ).val();
 
 			this.model.set( this.stepArgs.property, value );
+
+			if ( 'account' === this.stepArgs.property || 'project' === this.stepArgs.property ) {
+				// Autoclick "next" for user.
+				this.step();
+			}
 		},
 
 		setMapping: function() {
-			var success = function( response ) {
-				if ( response.success ) {
+			var success = function( data ) {
+				this.model.set( 'waiting', false );
 
-					this.model.set( 'waiting', false );
-
-					// Goodbye
-					app.reinit( this.model );
-
-				} else {
-					this.failMsg( response.data );
-				}
+				// Goodbye
+				this.trigger( 'complete', this.model, data );
 			};
 
 			this.ajax( {
 				action : 'gc_save_mapping_id',
-			}, success ).fail( function() {
-				this.failMsg();
-			} );
+			}, success, this.failMsg );
 		},
 
 		maybeEnableAndRender: function( model ) {
@@ -76,39 +77,36 @@ module.exports = function( app, $, gc ) {
 
 			this.setStep();
 
-			var success = function( response ) {
-				if ( response.success ) {
+			var properties = this.model.get( this.stepArgs.properties );
 
-					var cb = this.stepArgs.success || this.successHandler;
-					cb.call( this, response.data );
+			if ( properties && properties.length ) {
 
-					this.model.set( 'waiting', false );
+				this.successHandler( properties );
 
-				} else {
-					this.failMsg( response.data );
-				}
-			};
+			} else {
 
-			this.ajax( {
-				action   : 'gc_wp_filter_mappings',
-				property : this.stepArgs.property
-			}, success ).fail( function() {
-				this.failMsg();
-			} );
+				this.ajax( {
+					action   : 'gc_wp_filter_mappings',
+					property : this.stepArgs.property
+				}, this.successHandler, this.failMsg );
+
+			}
+
+			return this;
 		},
 
 		failMsg: function( msg ) {
-			msg = msg || gc._errors.unknown;
+			msg = 'string' === typeof msg ? msg : gc._errors.unknown;
 			window.alert( msg );
 			thisView.model.set( 'waiting', false );
 		},
 
 		successHandler: function( objects ) {
-			// var objects = this.get_objects( data );
 			this.model.set( this.stepArgs.properties, objects );
 			if ( objects.length < 2 ) {
 				this.model.set( 'btnDisabled', false );
 			}
+			this.model.set( 'waiting', false );
 		},
 
 		setStep: function() {
@@ -146,14 +144,25 @@ module.exports = function( app, $, gc ) {
 			};
 		},
 
-		// get_objects: function( data ) {
-		// 	 return _.map( data, function( object ) {
-		// 		return {
-		// 			id   : object.id,
-		// 			name : object.name,
-		// 		};
-		// 	} );
-		// },
+		cancel: function( evt ) {
+			this.trigger( 'cancel', evt );
+		},
+
+		resetModel : function() {
+			this.stepArgs = false;
+			this.model.set( {
+				'step'    : false,
+				'account' : 0,
+				'project' : 0,
+				'mapping' : 0,
+			} );
+			return this.model;
+		},
+
+		resetAndRender : function() {
+			this.resetModel();
+			this.render();
+		},
 
 		render : function() {
 			var json = this.model.toJSON();

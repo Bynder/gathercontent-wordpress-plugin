@@ -24,12 +24,15 @@ module.exports = Backbone.Collection.extend({
 module.exports = function (app) {
 	return app.collections.base.extend({
 		model: app.models.item,
+
 		totalChecked: 0,
 		allChecked: false,
 		syncEnabled: false,
+		processing: false,
 
 		initialize: function initialize() {
 			this.listenTo(this, 'checkAll', this.toggleChecked);
+			this.listenTo(this, 'checkSome', this.toggleCheckedIf);
 			this.listenTo(this, 'change:checked', this.checkChecked);
 		},
 
@@ -58,13 +61,41 @@ module.exports = function (app) {
 			}
 		},
 
+		toggleCheckedIf: function toggleCheckedIf(cb) {
+			this.processing = true;
+			this.each(function (model) {
+				model.set('checked', Boolean('function' === typeof cb ? cb(model) : cb));
+			});
+			this.processing = false;
+			this.trigger('render');
+		},
+
 		toggleChecked: function toggleChecked(checked) {
 			this.allChecked = checked;
-			this.each(function (model) {
-				model.set('checked', checked ? true : false);
+			this.toggleCheckedIf(checked);
+		},
+
+		checkedCan: function checkedCan(pushOrPull) {
+			switch (pushOrPull) {
+				case 'pull':
+					pushOrPull = 'canPull';
+					break;
+				case 'assign':
+					pushOrPull = 'disabled';
+					break;
+				// case 'push':
+				default:
+					pushOrPull = 'canPush';
+					break;
+			}
+
+			var can = this.find(function (model) {
+				return model.get(pushOrPull) && model.get('checked');
 			});
-			this.trigger('render');
+
+			return can;
 		}
+
 	});
 };
 
@@ -188,8 +219,8 @@ window.GatherContent = window.GatherContent || {};
 			app.modalView = new app.views.modal({
 				collection: app.generalView.collection
 			});
-			app.modalView.selected = posts;
-			app.modalView.render();
+			app.modalView.checked(posts);
+			app.generalView.listenTo(app.modalView, 'updateModels', app.generalView.updatePosts);
 		}
 	};
 
@@ -220,7 +251,7 @@ window.GatherContent = window.GatherContent || {};
 	$(app.init);
 })(window, document, jQuery, window.GatherContent);
 
-},{"./collections/modal-nav-items.js":3,"./collections/posts.js":4,"./initiate-objects.js":6,"./models/modal-nav-item.js":9,"./models/post.js":10,"./views/modal-post-row.js":13,"./views/modal.js":14,"./views/post-row.js":15,"./views/post-rows.js":16,"./views/status-select2.js":17}],6:[function(require,module,exports){
+},{"./collections/modal-nav-items.js":3,"./collections/posts.js":4,"./initiate-objects.js":6,"./models/modal-nav-item.js":9,"./models/post.js":10,"./views/modal-post-row.js":16,"./views/modal.js":17,"./views/post-row.js":18,"./views/post-rows.js":19,"./views/status-select2.js":20}],6:[function(require,module,exports){
 'use strict';
 
 module.exports = function (app) {
@@ -328,6 +359,8 @@ module.exports = function (gc) {
 			status: {},
 			checked: false,
 			disabled: false,
+			canPull: false,
+			canPush: false,
 			statuses: [],
 			statusesChecked: false
 		},
@@ -344,8 +377,17 @@ module.exports = function (gc) {
 		_get: function _get(value, attribute) {
 			switch (attribute) {
 				case 'disabled':
-					value = !this.get('item') || !this.get('mapping');
+					value = !this.get('mapping');
 					break;
+
+				case 'canPull':
+					value = this.get('item') > 0 && this.get('mapping') > 0;
+					break;
+
+				case 'canPush':
+					value = this.get('mapping') > 0;
+					break;
+
 				case 'mappingStatus':
 					value = gc._statuses[value] ? gc._statuses[value] : '';
 					break;
@@ -410,7 +452,7 @@ module.exports = function (app) {
 	return app.views.base.extend({
 		template: wp.template('gc-item'),
 		tagName: 'tr',
-		className: 'gc-item',
+		className: 'gc-item gc-enabled',
 		id: function id() {
 			return this.model.get('id');
 		},
@@ -439,6 +481,255 @@ module.exports = function (app) {
 },{}],13:[function(require,module,exports){
 'use strict';
 
+module.exports = function (app, $, gc) {
+	var thisView;
+	var base = require('./../views/metabox-base.js')(app, $, gc);
+	return base.extend({
+		template: wp.template('gc-mapping-metabox'),
+		stepArgs: false,
+		events: {
+			'click #gc-map': 'step',
+			'change #select-gc-next-step': 'setProperty',
+			'click #gc-map-cancel': 'cancel'
+		},
+
+		initialize: function initialize() {
+			thisView = this;
+			this.listenTo(this.model, 'change:waiting', this.toggleWaitingRender);
+			this.listenTo(this.model, 'change', this.maybeEnableAndRender);
+			this.listenTo(this.model, 'change:step', this.changeStep);
+			this.listenTo(this, 'cancel', this.resetAndRender);
+			this.render();
+			this.$el.removeClass('no-js').addClass('gc-mapping-metabox');
+		},
+
+		changeStep: function changeStep(model) {
+			if ('accounts' === model.changed.step) {
+				this.$el.addClass('gc-mapping-started');
+			}
+
+			if (model.changed.step) {
+				this.stepArgs = this['step_' + model.changed.step]();
+			}
+		},
+
+		setProperty: function setProperty(evt) {
+			var value = $(evt.target).val();
+
+			this.model.set(this.stepArgs.property, value);
+
+			if ('account' === this.stepArgs.property || 'project' === this.stepArgs.property) {
+				// Autoclick "next" for user.
+				this.step();
+			}
+		},
+
+		setMapping: function setMapping() {
+			var success = function success(data) {
+				this.model.set('waiting', false);
+
+				// Goodbye
+				this.trigger('complete', this.model, data);
+			};
+
+			this.ajax({
+				action: 'gc_save_mapping_id'
+			}, success, this.failMsg);
+		},
+
+		maybeEnableAndRender: function maybeEnableAndRender(model) {
+			if (model.changed.account || model.changed.project || model.changed.mapping) {
+				this.model.set('btnDisabled', false);
+				this.render();
+			}
+		},
+
+		toggleWaitingRender: function toggleWaitingRender(model) {
+			if (model.changed.waiting) {
+				this.model.set('btnDisabled', true);
+			}
+			this.render();
+		},
+
+		step: function step() {
+			this.model.set('waiting', true);
+
+			if ('mapping' === this.stepArgs.property) {
+				return this.setMapping();
+			}
+
+			this.setStep();
+
+			var properties = this.model.get(this.stepArgs.properties);
+
+			if (properties && properties.length) {
+
+				this.successHandler(properties);
+			} else {
+
+				this.ajax({
+					action: 'gc_wp_filter_mappings',
+					property: this.stepArgs.property
+				}, this.successHandler, this.failMsg);
+			}
+
+			return this;
+		},
+
+		failMsg: function failMsg(msg) {
+			msg = 'string' === typeof msg ? msg : gc._errors.unknown;
+			window.alert(msg);
+			thisView.model.set('waiting', false);
+		},
+
+		successHandler: function successHandler(objects) {
+			this.model.set(this.stepArgs.properties, objects);
+			if (objects.length < 2) {
+				this.model.set('btnDisabled', false);
+			}
+			this.model.set('waiting', false);
+		},
+
+		setStep: function setStep() {
+			if (!this.model.get('step')) {
+				return this.model.set('step', 'accounts');
+			}
+
+			if ('accounts' === this.model.get('step')) {
+				return this.model.set('step', 'projects');
+			}
+
+			if ('projects' === this.model.get('step')) {
+				return this.model.set('step', 'mappings');
+			}
+		},
+
+		step_accounts: function step_accounts() {
+			return {
+				property: 'account',
+				properties: 'accounts'
+			};
+		},
+
+		step_projects: function step_projects() {
+			return {
+				property: 'project',
+				properties: 'projects'
+			};
+		},
+
+		step_mappings: function step_mappings() {
+			return {
+				property: 'mapping',
+				properties: 'mappings'
+			};
+		},
+
+		cancel: function cancel(evt) {
+			this.trigger('cancel', evt);
+		},
+
+		resetModel: function resetModel() {
+			this.stepArgs = false;
+			this.model.set({
+				'step': false,
+				'account': 0,
+				'project': 0,
+				'mapping': 0
+			});
+			return this.model;
+		},
+
+		resetAndRender: function resetAndRender() {
+			this.resetModel();
+			this.render();
+		},
+
+		render: function render() {
+			var json = this.model.toJSON();
+			if (this.stepArgs) {
+				json.label = gc._step_labels[json.step];
+				json.property = this.stepArgs.property;
+			}
+			this.$el.html(this.template(json));
+			return this;
+		}
+
+	});
+};
+
+},{"./../views/metabox-base.js":14}],14:[function(require,module,exports){
+'use strict';
+
+module.exports = function (app, $, gc) {
+	return app.views.base.extend({
+		el: '#gc-related-data',
+
+		ajax: function ajax(args, successcb, failcb) {
+			var view = this;
+			var success = function success(response) {
+				if (response.success) {
+					successcb.call(view, response.data);
+				} else if (failcb) {
+					failcb.call(view, response.data);
+				}
+			};
+
+			var promise = $.post(window.ajaxurl, $.extend({
+				action: '',
+				post: this.model.toJSON(),
+				nonce: gc.$id('gc-edit-nonce').val(),
+				flush_cache: gc.queryargs.flush_cache ? 1 : 0
+			}, args), success);
+
+			if (failcb) {
+				promise.fail(function () {
+					failcb.call(view);
+				});
+			}
+
+			return promise;
+		}
+	});
+};
+
+},{}],15:[function(require,module,exports){
+'use strict';
+
+module.exports = function (app, $, gc) {
+	var base = require('./../views/mapping-metabox.js')(app, $, gc);
+
+	var model = new Backbone.Model({
+		id: true,
+		cancelBtn: true,
+		accounts: [],
+		projects: [],
+		mappings: []
+	});
+
+	var View = base.extend({
+		close: function close() {
+			model = this.resetModel();
+			base.prototype.close.call(this);
+		}
+	});
+
+	return function (postIds) {
+		model.set('ids', postIds);
+
+		var view = new View({
+			model: model
+		});
+
+		view.$el.addClass('postbox');
+
+		return view.step();
+	};
+};
+
+},{"./../views/mapping-metabox.js":13}],16:[function(require,module,exports){
+'use strict';
+
 module.exports = function (app, gc) {
 	var item = require('./../views/item.js')(app);
 	return item.extend({
@@ -449,7 +740,7 @@ module.exports = function (app, gc) {
 		},
 
 		className: function className() {
-			return 'gc-item ' + (this.model.get('disabled') ? 'gc-disabled' : '');
+			return 'gc-item ' + (this.model.get('disabled') ? 'gc-disabled' : 'gc-enabled');
 		},
 
 		events: {
@@ -474,7 +765,7 @@ module.exports = function (app, gc) {
 	});
 };
 
-},{"./../views/item.js":12}],14:[function(require,module,exports){
+},{"./../views/item.js":12}],17:[function(require,module,exports){
 'use strict';
 
 module.exports = function (app, gc, $) {
@@ -498,6 +789,7 @@ module.exports = function (app, gc, $) {
 		currNav: false,
 		timeoutID: null,
 		ajax: null,
+		metaboxView: null,
 
 		events: {
 			'click .gc-bb-modal-close': 'closeModal',
@@ -506,7 +798,9 @@ module.exports = function (app, gc, $) {
 			'click .gc-bb-modal-nav-tabs a': 'clickSelectTab',
 			'change .gc-field-th.check-column input': 'checkAll',
 			'click #gc-btn-pull': 'startPull',
-			'click #gc-btn-push': 'startPush'
+			'click #gc-btn-push': 'startPush',
+			'click .gc-cloak': 'maybeResetMetaboxView',
+			'click #gc-btn-assign-mapping': 'startAssignment'
 		},
 
 		/**
@@ -525,9 +819,28 @@ module.exports = function (app, gc, $) {
 
 			this.listenTo(this.navItems, 'render', this.render);
 			this.listenTo(this.collection, 'render', this.render);
-			this.listenTo(this.collection, 'enabledChange', this.checkEnableButton);
 			this.listenTo(this.collection, 'notAllChecked', this.allCheckedStatus);
-			this.listenTo(this.collection, 'updateItems', this.render);
+			this.listenTo(this.collection, 'updateItems', this.maybeRender);
+			this.listenTo(this.collection, 'change:checked', this.checkEnableButton);
+
+			this.initMetaboxView = require('./../views/modal-assign-mapping.js')(app, $, gc);
+		},
+
+		checked: function checked(selected) {
+			this.selected = selected;
+			if (!selected.length) {
+				return;
+			}
+
+			if (selected.length === this.collection.length) {
+				return this.collection.trigger('checkAll', true);
+			}
+
+			this.collection.trigger('checkSome', function (model) {
+				return -1 !== _.indexOf(thisView.selected, model.get('id')) && !model.get('disabled');
+			});
+
+			return this;
 		},
 
 		setupAjax: function setupAjax() {
@@ -548,7 +861,7 @@ module.exports = function (app, gc, $) {
 
 			// Build the base window and backdrop, attaching them to the $el.
 			// Setting the tab index allows us to capture focus and redirect it in Application.preserveFocus
-			this.$el.attr('tabindex', '0').html(this.template({
+			this.$el.removeClass('gc-set-mapping').attr('tabindex', '0').html(this.template({
 				btns: this.btns.toJSON(),
 				navItems: this.navItems.toJSON(),
 				currID: this.currNav ? this.currNav.get('id') : ''
@@ -573,12 +886,6 @@ module.exports = function (app, gc, $) {
 			// Set focus on the modal to prevent accidental actions in the underlying page
 			// Not strictly necessary, but nice to do.
 			this.$el.focus();
-		},
-
-		getSelected: function getSelected() {
-			return this.collection.filter(function (model) {
-				return -1 !== _.indexOf(thisView.selected, model.get('id')) && !model.get('disabled');
-			});
 		},
 
 		// getRenderedSelected: function() {
@@ -610,6 +917,7 @@ module.exports = function (app, gc, $) {
    */
 		closeModal: function closeModal(evt) {
 			evt.preventDefault();
+			this.resetMetaboxView();
 			this.undelegateEvents();
 			$(document).off('focusin');
 			$(document.body).removeClass('gc-modal-open');
@@ -645,7 +953,16 @@ module.exports = function (app, gc, $) {
 		},
 
 		buttonStatus: function buttonStatus(enable) {
-			this.$('.media-toolbar button').prop('disabled', !enable);
+			if (this.collection.processing) {
+				return;
+			}
+			if (!enable) {
+				this.$('.media-toolbar button').prop('disabled', true);
+			} else {
+				this.$('#gc-btn-assign-mapping').prop('disabled', !this.collection.checkedCan('assign'));
+				this.$('#gc-btn-push').prop('disabled', !this.collection.checkedCan('push'));
+				this.$('#gc-btn-pull').prop('disabled', !this.collection.checkedCan('pull'));
+			}
 		},
 
 		allCheckedStatus: function allCheckedStatus(checked) {
@@ -658,30 +975,94 @@ module.exports = function (app, gc, $) {
 
 		startPull: function startPull(evt) {
 			evt.preventDefault();
-			var selected = this.modelsToJSON(this.setSelectedMappingStatus('starting'));
-
-			this.doAjax(selected, 'pull');
+			this.startSync('pull');
 		},
 
 		startPush: function startPush(evt) {
 			evt.preventDefault();
-
-			var selected = this.modelsToJSON(this.setSelectedMappingStatus('starting'));
-
-			this.doAjax(selected, 'push');
+			this.startSync('push');
 		},
 
-		getSelectedAndChecked: function getSelectedAndChecked() {
-			var checked = _.filter(this.getSelected(), function (model) {
-				return model.get('checked');
+		startSync: function startSync(direction) {
+			var toCheck = 'push' === direction ? 'canPush' : 'canPull';
+			var selected = this.selectiveGet(toCheck);
+
+			if (window.confirm(gc._sure[direction])) {
+				selected = _.map(selected, function (model) {
+					model.set('mappingStatus', 'starting');
+					return model.toJSON();
+				});
+
+				this.doAjax(selected, direction);
+			}
+		},
+
+		startAssignment: function startAssignment(evt) {
+			var postIds = _.map(this.selectiveGet('disabled'), function (model) {
+				return model.get('id');
 			});
 
-			return checked;
+			this.resetMetaboxView();
+
+			this.$el.addClass('gc-set-mapping');
+
+			this.$('#gc-btn-assign-mapping').prop('disabled', true);
+
+			this.metaboxView = this.initMetaboxView(postIds);
+			this.listenTo(this.metaboxView, 'cancel', this.maybeResetMetaboxView);
+			this.listenTo(this.metaboxView, 'complete', function (model, data) {
+				model.set('waiting', true);
+
+				this.collection.map(function (model) {
+					if (model.get('id') in data.ids) {
+						model.set('mapping', data.mapping);
+						model.set('mappingName', data.mappingName);
+						model.set('mappingLink', data.mappingLink);
+					}
+				});
+
+				this.render();
+			});
 		},
 
-		modelsToJSON: function modelsToJSON(models) {
-			return _.map(models, function (model) {
-				return model.toJSON();
+		maybeResetMetaboxView: function maybeResetMetaboxView() {
+			if (this.metaboxView) {
+				this.resetMetaboxView();
+				this.buttonStatus(true);
+			}
+		},
+
+		resetMetaboxView: function resetMetaboxView() {
+			if (this.metaboxView) {
+				this.stopListening(this.metaboxView);
+				this.metaboxView.close();
+				this.$el.removeClass('gc-set-mapping');
+			}
+		},
+
+		selectiveGet: function selectiveGet(toCheck) {
+			var selected = [];
+			var staysChecked;
+
+			this.collection.trigger('checkSome', function (model) {
+				staysChecked = model.get('checked') && model.get(toCheck);
+				if (staysChecked) {
+					selected.push(model);
+				}
+
+				return staysChecked;
+			});
+
+			return selected;
+		},
+
+		getChecked: function getChecked(cb) {
+			this.collection.filter(function (model) {
+				var shouldGet = model.get('checked');
+				if (shouldGet && cb) {
+					cb(model);
+				}
+				return shouldGet;
 			});
 		},
 
@@ -691,7 +1072,13 @@ module.exports = function (app, gc, $) {
 			}
 
 			var mappings = [];
-			_.each(this.getSelectedAndChecked(), function (model) {
+
+			var toCheck = 'push' === response.data.direction ? 'canPush' : 'canPull';
+			var checked = this.getChecked(function (model) {
+				if (!model.get(toCheck)) {
+					return;
+				}
+
 				if (response.data.mappings.length && -1 !== _.indexOf(response.data.mappings, model.get('mapping'))) {
 					model.set('mappingStatus', 'syncing');
 					mappings.push(model.get('mapping'));
@@ -717,12 +1104,9 @@ module.exports = function (app, gc, $) {
 		},
 
 		setSelectedMappingStatus: function setSelectedMappingStatus(status) {
-			var selectedChecked = this.getSelectedAndChecked();
-			_.each(selectedChecked, function (model) {
+			return this.getChecked(function (model) {
 				model.set('mappingStatus', status);
 			});
-
-			return selectedChecked;
 		},
 
 		checkStatus: function checkStatus(mappings, direction) {
@@ -741,12 +1125,18 @@ module.exports = function (app, gc, $) {
 			this.ajax.set('action', 'gc_' + direction + '_items');
 
 			this.ajax.send(formData, this.ajaxSuccess.bind(this), 0, this.ajaxFail.bind(this));
+		},
+
+		maybeRender: function maybeRender() {
+			if (!this.metaboxView) {
+				this.render();
+			}
 		}
 
 	});
 };
 
-},{"./../models/ajax.js":7}],15:[function(require,module,exports){
+},{"./../models/ajax.js":7,"./../views/modal-assign-mapping.js":15}],18:[function(require,module,exports){
 'use strict';
 
 module.exports = function (app, gc) {
@@ -775,7 +1165,7 @@ module.exports = function (app, gc) {
 	});
 };
 
-},{}],16:[function(require,module,exports){
+},{}],19:[function(require,module,exports){
 'use strict';
 
 module.exports = function (app, gc, $) {
@@ -792,7 +1182,10 @@ module.exports = function (app, gc, $) {
 			this.listenTo(this, 'quickEdit', this.edit);
 			this.listenTo(this, 'quickEditSend', this.sending);
 			this.render();
+			this.updatePosts();
+		},
 
+		updatePosts: function updatePosts() {
 			// Trigger an un-cached update for the posts
 			$.post(window.ajaxurl, {
 				action: 'gc_get_posts',
@@ -913,7 +1306,7 @@ module.exports = function (app, gc, $) {
 	});
 };
 
-},{}],17:[function(require,module,exports){
+},{}],20:[function(require,module,exports){
 'use strict';
 
 module.exports = function (app) {

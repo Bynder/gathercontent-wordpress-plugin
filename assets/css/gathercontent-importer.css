@@ -112,8 +112,11 @@ ul.gc-radio-desc li, ul.gc-reveal-items-list li {
   padding: 6px 0 6px 6px;
   vertical-align: middle; }
 
-.gc-table .gc-status-column {
+.gc-enabled .gc-status-column {
   cursor: pointer; }
+
+.gc-disabled input[type="checkbox"] {
+  cursor: default; }
 
 .gathercontent-admin .select2-results__option, .gathercontent-admin-select2 .select2-results__option {
   border-bottom: 1px solid #eee;
@@ -310,6 +313,27 @@ ul.gc-radio-desc li, ul.gc-reveal-items-list li {
 
 .gc-modal-tabs .gc-disabled td:not(.gc-item-wp-post-title) {
   opacity: 0.4; }
+
+.gc-set-mapping .gc-cloak {
+  position: absolute;
+  top: 84px;
+  left: 200px;
+  right: 0;
+  bottom: 0;
+  height: auto;
+  width: auto;
+  background: #fff;
+  opacity: .5;
+  z-index: 101; }
+
+.gc-set-mapping .gc-mapping-metabox {
+  position: absolute;
+  right: 16px;
+  bottom: 41px;
+  width: 270px;
+  z-index: 102; }
+  .gc-set-mapping .gc-mapping-metabox select {
+    width: 250px; }
 
 #poststuff #gc-manage .inside {
   margin: 0;
