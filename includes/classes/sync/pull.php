@@ -90,6 +90,10 @@ class Pull extends Base {
 			unset( $post_data['attachments'] );
 		}
 
+		if ( empty( $post_data['post_title'] ) && ! empty( $this->item->name ) ) {
+			$post_data['post_title'] = sanitize_text_field( $this->item->name );
+		}
+
 		$post_id = wp_insert_post( $post_data, 1 );
 
 		if ( is_wp_error( $post_id ) ) {
