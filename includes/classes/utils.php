@@ -82,25 +82,28 @@ class Utils extends Base {
 		if ( null === $tzstring ) {
 			$current_offset = get_option( 'gmt_offset' );
 			$tzstring       = get_option( 'timezone_string' );
+			$allowed_zones  = timezone_identifiers_list();
 
 			// Remove old Etc mappings. Fallback to gmt_offset.
 			if ( false !== strpos( $tzstring, 'Etc/GMT' ) ) {
 				$tzstring = '';
 			}
 
-			if ( empty( $tzstring ) ) { // Create a UTC+- zone if no timezone string exists
-				if ( 0 == $current_offset ) {
-					$tzstring = 'UTC+0';
-				} elseif ( $current_offset < 0 ) {
-					$tzstring = 'UTC' . $current_offset;
-				} else {
-					$tzstring = 'UTC+' . $current_offset;
-				}
+			if ( ! in_array( $tzstring, $allowed_zones, true ) ) {
+				$tzstring = '';
+			}
+
+			if ( empty( $tzstring ) ) {
+				$tzstring = timezone_name_from_abbr( '', $current_offset, 0 );
+				$tzstring = false !== $tzstring ? $tzstring : timezone_name_from_abbr( '', 0, 0 );
 			}
 		}
 
-		$date = new DateTime( $utc_date, new DateTimeZone( 'UTC' ) );
-		$date->setTimeZone( new DateTimeZone( $tzstring ) );
+		try {
+			$date = new DateTime( $utc_date, new DateTimeZone( $tzstring ) );
+		} catch ( \Exception $e ) {
+			$date = new DateTime( $utc_date );
+		}
 
 		$time = $date->getTimestamp();
 		$currtime = time();
