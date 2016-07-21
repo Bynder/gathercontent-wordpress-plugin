@@ -44,20 +44,42 @@ class Pull extends Base {
 	 * @return void
 	 */
 	public function init_hooks() {
+		parent::init_hooks();
 		add_action( 'wp_async_gc_pull_items', array( $this, 'sync_items' ) );
 	}
 
-	public function maybe_pull_item( $post, $item_id ) {
+	/**
+	 * A method for trying to pull directly (without async hooks).
+	 *
+	 * @since  3.0.0
+	 *
+	 * @param  int $mapping_post Mapping post ID or object.
+	 * @param  int $item_id      GC item id.
+	 *
+	 * @return mixed Result of pull. WP_Error on failure.
+	 */
+	public function maybe_pull_item( $mapping_post, $item_id ) {
 		try {
-			$this->mapping = Mapping_Post::get( $post, true );
+			$this->mapping = Mapping_Post::get( $mapping_post, true );
 			$result = $this->do_item( $item_id );
-		} catch ( Exception $e ) {
+		} catch ( \Exception $e ) {
 			$result = new WP_Error( 'gc_pull_item_fail_' . $e->getCode(), $e->getMessage(), $e->get_data() );
 		}
 
 		return $result;
 	}
 
+	/**
+	 * Pulls GC item to update a post after some sanitiy checks.
+	 *
+	 * @since  3.0.0
+	 *
+	 * @param  int $id GC Item ID.
+	 *
+	 * @throws Exception On failure.
+	 *
+	 * @return mixed Result of pull.
+	 */
 	protected function do_item( $id ) {
 		$this->check_mapping_data( $this->mapping );
 
@@ -67,21 +89,20 @@ class Pull extends Base {
 		$attachments = false;
 
 		if ( $existing = \GatherContent\Importer\get_post_by_item_id( $id ) ) {
-
 			// Check if item is up-to-date and if pull is necessary.
 			$meta = \GatherContent\Importer\get_post_item_meta( $existing->ID );
 			$updated_at = isset( $meta['updated_at'] ) ? $meta['updated_at'] : 0;
 			$updated_at = is_object( $updated_at ) ? $updated_at->date : $updated_at;
 
 			if (
-				// Check if we have updated_at values to compare
+				// Check if we have updated_at values to compare.
 				isset( $this->item->updated_at ) && ! empty( $updated_at )
 				// And if we do, compare them to see if GC item is newer.
 				&& ( $is_up_to_date = strtotime( $this->item->updated_at->date ) <= strtotime( $updated_at ) )
 				// If it's not newer, then don't update (unless asked to via filter).
 				&& $is_up_to_date && apply_filters( 'gc_only_update_if_newer', true )
 			) {
-				throw new Exception( sprintf( __( 'WordPress has most recent changes for:', 'gathercontent-import' ), $this->item->id ), __LINE__, array( 'post' => $existing->ID, 'item' => $this->item->id ) );
+				throw new Exception( sprintf( __( 'WordPress has most recent changes for %s (Item ID: %d):', 'gathercontent-import' ), $this->item->name, $this->item->id ), __LINE__, array( 'post' => $existing->ID, 'item' => $this->item->id ) );
 			}
 
 			$post_data = (array) $existing;
@@ -121,7 +142,7 @@ class Pull extends Base {
 			$replacements = $this->sideload_attachments( $attachments, $post_data );
 
 			if ( ! empty( $replacements ) ) {
-				// Do replacements
+				// Do replacements.
 				if ( ! empty( $replacements['post_content'] ) ) {
 					$post_data['post_content'] = strtr( $post_data['post_content'], $replacements['post_content'] );
 				}
@@ -149,6 +170,15 @@ class Pull extends Base {
 		return $post_id;
 	}
 
+	/**
+	 * Maps the GC item config data to WP data.
+	 *
+	 * @since  3.0.0
+	 *
+	 * @param  array $post_data The WP Post data array.
+	 *
+	 * @return array Item config array on success.
+	 */
 	protected function map_gc_data_to_wp_data( $post_data = array() ) {
 		$this->check_mapping_data( $this->mapping );
 
@@ -166,11 +196,7 @@ class Pull extends Base {
 			$post_data[ $key ] = 'gcinitial';
 		}
 
-		if ( isset( $_GET['test_pull'] ) ) {
-			$files = $this->api->get_item_files( $this->item->id );
-		} else {
-			$files = $this->api->uncached()->get_item_files( $this->item->id );
-		}
+		$files = $this->api->uncached()->get_item_files( $this->item->id );
 
 		$this->item->files = array();
 		if ( is_array( $files ) ) {
@@ -197,6 +223,15 @@ class Pull extends Base {
 		return $post_data;
 	}
 
+	/**
+	 * Loops the GC item config elements and maps the WP post data.
+	 *
+	 * @since  3.0.0
+	 *
+	 * @param  array $post_data The WP Post data array.
+	 *
+	 * @return array Modified post data array on success.
+	 */
 	protected function loop_item_elements_and_map( $post_data ) {
 		if ( ! isset( $this->item->config ) || empty( $this->item->config ) ) {
 			return $post_data;
@@ -220,6 +255,16 @@ class Pull extends Base {
 		return $post_data;
 	}
 
+	/**
+	 * Sets the post data value, for each data type.
+	 *
+	 * @since 3.0.0
+	 *
+	 * @param  array $destination Destination array, includes type and value.
+	 * @param  array $post_data   The WP Post data array.
+	 *
+	 * @return array $post_data   The modified WP Post data array.
+	 */
 	protected function set_post_values( $destination, $post_data ) {
 		$this->set_element_value();
 
@@ -241,19 +286,41 @@ class Pull extends Base {
 					$post_data = $this->set_media_field_value( $destination['value'], $post_data );
 					break;
 			}
-		} catch ( Exception $e ) {
-
+		// @codingStandardsIgnoreStart
+		} catch ( \Exception $e ) {
+			// @todo logging?
 		}
+		// @codingStandardsIgnoreEnd
 
 		return $post_data;
 	}
 
-	protected function set_post_field_value( $field, $post_data ) {
-		$value = $this->sanitize_post_field( $field, $this->element->value, $post_data['ID'] );
+	/**
+	 * Sets the WP post fields based on the item config.
+	 *
+	 * @since 3.0.0
+	 *
+	 * @param  string $post_column The post data column.
+	 * @param  array  $post_data   The WP Post data array.
+	 *
+	 * @return array $post_data   The modified WP Post data array.
+	 */
+	protected function set_post_field_value( $post_column, $post_data ) {
+		$value = $this->sanitize_post_field( $post_column, $this->element->value, $post_data['ID'] );
 
-		return $this->maybe_append( $field, $value, $post_data );
+		return $this->maybe_append( $post_column, $value, $post_data );
 	}
 
+	/**
+	 * Sets the WP taxonomy terms based on the item config.
+	 *
+	 * @since 3.0.0
+	 *
+	 * @param  string $taxonomy  The taxonomy name.
+	 * @param  array  $post_data The WP Post data array.
+	 *
+	 * @return array $post_data  The modified WP Post data array.
+	 */
 	protected function set_taxonomy_field_value( $taxonomy, $post_data ) {
 		$terms = $this->get_element_terms( $taxonomy );
 		if ( ! empty( $terms ) ) {
@@ -267,6 +334,16 @@ class Pull extends Base {
 		return $post_data;
 	}
 
+	/**
+	 * Sets the WP meta data based on the item config.
+	 *
+	 * @since 3.0.0
+	 *
+	 * @param  string $meta_key  The meta key.
+	 * @param  array  $post_data The WP Post data array.
+	 *
+	 * @return array  $post_data The modified WP Post data array.
+	 */
 	protected function set_meta_field_value( $meta_key, $post_data ) {
 		$value = $this->sanitize_element_meta();
 		if ( ! isset( $post_data['meta_input'] ) ) {
@@ -282,10 +359,23 @@ class Pull extends Base {
 		return $post_data;
 	}
 
+	/**
+	 * Sets the WP media destination.
+	 *
+	 * @since 3.0.0
+	 *
+	 * @param  string $destination The media destination.
+	 * @param  array  $post_data   The WP Post data array.
+	 *
+	 * @return array  $post_data   The modified WP Post data array.
+	 */
 	protected function set_media_field_value( $destination, $post_data ) {
 		$media_items = $this->sanitize_element_media();
 
-		if ( in_array( $destination, array( 'gallery', 'content_image', 'excerpt_image' ), 1 ) && is_array( $media_items ) ) {
+		if (
+			in_array( $destination, array( 'gallery', 'content_image', 'excerpt_image' ), true )
+			&& is_array( $media_items )
+		) {
 			$position = 0;
 			foreach ( $media_items as $index => $media ) {
 				$media_items[ $index ]->position = ++$position;
@@ -305,6 +395,17 @@ class Pull extends Base {
 		return $post_data;
 	}
 
+	/**
+	 * If field can append, then append the data, else set the data directly.
+	 *
+	 * @since  3.0.0
+	 *
+	 * @param  string $field The field to set.
+	 * @param  mixed  $value The value for the field.
+	 * @param  array  $array The array to check against.
+	 *
+	 * @return array         The modified array.
+	 */
 	protected function maybe_append( $field, $value, $array ) {
 		if ( $this->type_can_append( $field ) ) {
 			$array[ $field ] = isset( $array[ $field ] ) ? $array[ $field ] : '';
@@ -319,6 +420,20 @@ class Pull extends Base {
 		return $array;
 	}
 
+	/**
+	 * Specific sanitization for WP post column fields.
+	 *
+	 * @since  3.0.0
+	 *
+	 * @param  string $field     The post field to sanitize.
+	 * @param  mixed  $value     The post field value to sanitize.
+	 * @param  array  $post_data The WP Post data array.
+	 *
+	 * @throws Exception Will fail if the wrong kind of GC field is
+	 *         				attempting to be sanitized.
+	 *
+	 * @return mixed             The sanitized post field value.
+	 */
 	protected function sanitize_post_field( $field, $value, $post_data ) {
 		if ( ! $value ) {
 			return $value;
@@ -350,6 +465,15 @@ class Pull extends Base {
 		return sanitize_post_field( $field, $value, $post_data['ID'], 'db' );
 	}
 
+	/**
+	 * Gets the terms from the current item element object.
+	 *
+	 * @since  3.0.0
+	 *
+	 * @param  string $taxonomy The taxonomy to determine data storage method.
+	 *
+	 * @return mixed            The terms.
+	 */
 	protected function get_element_terms( $taxonomy ) {
 		if ( 'text' === $this->element->type ) {
 			$terms = array_map( 'trim', explode( ',', sanitize_text_field( $this->element->value ) ) );
@@ -359,7 +483,9 @@ class Pull extends Base {
 
 		if ( ! empty( $terms ) && is_taxonomy_hierarchical( $taxonomy ) ) {
 			foreach ( $terms as $key => $term ) {
+				// @codingStandardsIgnoreStart
 				if ( ! $term_info = term_exists( $term, $taxonomy ) ) {
+					// @codingStandardsIgnoreEnd
 					// Skip if a non-existent term ID is passed.
 					if ( is_int( $term ) ) {
 						unset( $terms[ $key ] );
@@ -377,14 +503,46 @@ class Pull extends Base {
 		return apply_filters( 'gc_get_element_terms', $terms, $this->element, $this->item );
 	}
 
+	/**
+	 * Specific sanitization for the element value when stored as post-meta.
+	 * Currently only filtered.
+	 *
+	 * @since  3.0.0
+	 *
+	 * @return mixed Value for meta.
+	 */
 	protected function sanitize_element_meta() {
 		return apply_filters( 'gc_sanitize_meta_field', $this->element->value, $this->element, $this->item );
 	}
 
+	/*
+	 * Begin Media handling functionality.
+	 */
+
+	/**
+	 * Specific sanitization for the element media.
+	 * Currently only filtered.
+	 *
+	 * @since  3.0.0
+	 *
+	 * @return mixed Value for media.
+	 */
 	protected function sanitize_element_media() {
 		return apply_filters( 'gc_sanitize_media_field', $this->element->value, $this->element, $this->item );
 	}
 
+	/**
+	 * After the post is created/updated, we sideload the applicable attachments,
+	 * then we send the attachments to the requested location.
+	 * (post content, excerpt post-meta, gallery, etc)
+	 *
+	 * @since  3.0.0
+	 *
+	 * @param  array $attachments Array of attachments to sideload/attach/relocate.
+	 * @param  array $post_data   The WP Post data array.
+	 *
+	 * @return array              Array of replacement key/values for strtr.
+	 */
 	protected function sideload_attachments( $attachments, $post_data ) {
 		$post_id = $post_data['ID'];
 		$featured_img_id = false;
@@ -408,7 +566,7 @@ class Pull extends Base {
 
 				if ( 'featured_image' === $attachment['destination'] ) {
 					$featured_img_id = $attach_id;
-				} elseif ( in_array( $attachment['destination'], array( 'content_image', 'excerpt_image' ), 1 ) ) {
+				} elseif ( in_array( $attachment['destination'], array( 'content_image', 'excerpt_image' ), true ) ) {
 					$field = 'excerpt_image' === $attachment['destination'] ? 'post_excerpt' : 'post_content';
 
 					$image = wp_get_attachment_image( $attach_id, 'full', false, array(
@@ -416,7 +574,7 @@ class Pull extends Base {
 						'class'     => 'attachment-full size-full gathercontent-image',
 					) );
 
-					// If we've found a GC "shortcode"
+					// If we've found a GC "shortcode"...
 					if ( $media_replace = $this->get_media_shortcode_attributes( $post_data[ $field ], $media->position ) ) {
 
 						foreach ( $media_replace as $replace_val => $atts ) {
@@ -443,8 +601,6 @@ class Pull extends Base {
 						$replacements[ $field ][ $token ] = $image;
 
 					}
-
-
 				} elseif ( 'gallery' === $attachment['destination'] ) {
 
 					$gallery_ids[] = $attach_id;
@@ -474,7 +630,6 @@ class Pull extends Base {
 					'updated_at' => isset( $media->updated_at->date ) ? $media->updated_at->date : $media->updated_at,
 				) );
 			}
-
 		}
 
 		if ( $featured_img_id ) {
@@ -483,7 +638,7 @@ class Pull extends Base {
 
 		if ( ! empty( $gallery_ids ) ) {
 
-			$shortcode = '[gallery link="file" size="full" ids="'. implode( ',', $gallery_ids ) .'"]';
+			$shortcode = '[gallery link="file" size="full" ids="' . implode( ',', $gallery_ids ) . '"]';
 			$shortcode = apply_filters( 'gc_content_gallery_shortcode', $shortcode, $gallery_ids, $post_data );
 
 			$replacements['post_content'][ $gallery_token ] = $shortcode;
@@ -492,6 +647,18 @@ class Pull extends Base {
 		return apply_filters( 'gc_media_replacements', $replacements, $attachments, $post_data );
 	}
 
+	/**
+	 * Handles determing if media from GC should be sideloaded, then sideloads.
+	 *
+	 * Logic is based on whether media already exists and if it has been updated.
+	 *
+	 * @since  3.0.0
+	 *
+	 * @param  object $media   The GC media object.
+	 * @param  int    $post_id The post ID.
+	 *
+	 * @return int             The sideloaded attachment ID.
+	 */
 	protected function maybe_sideload_image( $media, $post_id ) {
 		$attachment = \GatherContent\Importer\get_post_by_item_id( $media->id, array( 'post_status' => 'inherit' ) );
 
@@ -507,7 +674,7 @@ class Pull extends Base {
 			$new_updated = strtotime( isset( $media->updated_at->date ) ? $media->updated_at->date : $media->updated_at );
 			$old_updated = strtotime( $meta->updated_at );
 
-			// Check if updated time-stamp is newer than previous updated timestamp
+			// Check if updated time-stamp is newer than previous updated timestamp.
 			if ( $new_updated > $old_updated ) {
 
 				$replace_data = apply_filters( 'gc_replace_attachment_data_on_update', false, $attachment );
@@ -515,7 +682,6 @@ class Pull extends Base {
 				// @todo How to handle failures?
 				$attach_id = $this->sideload_and_update_attachment( $media->url, $media->filename, $attachment, $replace_data );
 			}
-
 		}
 
 		return $attach_id;
@@ -538,7 +704,9 @@ class Pull extends Base {
 
 			// If error storing permanently, unlink.
 			if ( is_wp_error( $id ) ) {
+				// @codingStandardsIgnoreStart
 				@unlink( $file_array['tmp_name'] );
+				// @codingStandardsIgnoreEnd
 				return $id;
 			}
 
@@ -549,7 +717,20 @@ class Pull extends Base {
 		return ! empty( $src ) ? $id : new WP_Error( 'image_sideload_failed' );
 	}
 
-	protected function sideload_and_update_attachment( $file_url, $file_name, $attachment, $replace_data ) {
+	/**
+	 * Handles re-sideloading attachment and replacing existing.
+	 *
+	 * @since  3.0.0
+	 *
+	 * @param  string $file_url     The file URL.
+	 * @param  string $file_name    The file name.
+	 * @param  object $attachment   The attachment post object.
+	 * @param  bool   $replace_data Whether to replace attachement title/content.
+	 *                              Default false.
+	 *
+	 * @return int                  The sideloaded attachment ID.
+	 */
+	protected function sideload_and_update_attachment( $file_url, $file_name, $attachment, $replace_data = false ) {
 		if ( ! isset( $attachment->ID ) || empty( $file_url ) ) {
 			return new WP_Error( 'sideload_and_update_attachment_error' );
 		}
@@ -575,11 +756,13 @@ class Pull extends Base {
 
 		if ( $replace_data ) {
 			$type = $file['type'];
-			$title = preg_replace('/\.[^.]+$/', '', basename($_file));
+			$title = preg_replace( '/\.[^.]+$/', '', basename( $_file ) );
 			$content = '';
 
 			// Use image exif/iptc data for title and caption defaults if possible.
+			// @codingStandardsIgnoreStart
 			if ( $image_meta = @wp_read_image_metadata( $_file ) ) {
+				// @codingStandardsIgnoreEnd
 				if ( trim( $image_meta['title'] ) && ! is_numeric( sanitize_title( $image_meta['title'] ) ) ) {
 					$title = $image_meta['title'];
 				}
@@ -592,12 +775,14 @@ class Pull extends Base {
 			$args['post_content'] = $content;
 		}
 
-		// Save the attachment metadata
+		// Save the attachment metadata.
 		$id = wp_insert_attachment( $args, $_file, $attachment->post_parent );
 
 		if ( is_wp_error( $id ) ) {
 			// If error storing permanently, unlink.
+			// @codingStandardsIgnoreStart
 			@unlink( $file_array['tmp_name'] );
+			// @codingStandardsIgnoreEnd
 		} else {
 			wp_update_attachment_metadata( $id, wp_generate_attachment_metadata( $id, $file ) );
 		}
@@ -605,6 +790,16 @@ class Pull extends Base {
 		return $id;
 	}
 
+	/**
+	 * Download and create a temporary file.
+	 *
+	 * @since  3.0.0
+	 *
+	 * @param  string $file_url  The file to dowload.
+	 * @param  string $file_name The name of the file being downloaded.
+	 *
+	 * @return array              The temporary file array.
+	 */
 	protected function tmp_file( $file_url, $file_name ) {
 		// Set variables for storage, fix file filename for query strings.
 		preg_match( '/[^\?]+\.(jpe?g|jpe|gif|png)\b/i', $file_name, $matches );
@@ -615,9 +810,9 @@ class Pull extends Base {
 		$file_array = array();
 		$file_array['name'] = basename( $matches[0] );
 
-		require_once( ABSPATH .'/wp-admin/includes/file.php' );
-		require_once( ABSPATH .'/wp-admin/includes/media.php' );
-		require_once( ABSPATH .'/wp-admin/includes/image.php' );
+		require_once( ABSPATH . '/wp-admin/includes/file.php' );
+		require_once( ABSPATH . '/wp-admin/includes/media.php' );
+		require_once( ABSPATH . '/wp-admin/includes/image.php' );
 
 		// Download file to temp location.
 		$file_array['tmp_name'] = download_url( $file_url );

@@ -17,7 +17,7 @@ use WP_Query;
  * @return void
  */
 function enqueue_style( $handle, $filename, $deps = [], $ver = GATHERCONTENT_VERSION ) {
-	$suffix = Utils::js_suffix();
+	$suffix = Utils::asset_suffix();
 	wp_enqueue_style( $handle, GATHERCONTENT_URL . "assets/css/{$filename}{$suffix}.css", $deps, $ver );
 }
 
@@ -36,7 +36,7 @@ function enqueue_style( $handle, $filename, $deps = [], $ver = GATHERCONTENT_VER
  * @return void
  */
 function enqueue_script( $handle, $filename, $deps = [], $ver = GATHERCONTENT_VERSION ) {
-	$suffix = Utils::js_suffix();
+	$suffix = Utils::asset_suffix();
 	wp_enqueue_script( $handle, GATHERCONTENT_URL . "assets/js/{$filename}{$suffix}.js", $deps, $ver, 1 );
 }
 

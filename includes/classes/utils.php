@@ -21,24 +21,41 @@ class Utils extends Base {
 	 *
 	 * @var string
 	 */
-	protected static $js_suffix = '';
+	protected static $asset_suffix = '';
 
 	/**
-	 * Constructor. Sets the js_suffix var.
+	 * A flag to check if this is an ajax request.
+	 *
+	 * @var boolean
+	 */
+	protected static $doing_ajax = false;
+
+	/**
+	 * Constructor. Sets the asset_suffix var.
 	 *
 	 * @since 3.0.0
 	 */
 	public function __construct() {
-		self::$js_suffix = defined( 'SCRIPT_DEBUG' ) && SCRIPT_DEBUG ? '' : '.min';
+		self::$asset_suffix = defined( 'SCRIPT_DEBUG' ) && SCRIPT_DEBUG ? '' : '.min';
+		self::$doing_ajax = defined( 'DOING_AJAX' ) && DOING_AJAX;
 	}
 
 	/**
-	 * Magic getter for our object, to make protected properties accessible.
+	 * Get the suffix for script/style assets.
 	 *
 	 * @return string
 	 */
-	public static function js_suffix() {
-		return self::$js_suffix;
+	public static function asset_suffix() {
+		return self::$asset_suffix;
+	}
+
+	/**
+	 * Check if ajax request.
+	 *
+	 * @return bool
+	 */
+	public static function doing_ajax() {
+		return self::$doing_ajax;
 	}
 
 	/**

@@ -163,10 +163,10 @@ module.exports = function( app, $, gc ) {
 
 			if ( ! response.success ) {
 				this.renderProgressUpdate( 0 );
-				if ( response.data ) {
-					window.alert( response.data );
-				}
 				this.cancelSync();
+				if ( response.data ) {
+					return window.alert( response.data );
+				}
 			}
 		},
 

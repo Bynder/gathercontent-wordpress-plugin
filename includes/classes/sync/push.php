@@ -66,6 +66,7 @@ class Push extends Base {
 	 * @return void
 	 */
 	public function init_hooks() {
+		parent::init_hooks();
 		add_action( 'wp_async_gc_push_items', array( $this, 'sync_items' ) );
 	}
 
@@ -88,7 +89,7 @@ class Push extends Base {
 
 			$result = $this->do_item( $post->ID );
 
-		} catch ( Exception $e ) {
+		} catch ( \Exception $e ) {
 			$result = new WP_Error( 'gc_push_item_fail_' . $e->getCode(), $e->getMessage(), $e->get_data() );
 		}
 
@@ -96,7 +97,7 @@ class Push extends Base {
 	}
 
 	/**
-	 * Pushes WP post to GC after soem sanitiy checks.
+	 * Pushes WP post to GC after some sanitiy checks.
 	 *
 	 * @since  3.0.0
 	 *

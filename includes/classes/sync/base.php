@@ -8,6 +8,7 @@
 namespace GatherContent\Importer\Sync;
 use GatherContent\Importer\Base as Plugin_Base;
 use GatherContent\Importer\Post_Types\Template_Mappings;
+use GatherContent\Importer\Exception as Base_Exception;
 use GatherContent\Importer\Mapping_Post;
 use GatherContent\Importer\API;
 use GatherContent\Importer\Dom;
@@ -18,42 +19,7 @@ use WP_Error;
  *
  * @since 3.0.0
  */
-class Exception extends \Exception {
-
-	/**
-	 * Additional data for the exception.
-	 *
-	 * @var mixed
-	 */
-	protected $data;
-
-	/**
-	 * Constructor. Handles assigning the data property.
-	 *
-	 * @since 3.0.0
-	 *
-	 * @param strin $message Exception message.
-	 * @param int   $code    Exception code.
-	 * @param mixed $data    Additional data.
-	 */
-	public function __construct( $message, $code, $data = null ) {
-		parent::__construct( $message, $code );
-		if ( null !== $data ) {
-			$this->data = $data;
-		}
-	}
-
-	/**
-	 * Fetch the Exception data.
-	 *
-	 * @since  3.0.0
-	 *
-	 * @return mixed Exception data
-	 */
-	public function get_data() {
-		return $this->data;
-	}
-}
+class Exception extends Base_Exception {}
 
 /**
  * Base class for pushing/pulling content to GC.
@@ -134,8 +100,9 @@ abstract class Base extends Plugin_Base {
 	 * @param Async_Base $async Async_Base object.
 	 */
 	public function __construct( API $api, Async_Base $async ) {
-		$this->api   = $api;
-		$this->async = $async;
+		$this->api    = $api;
+		$this->async  = $async;
+		$this->logger = new Log();
 	}
 
 	/**
@@ -145,7 +112,9 @@ abstract class Base extends Plugin_Base {
 	 *
 	 * @return void
 	 */
-	abstract public function init_hooks();
+	public function init_hooks() {
+		$this->logger->init_hooks();
+	}
 
 	/**
 	 * Handles pushing/pulling item.
@@ -173,7 +142,7 @@ abstract class Base extends Plugin_Base {
 	 */
 	public function sync_items( $mapping_post_id ) {
 		$result = $this->_sync_items( $mapping_post_id );
-		// @todo store errors as post-meta (if mapping id resolves)
+		do_action( 'gc_sync_items_result', $result, $this );
 		return $result;
 	}
 
@@ -195,7 +164,11 @@ abstract class Base extends Plugin_Base {
 			$this->check_mapping_data();
 			$ids = $this->get_items_to_sync( $this->direction );
 
-		} catch ( Exception $e ) {
+		} catch ( \Exception $e ) {
+			if ( $this->mapping ) {
+				$this->mapping->update_items_to_sync( false, $this->direction );
+			}
+
 			return new WP_Error( "gc_{$this->direction}_items_fail_" . $e->getCode(), $e->getMessage(), $e->get_data() );
 		}
 
@@ -208,8 +181,14 @@ abstract class Base extends Plugin_Base {
 		try {
 			update_option( "gc_{$this->direction}_item_{$id}", time(), false );
 			$result = $this->do_item( $id );
-		} catch ( Exception $e ) {
-			$result = new WP_Error( "gc_{$this->direction}_item_fail_" . $e->getCode(), $e->getMessage(), $e->get_data() );
+		} catch ( \Exception $e ) {
+			$data = $e->get_data();
+			if ( is_array( $data ) ) {
+				$data['sync_item_id'] = $id;
+			} else {
+				$data = array( 'data' => $data, 'sync_item_id' => $id );
+			}
+			$result = new WP_Error( "gc_{$this->direction}_item_fail_" . $e->getCode(), $e->getMessage(), $data );
 		}
 
 		$ids['complete'] = isset( $ids['complete'] ) ? $ids['complete'] : array();
@@ -639,6 +618,16 @@ abstract class Base extends Plugin_Base {
 	 */
 	public static function remove_zero_width( $string ) {
 		return preg_replace( '/[\x{200B}-\x{200D}]/u', '', $string );
+	}
+
+	/**
+	 * Magic getter for our object, to make protected properties accessible.
+	 *
+	 * @param  string $property Protected class property.
+	 * @return mixed
+	 */
+	public function __get( $property ) {
+		return $this->{$property};
 	}
 
 }

@@ -8,7 +8,7 @@
 namespace GatherContent\Importer;
 
 /**
- * Will look for Some_Class\Name in /includes/classes/some-class/class.name.php
+ * Will look for Some_Class\Name in /includes/classes/some-class/name.php
  *
  * @since  3.0.0
  *

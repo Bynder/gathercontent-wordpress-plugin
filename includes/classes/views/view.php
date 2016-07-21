@@ -56,7 +56,7 @@ class View {
 			$this->_include();
 			// grab the data from the output buffer and add it to our $content variable
 			$content = ob_get_clean();
-		} catch ( Exception $e ) {
+		} catch ( \Exception $e ) {
 			wpdie( $e->getMessage() );
 		}
 

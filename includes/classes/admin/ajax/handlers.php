@@ -72,6 +72,7 @@ class Handlers extends Plugin_Base {
 		add_action( 'wp_ajax_gc_fetch_js_post', array( $this, 'gc_fetch_js_post_cb' ) );
 		add_action( 'wp_ajax_gc_wp_filter_mappings', array( $this, 'gc_wp_filter_mappings_cb' ) );
 		add_action( 'wp_ajax_gc_save_mapping_id', array( $this, 'gc_save_mapping_id_cb' ) );
+		add_action( 'wp_ajax_gc_dismiss_notice', array( $this, 'gc_dismiss_notice_cb' ) );
 	}
 
 	/**
@@ -338,6 +339,33 @@ class Handlers extends Plugin_Base {
 
 		if ( ! empty( $objects ) ) {
 			wp_send_json_success( array_values( $objects ) );
+		}
+
+		wp_send_json_error();
+	}
+
+	/**
+	 * Ajax callback when dismissing import errors.. will delete those errors to not show again.
+	 *
+	 * @since  3.0.0
+	 *
+	 * @return void
+	 */
+	public function gc_dismiss_notice_cb() {
+		if ( ! $this->_post_val( 'mapping' ) ) {
+			wp_send_json_error();
+		}
+
+		$mapping = Mapping_Post::get( absint( $this->_post_val( 'mapping' ) ) );
+
+		if ( ! $mapping ) {
+			wp_send_json_error();
+		}
+
+		$is_last_error = $this->_post_val( 'lastError' );
+
+		if ( $mapping->delete_meta( $is_last_error ? 'last_error' : 'item_errors' ) ) {
+			wp_send_json_success();
 		}
 
 		wp_send_json_error();
