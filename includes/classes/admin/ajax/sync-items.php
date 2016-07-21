@@ -52,6 +52,8 @@ class Sync_Items extends Plugin_Base {
 		try {
 			$this->mapping = Mapping_Post::get( absint( $this->_post_val( 'id' ) ), true );
 		} catch( \Exception $e ) {
+			$this->maybe_cancelling();
+
 			wp_send_json_error( sprintf(
 				__( 'Error %d: Cannot find a mapping by that id: %d', 'gathercontent-import' ),
 				__LINE__,
@@ -66,7 +68,9 @@ class Sync_Items extends Plugin_Base {
 			return false;
 		}
 
-		$this->mapping->update_items_to_pull( false );
+		if ( $this->mapping ) {
+			$this->mapping->update_items_to_pull( false );
+		}
 
 		wp_send_json_success();
 	}
