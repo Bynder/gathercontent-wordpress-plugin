@@ -79,6 +79,13 @@ abstract class Base extends Plugin_Base {
 		$this->async = $async;
 	}
 
+	/**
+	 * Initiate admin hooks
+	 *
+	 * @since  3.0.0
+	 *
+	 * @return void
+	 */
 	abstract public function init_hooks();
 	abstract protected function do_item( $id );
 

@@ -10,6 +10,8 @@ use GatherContent\Importer\Base as Plugin_Base;
 
 /**
  * Class for managing syncing template items.
+ *
+ * @since 3.0.0
  */
 abstract class Base extends Plugin_Base {
 

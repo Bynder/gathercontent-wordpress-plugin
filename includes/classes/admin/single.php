@@ -14,6 +14,8 @@ use GatherContent\Importer\Admin\Enqueue;
 
 /**
  * Handles the UI for the metabox on the post-edit page.
+ *
+ * @since 3.0.0
  */
 class Single extends Post_Base {
 

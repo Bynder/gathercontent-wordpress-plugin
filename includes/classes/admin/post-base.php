@@ -12,11 +12,15 @@ use GatherContent\Importer\Admin\Mapping\Base as UI_Base;
 
 /**
  * Because Enqueue is abstract.
+ *
+ * @since 3.0.0
  */
 class Post_Enqueue extends Enqueue {}
 
 /**
  * Class for managing syncing template items.
+ *
+ * @since 3.0.0
  */
 abstract class Post_Base extends UI_Base {
 

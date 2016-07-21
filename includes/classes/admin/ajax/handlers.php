@@ -15,6 +15,8 @@ use GatherContent\Importer\API;
 
 /**
  * Sets up all plugin ajax callbacks.
+ *
+ * @since 3.0.0
  */
 class Handlers extends Plugin_Base {
 

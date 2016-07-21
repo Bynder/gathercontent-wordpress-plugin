@@ -7,6 +7,8 @@ use GatherContent\Importer\Post_Types\Template_Mappings;
 
 /**
  * Class for the template mappings creation wizzard.
+ *
+ * @since 3.0.0
  */
 class Mapping_Wizzard extends Base {
 

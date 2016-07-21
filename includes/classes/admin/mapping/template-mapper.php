@@ -3,6 +3,8 @@ namespace GatherContent\Importer\Admin\Mapping;
 
 /**
  * Class for managing/creating template mappings.
+ *
+ * @since 3.0.0
  */
 class Template_Mapper extends Base {
 

@@ -11,6 +11,8 @@ use GatherContent\Importer\Views\View;
 
 /**
  * GatherContent Importer, Base Field Type
+ *
+ * @since 3.0.0
  */
 abstract class Base extends Plugin_Base implements Type {
 

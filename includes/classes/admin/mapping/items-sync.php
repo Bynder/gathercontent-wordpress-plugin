@@ -3,6 +3,8 @@ namespace GatherContent\Importer\Admin\Mapping;
 
 /**
  * Class for managing syncing template items.
+ *
+ * @since 3.0.0
  */
 class Items_Sync extends Base {
 

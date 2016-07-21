@@ -1,10 +1,21 @@
 <?php
+/**
+ * GatherContent Importer
+ *
+ * @package GatherContent Importer
+ */
+
 namespace GatherContent\Importer\Sync;
 use GatherContent\Importer\Post_Types\Template_Mappings;
 use GatherContent\Importer\Mapping_Post;
 use GatherContent\Importer\API;
 use WP_Error;
 
+/**
+ * Handles pushing content to GC.
+ *
+ * @since 3.0.0
+ */
 class Push extends Base {
 
 	/**
@@ -41,27 +52,36 @@ class Push extends Base {
 	 *
 	 * @since 3.0.0
 	 *
-	 * @param $api API object
+	 * @param API $api API object.
 	 */
 	public function __construct( API $api ) {
 		parent::__construct( $api, new Async_Push_Action() );
 	}
 
+	/**
+	 * Initiate admin hooks
+	 *
+	 * @since  3.0.0
+	 *
+	 * @return void
+	 */
 	public function init_hooks() {
 		add_action( 'wp_async_gc_push_items', array( $this, 'sync_items' ) );
-
-		if ( isset( $_GET['test_gc_push'], $_GET['item_id'] ) ) {
-			$item_id = absint( $_GET['item_id'] );
-			echo '<xmp>item-id: '. print_r( $item_id, true ) .'</xmp>';
-			wp_die( '<xmp>maybe_push_item $result: '. print_r( $this->maybe_push_item( $item_id ), true ) .'</xmp>' );
-		}
-
 	}
 
-	public function maybe_push_item( $post_id ) {
+	/**
+	 * A method for trying to push directly (without async hooks).
+	 *
+	 * @since  3.0.0
+	 *
+	 * @param  int $mapping_post_id Mapping post ID.
+	 *
+	 * @return mixed Result of push. WP_Error on failure.
+	 */
+	public function maybe_push_item( $mapping_post_id ) {
 		try {
 
-			$post = $this->get_post( $post_id );
+			$post = $this->get_post( $mapping_post_id );
 			$mapping_id = \GatherContent\Importer\get_post_mapping_id( $post->ID );
 
 			$this->mapping = Mapping_Post::get( $mapping_id, true );
@@ -75,6 +95,17 @@ class Push extends Base {
 		return $result;
 	}
 
+	/**
+	 * Pushes WP post to GC after soem sanitiy checks.
+	 *
+	 * @since  3.0.0
+	 *
+	 * @param  int $id WP post ID.
+	 *
+	 * @throws Exception On failure.
+	 *
+	 * @return mixed Result of push.
+	 */
 	protected function do_item( $id ) {
 		$this->post = $this->get_post( $id );
 
@@ -97,10 +128,18 @@ class Push extends Base {
 		return $this->maybe_do_item_update( $config_update );
 	}
 
+	/**
+	 * Pushes WP post to GC.
+	 *
+	 * @since  3.0.0
+	 *
+	 * @param  array $update The item config update delta array.
+	 *
+	 * @throws Exception On failure.
+	 *
+	 * @return mixed Result of push.
+	 */
 	public function maybe_do_item_update( $update ) {
-		if ( isset( $_GET['test_push'] ) ) {
-			echo '<xmp>To update: '. print_r( $update, true ) .'</xmp>';
-		}
 
 		// Get our initial config reference.
 		$config = json_decode( $this->config );
@@ -130,6 +169,17 @@ class Push extends Base {
 		return $result;
 	}
 
+	/**
+	 * Sets the item to be pushed to. If it doesn't exist yet, we create it now.
+	 *
+	 * @since 3.0.0
+	 *
+	 * @param integer $item_id Item id.
+	 *
+	 * @throws Exception On failure.
+	 *
+	 * @return $item
+	 */
 	protected function set_item( $item_id ) {
 		// Let's create an item, if it doesn't exist yet.
 		// It will have the correct template applied to it, and the config object will exist.
@@ -168,11 +218,25 @@ class Push extends Base {
 		return $item;
 	}
 
+	/**
+	 * Maps the WP post data to the GC item config.
+	 *
+	 * @since  3.0.0
+	 *
+	 * @return array Item config array on success.
+	 */
 	protected function map_wp_data_to_gc_data() {
 		$config = $this->loop_item_elements_and_map();
 		return apply_filters( 'gc_update_gc_config_data', $config, $this );
 	}
 
+	/**
+	 * Loops the GC item config elements and maps the WP post data.
+	 *
+	 * @since  3.0.0
+	 *
+	 * @return array Modified item config array on success.
+	 */
 	public function loop_item_elements_and_map() {
 		if ( empty( $this->item->config ) ) {
 			return false;
@@ -201,7 +265,7 @@ class Push extends Base {
 						$this->done[ $source_type ][ $source_key ] = array();
 					}
 
-					$this->done[ $source_type ][ $source_key ][ $index .':'. $element_index ] = (array) $this->element;
+					$this->done[ $source_type ][ $source_key ][ $index . ':' . $element_index ] = (array) $this->element;
 				}
 
 				if (
@@ -211,7 +275,6 @@ class Push extends Base {
 				) {
 					unset( $this->item->config[ $index ]->elements[ $element_index ] );
 				}
-
 			}
 
 			if ( empty( $this->item->config[ $index ]->elements ) ) {
@@ -241,11 +304,13 @@ class Push extends Base {
 					continue;
 				}
 
-				// @todo fix this.
-				// UH OH, this means we've encountered some appendable field types which
-				// have more than one GC value mapping to them. We don't have a reliable
-				// way of parsing those bits back to the individual GC fields, So we have
-				// to simply remove them from the update.
+				/*
+				 * @todo fix this.
+				 * UH OH, this means we've encountered some appendable field types which
+				 * have more than one GC value mapping to them. We don't have a reliable
+				 * way of parsing those bits back to the individual GC fields, So we have
+				 * to simply remove them from the update.
+				 */
 
 				foreach ( $values as $key => $value ) {
 					$keys = explode( ':', $key );
@@ -255,12 +320,21 @@ class Push extends Base {
 					if ( empty( $this->item->config[ $keys[0] ]->elements ) ) {
 						unset( $this->item->config[ $keys[0] ] );
 					}
-
 				}
 			}
 		}
 	}
 
+	/**
+	 * Sets the item config element value, if it is determeined that the value changed.
+	 *
+	 * @since 3.0.0
+	 *
+	 * @param string $source_type The data source type.
+	 * @param string $source_key  The data source key.
+	 *
+	 * @return array $updated Whether value was updated.
+	 */
 	protected function set_values_from_wp( $source_type, $source_key ) {
 		$updated = false;
 
@@ -277,15 +351,27 @@ class Push extends Base {
 				$updated = $this->set_meta_field_value( $source_key );
 				break;
 
-			// @todo determine if GC can accept file updates.
-			// case 'wp-type-media':
-			// 	$updated = $this->get_media_field_value( $source_key );
-			// 	break;
+			/*
+			 * @todo determine if GC can accept file updates.
+			 * case 'wp-type-media':
+			 * 	$updated = $this->get_media_field_value( $source_key );
+			 * 	break;
+			 */
 		}
 
 		return $updated;
 	}
 
+	/**
+	 * Sets the item config element value for WP post fields,
+	 * if it is determeined that the value changed.
+	 *
+	 * @since 3.0.0
+	 *
+	 * @param string $post_column The post data column.
+	 *
+	 * @return bool $updated Whether value was updated.
+	 */
 	protected function set_post_field_value( $post_column ) {
 		$updated = false;
 		$el_value = $this->element->value;
@@ -313,7 +399,10 @@ class Push extends Base {
 				break;
 		}
 
+		// @codingStandardsIgnoreStart
+		// We don't necessarily want strict comparison here.
 		if ( $value != $el_value ) {
+			// @codingStandardsIgnoreEnd
 			$this->element->value = $value;
 			$updated = true;
 		}
@@ -321,6 +410,16 @@ class Push extends Base {
 		return $updated;
 	}
 
+	/**
+	 * Sets the item config element value for WP taxonomy terms,
+	 * if it is determeined that the value changed.
+	 *
+	 * @since 3.0.0
+	 *
+	 * @param string $taxonomy The taxonomy name.
+	 *
+	 * @return bool $updated Whether value was updated.
+	 */
 	protected function set_taxonomy_field_value( $taxonomy ) {
 		$updated = false;
 		$terms = get_the_terms( $this->post, $taxonomy );
@@ -347,18 +446,25 @@ class Push extends Base {
 			case 'choice_checkbox':
 			case 'choice_radio':
 				$updated = $this->update_element_selected_options( function( $option ) use ( $term_names ) {
-					return in_array( $option, $term_names );
+					return in_array( $option, $term_names, true );
 				} );
 
-				// @todo Probably can't create options via the API, but we'll leave this for the future, in case you can.
-				// $option_names = wp_list_pluck( $this->element->options, 'label' );
-				// $new_terms = array_diff( $term_names, $option_names );
-				// foreach ( $new_terms as $new_term ) {
-				// 	$this->element->options[] = (object) array(
-				// 		'label' => $new_term,
-				// 		'selected' => true,
-				// 	)
-				// }
+				// @codingStandardsIgnoreStart
+				/*
+				 * Probably can't create options via the API.
+				 *
+				 * @todo we'll leave this for the future, in case you can.
+				 *
+				 * $option_names = wp_list_pluck( $this->element->options, 'label' );
+				 * $new_terms = array_diff( $term_names, $option_names );
+				 * foreach ( $new_terms as $new_term ) {
+				 * 	$this->element->options[] = (object) array(
+				 * 		'label' => $new_term,
+				 * 		'selected' => true,
+				 * 	)
+				 * }
+				 */
+				// @codingStandardsIgnoreEnd
 				break;
 
 		}
@@ -366,14 +472,27 @@ class Push extends Base {
 		return $updated;
 	}
 
+	/**
+	 * Sets the item config element value for WP meta fields,
+	 * if it is determeined that the value changed.
+	 *
+	 * @since 3.0.0
+	 *
+	 * @param string $meta_key The meta key.
+	 *
+	 * @return bool $updated Whether value was updated.
+	 */
 	protected function set_meta_field_value( $meta_key ) {
 		$updated = false;
-		$meta_value = get_post_meta( $this->post->ID, $meta_key, 1 );;
+		$meta_value = get_post_meta( $this->post->ID, $meta_key, 1 );
 
 		switch ( $this->element->type ) {
 
 			case 'text':
+				// @codingStandardsIgnoreStart
+				// We don't necessarily want strict comparison here.
 				if ( $meta_value != $this->element->value ) {
+					// @codingStandardsIgnoreEnd
 					$this->element->value = $meta_value;
 					$updated = true;
 				}
@@ -381,7 +500,7 @@ class Push extends Base {
 
 			case 'choice_radio':
 				$updated = $this->update_element_selected_options( function( $option ) use ( $meta_value ) {
-					return $meta_value == $option;
+					return $meta_value === $option;
 				} );
 				break;
 
@@ -393,7 +512,7 @@ class Push extends Base {
 				}
 
 				$updated = $this->update_element_selected_options( function( $option ) use ( $meta_value ) {
-					return in_array( $option, $meta_value );
+					return in_array( $option, $meta_value, true );
 				} );
 				break;
 
@@ -407,12 +526,12 @@ class Push extends Base {
 	 *
 	 * @since  3.0.0
 	 *
-	 * @param  callable $callback Closure
+	 * @param  callable $callback Closure.
 	 *
 	 * @return bool            	Whether the options were updated or not.
 	 */
 	public function update_element_selected_options( $callback ) {
-		$pre_options = json_encode( $this->element->options );
+		$pre_options = wp_json_encode( $this->element->options );
 
 		foreach ( $this->element->options as $key => $option ) {
 			if ( $callback( self::remove_zero_width( $option->label ) ) ) {
@@ -422,9 +541,12 @@ class Push extends Base {
 			}
 		}
 
-		$post_options = json_encode( $this->element->options );
+		$post_options = wp_json_encode( $this->element->options );
 
+		// @codingStandardsIgnoreStart
 		// Check if the values have been updated.
+		// We don't necessarily want strict comparison here.
 		return $pre_options != $post_options;
+		// @codingStandardsIgnoreEnd
 	}
 }

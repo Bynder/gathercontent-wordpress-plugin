@@ -90,6 +90,13 @@ class General extends Base {
 		}
 	}
 
+	/**
+	 * Initiate admin hooks
+	 *
+	 * @since  3.0.0
+	 *
+	 * @return void
+	 */
 	public function init_hooks() {
 		$this->admin->init_hooks();
 		$this->pull->init_hooks();

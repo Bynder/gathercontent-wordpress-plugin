@@ -11,6 +11,8 @@ use DateTimeZone;
 
 /**
  * GatherContent Importer Utilities
+ *
+ * @since 3.0.0
  */
 class Utils extends Base {
 

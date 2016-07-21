@@ -1,4 +1,10 @@
 <?php
+/**
+ * GatherContent Importer
+ *
+ * @package GatherContent Importer
+ */
+
 namespace GatherContent\Importer\Sync;
 use GatherContent\Importer\Post_Types\Template_Mappings;
 use GatherContent\Importer\Mapping_Post;
@@ -6,9 +12,9 @@ use GatherContent\Importer\API;
 use WP_Error;
 
 /**
- * @todo  Add media importing.
+ * Handles pulling content from GC.
  *
- *
+ * @since 3.0.0
  */
 class Pull extends Base {
 
@@ -24,24 +30,21 @@ class Pull extends Base {
 	 *
 	 * @since 3.0.0
 	 *
-	 * @param $api API object
+	 * @param API $api API object.
 	 */
 	public function __construct( API $api ) {
 		parent::__construct( $api, new Async_Pull_Action() );
 	}
 
+	/**
+	 * Initiate admin hooks
+	 *
+	 * @since  3.0.0
+	 *
+	 * @return void
+	 */
 	public function init_hooks() {
 		add_action( 'wp_async_gc_pull_items', array( $this, 'sync_items' ) );
-
-		if ( isset( $_GET['test_gc_pull'], $_GET['mapping_id'], $_GET['item_id'] ) ) {
-			// 257 2632454
-			$mapping_id = absint( $_GET['mapping_id'] );
-			$item_id = absint( $_GET['item_id'] );
-			echo '<xmp>mapping-id: '. print_r( $mapping_id, true ) .'</xmp>';
-			echo '<xmp>item-id: '. print_r( $item_id, true ) .'</xmp>';
-			wp_die( '<xmp>maybe_pull_item: '. print_r( $this->maybe_pull_item( $mapping_id, $item_id ), true ) .'</xmp>' );
-		}
-
 	}
 
 	public function maybe_pull_item( $post, $item_id ) {

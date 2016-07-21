@@ -13,6 +13,8 @@ use GatherContent\Importer\Admin\Mapping_Wizzard;
 
 /**
  * Handles the UI for the bulk/quick-editing on post-listing page.
+ *
+ * @since 3.0.0
  */
 class Bulk extends Post_Base {
 
