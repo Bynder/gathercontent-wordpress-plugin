@@ -50,9 +50,10 @@ class Push extends Base {
 	public function init_hooks() {
 		add_action( 'wp_async_gc_push_items', array( $this, 'sync_items' ) );
 
-		if ( isset( $_GET['test_push'] ) ) {
-			// wp_die( '<xmp>'. __LINE__ .') create_item $item_id: '. print_r( $this->api->create_item( 73849, 347939, 'HEYO!' ), true ) .'</xmp>' );
-			wp_die( '<xmp>maybe_push_item $result: '. print_r( $this->maybe_push_item( 6 ), true ) .'</xmp>' );
+		if ( isset( $_GET['test_gc_push'], $_GET['item_id'] ) ) {
+			$item_id = absint( $_GET['item_id'] );
+			echo '<xmp>item-id: '. print_r( $item_id, true ) .'</xmp>';
+			wp_die( '<xmp>maybe_push_item $result: '. print_r( $this->maybe_push_item( $item_id ), true ) .'</xmp>' );
 		}
 
 	}

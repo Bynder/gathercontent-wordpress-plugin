@@ -33,10 +33,13 @@ class Pull extends Base {
 	public function init_hooks() {
 		add_action( 'wp_async_gc_pull_items', array( $this, 'sync_items' ) );
 
-		if ( isset( $_GET['test_pull'] ) ) {
-			echo '<xmp>mapping-id: '. print_r( 33, true ) .'</xmp>';
-			echo '<xmp>item-id: '. print_r( 2861687, true ) .'</xmp>';
-			wp_die( '<xmp>maybe_pull_item: '. print_r( $this->maybe_pull_item( 33, 2861687 ), true ) .'</xmp>' );
+		if ( isset( $_GET['test_gc_pull'], $_GET['mapping_id'], $_GET['item_id'] ) ) {
+			// 257 2632454
+			$mapping_id = absint( $_GET['mapping_id'] );
+			$item_id = absint( $_GET['item_id'] );
+			echo '<xmp>mapping-id: '. print_r( $mapping_id, true ) .'</xmp>';
+			echo '<xmp>item-id: '. print_r( $item_id, true ) .'</xmp>';
+			wp_die( '<xmp>maybe_pull_item: '. print_r( $this->maybe_pull_item( $mapping_id, $item_id ), true ) .'</xmp>' );
 		}
 
 	}
