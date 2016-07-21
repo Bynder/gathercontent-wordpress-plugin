@@ -96,7 +96,8 @@
  				.html( this.template( {
 						btns     : this.btns.toJSON(),
 						navItems : this.navItems.toJSON(),
-						currID   : this.currNav ? this.currNav.get( 'id' ) : ''
+						currID   : this.currNav ? this.currNav.get( 'id' ) : '',
+						count    : this.collection.length
 				} ) )
  				.append( this.backdrop );
 

@@ -864,7 +864,8 @@ module.exports = function (app, gc, $) {
 			this.$el.removeClass('gc-set-mapping').attr('tabindex', '0').html(this.template({
 				btns: this.btns.toJSON(),
 				navItems: this.navItems.toJSON(),
-				currID: this.currNav ? this.currNav.get('id') : ''
+				currID: this.currNav ? this.currNav.get('id') : '',
+				count: this.collection.length
 			})).append(this.backdrop);
 
 			// this.$el.find( 'tbody' ).html( this.getRenderedSelected() );

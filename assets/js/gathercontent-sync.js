@@ -526,7 +526,10 @@ module.exports = function (app, $, gc) {
 			if (percent > 0 && percent < 100) {
 				this.startSync('check');
 			} else {
-				this.$el.html(this.template({ checked: this.collection.allChecked }));
+				this.$el.html(this.template({
+					checked: this.collection.allChecked,
+					count: this.collection.length
+				}));
 				this.render();
 			}
 		},

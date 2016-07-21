@@ -1,3 +1,9 @@
+<div class="tablenav top">
+	<div class="tablenav-pages one-page">
+		<span class="displaying-num"><span class="gc-item-count">{{ data.count }}</span> <?php _e( 'items', 'gathercontent-import' ); ?></span>
+	</div>
+	<br class="clear">
+</div>
 <legend class="screen-reader-text"><?php _e( 'Import Items', 'gathercontent-import' ); ?></legend>
 <table class="widefat striped gc-table">
 	<thead>

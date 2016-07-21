@@ -44,6 +44,12 @@
 		<# } #>
 
 		<div class="media-frame-content gc-bb-modal-main">
+			<div class="tablenav top">
+				<div class="tablenav-pages one-page">
+					<span class="displaying-num"><span class="gc-item-count">{{ data.count }}</span> <?php _e( 'items', 'gathercontent-import' ); ?></span>
+				</div>
+				<br class="clear">
+			</div>
 			<table id="gc-modal-{{ data.currID }}" class="gc-modal-tabs widefat striped gc-table">
 				<thead>
 					<tr>
