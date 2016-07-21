@@ -1,23 +1,26 @@
 <?php
+/**
+ * GatherContent Importer
+ *
+ * @package GatherContent Importer
+ */
+
 namespace GatherContent\Importer;
 use GatherContent\Importer\Post_Types\Template_Mappings;
 use WP_Post;
 
-class Mapping_Post_Exception extends \Exception {
-	protected $data;
+/**
+ * Mapping-post exception class w/ data property.
+ *
+ * @since 3.0.0
+ */
+class Mapping_Post_Exception extends Exception {}
 
-	public function __construct( $message, $code, $data = null ) {
-		parent::__construct( $message, $code );
-		if ( null !== $data ) {
-			$this->data = $data;
-		}
-	}
-
-	public function get_data() {
-		return $this->data;
-	}
-}
-
+/**
+ * A wrapper for get_post which bundles a lot of mapping-specific functionality.
+ *
+ * @since 3.0.0
+ */
 class Mapping_Post extends Base {
 
 	/**
@@ -46,7 +49,10 @@ class Mapping_Post extends Base {
 	 *
 	 * @since  3.0.0
 	 *
-	 * @param  WP_Post|int $post WP_Post object or ID
+	 * @param  WP_Post|int $post        WP_Post object or ID.
+	 * @param  bool        $throw_error Request to throw an error on failure.
+	 *
+	 * @throws Exception If requesting to throw an error.
 	 *
 	 * @return Mapping_Post|false Will return false if $post is not found or not a template-mapping post.
 	 */
@@ -65,7 +71,7 @@ class Mapping_Post extends Base {
 
 			return self::$instances[ $post->ID ];
 
-		} catch( \Exception $e ) {
+		} catch ( \Exception $e ) {
 			if ( $throw_error ) {
 				throw $e;
 			}
@@ -73,15 +79,26 @@ class Mapping_Post extends Base {
 		}
 	}
 
+	/**
+	 * Get the full post object.
+	 *
+	 * @since  3.0.0
+	 *
+	 * @param  mixed $post Post id or object.
+	 *
+	 * @throws Mapping_Post_Exception If post could not be retrieved.
+	 *
+	 * @return WP_Post Post object.
+	 */
 	protected static function get_post( $post ) {
 		$post = $post instanceof WP_Post ? $post : get_post( $post );
 
 		if ( ! $post ) {
-			throw new Mapping_Post_Exception( __CLASS__ .' expects a WP_Post object or post ID.', __LINE__, $post );
+			throw new Mapping_Post_Exception( __CLASS__ . ' expects a WP_Post object or post ID.', __LINE__, $post );
 		}
 
-		if ( $post->post_type !== Template_Mappings::SLUG ) {
-			throw new Mapping_Post_Exception( __CLASS__ .' expects a '. Template_Mappings::SLUG .' object.', __LINE__, $post );
+		if ( Template_Mappings::SLUG !== $post->post_type ) {
+			throw new Mapping_Post_Exception( __CLASS__ . ' expects a ' . Template_Mappings::SLUG . ' object.', __LINE__, $post );
 		}
 
 		return $post;
@@ -92,13 +109,22 @@ class Mapping_Post extends Base {
 	 *
 	 * @since 3.0.0
 	 *
-	 * @param WP_Post $post
+	 * @param WP_Post $post Post object.
 	 */
 	protected function __construct( WP_Post $post ) {
 		$this->post = $post;
 		$this->init_data( $post );
 	}
 
+	/**
+	 * Initiate the data property from the post content.
+	 *
+	 * @since  3.0.0
+	 *
+	 * @param  WP_Post $post Post object.
+	 *
+	 * @return void
+	 */
 	protected function init_data( $post ) {
 		if ( ! isset( $post->post_content ) || empty( $post->post_content ) ) {
 			return;
@@ -117,6 +143,16 @@ class Mapping_Post extends Base {
 		}
 	}
 
+	/**
+	 * Get value from mapping data.
+	 *
+	 * @since  3.0.0
+	 *
+	 * @param  string $arg     The arg key.
+	 * @param  string $sub_arg Optional sub-arg key.
+	 *
+	 * @return mixed           Result of lookup.
+	 */
 	public function data( $arg = null, $sub_arg = null ) {
 		if ( null === $arg ) {
 			return $this->data;
@@ -129,7 +165,7 @@ class Mapping_Post extends Base {
 		$destination = $this->data[ $arg ];
 
 		if ( isset( $destination['type'] ) ) {
-			// Trim qualifiers (wpseo, acf, cmb2, etc)
+			// Trim qualifiers (wpseo, acf, cmb2, etc).
 			$type = explode( '--', $destination['type'] );
 			$destination['type'] = $type[0];
 		}
@@ -141,6 +177,15 @@ class Mapping_Post extends Base {
 		return $destination;
 	}
 
+	/**
+	 * Get the corresponding WP post status based on the item status id.
+	 *
+	 * @since  3.0.0
+	 *
+	 * @param  object $item Item object.
+	 *
+	 * @return mixed        WP post status or false.
+	 */
 	public function get_wp_status_for_item( $item ) {
 		$status_id = isset( $item->custom_state_id ) ? $item->custom_state_id : $item;
 		if ( $gc_status = $this->data( 'gc_status', $status_id ) ) {
@@ -148,9 +193,19 @@ class Mapping_Post extends Base {
 				return sanitize_text_field( $gc_status['wp'] );
 			}
 		}
+
 		return false;
 	}
 
+	/**
+	 * Get the status which the item should transition to.
+	 *
+	 * @since  3.0.0
+	 *
+	 * @param  object $item Item object.
+	 *
+	 * @return mixed        New item status or false.
+	 */
 	public function get_item_new_status( $item ) {
 		$status_id = isset( $item->custom_state_id ) ? $item->custom_state_id : $item;
 		if ( $gc_status = $this->data( 'gc_status', $status_id ) ) {
@@ -161,67 +216,196 @@ class Mapping_Post extends Base {
 		return false;
 	}
 
+	/**
+	 * Get the mapping edit link.
+	 *
+	 * @since  3.0.0
+	 *
+	 * @return string
+	 */
 	public function get_edit_post_link() {
 		return get_edit_post_link( $this->post->ID );
 	}
 
-	public function update_meta( $key, $value ) {
-		return update_post_meta( $this->post->ID, $key, $value );
+	/**
+	 * Wrapper for update_post_meta.
+	 *
+	 * @since  3.0.0
+	 *
+	 * @param string $meta_key   Metadata key.
+	 * @param mixed  $meta_value Metadata value. Must be serializable if non-scalar.
+	 *
+	 * @return int|bool Meta ID if the key didn't exist, true on successful update,
+	 *                  false on failure.
+	 */
+	public function update_meta( $meta_key, $meta_value ) {
+		return update_post_meta( $this->post->ID, $meta_key, $meta_value );
 	}
 
-	protected function get_meta( $key ) {
-		return get_post_meta( $this->post->ID, $key, 1 );
+	/**
+	 * Wrapper for get_post_meta.
+	 *
+	 * @param string $meta_key The meta key to retrieve. By default, returns
+	 *                         data for all keys. Default empty.
+	 * @return mixed Will be an array if $single is false. Will be value of meta data
+	 *               field if $single is true.
+	 */
+	public function get_meta( $meta_key ) {
+		return get_post_meta( $this->post->ID, $meta_key, 1 );
 	}
 
-	protected function delete_meta( $key ) {
-		return delete_post_meta( $this->post->ID, $key );
+	/**
+	 * Wrapper for delete_post_meta.
+	 *
+	 * @param string $meta_key Metadata name.
+	 *
+	 * @return bool True on success, false on failure.
+	 */
+	public function delete_meta( $meta_key ) {
+		return delete_post_meta( $this->post->ID, $meta_key );
 	}
 
+	/**
+	 * Gets the _gc_template meta value.
+	 *
+	 * @since  3.0.0
+	 *
+	 * @return mixed
+	 */
 	public function get_template() {
 		return $this->get_meta( '_gc_template' );
 	}
 
+	/**
+	 * Gets the _gc_project meta value.
+	 *
+	 * @since  3.0.0
+	 *
+	 * @return mixed
+	 */
 	public function get_project() {
 		return $this->get_meta( '_gc_project' );
 	}
 
+	/**
+	 * Gets the _gc_account_id meta value.
+	 *
+	 * @since  3.0.0
+	 *
+	 * @return mixed
+	 */
 	public function get_account_id() {
 		return $this->get_meta( '_gc_account_id' );
 	}
 
+	/**
+	 * Gets the _gc_account meta value.
+	 *
+	 * @since  3.0.0
+	 *
+	 * @return mixed
+	 */
 	public function get_account_slug() {
 		return $this->get_meta( '_gc_account' );
 	}
 
+	/**
+	 * Gets the items to pull.
+	 *
+	 * @since  3.0.0
+	 *
+	 * @return array
+	 */
 	public function get_items_to_pull() {
 		return $this->get_items_to_sync();
 	}
 
+	/**
+	 * Updates the items to pull.
+	 *
+	 * @since  3.0.0
+	 *
+	 * @param  array $items Array of items to store to meta.
+	 *
+	 * @return int|bool Meta ID if the key didn't exist, true on successful update,
+	 *                  false on failure.
+	 */
 	public function update_items_to_pull( $items ) {
 		return $this->update_items_to_sync( $items );
 	}
 
+	/**
+	 * Gets the percent of items pulled.
+	 *
+	 * @since  3.0.0
+	 *
+	 * @return int
+	 */
 	public function get_pull_percent() {
 		return $this->get_sync_percent();
 	}
 
+	/**
+	 * Gets the items to push.
+	 *
+	 * @since  3.0.0
+	 *
+	 * @return array
+	 */
 	public function get_items_to_push() {
 		return $this->get_items_to_sync( 'push' );
 	}
 
+	/**
+	 * Updates the items to pull.
+	 *
+	 * @since  3.0.0
+	 *
+	 * @param  array $items Array of items to store to meta.
+	 *
+	 * @return int|bool Meta ID if the key didn't exist, true on successful update,
+	 *                  false on failure.
+	 */
 	public function update_items_to_push( $items ) {
 		return $this->update_items_to_sync( $items, 'push' );
 	}
 
+	/**
+	 * Gets the percent of items pushed.
+	 *
+	 * @since  3.0.0
+	 *
+	 * @return int
+	 */
 	public function get_push_percent() {
 		return $this->get_sync_percent( 'push' );
 	}
 
+	/**
+	 * Gets the items to sync, based on $direction
+	 *
+	 * @since  3.0.0
+	 *
+	 * @param  string $direction Push or pull.
+	 *
+	 * @return array
+	 */
 	public function get_items_to_sync( $direction = 'pull'  ) {
 		$items = $this->get_meta( "_gc_{$direction}_items" );
 		return is_array( $items ) ? $items : array();
 	}
 
+	/**
+	 * Updates the items to sync, based on $direction.
+	 *
+	 * @since  3.0.0
+	 *
+	 * @param  array  $items Array of items to store to meta.
+	 * @param  string $direction Push or pull.
+	 *
+	 * @return int|bool Meta ID if the key didn't exist, true on successful update,
+	 *                  false on failure.
+	 */
 	public function update_items_to_sync( $items, $direction = 'pull' ) {
 		if ( empty( $items ) || empty( $items['pending'] ) ) {
 			return $this->delete_meta( "_gc_{$direction}_items" );
@@ -230,6 +414,15 @@ class Mapping_Post extends Base {
 		return $this->update_meta( "_gc_{$direction}_items", $items );
 	}
 
+	/**
+	 * Gets the percent of items synced.
+	 *
+	 * @since  3.0.0
+	 *
+	 * @param  string $direction Push or pull.
+	 *
+	 * @return int
+	 */
 	public function get_sync_percent( $direction = 'pull'  ) {
 		$percent = 1;
 
@@ -254,7 +447,7 @@ class Mapping_Post extends Base {
 	/**
 	 * Magic getter for our object.
 	 *
-	 * @param string $property
+	 * @param  string $property The class property to get.
 	 * @throws Mapping_Post_Exception Throws an exception if the field is invalid.
 	 * @return mixed
 	 */
@@ -279,7 +472,7 @@ class Mapping_Post extends Base {
 	/**
 	 * Magic isset checker for our object.
 	 *
-	 * @param string $property
+	 * @param string $property The class property to check if isset.
 	 * @return bool
 	 */
 	public function __isset( $property ) {

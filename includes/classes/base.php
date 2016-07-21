@@ -1,9 +1,32 @@
 <?php
+/**
+ * GatherContent Importer
+ *
+ * @package GatherContent Importer
+ */
+
 namespace GatherContent\Importer;
 
+/**
+ * Base class for all classes. Provides some methods for
+ * interacting w/ $_GET and $_POST superglobals.
+ *
+ * @version 3.0.0
+ */
 abstract class Base {
 
+	/**
+	 * The $_GET superglobal.
+	 *
+	 * @var array|null
+	 */
 	protected static $_get  = null;
+
+	/**
+	 * The $_POST superglobal.
+	 *
+	 * @var array|null
+	 */
 	protected static $_post = null;
 
 	/**
@@ -12,8 +35,10 @@ abstract class Base {
 	 *
 	 * @since 3.0.0
 	 *
-	 * @param array  $_get       Array of $_GET variables
-	 * @param array  $_post       Array of $_POST variables
+	 * @param array $_get  Array of $_GET variables.
+	 * @param array $_post Array of $_POST variables.
+	 *
+	 * @throws Exception If the $_GET and $_Post variables are not set on the first initation.
 	 */
 	protected function __construct( array $_get = null, array $_post = null ) {
 		if ( is_array( $_get ) ) {
@@ -34,7 +59,7 @@ abstract class Base {
 	 *
 	 * @since  3.0.0
 	 *
-	 * @param  string  $key Key to check/retrieve
+	 * @param  string $key Key to check/retrieve.
 	 *
 	 * @return mixed        Query value if it exists.
 	 */
@@ -47,8 +72,8 @@ abstract class Base {
 	 *
 	 * @since  3.0.0
 	 *
-	 * @param  string  $key   Key to check.
-	 * @param  string  $value Value to check.
+	 * @param  string $key   Key to check.
+	 * @param  string $value Value to check.
 	 *
 	 * @return bool           Whether Query key/value exists.
 	 */
@@ -61,9 +86,9 @@ abstract class Base {
 	 *
 	 * @since  3.0.0
 	 *
-	 * @param  string  $key Key to check/retrieve
+	 * @param  string $key Key to check/retrieve.
 	 *
-	 * @return mixed        Query value if it exists.
+	 * @return mixed       Query value if it exists.
 	 */
 	public function _post_val( $key ) {
 		return isset( self::$_post[ $key ] ) ? self::$_post[ $key ] : null;
@@ -74,21 +99,25 @@ abstract class Base {
 	 *
 	 * @since  3.0.0
 	 *
-	 * @param  string  $key   Key to check.
-	 * @param  string  $value Value to check.
+	 * @param  string $key   Key to check.
+	 * @param  string $value Value to check.
 	 *
-	 * @return bool           Whether Query key/value exists.
+	 * @return bool          Whether Query key/value exists.
 	 */
 	public function post_val_equals( $key, $value ) {
 		return isset( self::$_post[ $key ] ) && $value === self::$_post[ $key ];
 	}
 
 	/**
-	 * Outputs a view
+	 * Outputs a view.
 	 *
 	 * @since  3.0.0
 	 *
-	 * @return void
+	 * @param  string  $template The template name.
+	 * @param  array   $args     Array of args for the template.
+	 * @param  boolean $echo     Whether to output result or return it.
+	 *
+	 * @return mixed             Result of view rendering if requesting to return it.
 	 */
 	public function view( $template, array $args = array(), $echo = true ) {
 		switch ( $template ) {
