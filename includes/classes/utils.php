@@ -1,8 +1,17 @@
 <?php
+/**
+ * GatherContent Importer
+ *
+ * @package GatherContent Importer
+ */
+
 namespace GatherContent\Importer;
 use DateTime;
 use DateTimeZone;
 
+/**
+ * GatherContent Importer Utilities
+ */
 class Utils extends Base {
 
 	/**
@@ -12,14 +21,19 @@ class Utils extends Base {
 	 */
 	protected static $js_suffix = '';
 
+	/**
+	 * Constructor. Sets the js_suffix var.
+	 *
+	 * @since 3.0.0
+	 */
 	public function __construct() {
 		self::$js_suffix = defined( 'SCRIPT_DEBUG' ) && SCRIPT_DEBUG ? '' : '.min';
 	}
 
 	/**
 	 * Magic getter for our object, to make protected properties accessible.
-	 * @param string $field
-	 * @return mixed
+	 *
+	 * @return string
 	 */
 	public static function js_suffix() {
 		return self::$js_suffix;
@@ -30,11 +44,11 @@ class Utils extends Base {
 	 *
 	 * @since  3.0.0
 	 *
-	 * @param  mixed  $date_check   Date to check
-	 * @param  mixed  $date_compare Date to compare with
-	 * @param  integer $allowance   Allowed tolerance.
+	 * @param  mixed   $date_check   Date to check.
+	 * @param  mixed   $date_compare Date to compare with.
+	 * @param  integer $allowance    Allowed tolerance.
 	 *
-	 * @return bool                 Whether $date_check is current with $date_compare.
+	 * @return bool                  Whether $date_check is current with $date_compare.
 	 */
 	public static function date_current_with( $date_check, $date_compare, $allowance = 0 ) {
 		$date_compare = strtotime( $date_compare );
@@ -49,17 +63,16 @@ class Utils extends Base {
 	 *
 	 * @since  3.0.0
 	 *
-	 * @param  callable $callback Callable function
-	 * @param  array    $array    Array to recurse
+	 * @param  callable $callback Callable function.
+	 * @param  array    $array    Array to recurse.
 	 *
 	 * @return array              Updated array.
 	 */
 	static function array_map_recursive( $callback, $array ) {
-		foreach ( $array as $key => $value) {
+		foreach ( $array as $key => $value ) {
 			if ( is_array( $array[ $key ] ) ) {
 				$array[ $key ] = self::array_map_recursive( $callback, $array[ $key ] );
-			}
-			else {
+			} else {
 				$array[ $key ] = call_user_func( $callback, $array[ $key ] );
 			}
 		}
@@ -71,7 +84,7 @@ class Utils extends Base {
 	 *
 	 * @since  3.0.0
 	 *
-	 * @param  string $utc_date UTC date
+	 * @param  string $utc_date UTC date.
 	 *
 	 * @return string           Human readable relative date.
 	 */
