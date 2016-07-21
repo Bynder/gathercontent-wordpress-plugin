@@ -6,7 +6,10 @@ use GatherContent\Importer\Mapping_Post;
 
 class Sync_Items extends Plugin_Base {
 
+	protected $mapping = null;
+
 	public function gc_sync_items_cb() {
+
 		$this->verify_request();
 
 		$this->verify_nonce();
@@ -75,7 +78,7 @@ class Sync_Items extends Plugin_Base {
 
 		$percent = $this->mapping->get_pull_percent();
 
-		do_action( 'gc_pull_items', $this->mapping );
+		// do_action( 'gc_pull_items', $this->mapping );
 
 		wp_send_json_success( compact( 'percent' ) );
 	}
