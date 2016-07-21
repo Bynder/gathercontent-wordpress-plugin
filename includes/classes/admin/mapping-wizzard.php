@@ -139,7 +139,9 @@ class Mapping_Wizzard extends Base {
 	}
 
 	public function admin_page() {
-		$this->register_notices();
+		if ( Utils::doing_ajax() ) {
+			return;
+		}
 
 		$args = array(
 			'logo'                => $this->logo,
@@ -170,23 +172,53 @@ class Mapping_Wizzard extends Base {
 				break;
 		}
 
+		$this->register_notices();
 		$this->view( 'admin-page', $args );
 	}
 
 	public function register_notices() {
+		$notices = array();
+
 		if ( get_option( 'gc-api-updated' ) ) {
-			$this->add_settings_error( $this->option_name, 'gc-api-connection-reset', __( 'We refreshed the data from the GatherContent API.', 'gathercontent-import' ), 'updated' );
+			$notices[] = array(
+				'id'      => 'gc-api-connection-reset',
+				'message' => __( 'We refreshed the data from the GatherContent API.', 'gathercontent-import' ),
+				'type'    => 'updated',
+			);
 			delete_option( 'gc-api-updated' );
 		}
 
 		if ( $this->_get_val( 'updated' ) &&  $this->_get_val( 'project' ) &&  $this->_get_val( 'template' ) ) {
 
 			if ( $this->_get_val( 'sync-items' ) ) {
-				return $this->add_settings_error( $this->option_name, 'gc-mapping-updated', __( 'Items Import complete!', 'gathercontent-import' ), 'updated' );
+				$notices[] = array(
+					'id'      => 'gc-mapping-updated',
+					'message' => __( 'Items Import complete!', 'gathercontent-import' ),
+					'type'    => 'updated',
+				);
+
+			} else {
+				$label = 1 === absint( $this->_get_val( 'updated' ) ) ? 'item_updated' : 'item_saved';
+
+				$notices[] = array(
+					'id'      => 'gc-mapping-updated',
+					'message' => $this->mappings->args->labels->{$label},
+					'type'    => 'updated',
+				);
 			}
 
-			$label = 1 === absint( $this->_get_val( 'updated' ) ) ? 'item_updated' : 'item_saved';
-			$this->add_settings_error( $this->option_name, 'gc-mapping-updated', $this->mappings->args->labels->{$label}, 'updated' );
+		}
+
+		$notices = apply_filters( 'gc_admin_notices', $notices );
+		foreach ( $notices as $notice ) {
+			$notice['type'] = isset( $notice['type'] ) ? $notice['type'] : 'error';
+
+			$this->add_settings_error(
+				$this->option_name,
+				$notice['id'],
+				$notice['message'],
+				$notice['type']
+			);
 		}
 	}
 
