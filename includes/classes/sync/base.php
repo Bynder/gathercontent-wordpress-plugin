@@ -1,16 +1,41 @@
 <?php
+/**
+ * GatherContent Importer
+ *
+ * @package GatherContent Importer
+ */
+
 namespace GatherContent\Importer\Sync;
 use GatherContent\Importer\Base as Plugin_Base;
 use GatherContent\Importer\Post_Types\Template_Mappings;
 use GatherContent\Importer\Mapping_Post;
 use GatherContent\Importer\API;
 use GatherContent\Importer\Dom;
-
 use WP_Error;
 
+/**
+ * Sync-specific exception class w/ data property.
+ *
+ * @since 3.0.0
+ */
 class Exception extends \Exception {
+
+	/**
+	 * Additional data for the exception.
+	 *
+	 * @var mixed
+	 */
 	protected $data;
 
+	/**
+	 * Constructor. Handles assigning the data property.
+	 *
+	 * @since 3.0.0
+	 *
+	 * @param strin $message Exception message.
+	 * @param int   $code    Exception code.
+	 * @param mixed $data    Additional data.
+	 */
 	public function __construct( $message, $code, $data = null ) {
 		parent::__construct( $message, $code );
 		if ( null !== $data ) {
@@ -18,15 +43,29 @@ class Exception extends \Exception {
 		}
 	}
 
+	/**
+	 * Fetch the Exception data.
+	 *
+	 * @since  3.0.0
+	 *
+	 * @return mixed Exception data
+	 */
 	public function get_data() {
 		return $this->data;
 	}
 }
 
+/**
+ * Base class for pushing/pulling content to GC.
+ *
+ * @since 3.0.0
+ */
 abstract class Base extends Plugin_Base {
 
 	/**
 	 * Sync direction. 'push', or 'pull'.
+	 *
+	 * @since  3.0.0
 	 *
 	 * @var string
 	 */
@@ -35,12 +74,16 @@ abstract class Base extends Plugin_Base {
 	/**
 	 * GatherContent\Importer\API instance
 	 *
+	 * @since  3.0.0
+	 *
 	 * @var GatherContent\Importer\API
 	 */
 	protected $api = null;
 
 	/**
 	 * Async_Base instance
+	 *
+	 * @since  3.0.0
 	 *
 	 * @var Async_Base
 	 */
@@ -49,12 +92,16 @@ abstract class Base extends Plugin_Base {
 	/**
 	 * GatherContent item object.
 	 *
+	 * @since  3.0.0
+	 *
 	 * @var null|object
 	 */
 	protected $item = null;
 
 	/**
 	 * GatherContent item element object.
+	 *
+	 * @since  3.0.0
 	 *
 	 * @var null|object
 	 */
@@ -63,16 +110,28 @@ abstract class Base extends Plugin_Base {
 	/**
 	 * Mapping post object
 	 *
+	 * @since  3.0.0
+	 *
 	 * @var null|Mapping_Post
 	 */
 	protected $mapping = null;
+
+	/**
+	 * The WP field types which allow appending (concatenation) of content.
+	 *
+	 * @since  3.0.0
+	 *
+	 * @var array
+	 */
+	protected $append_types = array( 'post_content', 'post_title', 'post_excerpt' );
 
 	/**
 	 * Creates an instance of this class.
 	 *
 	 * @since 3.0.0
 	 *
-	 * @param $api API object
+	 * @param API        $api   API object.
+	 * @param Async_Base $async Async_Base object.
 	 */
 	public function __construct( API $api, Async_Base $async ) {
 		$this->api   = $api;
@@ -87,17 +146,51 @@ abstract class Base extends Plugin_Base {
 	 * @return void
 	 */
 	abstract public function init_hooks();
+
+	/**
+	 * Handles pushing/pulling item.
+	 *
+	 * @since  3.0.0
+	 *
+	 * @param  int $id id of thing to sync.
+	 *
+	 * @throws Exception On failure.
+	 *
+	 * @return mixed Result of push.
+	 */
 	abstract protected function do_item( $id );
 
-	public function sync_items( $mapping ) {
-		$result = $this->_sync_items( $mapping );
-		// error_log( '_sync_items $result: '. print_r( $result, true ) );
+	/**
+	 * Handles syncing items for a mapping.
+	 *
+	 * @todo  Store errors.
+	 *
+	 * @since  3.0.0
+	 *
+	 * @param  int $mapping_post_id Mapping post ID.
+	 *
+	 * @return mixed Result of sync. WP_Error on failure.
+	 */
+	public function sync_items( $mapping_post_id ) {
+		$result = $this->_sync_items( $mapping_post_id );
+		// @todo store errors as post-meta (if mapping id resolves)
 		return $result;
 	}
 
-	protected function _sync_items( $mapping ) {
+	/**
+	 * Handles syncing items for a mapping.
+	 *
+	 * @since  3.0.0
+	 *
+	 * @param  int $mapping_post_id Mapping post ID.
+	 *
+	 * @throws Exception On failure.
+	 *
+	 * @return mixed Result of sync.
+	 */
+	protected function _sync_items( $mapping_post_id ) {
 		try {
-			$this->mapping = Mapping_Post::get( $mapping, true );
+			$this->mapping = Mapping_Post::get( $mapping_post_id, true );
 
 			$this->check_mapping_data();
 			$ids = $this->get_items_to_sync( $this->direction );
@@ -125,15 +218,26 @@ abstract class Base extends Plugin_Base {
 		$this->mapping->update_items_to_sync( $ids, $this->direction );
 		delete_option( "gc_{$this->direction}_item_{$id}" );
 
-		// If we have more items
+		// If we have more items...
 		if ( ! empty( $ids['pending'] ) ) {
-			// Then trigger the next async request
+			// Then trigger the next async request.
 			do_action( "gc_{$this->direction}_items", $this->mapping );
 		}
 
 		return $result;
 	}
 
+	/**
+	 * Wrapper for `get_post` that throws an exception if not found.
+	 *
+	 * @since  3.0.0
+	 *
+	 * @param  int|object $post_id Post id or post object.
+	 *
+	 * @throws Exception On failure.
+	 *
+	 * @return object Post object.
+	 */
 	protected function get_post( $post_id ) {
 		$post = $post_id instanceof WP_Post ? $post_id : get_post( $post_id );
 		if ( ! $post ) {
@@ -143,12 +247,19 @@ abstract class Base extends Plugin_Base {
 		return $post;
 	}
 
+	/**
+	 * Gets an item from the API, then sets it as the class item property.
+	 *
+	 * @since 3.0.0
+	 *
+	 * @param int $item_id Item id.
+	 *
+	 * @throws Exception On failure.
+	 *
+	 * @return object Item object.
+	 */
 	protected function set_item( $item_id ) {
-		// if ( isset( $_GET['test_pull'] ) ) {
-		// 	$this->item = $this->api->get_item( $item_id );
-		// } else {
-			$this->item = $this->api->uncached()->get_item( $item_id );
-		// }
+		$this->item = $this->api->uncached()->get_item( $item_id );
 
 		if ( ! isset( $this->item->id ) ) {
 			// @todo maybe check if error was temporary.
@@ -158,6 +269,15 @@ abstract class Base extends Plugin_Base {
 		return $this->item;
 	}
 
+	/**
+	 * Gets the pending sync items.
+	 *
+	 * @since 3.0.0
+	 *
+	 * @throws Exception On failure.
+	 *
+	 * @return array Array of pending sync items.
+	 */
 	protected function get_items_to_sync() {
 		$items = $this->mapping->get_items_to_sync( $this->direction );
 
@@ -168,6 +288,15 @@ abstract class Base extends Plugin_Base {
 		return $items;
 	}
 
+	/**
+	 * Ensures the mapping has mapping data set.
+	 *
+	 * @since 3.0.0
+	 *
+	 * @throws Exception On failure.
+	 *
+	 * @return void
+	 */
 	protected function check_mapping_data() {
 		$mapping_data = $this->mapping->data();
 		if ( empty( $mapping_data ) ) {
@@ -176,11 +305,27 @@ abstract class Base extends Plugin_Base {
 		}
 	}
 
+	/**
+	 * Gets the current element's value, and passes through a filter.
+	 *
+	 * @since  3.0.0
+	 *
+	 * @return mixed  The current element's value.
+	 */
 	protected function get_element_value() {
 		$val = $this->get_value_for_element( $this->element );
 		return apply_filters( 'gc_get_element_value', $val, $this->element, $this->item );
 	}
 
+	/**
+	 * Gets the element's value, based on the element type.
+	 *
+	 * @since  3.0.0
+	 *
+	 * @param object $element The element to get the value for.
+	 *
+	 * @return mixed  The current element's value.
+	 */
 	protected function get_value_for_element( $element ) {
 		$val = false;
 
@@ -192,28 +337,39 @@ abstract class Base extends Plugin_Base {
 					$val = preg_replace_callback(
 						'#\<p\>(.+?)\<\/p\>#s',
 						function ( $matches ) {
-							return '<p>'. str_replace( array(
+							return '<p>' . str_replace( array(
 								"\n    ",
 								"\r\n    ",
 								"\r    ",
 								"\n",
 								"\r\n",
 								"\r",
-							), '', $matches[1] ) .'</p>';
+							), '', $matches[1] ) . '</p>';
 						},
 						$val
 					);
 					$val = str_replace( '</ul><', "</ul>\n<", $val );
 					$val = preg_replace( '/<\/p>\s*<p>/m', "</p>\n<p>", $val );
 					$val = preg_replace( '/<\/p>\s*</m', "</p>\n<", $val );
-					$val = preg_replace( '/<p>\s*<\/p>/m','<p>&nbsp;</p>',$val );
-					$val = str_replace( array('<ul><li', '</li><li>', '</li></ul>'), array("<ul>\n\t<li", "</li>\n\t<li>", "</li>\n</ul>"), $val );
+					$val = preg_replace( '/<p>\s*<\/p>/m', '<p>&nbsp;</p>', $val );
+					$val = str_replace(
+						array(
+							'<ul><li',
+							'</li><li>',
+							'</li></ul>',
+						), array(
+							"<ul>\n\t<li",
+							"</li>\n\t<li>",
+							"</li>\n</ul>",
+						),
+						$val
+					);
 
 					$val = preg_replace( '/<mark[^>]*>/i', '', $val );
 					$val = preg_replace( '/<\/mark>/i', '', $val );
 
 					// Replace encoded ampersands in html entities.
-					// http://regexr.com/3dpcf
+					// http://regexr.com/3dpcf -- example.
 					$val = preg_replace_callback( '~(&amp;)(?:[a-z,A-Z,0-9]+|#\d+|#x[0-9a-f]+);~', function( $matches ) {
 						return str_replace( '&amp;', '&', $matches[0] );
 					}, $val );
@@ -228,8 +384,7 @@ abstract class Base extends Plugin_Base {
 					if ( $option->selected ) {
 						if ( isset( $option->value ) ) {
 							$val = sanitize_text_field( $option->value );
-						}
-						else {
+						} else {
 							$val = sanitize_text_field( $option->label );
 						}
 					}
@@ -261,16 +416,28 @@ abstract class Base extends Plugin_Base {
 		return $val;
 	}
 
+	/**
+	 * Sets the current element's value.
+	 *
+	 * @since  3.0.0
+	 *
+	 * @return void
+	 */
 	protected function set_element_value() {
 		$this->element->value = $this->get_element_value();
 	}
 
-	protected function get_append_types() {
-		return array( 'post_content', 'post_title', 'post_excerpt' );
-	}
-
+	/**
+	 * Determines if the field can be appended to.
+	 *
+	 * @since  3.0.0
+	 *
+	 * @param  string $field Field to check.
+	 *
+	 * @return bool          Whether field can append.
+	 */
 	protected function type_can_append( $field ) {
-		$can_append = in_array( $field, $this->get_append_types(), 1 );
+		$can_append = in_array( $field, $this->append_types, true );
 
 		return apply_filters( "gc_can_append_{$field}", $can_append, $this->element, $this->item );
 	}
@@ -282,7 +449,7 @@ abstract class Base extends Plugin_Base {
 	 * @since  3.0.0
 	 * @uses   get_shortcode_regex
 	 *
-	 * @param  string $content  The GC content
+	 * @param  string $content  The GC content.
 	 * @param  int    $position Image positional argument.
 	 *
 	 * @return false|array      Array of attributes on success.
@@ -319,11 +486,11 @@ abstract class Base extends Plugin_Base {
 	 *
 	 * @since  3.0.0
 	 *
-	 * @param  array  $atts    Array of attributes.
-	 * @param  int  $media_id  The GC media object id.
-	 * @param  int  $attach_id The WP media id.
+	 * @param  array $atts      Array of attributes.
+	 * @param  int   $media_id  The GC media object id.
+	 * @param  int   $attach_id The WP media id.
 	 *
-	 * @return string          Image markup, if successful.
+	 * @return string           Image markup, if successful.
 	 */
 	public function get_requested_media( $atts, $media_id, $attach_id ) {
 		$image = '';
@@ -403,9 +570,9 @@ abstract class Base extends Plugin_Base {
 	 *
 	 * @since  3.0.0
 	 *
-	 * @param  string  $content HTML content
+	 * @param  string $content HTML content.
 	 *
-	 * @return string           Updated content.
+	 * @return string          Updated content.
 	 */
 	public function convert_media_to_shortcodes( $content ) {
 		$dom          = new Dom( $content );
@@ -427,7 +594,7 @@ abstract class Base extends Plugin_Base {
 				$index++;
 			}
 
-			// Mark this gc media id
+			// Mark this gc media id.
 			$ids[ $gcid ] = 1;
 
 			$string = '';
@@ -441,9 +608,11 @@ abstract class Base extends Plugin_Base {
 					}
 
 					// If wrapped in a link, need to get that too.
-					if ( isset( $data['linkto'] ) && in_array( $data['linkto'], array( 'attachment-page', 'file' ), 1 ) ) {
+					if ( isset( $data['linkto'] ) && in_array( $data['linkto'], array( 'attachment-page', 'file' ), true ) ) {
+						// @codingStandardsIgnoreStart
 						if ( 'a' === $img->parentNode->tagName ) {
 							$node_to_replace = $dom->saveHTML( $img->parentNode );
+							// @codingStandardsIgnoreEnd
 						}
 					}
 				}
@@ -458,11 +627,15 @@ abstract class Base extends Plugin_Base {
 
 	/**
 	 * Removes faulty "zero width space", which seems to come through the GC API.
+	 *
 	 * @link http://stackoverflow.com/questions/11305797/remove-zero-width-space-characters-from-a-javascript-string
 	 * U+200B zero width space
 	 * U+200C zero width non-joiner Unicode code point
 	 * U+200D zero width joiner Unicode code point
 	 * U+FEFF zero width no-break space Unicode code point
+	 *
+	 * @param  string $string The string to clean.
+	 * @return string The cleaned up string.
 	 */
 	public static function remove_zero_width( $string ) {
 		return preg_replace( '/[\x{200B}-\x{200D}]/u', '', $string );

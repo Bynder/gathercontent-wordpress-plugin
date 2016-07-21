@@ -161,7 +161,7 @@ class Pull extends Base {
 		}
 
 		$backup = array();
-		foreach ( $this->get_append_types() as $key ) {
+		foreach ( $this->append_types as $key ) {
 			$backup[ $key ] = isset( $post_data[ $key ] ) ? $post_data[ $key ] : '';
 			$post_data[ $key ] = 'gcinitial';
 		}
