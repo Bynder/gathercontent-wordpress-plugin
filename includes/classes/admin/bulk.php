@@ -73,7 +73,7 @@ class Bulk extends Post_Base {
 	 *
 	 * @since  3.0.0
 	 *
-	 * @return void
+	 * @return void|bool
 	 */
 	public function ui_page() {
 		$screen = get_current_screen();
@@ -82,11 +82,11 @@ class Bulk extends Post_Base {
 			'edit' !== $screen->base
 			|| ! $screen->post_type
 		) {
-			return;
+			return false;
 		}
 
 		if ( ! isset( $this->post_types[ $screen->post_type ] ) ) {
-			return;
+			return false;
 		}
 
 		wp_enqueue_style( 'media-views' );

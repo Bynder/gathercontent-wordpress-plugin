@@ -1,4 +1,10 @@
 <?php
+/**
+ * GatherContent Importer
+ *
+ * @package GatherContent Importer
+ */
+
 namespace GatherContent\Importer\Admin\Mapping;
 use GatherContent\Importer\Base as Plugin_Base;
 
@@ -7,11 +13,48 @@ use GatherContent\Importer\Base as Plugin_Base;
  */
 abstract class Base extends Plugin_Base {
 
+	/**
+	 * The mapping ID.
+	 *
+	 * @var integer
+	 */
 	protected $mapping_id = 0;
-	protected $account;
+
+	/**
+	 * The Account ID.
+	 *
+	 * @var integer
+	 */
+	protected $account_id;
+
+	/**
+	 * The Account Slug.
+	 *
+	 * @var integer
+	 */
+	protected $account_slug;
+
+	/**
+	 * The Project ID.
+	 *
+	 * @var integer
+	 */
 	protected $project;
+
+	/**
+	 * The Template ID.
+	 *
+	 * @var integer
+	 */
 	protected $template;
 
+	/**
+	 * Constructor
+	 *
+	 * @since 3.0.0
+	 *
+	 * @param array $args Arguments.
+	 */
 	public function __construct( array $args ) {
 		$this->mapping_id   = $args['mapping_id'];
 		$this->account_id   = $args['account_id'];
@@ -64,9 +107,11 @@ abstract class Base extends Plugin_Base {
 	 * @return void
 	 */
 	public function ui() {
-		$this->ui_page();
+		if ( false === $this->ui_page() ) {
+			return;
+		}
 
-		// Hook in the underscores templates
+		// Hook in the underscores templates.
 		add_action( 'admin_footer', array( $this, 'footer_mapping_js_templates' ) );
 
 		add_filter( 'gathercontent_localized_data', array( $this, 'localize_data' ) );
@@ -84,7 +129,7 @@ abstract class Base extends Plugin_Base {
 	 */
 	public function footer_mapping_js_templates() {
 		foreach ( $this->get_underscore_templates() as $template_id => $view_args ) {
-			echo '<script type="text/html" id="'. $template_id .'">';
+			echo '<script type="text/html" id="' . esc_attr( $template_id ) . '">';
 			$this->view( $template_id, $view_args );
 			echo '</script>';
 		}
@@ -95,9 +140,9 @@ abstract class Base extends Plugin_Base {
 	 *
 	 * @since  3.0.0
 	 *
-	 * @param  array  $data Array of localizable data
+	 * @param  array $data Array of localizable data.
 	 *
-	 * @return array        Modified array of data.
+	 * @return array       Modified array of data.
 	 */
 	public function localize_data( $data ) {
 		return array_merge( $data, $this->get_localize_data() );
@@ -108,9 +153,9 @@ abstract class Base extends Plugin_Base {
 	 *
 	 * @since  3.0.0
 	 *
-	 * @param  string  $col Post column.
+	 * @param  string $col Post column.
 	 *
-	 * @return array        Array of <select> options.
+	 * @return array       Array of <select> options.
 	 */
 	protected function get_default_field_options( $col ) {
 		$select_options = array();
@@ -159,10 +204,10 @@ abstract class Base extends Plugin_Base {
 
 		$options = array();
 		$table_name = $wpdb->prefix . 'posts';
-		$post_columns = $wpdb->get_col( "DESC " . $table_name, 0 );
+		$post_columns = $wpdb->get_col( "DESC {$wpdb->prefix}posts", 0 );
 
 		foreach ( $post_columns as $col ) {
-			if ( ! $this->post_column_option_is_blacklisted( $col) ) {
+			if ( ! $this->post_column_option_is_blacklisted( $col ) ) {
 				$options[ $col ] = $this->post_column_label( $col );
 			}
 		}
@@ -182,8 +227,8 @@ abstract class Base extends Plugin_Base {
 
 		$meta_keys = get_transient( 'gathercontent_importer_custom_field_keys' );
 
-		if ( ! $meta_keys || isset( $_GET['delete-trans'] ) ) {
-			// retrieve custom field keys to include in the Custom Fields weight table select
+		if ( ! $meta_keys || $this->_get_val( 'delete-trans' ) ) {
+			// Retrieve custom field keys to include in the Custom Fields weight table select.
 			$meta_keys = $wpdb->get_col( $wpdb->prepare( "
 				SELECT meta_key
 				FROM $wpdb->postmeta
@@ -196,10 +241,10 @@ abstract class Base extends Plugin_Base {
 			set_transient( 'gathercontent_importer_custom_field_keys', $meta_keys, DAY_IN_SECONDS );
 		}
 
-		// allow devs to filter this list
+		// Allow devs to filter this list.
 		$meta_keys = array_unique( apply_filters( 'gathercontent_importer_custom_field_keys', $meta_keys ) );
 
-		// sort the keys alphabetically
+		// Sort the keys alphabetically.
 		if ( $meta_keys ) {
 			natcasesort( $meta_keys );
 		} else {
@@ -228,13 +273,13 @@ abstract class Base extends Plugin_Base {
 			'_gc_mapped_item_id'       => 1,
 			'_gc_mapping_id'           => 1,
 			'_gc_mapped_meta'          => 1,
-			// legacy
+			// legacy.
 			'gc_file_id'               => 1,
 		) );
 
 		$keys = array();
 		foreach ( array_values( $meta_keys ) as $column ) {
-			if ( ! isset( $meta_keys_blacklist[ $column ] ) )  {
+			if ( ! isset( $meta_keys_blacklist[ $column ] ) ) {
 				$keys[] = array( 'value' => $column );
 			}
 		}
@@ -247,7 +292,7 @@ abstract class Base extends Plugin_Base {
 	 *
 	 * @since  3.0.0
 	 *
-	 * @param  string $col Post table column
+	 * @param  string $col Post table column.
 	 *
 	 * @return bool        Whether column passed the blacklist check.
 	 */
@@ -262,7 +307,7 @@ abstract class Base extends Plugin_Base {
 			'guid',
 			'post_type',
 			'post_type',
-		) );
+		), true );
 	}
 
 	/**
@@ -270,9 +315,9 @@ abstract class Base extends Plugin_Base {
 	 *
 	 * @since  3.0.0
 	 *
-	 * @param  string  $col Post table column
+	 * @param  string $col Post table column.
 	 *
-	 * @return string       Human readable value if we have one.
+	 * @return string      Human readable value if we have one.
 	 */
 	protected function post_column_label( $col ) {
 		switch ( $col ) {
@@ -336,7 +381,6 @@ abstract class Base extends Plugin_Base {
 			$type->taxonomies = array();
 			foreach ( get_object_taxonomies( $type->name, 'objects' ) as $tax ) {
 				if ( 'post_format' === $tax->name ) {
-					// continue;
 					$tax->label = __( 'Post Formats', 'gathercontent-import' );
 				}
 
@@ -354,7 +398,7 @@ abstract class Base extends Plugin_Base {
 	 *
 	 * @since  3.0.0
 	 *
-	 * @param  string   $key      Array key to check
+	 * @param  string   $key      Array key to check.
 	 * @param  callable $callback Callback to send data through.
 	 * @param  mixed    $default  Default value if value doesn't exist.
 	 *

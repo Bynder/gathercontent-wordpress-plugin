@@ -71,18 +71,18 @@ class Single extends Post_Base {
 	 *
 	 * @since  3.0.0
 	 *
-	 * @return void
+	 * @return void|bool
 	 */
 	public function ui_page() {
 		$screen = get_current_screen();
 
 		if ( 'post' !== $screen->base || ! $screen->post_type ) {
-			return;
+			return false;
 		}
 
 		// Do not show GC metabox if there is no mapping for this post-type, or if this is a new post.
 		if ( ! isset( $this->post_types[ $screen->post_type ] ) || ! $this->_get_val( 'post' ) ) {
-			return;
+			return false;
 		}
 
 		$this->enqueue->admin_enqueue_style();
