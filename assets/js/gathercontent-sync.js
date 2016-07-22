@@ -1,5 +1,5 @@
 /**
- * GatherContent Importer - v3.0.0 - 2016-07-21
+ * GatherContent Importer - v3.0.0 - 2016-07-22
  * http://www.gathercontent.com
  *
  * Copyright (c) 2016 GatherContent
@@ -108,7 +108,7 @@ module.exports = function (app) {
 	app.views = { base: require('./views/base.js') };
 };
 
-},{"./collections/base.js":1,"./models/base.js":5,"./views/base.js":8}],4:[function(require,module,exports){
+},{"./collections/base.js":1,"./models/base.js":5,"./views/base.js":9}],4:[function(require,module,exports){
 'use strict';
 
 module.exports = function (app, defaults) {
@@ -176,8 +176,8 @@ module.exports = Backbone.Model.extend({
 },{}],6:[function(require,module,exports){
 'use strict';
 
-module.exports = function (app) {
-	return app.models.base.extend({
+module.exports = function (app, gc) {
+	return require('./../models/modify-json.js')(app.models.base.extend({
 		defaults: {
 			id: 0,
 			item: 0,
@@ -190,6 +190,7 @@ module.exports = function (app) {
 			config: '',
 			notes: '',
 			type: '',
+			typeName: '',
 			overdue: false,
 			archived_by: '',
 			archived_at: '',
@@ -200,29 +201,45 @@ module.exports = function (app) {
 			expanded: false,
 			checked: false
 		},
-		_get: function _get(value, attribute) {
-			switch (attribute) {
-				case 'item':
-					value = this.get('id');
-					break;
+
+		_get_item: function _get_item(value) {
+			return this.get('id');
+		},
+
+		_get_typeName: function _get_typeName(value) {
+			if (!value) {
+				value = Backbone.Model.prototype.get.call(this, 'type');
 			}
-
-			return value;
-		},
-
-		get: function get(attribute) {
-			return this._get(app.models.base.prototype.get.call(this, attribute), attribute);
-		},
-
-		// hijack the toJSON method and overwrite the data that is sent back to the view.
-		toJSON: function toJSON() {
-			return _.mapObject(app.models.base.prototype.toJSON.call(this), _.bind(this._get, this));
+			return gc._type_names[value] ? gc._type_names[value] : value;
 		}
-
-	});
+	}));
 };
 
-},{}],7:[function(require,module,exports){
+},{"./../models/modify-json.js":7}],7:[function(require,module,exports){
+'use strict';
+
+module.exports = function (model) {
+
+	model.prototype._get = function (value, attribute) {
+		if (this['_get_' + attribute]) {
+			value = this['_get_' + attribute](value);
+		}
+		return value;
+	};
+
+	model.prototype.get = function (attribute) {
+		return this._get(Backbone.Model.prototype.get.call(this, attribute), attribute);
+	};
+
+	// hijack the toJSON method and overwrite the data that is sent back to the view.
+	model.prototype.toJSON = function () {
+		return _.mapObject(Backbone.Model.prototype.toJSON.call(this), _.bind(this._get, this));
+	};
+
+	return model;
+};
+
+},{}],8:[function(require,module,exports){
 'use strict';
 
 window.GatherContent = window.GatherContent || {};
@@ -240,7 +257,7 @@ window.GatherContent = window.GatherContent || {};
   * Item setup
   */
 
-	app.models.item = require('./models/item.js')(app);
+	app.models.item = require('./models/item.js')(app, gc);
 	app.collections.items = require('./collections/items.js')(app);
 	app.views.item = require('./views/item.js')(app);
 	app.views.items = require('./views/items.js')(app, $, gc);
@@ -269,7 +286,7 @@ window.GatherContent = window.GatherContent || {};
 	$(app.init);
 })(window, document, jQuery, window.GatherContent);
 
-},{"./collections/items.js":2,"./initiate-objects.js":3,"./models/item.js":6,"./views/item.js":9,"./views/items.js":10}],8:[function(require,module,exports){
+},{"./collections/items.js":2,"./initiate-objects.js":3,"./models/item.js":6,"./views/item.js":10,"./views/items.js":11}],9:[function(require,module,exports){
 'use strict';
 
 module.exports = Backbone.View.extend({
@@ -303,7 +320,7 @@ module.exports = Backbone.View.extend({
 	}
 });
 
-},{}],9:[function(require,module,exports){
+},{}],10:[function(require,module,exports){
 'use strict';
 
 module.exports = function (app) {
@@ -336,7 +353,7 @@ module.exports = function (app) {
 	});
 };
 
-},{}],10:[function(require,module,exports){
+},{}],11:[function(require,module,exports){
 'use strict';
 
 module.exports = function (app, $, gc) {
@@ -552,4 +569,4 @@ module.exports = function (app, $, gc) {
 	});
 };
 
-},{"./../models/ajax.js":4}]},{},[7]);
+},{"./../models/ajax.js":4}]},{},[8]);

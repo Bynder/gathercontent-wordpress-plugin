@@ -1,36 +1,39 @@
-module.exports = function( app ) {
-	return app.models.base.extend({
+module.exports = function( app, gc ) {
+	return require( './../models/modify-json.js' )( app.models.base.extend({
 		defaults: {
 			id          : '',
 			label       : '',
 			name        : '',
 			field_type  : '',
+			type        : '',
+			typeName    : '',
 			post_type   : 'post',
 			field_value : false,
 			expanded    : false,
+			required    : false,
+			value       : '',
+			microcopy   : '',
+			limit_type  : '',
+			limit       : 0,
+			plain_text  : false,
 		},
 
-		_get : function( value, attribute ) {
+		_get_post_type : function( value ) {
+			return app.mappingView ? app.mappingView.defaultTab.get( 'post_type' ) : value;
+		},
 
-			switch ( attribute ) {
-				case 'post_type':
-					if ( app.mappingView ) {
-						value = app.mappingView.defaultTab.get( 'post_type' );
-					}
-					break;
+		_get_type : function( value ) {
+			if ( 'text' === value ) {
+				value = this.get( 'plain_text' ) ? 'text_plain' : 'text_rich';
 			}
-
 			return value;
 		},
 
-		get : function( attribute ) {
-			return this._get( app.models.base.prototype.get.call( this, attribute ), attribute );
-		},
-
-		// hijack the toJSON method and overwrite the data that is sent back to the view.
-		toJSON: function() {
-			return _.mapObject( app.models.base.prototype.toJSON.call( this ), _.bind( this._get, this ) );
+		_get_typeName : function( value ) {
+			if ( ! value ) {
+				value = this.get( 'type' );
+			}
+			return gc._type_names[ value ] ? gc._type_names[ value ] : value;
 		}
-
-	});
+	} ) );
 };

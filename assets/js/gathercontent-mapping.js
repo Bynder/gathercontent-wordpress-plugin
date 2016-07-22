@@ -1,5 +1,5 @@
 /**
- * GatherContent Importer - v3.0.0 - 2016-07-21
+ * GatherContent Importer - v3.0.0 - 2016-07-22
  * http://www.gathercontent.com
  *
  * Copyright (c) 2016 GatherContent
@@ -49,7 +49,7 @@ module.exports = function (app) {
 	app.views = { base: require('./views/base.js') };
 };
 
-},{"./collections/base.js":1,"./models/base.js":6,"./views/base.js":9}],5:[function(require,module,exports){
+},{"./collections/base.js":1,"./models/base.js":6,"./views/base.js":10}],5:[function(require,module,exports){
 'use strict';
 
 window.GatherContent = window.GatherContent || {};
@@ -68,7 +68,7 @@ window.GatherContent = window.GatherContent || {};
   * Tab Row setup
   */
 
-	app.models.tabRow = require('./models/tab-row.js')(app);
+	app.models.tabRow = require('./models/tab-row.js')(app, gc);
 	app.collections.tabRows = require('./collections/tab-rows.js')(app);
 	app.views.tabRow = require('./views/tab-row.js')(app, gc._meta_keys);
 
@@ -100,7 +100,7 @@ window.GatherContent = window.GatherContent || {};
 	$(app.init);
 })(window, document, jQuery, window.GatherContent);
 
-},{"./collections/tab-rows.js":2,"./collections/tabs.js":3,"./initiate-objects.js":4,"./models/tab-row.js":7,"./models/tab.js":8,"./views/default-tab.js":10,"./views/status-select2.js":11,"./views/tab-link.js":12,"./views/tab-row.js":13,"./views/tab.js":14,"./views/tabs.js":15}],6:[function(require,module,exports){
+},{"./collections/tab-rows.js":2,"./collections/tabs.js":3,"./initiate-objects.js":4,"./models/tab-row.js":8,"./models/tab.js":9,"./views/default-tab.js":11,"./views/status-select2.js":12,"./views/tab-link.js":13,"./views/tab-row.js":14,"./views/tab.js":15,"./views/tabs.js":16}],6:[function(require,module,exports){
 "use strict";
 
 module.exports = Backbone.Model.extend({
@@ -112,44 +112,71 @@ module.exports = Backbone.Model.extend({
 },{}],7:[function(require,module,exports){
 'use strict';
 
-module.exports = function (app) {
-	return app.models.base.extend({
+module.exports = function (model) {
+
+	model.prototype._get = function (value, attribute) {
+		if (this['_get_' + attribute]) {
+			value = this['_get_' + attribute](value);
+		}
+		return value;
+	};
+
+	model.prototype.get = function (attribute) {
+		return this._get(Backbone.Model.prototype.get.call(this, attribute), attribute);
+	};
+
+	// hijack the toJSON method and overwrite the data that is sent back to the view.
+	model.prototype.toJSON = function () {
+		return _.mapObject(Backbone.Model.prototype.toJSON.call(this), _.bind(this._get, this));
+	};
+
+	return model;
+};
+
+},{}],8:[function(require,module,exports){
+'use strict';
+
+module.exports = function (app, gc) {
+	return require('./../models/modify-json.js')(app.models.base.extend({
 		defaults: {
 			id: '',
 			label: '',
 			name: '',
 			field_type: '',
+			type: '',
+			typeName: '',
 			post_type: 'post',
 			field_value: false,
-			expanded: false
+			expanded: false,
+			required: false,
+			value: '',
+			microcopy: '',
+			limit_type: '',
+			limit: 0,
+			plain_text: false
 		},
 
-		_get: function _get(value, attribute) {
+		_get_post_type: function _get_post_type(value) {
+			return app.mappingView ? app.mappingView.defaultTab.get('post_type') : value;
+		},
 
-			switch (attribute) {
-				case 'post_type':
-					if (app.mappingView) {
-						value = app.mappingView.defaultTab.get('post_type');
-					}
-					break;
+		_get_type: function _get_type(value) {
+			if ('text' === value) {
+				value = this.get('plain_text') ? 'text_plain' : 'text_rich';
 			}
-
 			return value;
 		},
 
-		get: function get(attribute) {
-			return this._get(app.models.base.prototype.get.call(this, attribute), attribute);
-		},
-
-		// hijack the toJSON method and overwrite the data that is sent back to the view.
-		toJSON: function toJSON() {
-			return _.mapObject(app.models.base.prototype.toJSON.call(this), _.bind(this._get, this));
+		_get_typeName: function _get_typeName(value) {
+			if (!value) {
+				value = this.get('type');
+			}
+			return gc._type_names[value] ? gc._type_names[value] : value;
 		}
-
-	});
+	}));
 };
 
-},{}],8:[function(require,module,exports){
+},{"./../models/modify-json.js":7}],9:[function(require,module,exports){
 'use strict';
 
 module.exports = function (app, table_headings) {
@@ -170,7 +197,7 @@ module.exports = function (app, table_headings) {
 	});
 };
 
-},{}],9:[function(require,module,exports){
+},{}],10:[function(require,module,exports){
 'use strict';
 
 module.exports = Backbone.View.extend({
@@ -204,7 +231,7 @@ module.exports = Backbone.View.extend({
 	}
 });
 
-},{}],10:[function(require,module,exports){
+},{}],11:[function(require,module,exports){
 'use strict';
 
 module.exports = function (app, table_headings) {
@@ -293,7 +320,7 @@ module.exports = function (app, table_headings) {
 	});
 };
 
-},{}],11:[function(require,module,exports){
+},{}],12:[function(require,module,exports){
 'use strict';
 
 module.exports = function (app) {
@@ -341,7 +368,7 @@ module.exports = function (app) {
 	});
 };
 
-},{}],12:[function(require,module,exports){
+},{}],13:[function(require,module,exports){
 'use strict';
 
 module.exports = function (app) {
@@ -365,7 +392,7 @@ module.exports = function (app) {
 	});
 };
 
-},{}],13:[function(require,module,exports){
+},{}],14:[function(require,module,exports){
 'use strict';
 
 module.exports = function (app, _meta_keys) {
@@ -440,7 +467,7 @@ module.exports = function (app, _meta_keys) {
 	});
 };
 
-},{}],14:[function(require,module,exports){
+},{}],15:[function(require,module,exports){
 'use strict';
 
 module.exports = function (app) {
@@ -469,7 +496,7 @@ module.exports = function (app) {
 	});
 };
 
-},{}],15:[function(require,module,exports){
+},{}],16:[function(require,module,exports){
 'use strict';
 
 module.exports = function (app, $, gc) {

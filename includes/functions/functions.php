@@ -1,4 +1,10 @@
 <?php
+/**
+ * GatherContent Importer
+ *
+ * @package GatherContent Importer
+ */
+
 namespace GatherContent\Importer;
 use WP_Query;
 
@@ -8,11 +14,11 @@ use WP_Query;
  * @since  3.0.0
  *
  * @param string           $handle   Name of the stylesheet. Should be unique.
- * @param string           $filename Path (w/o extension/suffix) to CSS file in /assets/css/
+ * @param string           $filename Path (w/o extension/suffix) to CSS file in /assets/css/.
  * @param array            $deps     Optional. An array of registered stylesheet handles this stylesheet
  *                                   depends on. Default empty array.
- * @param string|bool|null $ver      Optional. String specifying stylesheet version number, if it has one,
- *                                   which is added to the URL
+ * @param string|bool|null $ver      Optional. String specifying stylesheet version number,
+ *                                   if it has one, which is added to the URL.
  *
  * @return void
  */
@@ -27,11 +33,11 @@ function enqueue_style( $handle, $filename, $deps = [], $ver = GATHERCONTENT_VER
  * @since  3.0.0
  *
  * @param string           $handle   Name of the script. Should be unique.
- * @param string           $filename Path (w/o extension/suffix) to JS file in /assets/js/
- * @param array            $deps     Optional. An array of registered script handles this script
- *                                   depends on. Default empty array.
- * @param string|bool|null $ver      Optional. String specifying script version number, if it has one,
- *                                   which is added to the URL
+ * @param string           $filename Path (w/o extension/suffix) to JS file in /assets/js/.
+ * @param array            $deps     Optional. An array of registered script handles this
+ *                                   script depends on. Default empty array.
+ * @param string|bool|null $ver      Optional. String specifying script version number,
+ *                                   if it has one, which is added to the URL.
  *
  * @return void
  */
@@ -55,12 +61,14 @@ function get_post_by_item_id( $item_id, $args = array() ) {
 		'post_type'      => 'any',
 		'posts_per_page' => 1,
 		'no_found_rows'  => true,
+		// @codingStandardsIgnoreStart
 		'meta_query'     => array(
 			array(
 				'key'   => '_gc_mapped_item_id',
 				'value' => $item_id,
 			),
 		),
+		// @codingStandardsIgnoreEnd
 	) ) );
 
 	return $query->have_posts() && $query->post ? $query->post : false;
@@ -71,7 +79,7 @@ function get_post_by_item_id( $item_id, $args = array() ) {
  *
  * @since  3.0.0
  *
- * @param  int  $post_id The ID of the post to check.
+ * @param  int $post_id The ID of the post to check.
  *
  * @return mixed         Result of get_post_meta.
  */
@@ -98,7 +106,7 @@ function update_post_item_id( $post_id, $item_id ) {
  *
  * @since  3.0.0
  *
- * @param  int  $post_id The ID of the post to check.
+ * @param  int $post_id The ID of the post to check.
  *
  * @return mixed         Result of get_post_meta.
  */
@@ -139,6 +147,7 @@ function get_post_mapping_id( $post_id ) {
  *
  * @since  3.0.0
  *
+ * @param  int $post_id The ID of the post to update.
  * @param  int $mapping_post_id The ID of the mapping post.
  *
  * @return mixed Result of update_post_meta.
@@ -152,9 +161,10 @@ function update_post_mapping_id( $post_id, $mapping_post_id ) {
  *
  * @since  3.0.0
  *
- * @param  object  $item GatherContent item object
+ * @param  object $item       GatherContent item object.
+ * @param  int    $mapping_id Optional. ID of the mapping post.
  *
- * @return array         Object prepared for JS.
+ * @return array              Object prepared for JS.
  */
 function prepare_item_for_js( $item, $mapping_id = 0 ) {
 	$post = \GatherContent\Importer\get_post_by_item_id( $item->id );
@@ -181,10 +191,10 @@ function prepare_item_for_js( $item, $mapping_id = 0 ) {
  *
  * @since  3.0.0
  *
- * @param  mixed  $post     WP_Post or post ID.
- * @param  bool   $uncached Whether to fetch item data uncached. Default is to ONLY fetch from cache.
+ * @param  mixed $post     WP_Post or post ID.
+ * @param  bool  $uncached Whether to fetch item data uncached. Default is to ONLY fetch from cache.
  *
- * @return array            JS post array.
+ * @return array           JS post array.
  */
 function prepare_post_for_js( $post, $uncached = false ) {
 	$post = $post instanceof WP_Post ? $post : get_post( $post );
@@ -199,7 +209,7 @@ function prepare_post_for_js( $post, $uncached = false ) {
 	$js_post['current']  = true;
 	$js_post['post_id']  = $post->ID;
 
-	if ( $js_post['item'] && ! $js_post['mapping'] ) {
+	if ( $js_post['item'] && ! $js_post['mapping'] || ! get_post( $js_post['mapping'] ) ) {
 		$admin = General::get_instance()->admin;
 		if ( isset( $admin->mapping_wizzard->mappings ) ) {
 			$js_post['mapping'] = $admin->mapping_wizzard->mappings->get_by_item_id( $js_post['item'] );
@@ -217,6 +227,17 @@ function prepare_post_for_js( $post, $uncached = false ) {
 	return \GatherContent\Importer\prepare_js_data( $js_post, $item );
 }
 
+/**
+ * Get a an array of data from a WP_Post or GC item object to be used as a backbone model.
+ *
+ * @since  3.0.0
+ *
+ * @param  array  $args Array of args to be added to.
+ * @param  object $item GatherContent item object.
+ * @param  string $type Which type of data we are preparing, 'post' or 'item'.
+ *
+ * @return array        Array of modified args.
+ */
 function prepare_js_data( $args, $item = null, $type = 'post' ) {
 	$args = wp_parse_args( $args, array(
 		'item'        => 0,
@@ -248,6 +269,10 @@ function prepare_js_data( $args, $item = null, $type = 'post' ) {
 			? $item->status->data
 			: (object) array();
 
+		$args['typeName'] = isset( $item->type )
+			? Utils::gc_field_type_name( $item->type )
+			: '';
+
 		if ( isset( $item->updated_at->date ) ) {
 			$args['updated'] = Utils::relative_date( $item->updated_at->date );
 		}
@@ -269,10 +294,10 @@ function prepare_js_data( $args, $item = null, $type = 'post' ) {
  *
  * @since  3.0.0
  *
- * @param  int         $post_id Post ID
- * @param  mixed $item GatherContent item object.
+ * @param  int   $post_id Post ID.
+ * @param  mixed $item    GatherContent item object.
  *
- * @return bool        Whether post is current.
+ * @return bool           Whether post is current.
  */
 function post_is_current( $post_id, $item ) {
 	$meta = \GatherContent\Importer\get_post_item_meta( $post_id );
@@ -293,7 +318,6 @@ function post_is_current( $post_id, $item ) {
 			// If we couldn't find an item date, then we'll say, yes, we're current.
 			$is_current = true;
 		}
-
 	}
 
 	return $is_current;
@@ -311,8 +335,9 @@ function refresh_connection_link() {
 		'redirect_url' => false,
 		'flush_url' => add_query_arg( array( 'flush_cache' => 1, 'redirect' => 1 ) ),
 	);
-
+	// @codingStandardsIgnoreStart
 	if ( isset( $_GET['flush_cache'], $_GET['redirect'] ) ) {
+		// @codingStandardsIgnoreEnd
 		update_option( 'gc-api-updated', 1, false );
 		$args['redirect_url'] = remove_query_arg( 'flush_cache', remove_query_arg( 'redirect' ) );
 	}

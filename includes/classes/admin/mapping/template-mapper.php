@@ -1,5 +1,6 @@
 <?php
 namespace GatherContent\Importer\Admin\Mapping;
+use GatherContent\Importer\Utils;
 
 /**
  * Class for managing/creating template mappings.
@@ -278,6 +279,10 @@ class Template_Mapper extends Base {
 					$element->field_type = isset( $val['type'] ) ? $val['type'] : '';
 					$element->field_value = isset( $val['value'] ) ? $val['value'] : '';
 				}
+
+				$element->typeName = isset( $element->type )
+					? Utils::gc_field_type_name( $element->type )
+					: '';
 
 				$rows[] = $element;
 			}

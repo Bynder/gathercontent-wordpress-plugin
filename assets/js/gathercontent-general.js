@@ -1,5 +1,5 @@
 /**
- * GatherContent Importer - v3.0.0 - 2016-07-21
+ * GatherContent Importer - v3.0.0 - 2016-07-22
  * http://www.gathercontent.com
  *
  * Copyright (c) 2016 GatherContent
@@ -251,7 +251,7 @@ window.GatherContent = window.GatherContent || {};
 	$(app.init);
 })(window, document, jQuery, window.GatherContent);
 
-},{"./collections/modal-nav-items.js":3,"./collections/posts.js":4,"./initiate-objects.js":6,"./models/modal-nav-item.js":9,"./models/post.js":10,"./views/modal-post-row.js":16,"./views/modal.js":17,"./views/post-row.js":18,"./views/post-rows.js":19,"./views/status-select2.js":20}],6:[function(require,module,exports){
+},{"./collections/modal-nav-items.js":3,"./collections/posts.js":4,"./initiate-objects.js":6,"./models/modal-nav-item.js":9,"./models/post.js":11,"./views/modal-post-row.js":17,"./views/modal.js":18,"./views/post-row.js":19,"./views/post-rows.js":20,"./views/status-select2.js":21}],6:[function(require,module,exports){
 'use strict';
 
 module.exports = function (app) {
@@ -260,7 +260,7 @@ module.exports = function (app) {
 	app.views = { base: require('./views/base.js') };
 };
 
-},{"./collections/base.js":1,"./models/base.js":8,"./views/base.js":11}],7:[function(require,module,exports){
+},{"./collections/base.js":1,"./models/base.js":8,"./views/base.js":12}],7:[function(require,module,exports){
 'use strict';
 
 module.exports = function (app, defaults) {
@@ -342,8 +342,32 @@ module.exports = function (app) {
 },{}],10:[function(require,module,exports){
 'use strict';
 
+module.exports = function (model) {
+
+	model.prototype._get = function (value, attribute) {
+		if (this['_get_' + attribute]) {
+			value = this['_get_' + attribute](value);
+		}
+		return value;
+	};
+
+	model.prototype.get = function (attribute) {
+		return this._get(Backbone.Model.prototype.get.call(this, attribute), attribute);
+	};
+
+	// hijack the toJSON method and overwrite the data that is sent back to the view.
+	model.prototype.toJSON = function () {
+		return _.mapObject(Backbone.Model.prototype.toJSON.call(this), _.bind(this._get, this));
+	};
+
+	return model;
+};
+
+},{}],11:[function(require,module,exports){
+'use strict';
+
 module.exports = function (gc) {
-	return Backbone.Model.extend({
+	return require('./../models/modify-json.js')(Backbone.Model.extend({
 		defaults: {
 			id: 0,
 			item: 0,
@@ -374,44 +398,36 @@ module.exports = function (gc) {
 			return url;
 		},
 
-		_get: function _get(value, attribute) {
-			switch (attribute) {
-				case 'disabled':
-					value = !this.get('mapping');
-					break;
+		_get_disabled: function _get_disabled(value) {
+			return !this.get('mapping');
+		},
 
-				case 'canPull':
-					value = this.get('item') > 0 && this.get('mapping') > 0;
-					break;
+		_get_canPull: function _get_canPull(value) {
+			return this.get('item') > 0 && this.get('mapping') > 0;
+		},
 
-				case 'canPush':
-					value = this.get('mapping') > 0;
-					break;
+		_get_canPush: function _get_canPush(value) {
+			return this.get('mapping') > 0;
+		},
 
-				case 'mappingStatus':
-					value = gc._statuses[value] ? gc._statuses[value] : '';
-					break;
-				case 'mappingStatusId':
-					value = Backbone.Model.prototype.get.call(this, 'mappingStatus');
-					break;
+		_get_mappingLink: function _get_mappingLink(value) {
+			if ('failed' === Backbone.Model.prototype.get.call(this, 'mappingStatus')) {
+				value += '&sync-items=1';
 			}
-
 			return value;
 		},
 
-		get: function get(attribute) {
-			return this._get(Backbone.Model.prototype.get.call(this, attribute), attribute);
+		_get_mappingStatus: function _get_mappingStatus(value) {
+			return gc._statuses[value] ? gc._statuses[value] : '';
 		},
 
-		// hijack the toJSON method and overwrite the data that is sent back to the view.
-		toJSON: function toJSON() {
-			return _.mapObject(Backbone.Model.prototype.toJSON.call(this), _.bind(this._get, this));
+		_get_mappingStatusId: function _get_mappingStatusId(value) {
+			return Backbone.Model.prototype.get.call(this, 'mappingStatus');
 		}
-
-	});
+	}));
 };
 
-},{}],11:[function(require,module,exports){
+},{"./../models/modify-json.js":10}],12:[function(require,module,exports){
 'use strict';
 
 module.exports = Backbone.View.extend({
@@ -445,7 +461,7 @@ module.exports = Backbone.View.extend({
 	}
 });
 
-},{}],12:[function(require,module,exports){
+},{}],13:[function(require,module,exports){
 'use strict';
 
 module.exports = function (app) {
@@ -478,7 +494,7 @@ module.exports = function (app) {
 	});
 };
 
-},{}],13:[function(require,module,exports){
+},{}],14:[function(require,module,exports){
 'use strict';
 
 module.exports = function (app, $, gc) {
@@ -658,7 +674,7 @@ module.exports = function (app, $, gc) {
 	});
 };
 
-},{"./../views/metabox-base.js":14}],14:[function(require,module,exports){
+},{"./../views/metabox-base.js":15}],15:[function(require,module,exports){
 'use strict';
 
 module.exports = function (app, $, gc) {
@@ -693,7 +709,7 @@ module.exports = function (app, $, gc) {
 	});
 };
 
-},{}],15:[function(require,module,exports){
+},{}],16:[function(require,module,exports){
 'use strict';
 
 module.exports = function (app, $, gc) {
@@ -727,7 +743,7 @@ module.exports = function (app, $, gc) {
 	};
 };
 
-},{"./../views/mapping-metabox.js":13}],16:[function(require,module,exports){
+},{"./../views/mapping-metabox.js":14}],17:[function(require,module,exports){
 'use strict';
 
 module.exports = function (app, gc) {
@@ -765,7 +781,7 @@ module.exports = function (app, gc) {
 	});
 };
 
-},{"./../views/item.js":12}],17:[function(require,module,exports){
+},{"./../views/item.js":13}],18:[function(require,module,exports){
 'use strict';
 
 module.exports = function (app, gc, $) {
@@ -1137,7 +1153,7 @@ module.exports = function (app, gc, $) {
 	});
 };
 
-},{"./../models/ajax.js":7,"./../views/modal-assign-mapping.js":15}],18:[function(require,module,exports){
+},{"./../models/ajax.js":7,"./../views/modal-assign-mapping.js":16}],19:[function(require,module,exports){
 'use strict';
 
 module.exports = function (app, gc) {
@@ -1166,7 +1182,7 @@ module.exports = function (app, gc) {
 	});
 };
 
-},{}],19:[function(require,module,exports){
+},{}],20:[function(require,module,exports){
 'use strict';
 
 module.exports = function (app, gc, $) {
@@ -1307,7 +1323,7 @@ module.exports = function (app, gc, $) {
 	});
 };
 
-},{}],20:[function(require,module,exports){
+},{}],21:[function(require,module,exports){
 'use strict';
 
 module.exports = function (app) {

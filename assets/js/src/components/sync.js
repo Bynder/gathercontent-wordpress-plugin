@@ -13,7 +13,7 @@ window.GatherContent = window.GatherContent || {};
 	 * Item setup
 	 */
 
-	app.models.item = require( './models/item.js' )( app );
+	app.models.item = require( './models/item.js' )( app, gc );
 	app.collections.items = require( './collections/items.js' )( app );
 	app.views.item = require( './views/item.js' )( app );
 	app.views.items = require( './views/items.js' )( app, $, gc );

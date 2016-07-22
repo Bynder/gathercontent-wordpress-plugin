@@ -149,4 +149,36 @@ class Utils extends Base {
 
 		return $date;
 	}
+
+	/**
+	 * Get the GatherContent item field type nice-name.
+	 *
+	 * @since  3.0.0
+	 *
+	 * @param  string $type The type to get the name for. 'all' to get the entire array.
+	 *
+	 * @return mixed        The type nice-name, or the entire types array.
+	 */
+	public static function gc_field_type_name( $type ) {
+		static $types = null;
+
+		if ( null === $types ) {
+			$types = apply_filters( 'gc_field_type_names', array(
+				'text'            => __( 'Text', 'gathercontent-import' ),
+				'text_rich'       => __( 'Rich Text', 'gathercontent-import' ),
+				'text_plain'      => __( 'Plain Text', 'gathercontent-import' ),
+				'choice_radio'    => __( 'Muliple Choice', 'gathercontent-import' ),
+				'choice_checkbox' => __( 'Checkboxes', 'gathercontent-import' ),
+				'files'           => __( 'Attachment', 'gathercontent-import' ),
+			) );
+		}
+
+		if ( 'all' === $type ) {
+			return $types;
+		}
+
+		return isset( $types[ $type ] ) ? $types[ $type ] : $type;
+	}
+
+
 }

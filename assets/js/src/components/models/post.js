@@ -1,5 +1,5 @@
 module.exports = function( gc ) {
-	return Backbone.Model.extend({
+	return require( './../models/modify-json.js' )( Backbone.Model.extend({
 		defaults: {
 			id              : 0,
 			item            : 0,
@@ -30,39 +30,31 @@ module.exports = function( gc ) {
 			return url;
 		},
 
-		_get : function( value, attribute ) {
-			switch ( attribute ) {
-				case 'disabled':
-					value = ! this.get( 'mapping' );
-					break;
+		_get_disabled : function( value ) {
+			return ! this.get( 'mapping' );
+		},
 
-				case 'canPull':
-					value = this.get( 'item' ) > 0 && this.get( 'mapping' ) > 0;
-					break;
+		_get_canPull : function( value ) {
+			return this.get( 'item' ) > 0 && this.get( 'mapping' ) > 0;
+		},
 
-				case 'canPush':
-					value = this.get( 'mapping' ) > 0;
-					break;
+		_get_canPush : function( value ) {
+			return this.get( 'mapping' ) > 0;
+		},
 
-				case 'mappingStatus':
-					value = gc._statuses[ value ] ? gc._statuses[ value ] : '';
-					break;
-				case 'mappingStatusId':
-					value = Backbone.Model.prototype.get.call( this, 'mappingStatus' );
-					break;
+		_get_mappingLink : function( value ) {
+			if ( 'failed' === Backbone.Model.prototype.get.call( this, 'mappingStatus' ) ) {
+				value += '&sync-items=1';
 			}
-
 			return value;
 		},
 
-		get : function( attribute ) {
-			return this._get( Backbone.Model.prototype.get.call( this, attribute ), attribute );
+		_get_mappingStatus : function( value ) {
+			return gc._statuses[ value ] ? gc._statuses[ value ] : '';
 		},
 
-		// hijack the toJSON method and overwrite the data that is sent back to the view.
-		toJSON: function() {
-			return _.mapObject( Backbone.Model.prototype.toJSON.call( this ), _.bind( this._get, this ) );
+		_get_mappingStatusId : function( value ) {
+			return Backbone.Model.prototype.get.call( this, 'mappingStatus' );
 		}
-
-	});
+	} ) );
 };

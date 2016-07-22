@@ -14,7 +14,7 @@ window.GatherContent = window.GatherContent || {};
 	 * Tab Row setup
 	 */
 
-	app.models.tabRow = require( './models/tab-row.js' )( app );
+	app.models.tabRow = require( './models/tab-row.js' )( app, gc );
 	app.collections.tabRows = require( './collections/tab-rows.js' )( app );
 	app.views.tabRow = require( './views/tab-row.js' )( app, gc._meta_keys );
 

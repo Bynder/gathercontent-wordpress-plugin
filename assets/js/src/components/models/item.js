@@ -1,5 +1,5 @@
-module.exports = function( app ) {
-	return app.models.base.extend({
+module.exports = function( app, gc ) {
+	return require( './../models/modify-json.js' )( app.models.base.extend({
 		defaults: {
 			id              : 0,
 			item            : 0,
@@ -12,6 +12,7 @@ module.exports = function( app ) {
 			config          : '',
 			notes           : '',
 			type            : '',
+			typeName        : '',
 			overdue         : false,
 			archived_by     : '',
 			archived_at     : '',
@@ -22,24 +23,16 @@ module.exports = function( app ) {
 			expanded        : false,
 			checked         : false,
 		},
-		_get : function( value, attribute ) {
-			switch ( attribute ) {
-				case 'item':
-					value = this.get( 'id' );
-					break;
+
+		_get_item : function( value ) {
+			return this.get( 'id' );
+		},
+
+		_get_typeName : function( value ) {
+			if ( ! value ) {
+				value = Backbone.Model.prototype.get.call( this, 'type' );
 			}
-
-			return value;
-		},
-
-		get : function( attribute ) {
-			return this._get( app.models.base.prototype.get.call( this, attribute ), attribute );
-		},
-
-		// hijack the toJSON method and overwrite the data that is sent back to the view.
-		toJSON: function() {
-			return _.mapObject( app.models.base.prototype.toJSON.call( this ), _.bind( this._get, this ) );
+			return gc._type_names[ value ] ? gc._type_names[ value ] : value;
 		}
-
-	});
+	} ) );
 };

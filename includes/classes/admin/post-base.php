@@ -81,7 +81,7 @@ abstract class Post_Base extends UI_Base {
 				'starting' => __( 'Starting Sync', 'gathercontent-importer' ),
 				'syncing'  => __( 'Syncing', 'gathercontent-importer' ),
 				'complete' => __( 'Sync Complete', 'gathercontent-importer' ),
-				'failed'   => __( 'Sync Failed', 'gathercontent-importer' ),
+				'failed'   => __( 'Sync Failed (review?)', 'gathercontent-importer' ),
 			),
 			'_errors' => array(
 				'unknown' => __( 'There was an unknown error', 'gathercontent-importer' ),
