@@ -28,6 +28,7 @@ class Template_Mappings extends Base {
 	public function __construct( $parent_menu_slug, API $api ) {
 		$this->api = $api;
 		$this->listing_url = admin_url( 'edit.php?post_type=' . self::SLUG );
+		new Async_Save_Hook( self::SLUG );
 
 		parent::__construct(
 			array(
@@ -79,6 +80,54 @@ class Template_Mappings extends Base {
 
 		add_filter( 'post_row_actions', array( $this, 'remove_quick_edit' ), 10, 2 );
 		add_action( 'gc_mapping_pre_post_update', array( $this, 'store_post_type_references' ) );
+		add_action( "wp_async_save_post_{$post_type}", array( $this, 'clear_out_updated_at' ) );
+	}
+
+	public function clear_out_updated_at( $post_id ) {
+		$types = array();
+		$all_types = $this->get_mapping_post_types();
+		foreach ( $all_types as $type => $mapping_ids ) {
+			if ( isset( $mapping_ids[ $post_id ] ) ) {
+				$types[] = $type;
+			}
+		}
+
+		$args = array(
+			// Get all posts in post-types which have this mapping ID set...
+			'post_type'   => $types,
+			'post_status' => 'any',
+			'fields'      => 'ids',
+			'meta_query'  => array(
+				// And limit to posts which have this mapping ID set...
+				array(
+					'key'   => '_gc_mapping_id',
+					'value' => $post_id,
+				),
+				// And that also have the item mapped meta, with the updated_at value.
+				array(
+					'key'     => '_gc_mapped_meta',
+					'value'   => 'updated_at',
+					'compare' => 'LIKE',
+				),
+			),
+		);
+
+		$query = new WP_Query( $args );
+
+		if ( ! $query->have_posts() ) {
+			return;
+		}
+
+		foreach ( $query->posts as $post_id ) {
+			$meta = \GatherContent\Importer\get_post_item_meta( $post_id );
+			// Only update the meta if they have the updated_at value.
+			if ( is_array( $meta ) ) {
+
+				// Set the updated_at value to 0.
+				$meta['updated_at'] = 0;
+				\GatherContent\Importer\update_post_item_meta( $post_id, $meta );
+			}
+		}
 	}
 
 	/**
