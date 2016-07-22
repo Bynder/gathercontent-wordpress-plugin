@@ -446,8 +446,8 @@ class Push extends Base {
 
 			case 'choice_checkbox':
 			case 'choice_radio':
-				$updated = $this->update_element_selected_options( function( $option ) use ( $term_names ) {
-					return in_array( $option, $term_names, true );
+				$updated = $this->update_element_selected_options( function( $label ) use ( $term_names ) {
+					return in_array( $label, $term_names, true );
 				} );
 
 				// @codingStandardsIgnoreStart
@@ -500,8 +500,8 @@ class Push extends Base {
 				break;
 
 			case 'choice_radio':
-				$updated = $this->update_element_selected_options( function( $option ) use ( $meta_value ) {
-					return $meta_value === $option;
+				$updated = $this->update_element_selected_options( function( $label ) use ( $meta_value ) {
+					return $meta_value === $label;
 				} );
 				break;
 
@@ -512,8 +512,8 @@ class Push extends Base {
 					$meta_value = is_array( $meta_value ) ? $meta_value : array( $meta_value );
 				}
 
-				$updated = $this->update_element_selected_options( function( $option ) use ( $meta_value ) {
-					return in_array( $option, $meta_value, true );
+				$updated = $this->update_element_selected_options( function( $label ) use ( $meta_value ) {
+					return in_array( $label, $meta_value, true );
 				} );
 				break;
 
@@ -534,11 +534,29 @@ class Push extends Base {
 	public function update_element_selected_options( $callback ) {
 		$pre_options = wp_json_encode( $this->element->options );
 
+		$last_key = false;
+		if ( isset( $this->element->other_option ) && $this->element->other_option ) {
+			$keys = array_keys( $this->element->options );
+			$last_key = end( $keys );
+		}
+
 		foreach ( $this->element->options as $key => $option ) {
-			if ( $callback( self::remove_zero_width( $option->label ) ) ) {
+
+			// If it's the "Other" option, we need to use the option's value, not label.
+			$label = $last_key === $key && isset( $option->value )
+				? $option->value
+				: $option->label;
+
+			if ( $callback( self::remove_zero_width( $label ) ) ) {
 				$this->element->options[ $key ]->selected = true;
 			} else {
 				$this->element->options[ $key ]->selected = false;
+
+				// Else GC API error:
+				// "Other option value must be empty when other option not selected".
+				if ( $last_key === $key ) {
+					$this->element->options[ $key ]->value = '';
+				}
 			}
 		}
 
@@ -550,4 +568,5 @@ class Push extends Base {
 		return $pre_options != $post_options;
 		// @codingStandardsIgnoreEnd
 	}
+
 }
