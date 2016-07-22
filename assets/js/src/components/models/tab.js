@@ -12,6 +12,11 @@ module.exports = function( app, table_headings ) {
 
 		initialize: function() {
 			this.rows = new app.collections.tabRows( this.get( 'rows' ), { tab: this } );
+			this.listenTo( this.rows, 'change', this.triggerRowChange );
+		},
+
+		triggerRowChange: function( rowModel ) {
+			this.trigger( 'rowChange', rowModel );
 		}
 	});
 };

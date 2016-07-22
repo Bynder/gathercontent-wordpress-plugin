@@ -17,30 +17,19 @@ module.exports = function( app, $, gc ) {
 			this.listenTo( this, 'saveDisabled', this.disableSave );
 
 			if ( this.initial ) {
-
 				// Listen for initialization
-				this.listenTo( this.collection, 'change', this.maybeInitMapping );
-
-				// 'initMapping' only fires when an un-saved mapping is first 'modified'.
-				// It enables saving, viewing tabs, etc.
-				this.listenTo( this, 'initMapping', this.initMapping );
+				this.listenTo( this.collection, 'change:post_type', this.initMapping );
 			}
 
 			this.defaultTab = this.collection.getById( 'mapping-defaults' );
 			this.render();
 		},
 
-		maybeInitMapping: function( model ) {
-			if ( 'post_type' in model.changed ) {
-				this.trigger( 'initMapping' );
-			}
-		},
-
 		initMapping: function() {
 			this.initial = false;
 
-			this.stopListening( this.collection, 'change', this.maybeInitMapping );
-			this.stopListening( this, 'initMapping', this.initMapping );
+			this.stopListening( this.collection, 'change:post_type', this.initMapping );
+			this.listenTo( this.collection, 'rowChange', this.triggerSaveEnabled );
 
 			this.defaultTab.set( 'initial', this.initial );
 			this.render();
@@ -49,8 +38,13 @@ module.exports = function( app, $, gc ) {
 				this.pointer( '.gc-nav-tab-wrapper-bb', 'select_tab_how_to' );
 				this.pointer( '#gc-status-mappings', 'map_status_how_to' );
 			}
+		},
 
-			this.trigger( 'saveEnabled' );
+		triggerSaveEnabled: function( model ) {
+			if ( model.changed.field_value ) {
+				this.trigger( 'saveEnabled' );
+				this.stopListening( this.collection, 'rowChange' );
+			}
 		},
 
 		triggerClick: function( evt ) {

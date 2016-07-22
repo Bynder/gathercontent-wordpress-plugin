@@ -191,6 +191,11 @@ module.exports = function (app, table_headings) {
 
 		initialize: function initialize() {
 			this.rows = new app.collections.tabRows(this.get('rows'), { tab: this });
+			this.listenTo(this.rows, 'change', this.triggerRowChange);
+		},
+
+		triggerRowChange: function triggerRowChange(rowModel) {
+			this.trigger('rowChange', rowModel);
 		}
 	});
 };
@@ -513,33 +518,24 @@ module.exports = function (app, $, gc) {
 			this.listenTo(this.collection, 'render', this.render);
 			this.listenTo(this, 'render', this.render);
 			this.listenTo(this, 'saveEnabled', this.enableSave);
+			this.listenTo(this.collection, 'saveEnabled', this.enableSave);
 			this.listenTo(this, 'saveDisabled', this.disableSave);
 
 			if (this.initial) {
-
 				// Listen for initialization
-				this.listenTo(this.collection, 'change', this.maybeInitMapping);
-
-				// 'initMapping' only fires when an un-saved mapping is first 'modified'.
-				// It enables saving, viewing tabs, etc.
-				this.listenTo(this, 'initMapping', this.initMapping);
+				this.listenTo(this.collection, 'change:post_type', this.initMapping);
 			}
 
 			this.defaultTab = this.collection.getById('mapping-defaults');
 			this.render();
 		},
 
-		maybeInitMapping: function maybeInitMapping(model) {
-			if ('post_type' in model.changed) {
-				this.trigger('initMapping');
-			}
-		},
-
 		initMapping: function initMapping() {
+			console.warn('initMapping');
 			this.initial = false;
 
-			this.stopListening(this.collection, 'change', this.maybeInitMapping);
-			this.stopListening(this, 'initMapping', this.initMapping);
+			this.stopListening(this.collection, 'change:post_type', this.initMapping);
+			this.listenTo(this.collection, 'rowChange', this.triggerSaveEnabled);
 
 			this.defaultTab.set('initial', this.initial);
 			this.render();
@@ -548,8 +544,14 @@ module.exports = function (app, $, gc) {
 				this.pointer('.gc-nav-tab-wrapper-bb', 'select_tab_how_to');
 				this.pointer('#gc-status-mappings', 'map_status_how_to');
 			}
+		},
 
-			this.trigger('saveEnabled');
+		triggerSaveEnabled: function triggerSaveEnabled(model) {
+			if (model.changed.field_value) {
+				console.warn('triggerSaveEnabled', model.changed.field_value, model);
+				this.trigger('saveEnabled');
+				this.stopListening(this.collection, 'rowChange');
+			}
 		},
 
 		triggerClick: function triggerClick(evt) {
@@ -637,6 +639,7 @@ module.exports = function (app, $, gc) {
 		},
 
 		enableSave: function enableSave() {
+			console.warn('enableSave');
 			// Enable save button.
 			$('.submit .button-primary').prop('disabled', false);
 		},
