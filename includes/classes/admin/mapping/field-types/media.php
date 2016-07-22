@@ -7,6 +7,15 @@ class Media extends Base implements Type {
 	protected $type_id = 'wp-type-media';
 
 	/**
+	 * Array of supported template field types.
+	 *
+	 * @var array
+	 */
+	protected $supported_types = array(
+		'files',
+	);
+
+	/**
 	 * Creates an instance of this class.
 	 *
 	 * @since 3.0.0

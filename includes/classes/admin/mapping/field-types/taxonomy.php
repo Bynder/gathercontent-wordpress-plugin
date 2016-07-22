@@ -8,6 +8,17 @@ class Taxonomy extends Base implements Type {
 	protected $post_types = array();
 
 	/**
+	 * Array of supported template field types.
+	 *
+	 * @var array
+	 */
+	protected $supported_types = array(
+		'text_plain',
+		'choice_radio',
+		'choice_checkbox',
+	);
+
+	/**
 	 * Creates an instance of this class.
 	 *
 	 * @since 3.0.0

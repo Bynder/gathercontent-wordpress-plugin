@@ -4,6 +4,18 @@ use GatherContent\Importer\Views\View;
 
 class Post extends Base implements Type {
 
+	/**
+	 * Array of supported template field types.
+	 *
+	 * @var array
+	 */
+	protected $supported_types = array(
+		'text',
+		'text_rich',
+		'text_plain',
+		'choice_radio',
+	);
+
 	protected $type_id = 'wp-type-post';
 	protected $post_options = array();
 
@@ -14,12 +26,7 @@ class Post extends Base implements Type {
 	 */
 	public function __construct( array $post_options ) {
 		$this->post_options = $post_options;
-	}
-
-	public function option_underscore_template( View $view ) {
-		?>
-		<option <# if ( '<?php $this->e_type_id(); ?>' === data.field_type ) { #>selected="selected"<# } #> value="<?php $this->e_type_id(); ?>"><?php _e( 'Post Data', 'gathercontent-import' ); ?></option>
-		<?php
+		$this->option_label = __( 'Post Data', 'gathercontent-import' );
 	}
 
 	public function underscore_template( View $view ) {

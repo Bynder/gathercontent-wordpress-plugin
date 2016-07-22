@@ -4,6 +4,17 @@ use GatherContent\Importer\Views\View;
 
 class WPSEO extends Base implements Type {
 
+	/**
+	 * Array of supported template field types.
+	 *
+	 * @var array
+	 */
+	protected $supported_types = array(
+		'text',
+		'text_rich',
+		'text_plain',
+	);
+
 	protected $type_id = 'wp-type-meta--seo';
 	protected $post_types = array();
 	protected $yoast_field_types = array(
@@ -39,6 +50,7 @@ class WPSEO extends Base implements Type {
 	public function __construct( array $post_types ) {
 		$this->post_types = $post_types;
 		$this->seo_options = $this->get_seo_options();
+		$this->option_label = __( 'SEO', 'gathercontent-import' );
 
 		add_filter( 'gathercontent_importer_custom_field_keys_blacklist', array( $this, 'remove_wpseo_keys' ) );
 	}
@@ -116,13 +128,6 @@ class WPSEO extends Base implements Type {
 		$blacklist += $this->seo_keys;
 
 		return $blacklist;
-	}
-
-
-	public function option_underscore_template( View $view ) {
-		?>
-		<option <# if ( '<?php $this->e_type_id(); ?>' === data.field_type ) { #>selected="selected"<# } #> value="<?php $this->e_type_id(); ?>"><?php _e( 'SEO', 'gathercontent-import' ); ?></option>
-		<?php
 	}
 
 	public function underscore_template( View $view ) {

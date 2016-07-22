@@ -30,9 +30,7 @@ module.exports = function( app, gc ) {
 		},
 
 		_get_typeName : function( value ) {
-			if ( ! value ) {
-				value = this.get( 'type' );
-			}
+			value = this.get( 'type' );
 			return gc._type_names[ value ] ? gc._type_names[ value ] : value;
 		}
 	} ) );

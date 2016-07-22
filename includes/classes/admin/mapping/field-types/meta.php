@@ -7,6 +7,19 @@ class Meta extends Base implements Type {
 	protected $type_id = 'wp-type-meta';
 
 	/**
+	 * Array of supported template field types.
+	 *
+	 * @var array
+	 */
+	protected $supported_types = array(
+		'text',
+		'text_rich',
+		'text_plain',
+		'choice_radio',
+		'choice_checkbox',
+	);
+
+	/**
 	 * Creates an instance of this class.
 	 *
 	 * @since 3.0.0

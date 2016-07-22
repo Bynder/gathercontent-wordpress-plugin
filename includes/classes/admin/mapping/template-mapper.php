@@ -280,9 +280,17 @@ class Template_Mapper extends Base {
 					$element->field_value = isset( $val['value'] ) ? $val['value'] : '';
 				}
 
-				$element->typeName = isset( $element->type )
-					? Utils::gc_field_type_name( $element->type )
-					: '';
+				$element->typeName = '';
+
+				if ( isset( $element->type ) ) {
+					if ( 'text' === $element->type ) {
+						$element->type = isset( $element->plain_text ) && $element->plain_text
+							? 'text_plain'
+							: 'text_rich';
+					}
+
+					$element->typeName = Utils::gc_field_type_name( $element->type );
+				}
 
 				$rows[] = $element;
 			}

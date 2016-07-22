@@ -31,6 +31,24 @@ abstract class Base extends Plugin_Base implements Type {
 	protected $option_label = '';
 
 	/**
+	 * Array of supported template field types.
+	 *
+	 * Possibilities include:
+	 *
+	 * array(
+	 * 	'text',
+	 * 	'text_rich',
+	 * 	'text_plain',
+	 * 	'files',
+	 * 	'choice_radio',
+	 * 	'choice_checkbox',
+	 * )
+	 *
+	 * @var array
+	 */
+	protected $supported_types = array();
+
+	/**
 	 * Returns type_id property
 	 *
 	 * @since  [since]
@@ -46,9 +64,13 @@ abstract class Base extends Plugin_Base implements Type {
 	}
 
 	public function option_underscore_template( View $view ) {
-		?>
-		<option <# if ( '<?php $this->e_type_id(); ?>' === data.field_type ) { #>selected="selected"<# } #> value="<?php $this->e_type_id(); ?>"><?php echo $this->option_label; ?></option>
-		<?php
+		$option = '<option <# if ( "'. $this->type_id() .'" === data.field_type ) { #>selected="selected"<# } #> value="'. $this->type_id() .'">' . $this->option_label . '</option>';
+
+		if ( $types = $this->get_supported_types() ) {
+			$option = '<# if ( data.type in '. $types .' ) { #>' . $option . '<# } #>';
+		}
+
+		echo "\n\t" . $option;
 	}
 
 	abstract function underscore_template( View $view );
@@ -65,6 +87,14 @@ abstract class Base extends Plugin_Base implements Type {
 
 	public function underscore_empty_option( $label ) {
 		$this->underscore_option( '', $label );
+	}
+
+	protected function get_supported_types() {
+		if ( ! empty( $this->supported_types ) && ! is_string( $this->supported_types ) ) {
+			$this->supported_types = wp_json_encode( array_flip( $this->supported_types ) );
+		}
+
+		return $this->supported_types;
 	}
 
 }
