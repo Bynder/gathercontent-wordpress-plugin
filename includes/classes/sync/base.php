@@ -374,7 +374,7 @@ abstract class Base extends Plugin_Base {
 				$val = array();
 				foreach ( $element->options as $option ) {
 					if ( $option->selected ) {
-						$val = sanitize_text_field( $option->label );
+						$val[] = sanitize_text_field( $option->label );
 					}
 				}
 				break;
