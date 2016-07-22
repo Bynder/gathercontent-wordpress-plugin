@@ -735,6 +735,11 @@ class Pull extends Base {
 			return new WP_Error( 'sideload_and_update_attachment_error' );
 		}
 
+		// @codingStandardsIgnoreStart
+		// 5 minutes per image should be PLENTY.
+		@set_time_limit( 900 );
+		// @codingStandardsIgnoreEnd
+
 		$time = substr( $attachment->post_date, 0, 4 ) > 0
 			? $attachment->post_date
 			: current_time( 'mysql' );
@@ -746,16 +751,12 @@ class Pull extends Base {
 			return new WP_Error( 'upload_error', $file['error'] );
 		}
 
-		$args = array(
-			'ID'             => $attachment->ID,
-			'post_parent'    => $attachment->post_parent,
-			'post_mime_type' => $type,
-		);
+		$args = (array) $attachment;
+		$args['post_mime_type'] = $file['type'];
 
 		$_file = $file['file'];
 
 		if ( $replace_data ) {
-			$type = $file['type'];
 			$title = preg_replace( '/\.[^.]+$/', '', basename( $_file ) );
 			$content = '';
 
@@ -784,7 +785,7 @@ class Pull extends Base {
 			@unlink( $file_array['tmp_name'] );
 			// @codingStandardsIgnoreEnd
 		} else {
-			wp_update_attachment_metadata( $id, wp_generate_attachment_metadata( $id, $file ) );
+			wp_update_attachment_metadata( $id, wp_generate_attachment_metadata( $id, $_file ) );
 		}
 
 		return $id;
