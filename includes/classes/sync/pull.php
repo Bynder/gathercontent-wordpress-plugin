@@ -102,7 +102,7 @@ class Pull extends Base {
 				// If it's not newer, then don't update (unless asked to via filter).
 				&& $is_up_to_date && apply_filters( 'gc_only_update_if_newer', true )
 			) {
-				throw new Exception( sprintf( __( 'WordPress has most recent changes for %s (Item ID: %d):', 'gathercontent-import' ), $this->item->name, $this->item->id ), __LINE__, array( 'post' => $existing->ID, 'item' => $this->item->id ) );
+				throw new Exception( sprintf( __( 'WordPress has most recent changes for %1$s (Item ID: %2$d):', 'gathercontent-import' ), $this->item->name, $this->item->id ), __LINE__, array( 'post' => $existing->ID, 'item' => $this->item->id ) );
 			}
 
 			$post_data = (array) $existing;
@@ -243,9 +243,7 @@ class Pull extends Base {
 			}
 
 			foreach ( $tab->elements as $this->element ) {
-
 				$destination = $this->mapping->data( $this->element->name );
-
 				if ( $destination && isset( $destination['type'], $destination['value'] ) ) {
 					$post_data = $this->set_post_values( $destination, $post_data );
 				}
@@ -306,6 +304,10 @@ class Pull extends Base {
 	 * @return array $post_data   The modified WP Post data array.
 	 */
 	protected function set_post_field_value( $post_column, $post_data ) {
+		if ( is_array( $this->element->value ) ) {
+			$this->element->value = implode( ', ', $this->element->value );
+		}
+
 		$value = $this->sanitize_post_field( $post_column, $this->element->value, $post_data['ID'] );
 
 		return $this->maybe_append( $post_column, $value, $post_data );
@@ -323,6 +325,7 @@ class Pull extends Base {
 	 */
 	protected function set_taxonomy_field_value( $taxonomy, $post_data ) {
 		$terms = $this->get_element_terms( $taxonomy );
+		$terms = array_filter( $terms );
 		if ( ! empty( $terms ) ) {
 			if ( 'category' === $taxonomy ) {
 				$post_data['post_category'] = $terms;
