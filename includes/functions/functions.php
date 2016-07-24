@@ -177,6 +177,7 @@ function prepare_item_for_js( $item, $mapping_id = 0 ) {
 		$js_item['editLink']   = get_edit_post_link( $post->ID );
 		$js_item['post_title'] = get_the_title( $post->ID );
 		$js_item['current']    = \GatherContent\Importer\post_is_current( $post->ID, $item );
+		$js_item['ptLabel']    = \GatherContent\Importer\get_post_type_singular_label( $post );
 
 		if ( ! $mapping_id ) {
 			$js_item['mapping'] = \GatherContent\Importer\get_post_mapping_id( $post->ID );
@@ -204,10 +205,11 @@ function prepare_post_for_js( $post, $uncached = false ) {
 
 	$js_post = array_change_key_case( (array) $post );
 
-	$js_post['item']     = absint( \GatherContent\Importer\get_post_item_id( $post->ID ) );
-	$js_post['mapping']  = absint( \GatherContent\Importer\get_post_mapping_id( $post->ID ) );
-	$js_post['current']  = true;
-	$js_post['post_id']  = $post->ID;
+	$js_post['item']    = absint( \GatherContent\Importer\get_post_item_id( $post->ID ) );
+	$js_post['mapping'] = absint( \GatherContent\Importer\get_post_mapping_id( $post->ID ) );
+	$js_post['current'] = true;
+	$js_post['post_id'] = $post->ID;
+	$js_post['ptLabel'] = \GatherContent\Importer\get_post_type_singular_label( $post );
 
 	if ( $js_post['item'] && ! $js_post['mapping'] || ! get_post( $js_post['mapping'] ) ) {
 		$admin = General::get_instance()->admin;
@@ -248,9 +250,10 @@ function prepare_js_data( $args, $item = null, $type = 'post' ) {
 		'mappingName' => __( '&mdash;', 'gathercontent-importer' ),
 		'status'      => (object) array(),
 		'itemName'    => __( 'N/A', 'gathercontent-importer' ),
-		'updated'     => __( '&mdash;', 'gathercontent-importer' ),
+		'updated_at'  => __( '&mdash;', 'gathercontent-importer' ),
 		'editLink'    => '',
 		'post_title'  => __( '&mdash;', 'gathercontent-importer' ),
+		'ptLabel'     => __( 'Post', 'gathercontent-importer' ),
 	) );
 
 	if ( $mapping = Mapping_Post::get( $args['mapping'] ) ) {
@@ -274,7 +277,7 @@ function prepare_js_data( $args, $item = null, $type = 'post' ) {
 			: '';
 
 		if ( isset( $item->updated_at->date ) ) {
-			$args['updated'] = Utils::relative_date( $item->updated_at->date );
+			$args['updated_at'] = Utils::relative_date( $item->updated_at->date );
 		}
 	}
 
@@ -287,6 +290,27 @@ function prepare_js_data( $args, $item = null, $type = 'post' ) {
 	}
 
 	return apply_filters( "gc_prepare_js_data_for_$type", $args, $type, $item );
+}
+
+/**
+ * Gets the singular label for a post's post-type object.
+ *
+ * @since  3.0.0
+ *
+ * @param  mixed  $post WP_Post
+ *
+ * @return string       Singular post-type label.
+ */
+function get_post_type_singular_label( $post ) {
+	$label = __( 'Post', 'gathercontent-importer' );
+	if ( ! isset( $post->post_type ) ) {
+		return $label;
+	}
+	$object = get_post_type_object( $post->post_type );
+
+	return isset( $object->labels->singular_name )
+		? $object->labels->singular_name
+		: $object->labels->name;
 }
 
 /**

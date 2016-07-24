@@ -25,6 +25,7 @@ window.GatherContent = window.GatherContent || {};
 	app.models.navItem = require( './models/modal-nav-item.js' )( app );
 	app.collections.navItems = require( './collections/modal-nav-items.js' )( app );
 
+	app.views.tableBase = require( './views/table-base.js' )( app, $, gc );
 	app.views.modalPostRow = require( './views/modal-post-row.js' )( app, gc );
 	app.views.modal = require( './views/modal.js' )( app, gc, $ );
 

@@ -20,6 +20,14 @@ class View {
 	public $template = '';
 
 	/**
+	 * Cached views.
+	 *
+	 * @var array
+	 * @since  3.0.0
+	 */
+	protected static $views = '';
+
+	/**
 	 * Render an HTML view with the given arguments and return the view's contents.
 	 *
 	 * @param string  $template The template file name, relative to the includes/templates/ folder - with or without .php extension
@@ -49,22 +57,25 @@ class View {
 
 		// Filter args before outputting template.
 		$this->args = apply_filters( "gc_template_args_for_{$this->template}", $this->args, $this );
+		$id = md5( $this->template . serialize( $this->args ) );
 
-		try {
-			ob_start();
-			// Do html
-			$this->_include();
-			// grab the data from the output buffer and add it to our $content variable
-			$content = ob_get_clean();
-		} catch ( \Exception $e ) {
-			wpdie( $e->getMessage() );
+		if ( ! isset( self::$views[ $id ] ) ) {
+			try {
+				ob_start();
+				// Do html
+				$this->_include();
+				// grab the data from the output buffer and add it to our $content variable
+				self::$views[ $id ] = ob_get_clean();
+			} catch ( \Exception $e ) {
+				wpdie( $e->getMessage() );
+			}
 		}
 
 		if ( $echo ) {
-			echo $content;
+			echo self::$views[ $id ];
 		}
 
-		return $content;
+		return self::$views[ $id ];
 	}
 
 	protected function _include() {

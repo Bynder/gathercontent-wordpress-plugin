@@ -4,11 +4,11 @@ module.exports = function( gc ) {
 			id              : 0,
 			item            : 0,
 			itemName        : '',
-			updated         : '',
+			updated_at      : '',
 			current         : true,
 			editLink        : '',
 			mapping         : 0,
-			mappingName     : 0,
+			mappingName     : '',
 			mappingLink     : '',
 			mappingStatus   : '',
 			mappingStatusId : '',
@@ -19,7 +19,14 @@ module.exports = function( gc ) {
 			canPush         : false,
 			statuses        : [],
 			statusesChecked : false,
+			ptLabel         : false,
 		},
+
+		searchAttributes: [
+			'itemName',
+			'mappingName',
+			'post_title',
+		],
 
 		url: function() {
 			var url = window.ajaxurl +'?action=gc_fetch_js_post&id='+ this.get( 'id' );

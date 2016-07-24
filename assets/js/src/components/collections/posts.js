@@ -1,6 +1,7 @@
 module.exports = function( app ) {
 	var items = require( './../collections/items.js' )( app );
-	return items.extend({
+
+	return require( './../collections/search-extension.js' )( items.extend( {
 		model : app.models.post,
 
 		initialize: function( models, options ) {
@@ -19,8 +20,8 @@ module.exports = function( app ) {
 					if ( data[ id ].itemName ) {
 						model.set( 'itemName', data[ id ].itemName );
 					}
-					if ( data[ id ].updated ) {
-						model.set( 'updated', data[ id ].updated );
+					if ( data[ id ].updated_at ) {
+						model.set( 'updated_at', data[ id ].updated_at );
 					}
 				}
 			} );
@@ -47,5 +48,5 @@ module.exports = function( app ) {
 			return can;
 		},
 
-	});
+	} ) );
 };

@@ -210,6 +210,9 @@ ul.gc-radio-desc li, ul.gc-reveal-items-list li {
 .gc-sync-progress table {
   background: none; }
 
+.gc-sync-progress #gc-items-search {
+  display: none; }
+
 .gc-progress-bar {
   position: relative; }
   .gc-progress-bar:before {
@@ -238,6 +241,12 @@ ul.gc-radio-desc li, ul.gc-reveal-items-list li {
 */
 .gc-modal-open {
   overflow: hidden; }
+  .gc-modal-open #gc-items-search {
+    display: block;
+    position: absolute;
+    top: 0;
+    left: 0;
+    z-index: 160001; }
 
 .gc-bb-modal {
   position: fixed;

@@ -5,6 +5,14 @@
 
 .gc-modal-open {
 	overflow: hidden;
+
+	#gc-items-search {
+		display: block;
+		position: absolute;
+		top: 0;
+		left: 0;
+		z-index: 160001;
+	}
 }
 
 .gc-bb-modal {

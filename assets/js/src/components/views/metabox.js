@@ -50,8 +50,8 @@ module.exports = function( app, $, gc ) {
 				if ( data[ id ].itemName ) {
 					this.model.set( 'itemName', data[ id ].itemName );
 				}
-				if ( data[ id ].updated ) {
-					this.model.set( 'updated', data[ id ].updated );
+				if ( data[ id ].updated_at ) {
+					this.model.set( 'updated_at', data[ id ].updated_at );
 				}
 			}
 		},

@@ -24,12 +24,13 @@ module.exports = function( app, gc ) {
 			expanded        : false,
 			checked         : false,
 			post_title      : false,
+			ptLabel         : false,
 		},
 
-		searchAttributes: {
-			itemName   : 0,
-			post_title : false,
-		},
+		searchAttributes: [
+			'itemName',
+			'post_title',
+		],
 
 		_get_item : function( value ) {
 			return this.get( 'id' );

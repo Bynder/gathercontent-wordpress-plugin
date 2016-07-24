@@ -276,24 +276,28 @@ class Bulk extends Post_Base {
 			return array();
 		}
 
-		$singular_label = isset( $this->post_type_object->labels->singular_name )
-			? $this->post_type_object->labels->singular_name
-			: $this->post_type_object->labels->name;
-
 		return array(
+			'tmpl-gc-table-search'    => array(),
+			'tmpl-gc-table-nav'       => array(),
 			'tmpl-gc-post-column-row' => array(),
-			'tmpl-gc-status-select2' => array(),
-			'tmpl-gc-select2-item' => array(),
-			'tmpl-gc-modal-window' => array(
+			'tmpl-gc-status-select2'  => array(),
+			'tmpl-gc-select2-item'    => array(),
+			'tmpl-gc-modal-window'    => array(
 				'nav' => array(
 					$this->wizzard->parent_url            => __( 'Settings', 'gathercontent-import' ),
 					$this->wizzard->mappings->listing_url => $this->wizzard->mappings->args->label,
 					$this->wizzard->url                   => $this->wizzard->mappings->args->labels->new_item,
 				),
+				'headers' => array(
+					'status'      => __( 'Status', 'gathercontent-import' ),
+					'itemName'    => __( 'Item', 'gathercontent-import' ),
+					'updated_at'  => __( 'Updated', 'gathercontent-import' ),
+					'mappingName' => __( 'Template Mapping', 'gathercontent-import' ),
+					'post_title'  => __( 'WordPress Title', 'gathercontent-import' ),
+				),
 			),
 			'tmpl-gc-item' => array(
-				'url'   => General::get_instance()->admin->platform_url(),
-				'label' => $singular_label,
+				'url' => General::get_instance()->admin->platform_url(),
 			),
 			'tmpl-gc-mapping-metabox' => array(
 				'message' => esc_html__( 'Fetching GatherContent Accounts', 'gathercontent-importer' ),
@@ -339,6 +343,10 @@ class Bulk extends Post_Base {
 		$data['_sure'] = array(
 			'push' => sprintf( __( 'Are you sure you want to push these %s to GatherContent? Any unsaved changes in GatherContent will be overwritten.', 'gathercontent-importer' ), $plural_label ),
 			'pull'  => sprintf( __( 'Are you sure you want to pull these %s from GatherContent? Any local changes will be overwritten.', 'gathercontent-importer' ), $plural_label ),
+		);
+
+		$data['_text'] = array(
+			'no_items' => esc_html__( 'No items found.', 'gathercontent-import' ),
 		);
 
 		return $data;

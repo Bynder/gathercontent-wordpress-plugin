@@ -142,13 +142,13 @@ class Handlers extends Plugin_Base {
 			}
 
 			$post_updates[ $post['id'] ] = array(
-				'id'       => $post['id'],
-				'status'   => $status,
-				'itemName' => isset( $item->name ) ? $item->name : __( 'N/A', 'gathercontent-importer' ),
-				'updated' => isset( $item->updated_at )
+				'id'         => $post['id'],
+				'status'     => $status,
+				'itemName'   => isset( $item->name ) ? $item->name : __( 'N/A', 'gathercontent-importer' ),
+				'updated_at' => isset( $item->updated_at )
 					? Utils::relative_date( $item->updated_at->date )
 					: __( '&mdash;', 'gathercontent-importer' ),
-				'current' => \GatherContent\Importer\post_is_current( $post['id'], $item ),
+				'current'    => \GatherContent\Importer\post_is_current( $post['id'], $item ),
 			);
 		}
 

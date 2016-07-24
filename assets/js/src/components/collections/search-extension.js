@@ -27,7 +27,7 @@ module.exports = function( Collection ) {
 			// Filter
 			var matcher = this.matcher;
 			var results = ! keyword ? this.models : this.filter( function( model ) {
-				attributes = attributes ? attributes : _.keys( model.searchAttributes || model.attributes );
+				attributes = attributes ? attributes : model.searchAttributes || _.keys( model.attributes );
 				return _.some( attributes, function( attribute ) {
 					return matcher( keyword, model.get( attribute ) );
 				} );

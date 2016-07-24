@@ -2,185 +2,191 @@
  module.exports = function( app, gc, $ ) {
  	app.modalView = undefined;
 
+ 	var ESCAPE = 27;
  	var thisView;
 	/**
 	 * Taken from https://github.com/aut0poietic/wp-admin-modal-example
 	 */
-	return app.views.base.extend({
- 		id: 'gc-bb-modal-dialog',
- 		template : wp.template( 'gc-modal-window' ),
+	return app.views.tableBase.extend( {
+		id           : 'gc-bb-modal-dialog',
+		template     : wp.template( 'gc-modal-window' ),
+		selected     : [],
+		navItems     : {},
+		btns         : {},
+		currID       : '',
+		currNav      : false,
+		metaboxView  : null,
+		modelView    : app.views.modalPostRow,
+		$search      : gc.$id( 'gc-items-search' ),
 
- 		navSeparator: '<li class="separator">&nbsp;</li>',
-
- 		backdrop: '<div class="gc-bb-modal-backdrop">&nbsp;</div>',
- 		selected: [],
- 		navItems: {},
- 		btns: {},
- 		currID: '',
- 		currNav: false,
-		timeoutID : null,
-		ajax : null,
-		metaboxView : null,
-
- 		events: {
+		events: {
 			'click .gc-bb-modal-close'               : 'closeModal',
 			'click #btn-cancel'                      : 'closeModal',
-			'click #gc-btn-ok'                       : 'saveModal',
+			'click .gc-bb-modal-backdrop'            : 'closeModal',
 			'click .gc-bb-modal-nav-tabs a'          : 'clickSelectTab',
 			'change .gc-field-th.check-column input' : 'checkAll',
 			'click #gc-btn-pull'                     : 'startPull',
 			'click #gc-btn-push'                     : 'startPush',
 			'click .gc-cloak'                        : 'maybeResetMetaboxView',
 			'click #gc-btn-assign-mapping'           : 'startAssignment',
- 		},
+			'click .gc-field-th.sortable'            : 'sortRowsByColumn',
+		},
 
 		/**
- 		 * Instantiates the Template object and triggers load.
- 		 */
- 		initialize: function () {
- 			thisView = this;
+		 * Instantiates the Template object and triggers load.
+		 */
+		initialize: function () {
+			thisView = this;
 
- 			_.bindAll( this, 'render', 'preserveFocus', 'closeModal', 'saveModal' );
+			if ( ! this.$search.length ) {
+				$( document.body ).append( '<div id="gc-items-search" class="hidden"></div>' );
+				this.$search = gc.$id( 'gc-items-search' );
+			}
 
- 			this.setupAjax();
+			app.views.tableBase.prototype.initialize.call( this );
 
- 			this.navItems = new app.collections.navItems( gc._nav_items );
- 			this.btns = new app.collections.base( gc._modal_btns );
- 			this.currNav = this.navItems.getActive();
+			_.bindAll( this, 'render', 'preserveFocus', 'maybeClose', 'closeModal' );
 
- 			this.listenTo( this.navItems, 'render', this.render );
- 			this.listenTo( this.collection, 'render', this.render );
- 			this.listenTo( this.collection, 'notAllChecked', this.allCheckedStatus );
- 			this.listenTo( this.collection, 'updateItems', this.maybeRender );
- 			this.listenTo( this.collection, 'change:checked', this.checkEnableButton );
+			this.navItems = new app.collections.navItems( gc._nav_items );
+			this.btns     = new app.collections.base( gc._modal_btns );
+			this.currNav  = this.navItems.getActive();
 
- 			this.initMetaboxView = require( './../views/modal-assign-mapping.js' )( app, $, gc );
- 		},
+			this.listenTo( this.navItems, 'render', this.render );
+			this.listenTo( this.collection, 'updateItems', this.maybeRender );
+			this.listenTo( this.collection, 'change:checked', this.checkEnableButton );
+			this.listenTo( this.collection, 'search', this.render );
 
- 		checked: function( selected ) {
- 			this.selected = selected;
- 			if ( ! selected.length ) {
- 				return;
- 			}
+			this.initMetaboxView = require( './../views/modal-assign-mapping.js' )( app, $, gc );
+		},
 
- 			if ( selected.length === this.collection.length ) {
- 				return this.collection.trigger( 'checkAll', true );
- 			}
+		checked: function( selected ) {
+			this.selected = selected;
+			if ( ! selected.length ) {
+				return;
+			}
+
+			if ( selected.length === this.collection.length ) {
+				return this.collection.trigger( 'checkAll', true );
+			}
 
 			this.collection.trigger( 'checkSome', function( model ) {
- 				return -1 !== _.indexOf( thisView.selected, model.get( 'id' ) ) && ! model.get( 'disabled' );
- 			} );
+				return -1 !== _.indexOf( thisView.selected, model.get( 'id' ) ) && ! model.get( 'disabled' );
+			} );
 
- 			return this;
- 		},
+			return this;
+		},
 
- 		setupAjax: function() {
- 			var Ajax = require( './../models/ajax.js' )( app, {
+		setupAjax: function() {
+			var Ajax = require( './../models/ajax.js' )( app, {
 				action      : 'gc_pull_items',
 				nonce       : gc._edit_nonce,
 				flush_cache : gc.queryargs.flush_cache ? 1 : 0,
- 			} );
+			} );
 
- 			this.ajax = new Ajax();
- 		},
+			this.ajax = new Ajax();
+		},
 
- 		/**
- 		 * Assembles the UI from loaded templates.
- 		 * @internal Obviously, if the templates fail to load, our modal never launches.
- 		 */
- 		render: function () {
+		/**
+		 * Assembles the UI from loaded templates.
+		 * @internal Obviously, if the templates fail to load, our modal never launches.
+		 */
+		render: function () {
 
- 			// Build the base window and backdrop, attaching them to the $el.
- 			// Setting the tab index allows us to capture focus and redirect it in Application.preserveFocus
- 			this.$el.removeClass( 'gc-set-mapping' ).attr( 'tabindex', '0' )
- 				.html( this.template( {
-						btns     : this.btns.toJSON(),
-						navItems : this.navItems.toJSON(),
-						currID   : this.currNav ? this.currNav.get( 'id' ) : '',
-						count    : this.collection.length
+			var collection = this.collection.current();
+
+			// Build the base window and backdrop, attaching them to the $el.
+			// Setting the tab index allows us to capture focus and redirect it in Application.preserveFocus
+			this.$el.removeClass( 'gc-set-mapping' ).attr( 'tabindex', '0' )
+				.html( this.template( {
+					btns          : this.btns.toJSON(),
+					navItems      : this.navItems.toJSON(),
+					currID        : this.currNav ? this.currNav.get( 'id' ) : '',
+					checked       : collection.allChecked,
+					sortKey       : collection.sortKey,
+					sortDirection : collection.sortDirection,
 				} ) )
- 				.append( this.backdrop );
+				.append( '<div class="gc-bb-modal-backdrop">&nbsp;</div>' );
 
-			// this.$el.find( 'tbody' ).html( this.getRenderedSelected() );
-			this.$el.find( 'tbody' ).html( this.getRenderedModels( app.views.modalPostRow ) );
+			app.views.tableBase.prototype.render.call( this );
 
-			// Make sync button enabled/disabled
-			this.buttonStatus( this.collection.syncEnabled );
+			$( document )
+				// Handle any attempt to move focus out of the modal.
+				.on( 'focusin', this.preserveFocus )
+				// Close modal on escape key.
+				.on( 'keyup', this.maybeClose );
 
-			// Make check-all inputs checked/unchecked
-			this.allCheckedStatus( this.collection.allChecked );
+			// set overflow to "hidden" on the body so that it ignores any scroll events
+			$( document.body ).addClass( 'gc-modal-open' );
 
- 			// Handle any attempt to move focus out of the modal.
- 			$( document ).on( 'focusin', this.preserveFocus );
+			// Add modal before the search input.
+			this.$search.before( this.$el );
 
- 			// set overflow to "hidden" on the body so that it ignores any scroll events
- 			// while the modal is active and append the modal to the body.
- 			$( document.body ).addClass( 'gc-modal-open' ).append( this.$el );
+			// Position search input. (After the above line, where we render the modal)
+			this.$search.css( jQuery( '#gc-tablenav' ).offset() );
 
- 			// Set focus on the modal to prevent accidental actions in the underlying page
- 			// Not strictly necessary, but nice to do.
- 			this.$el.focus();
- 		},
+			// If we're not focused on the search input...
+			if ( ! this.isSearch( document.activeElement ) ) {
 
- 		// getRenderedSelected: function() {
- 		// 	var selected = this.getSelected();
+				// Then set focus on the modal to prevent accidental actions in the underlying page.
+				this.$el.focus();
+			}
 
- 		// 	var addedElements = document.createDocumentFragment();
+			return this;
+		},
 
- 		// 	_.each( selected, function( model ) {
- 		// 		var view = ( new app.views.modalPostRow({ model: model }) ).render();
- 		// 		addedElements.appendChild( view.el );
- 		// 	});
+		/**
+		 * Ensures that keyboard focus remains within the Modal dialog or search input.
+		 * @param evt {object} A jQuery-normalized event object.
+		 */
+		preserveFocus: function ( evt ) {
+			var isOk = this.$el[0] === evt.target || this.$el.has( evt.target ).length || this.isSearch( evt.target );
+			if ( ! isOk ) {
+				this.$el.focus();
+			}
+		},
 
- 		// 	return addedElements;
- 		// },
+		/**
+		 * Closes modal if escape key is hit.
+		 * @param evt {object} A jQuery-normalized event object.
+		 */
+		maybeClose: function ( evt ) {
+			if ( ESCAPE === evt.keyCode && ! this.isSearch( evt.target ) ) {
+				this.closeModal( evt );
+			}
+		},
 
- 		/**
- 		 * Ensures that keyboard focus remains within the Modal dialog.
- 		 * @param evt {object} A jQuery-normalized event object.
- 		 */
- 		preserveFocus: function ( evt ) {
- 			if ( this.$el[0] !== evt.target && ! this.$el.has( evt.target ).length ) {
- 				this.$el.focus();
- 			}
- 		},
+		isSearch: function( el ) {
+			return this.$search[0] === el || this.$search.has( el ).length;
+		},
 
- 		/**
- 		 * Closes the modal and cleans up after the instance.
- 		 * @param evt {object} A jQuery-normalized event object.
- 		 */
- 		closeModal: function ( evt ) {
- 			evt.preventDefault();
- 			this.resetMetaboxView();
- 			this.undelegateEvents();
- 			$( document ).off( 'focusin' );
- 			$( document.body ).removeClass( 'gc-modal-open' );
- 			this.remove();
+		/**
+		 * Closes the modal and cleans up after the instance.
+		 * @param evt {object} A jQuery-normalized event object.
+		 */
+		closeModal: function ( evt ) {
+			evt.preventDefault();
+			this.resetMetaboxView();
+			this.undelegateEvents();
+			$( document ).off( 'focusin' );
+			$( document ).off( 'keyup', this.maybeClose );
+			$( document.body ).removeClass( 'gc-modal-open' );
+			this.remove();
 
- 			gc.$id( 'bulk-edit' ).find( 'button.cancel' ).trigger( 'click' );
- 			app.modalView = undefined;
- 		},
+			gc.$id( 'bulk-edit' ).find( 'button.cancel' ).trigger( 'click' );
+			app.modalView = undefined;
+		},
 
- 		/**
- 		 * Responds to the gc-btn-ok.click event
- 		 * @param evt {object} A jQuery-normalized event object.
- 		 * @todo You should make this your own.
- 		 */
- 		saveModal: function ( evt ) {
- 			this.closeModal( evt );
- 		},
+		clickSelectTab: function( evt ) {
+			evt.preventDefault();
 
- 		clickSelectTab: function( evt ) {
- 			evt.preventDefault();
+			this.selectTab( $( evt.target ).data( 'id' ) );
+		},
 
- 			this.selectTab( $( evt.target ).data( 'id' ) );
- 		},
-
- 		selectTab: function( id ) {
- 			this.currID = id;
- 			this.currNav = this.navItems.getById( id );
- 			this.navItems.trigger( 'activate', id );
- 		},
+		selectTab: function( id ) {
+			this.currID = id;
+			this.currNav = this.navItems.getById( id );
+			this.navItems.trigger( 'activate', id );
+		},
 
 		checkEnableButton: function( btnEnabled ) {
 			this.buttonStatus( btnEnabled );
@@ -197,14 +203,6 @@
 				this.$( '#gc-btn-push' ).prop( 'disabled', ! this.collection.checkedCan( 'push' ) );
 				this.$( '#gc-btn-pull' ).prop( 'disabled', ! this.collection.checkedCan( 'pull' ) );
 			}
-		},
-
-		allCheckedStatus: function( checked ) {
-			this.$( '.gc-field-th.check-column input' ).prop( 'checked', checked );
-		},
-
-		checkAll: function( evt ) {
-			this.collection.trigger( 'checkAll', $( evt.target ).is( ':checked' ) );
 		},
 
 		startPull: function( evt ) {
@@ -285,8 +283,8 @@
 					selected.push( model );
 				}
 
- 				return staysChecked;
- 			} );
+				return staysChecked;
+			} );
 
 			return selected;
 		},
@@ -346,14 +344,9 @@
 
 		checkStatus: function( mappings, direction ) {
 			this.clearTimeout();
-			this.timeoutID = window.setTimeout( function() {
+			this.setTimeout( function() {
 				thisView.doAjax( { check : mappings }, direction );
-			}, 1000 );
-		},
-
-		clearTimeout: function() {
-			window.clearTimeout( this.timeoutID );
-			this.timeoutID = null;
+			} );
 		},
 
 		doAjax: function( formData, direction ) {

@@ -1,5 +1,5 @@
 /**
- * GatherContent Importer - v3.0.0 - 2016-07-23
+ * GatherContent Importer - v3.0.0 - 2016-07-24
  * http://www.gathercontent.com
  *
  * Copyright (c) 2016 GatherContent
@@ -38,7 +38,6 @@ module.exports = function (app) {
 			this.listenTo(this, 'checkSome', this.toggleCheckedIf);
 			this.listenTo(this, 'change:checked', this.checkChecked);
 			this.listenTo(this, 'sortByColumn', this.sortByColumn);
-			this.listenTo(this, 'searchResults', this.transferProperties);
 
 			this.totalChecked = this.checked().length;
 
@@ -57,18 +56,19 @@ module.exports = function (app) {
 		},
 
 		checkChecked: function checkChecked(model) {
-			var render = false;
-
 			if (model.changed.checked) {
 				this.totalChecked++;
 			} else {
 				if (this.totalChecked === this.length) {
 					this.allChecked = false;
-					render = true;
 				}
 				this.totalChecked--;
 			}
 
+			this.checkAllStatus();
+		},
+
+		checkAllStatus: function checkAllStatus(checked) {
 			var syncWasEnabled = this.syncEnabled;
 			this.syncEnabled = this.totalChecked > 0;
 
@@ -83,10 +83,19 @@ module.exports = function (app) {
 
 		toggleCheckedIf: function toggleCheckedIf(checked) {
 			this.processing = true;
+
+			this.stopListening(this, 'change:checked', this.checkChecked);
 			this.each(function (model) {
 				model.set('checked', Boolean('function' === typeof checked ? checked(model) : checked));
 			});
+			this.listenTo(this, 'change:checked', this.checkChecked);
+
+			this.totalChecked = this.checked().length;
+			this.allChecked = this.totalChecked >= this.length;
+			this.checkAllStatus();
+
 			this.processing = false;
+
 			this.trigger('render');
 		},
 
@@ -184,7 +193,8 @@ module.exports = function (app) {
 
 module.exports = function (app) {
 	var items = require('./../collections/items.js')(app);
-	return items.extend({
+
+	return require('./../collections/search-extension.js')(items.extend({
 		model: app.models.post,
 
 		initialize: function initialize(models, options) {
@@ -203,8 +213,8 @@ module.exports = function (app) {
 					if (data[id].itemName) {
 						model.set('itemName', data[id].itemName);
 					}
-					if (data[id].updated) {
-						model.set('updated', data[id].updated);
+					if (data[id].updated_at) {
+						model.set('updated_at', data[id].updated_at);
 					}
 				}
 			});
@@ -231,10 +241,10 @@ module.exports = function (app) {
 			return can;
 		}
 
-	});
+	}));
 };
 
-},{"./../collections/items.js":2}],5:[function(require,module,exports){
+},{"./../collections/items.js":2,"./../collections/search-extension.js":5}],5:[function(require,module,exports){
 'use strict';
 
 module.exports = function (Collection) {
@@ -266,7 +276,7 @@ module.exports = function (Collection) {
 			// Filter
 			var matcher = this.matcher;
 			var results = !keyword ? this.models : this.filter(function (model) {
-				attributes = attributes ? attributes : _.keys(model.searchAttributes || model.attributes);
+				attributes = attributes ? attributes : model.searchAttributes || _.keys(model.attributes);
 				return _.some(attributes, function (attribute) {
 					return matcher(keyword, model.get(attribute));
 				});
@@ -359,6 +369,7 @@ window.GatherContent = window.GatherContent || {};
 	app.models.navItem = require('./models/modal-nav-item.js')(app);
 	app.collections.navItems = require('./collections/modal-nav-items.js')(app);
 
+	app.views.tableBase = require('./views/table-base.js')(app, $, gc);
 	app.views.modalPostRow = require('./views/modal-post-row.js')(app, gc);
 	app.views.modal = require('./views/modal.js')(app, gc, $);
 
@@ -421,7 +432,7 @@ window.GatherContent = window.GatherContent || {};
 	$(app.init);
 })(window, document, jQuery, window.GatherContent);
 
-},{"./collections/modal-nav-items.js":3,"./collections/posts.js":4,"./initiate-objects.js":7,"./models/modal-nav-item.js":10,"./models/post.js":12,"./views/modal-post-row.js":18,"./views/modal.js":19,"./views/post-row.js":20,"./views/post-rows.js":21,"./views/status-select2.js":22}],7:[function(require,module,exports){
+},{"./collections/modal-nav-items.js":3,"./collections/posts.js":4,"./initiate-objects.js":7,"./models/modal-nav-item.js":10,"./models/post.js":12,"./views/modal-post-row.js":18,"./views/modal.js":19,"./views/post-row.js":20,"./views/post-rows.js":21,"./views/status-select2.js":22,"./views/table-base.js":23}],7:[function(require,module,exports){
 'use strict';
 
 module.exports = function (app) {
@@ -542,11 +553,11 @@ module.exports = function (gc) {
 			id: 0,
 			item: 0,
 			itemName: '',
-			updated: '',
+			updated_at: '',
 			current: true,
 			editLink: '',
 			mapping: 0,
-			mappingName: 0,
+			mappingName: '',
 			mappingLink: '',
 			mappingStatus: '',
 			mappingStatusId: '',
@@ -556,8 +567,11 @@ module.exports = function (gc) {
 			canPull: false,
 			canPush: false,
 			statuses: [],
-			statusesChecked: false
+			statusesChecked: false,
+			ptLabel: false
 		},
+
+		searchAttributes: ['itemName', 'mappingName', 'post_title'],
 
 		url: function url() {
 			var url = window.ajaxurl + '?action=gc_fetch_js_post&id=' + this.get('id');
@@ -957,57 +971,59 @@ module.exports = function (app, gc) {
 module.exports = function (app, gc, $) {
 	app.modalView = undefined;
 
+	var ESCAPE = 27;
 	var thisView;
 	/**
   * Taken from https://github.com/aut0poietic/wp-admin-modal-example
   */
-	return app.views.base.extend({
+	return app.views.tableBase.extend({
 		id: 'gc-bb-modal-dialog',
 		template: wp.template('gc-modal-window'),
-
-		navSeparator: '<li class="separator">&nbsp;</li>',
-
-		backdrop: '<div class="gc-bb-modal-backdrop">&nbsp;</div>',
 		selected: [],
 		navItems: {},
 		btns: {},
 		currID: '',
 		currNav: false,
-		timeoutID: null,
-		ajax: null,
 		metaboxView: null,
+		modelView: app.views.modalPostRow,
+		$search: gc.$id('gc-items-search'),
 
 		events: {
 			'click .gc-bb-modal-close': 'closeModal',
 			'click #btn-cancel': 'closeModal',
-			'click #gc-btn-ok': 'saveModal',
+			'click .gc-bb-modal-backdrop': 'closeModal',
 			'click .gc-bb-modal-nav-tabs a': 'clickSelectTab',
 			'change .gc-field-th.check-column input': 'checkAll',
 			'click #gc-btn-pull': 'startPull',
 			'click #gc-btn-push': 'startPush',
 			'click .gc-cloak': 'maybeResetMetaboxView',
-			'click #gc-btn-assign-mapping': 'startAssignment'
+			'click #gc-btn-assign-mapping': 'startAssignment',
+			'click .gc-field-th.sortable': 'sortRowsByColumn'
 		},
 
 		/**
-  	 * Instantiates the Template object and triggers load.
-  	 */
+   * Instantiates the Template object and triggers load.
+   */
 		initialize: function initialize() {
 			thisView = this;
 
-			_.bindAll(this, 'render', 'preserveFocus', 'closeModal', 'saveModal');
+			if (!this.$search.length) {
+				$(document.body).append('<div id="gc-items-search" class="hidden"></div>');
+				this.$search = gc.$id('gc-items-search');
+			}
 
-			this.setupAjax();
+			app.views.tableBase.prototype.initialize.call(this);
+
+			_.bindAll(this, 'render', 'preserveFocus', 'maybeClose', 'closeModal');
 
 			this.navItems = new app.collections.navItems(gc._nav_items);
 			this.btns = new app.collections.base(gc._modal_btns);
 			this.currNav = this.navItems.getActive();
 
 			this.listenTo(this.navItems, 'render', this.render);
-			this.listenTo(this.collection, 'render', this.render);
-			this.listenTo(this.collection, 'notAllChecked', this.allCheckedStatus);
 			this.listenTo(this.collection, 'updateItems', this.maybeRender);
 			this.listenTo(this.collection, 'change:checked', this.checkEnableButton);
+			this.listenTo(this.collection, 'search', this.render);
 
 			this.initMetaboxView = require('./../views/modal-assign-mapping.js')(app, $, gc);
 		},
@@ -1045,57 +1061,69 @@ module.exports = function (app, gc, $) {
    */
 		render: function render() {
 
+			var collection = this.collection.current();
+
 			// Build the base window and backdrop, attaching them to the $el.
 			// Setting the tab index allows us to capture focus and redirect it in Application.preserveFocus
 			this.$el.removeClass('gc-set-mapping').attr('tabindex', '0').html(this.template({
 				btns: this.btns.toJSON(),
 				navItems: this.navItems.toJSON(),
 				currID: this.currNav ? this.currNav.get('id') : '',
-				count: this.collection.length
-			})).append(this.backdrop);
+				checked: collection.allChecked,
+				sortKey: collection.sortKey,
+				sortDirection: collection.sortDirection
+			})).append('<div class="gc-bb-modal-backdrop">&nbsp;</div>');
 
-			// this.$el.find( 'tbody' ).html( this.getRenderedSelected() );
-			this.$el.find('tbody').html(this.getRenderedModels(app.views.modalPostRow));
+			app.views.tableBase.prototype.render.call(this);
 
-			// Make sync button enabled/disabled
-			this.buttonStatus(this.collection.syncEnabled);
-
-			// Make check-all inputs checked/unchecked
-			this.allCheckedStatus(this.collection.allChecked);
-
+			$(document)
 			// Handle any attempt to move focus out of the modal.
-			$(document).on('focusin', this.preserveFocus);
+			.on('focusin', this.preserveFocus)
+			// Close modal on escape key.
+			.on('keyup', this.maybeClose);
 
 			// set overflow to "hidden" on the body so that it ignores any scroll events
-			// while the modal is active and append the modal to the body.
-			$(document.body).addClass('gc-modal-open').append(this.$el);
+			$(document.body).addClass('gc-modal-open');
 
-			// Set focus on the modal to prevent accidental actions in the underlying page
-			// Not strictly necessary, but nice to do.
-			this.$el.focus();
+			// Add modal before the search input.
+			this.$search.before(this.$el);
+
+			// Position search input. (After the above line, where we render the modal)
+			this.$search.css(jQuery('#gc-tablenav').offset());
+
+			// If we're not focused on the search input...
+			if (!this.isSearch(document.activeElement)) {
+
+				// Then set focus on the modal to prevent accidental actions in the underlying page.
+				this.$el.focus();
+			}
+
+			return this;
 		},
 
-		// getRenderedSelected: function() {
-		// 	var selected = this.getSelected();
-
-		// 	var addedElements = document.createDocumentFragment();
-
-		// 	_.each( selected, function( model ) {
-		// 		var view = ( new app.views.modalPostRow({ model: model }) ).render();
-		// 		addedElements.appendChild( view.el );
-		// 	});
-
-		// 	return addedElements;
-		// },
-
 		/**
-   * Ensures that keyboard focus remains within the Modal dialog.
+   * Ensures that keyboard focus remains within the Modal dialog or search input.
    * @param evt {object} A jQuery-normalized event object.
    */
 		preserveFocus: function preserveFocus(evt) {
-			if (this.$el[0] !== evt.target && !this.$el.has(evt.target).length) {
+			var isOk = this.$el[0] === evt.target || this.$el.has(evt.target).length || this.isSearch(evt.target);
+			if (!isOk) {
 				this.$el.focus();
 			}
+		},
+
+		/**
+   * Closes modal if escape key is hit.
+   * @param evt {object} A jQuery-normalized event object.
+   */
+		maybeClose: function maybeClose(evt) {
+			if (ESCAPE === evt.keyCode && !this.isSearch(evt.target)) {
+				this.closeModal(evt);
+			}
+		},
+
+		isSearch: function isSearch(el) {
+			return this.$search[0] === el || this.$search.has(el).length;
 		},
 
 		/**
@@ -1107,20 +1135,12 @@ module.exports = function (app, gc, $) {
 			this.resetMetaboxView();
 			this.undelegateEvents();
 			$(document).off('focusin');
+			$(document).off('keyup', this.maybeClose);
 			$(document.body).removeClass('gc-modal-open');
 			this.remove();
 
 			gc.$id('bulk-edit').find('button.cancel').trigger('click');
 			app.modalView = undefined;
-		},
-
-		/**
-   * Responds to the gc-btn-ok.click event
-   * @param evt {object} A jQuery-normalized event object.
-   * @todo You should make this your own.
-   */
-		saveModal: function saveModal(evt) {
-			this.closeModal(evt);
 		},
 
 		clickSelectTab: function clickSelectTab(evt) {
@@ -1150,14 +1170,6 @@ module.exports = function (app, gc, $) {
 				this.$('#gc-btn-push').prop('disabled', !this.collection.checkedCan('push'));
 				this.$('#gc-btn-pull').prop('disabled', !this.collection.checkedCan('pull'));
 			}
-		},
-
-		allCheckedStatus: function allCheckedStatus(checked) {
-			this.$('.gc-field-th.check-column input').prop('checked', checked);
-		},
-
-		checkAll: function checkAll(evt) {
-			this.collection.trigger('checkAll', $(evt.target).is(':checked'));
 		},
 
 		startPull: function startPull(evt) {
@@ -1298,14 +1310,9 @@ module.exports = function (app, gc, $) {
 
 		checkStatus: function checkStatus(mappings, direction) {
 			this.clearTimeout();
-			this.timeoutID = window.setTimeout(function () {
+			this.setTimeout(function () {
 				thisView.doAjax({ check: mappings }, direction);
-			}, 1000);
-		},
-
-		clearTimeout: function clearTimeout() {
-			window.clearTimeout(this.timeoutID);
-			this.timeoutID = null;
+			});
 		},
 
 		doAjax: function doAjax(formData, direction) {
@@ -1536,6 +1543,200 @@ module.exports = function (app) {
 			};
 
 			return args;
+		}
+
+	});
+};
+
+},{}],23:[function(require,module,exports){
+'use strict';
+
+module.exports = function (app, $, gc) {
+	app.views.tableSearch = require('./../views/table-search.js')(app, $, gc);
+	app.views.tableNav = require('./../views/table-nav.js')(app, $, gc);
+
+	return app.views.base.extend({
+		timeoutID: null,
+		ajax: null,
+		tableNavView: null,
+		searchView: null,
+		modelView: null, // Need to override.
+		timeoutTime: 1000,
+
+		events: {
+			'click .gc-field-th.sortable': 'sortRowsByColumn',
+			'change .gc-field-th.check-column input': 'checkAll'
+		},
+
+		initialize: function initialize() {
+			this.setupAjax();
+
+			this.listenTo(this.collection, 'render', this.render);
+			this.listenTo(this.collection, 'notAllChecked', this.allCheckedStatus);
+			this.listenTo(this.collection, 'change:checked', this.renderNav);
+			this.listenTo(this, 'render', this.render);
+
+			this.tableNavView = new app.views.tableNav({
+				collection: this.collection
+			});
+
+			this.searchView = new app.views.tableSearch({
+				collection: this.collection
+			});
+		},
+
+		// Need to override.
+		setupAjax: function setupAjax() {},
+
+		sortRowsByColumn: function sortRowsByColumn(evt) {
+			evt.preventDefault();
+			var collection = this.collection.current();
+
+			var $this = $(evt.currentTarget);
+			var column = $this.find('a').data('id');
+			var direction = false;
+
+			if ($this.hasClass('asc')) {
+				direction = 'desc';
+			}
+
+			if ($this.hasClass('desc')) {
+				direction = 'asc';
+			}
+
+			if (!direction) {
+				direction = collection.sortDirection;
+			}
+
+			if ('asc' === direction) {
+				$this.addClass('desc').removeClass('asc');
+			} else {
+				$this.addClass('asc').removeClass('desc');
+			}
+
+			collection.trigger('sortByColumn', column, direction);
+			this.sortRender();
+		},
+
+		buttonStatus: function buttonStatus(enable) {
+			this.$('.button-primary').prop('disabled', !enable);
+		},
+
+		allCheckedStatus: function allCheckedStatus() {
+			this.$('.gc-field-th.check-column input').prop('checked', this.collection.allChecked);
+		},
+
+		checkAll: function checkAll(evt) {
+			this.collection.trigger('checkAll', $(evt.target).is(':checked'));
+		},
+
+		doSpinner: function doSpinner() {
+			var html = this.blankRow('<span class="gc-loader spinner is-active"></span>');
+			this.renderRows(html);
+		},
+
+		setTimeout: function setTimeout(callback) {
+			this.timeoutID = window.setTimeout(callback, this.timeoutTime);
+		},
+
+		clearInterval: function clearInterval() {
+			window.clearTimeout(this.timeoutID);
+			this.timeoutID = null;
+		},
+
+		getRenderedRows: function getRenderedRows() {
+			var rows;
+
+			if (this.collection.current().length) {
+				rows = this.getRenderedModels(this.modelView, this.collection.current());
+			} else {
+				rows = this.blankRow(gc._text.no_items);
+			}
+
+			return rows;
+		},
+
+		sortRender: function sortRender() {
+			this.render();
+		},
+
+		blankRow: function blankRow(html) {
+			var cols = this.$('thead tr > *').length;
+			return '<tr><td colspan="' + cols + '">' + html + '</td></tr>';
+		},
+
+		renderRows: function renderRows(html) {
+			this.$('tbody').html(html || this.getRenderedRows());
+		},
+
+		renderNav: function renderNav() {
+			this.$('#gc-tablenav').html(this.tableNavView.render().el);
+		},
+
+		render: function render() {
+			var collection = this.collection.current();
+
+			// Re-render and replace table rows.
+			this.renderRows();
+
+			// Re-render table nav
+			this.renderNav();
+
+			// Make sync button enabled/disabled
+			this.buttonStatus(collection.syncEnabled);
+
+			// Make check-all inputs checked/unchecked
+			this.allCheckedStatus(collection.allChecked);
+
+			return this;
+		}
+
+	});
+};
+
+},{"./../views/table-nav.js":24,"./../views/table-search.js":25}],24:[function(require,module,exports){
+'use strict';
+
+module.exports = function (app, $, gc) {
+	return app.views.base.extend({
+		template: wp.template('gc-table-nav'),
+
+		render: function render() {
+			var collection = this.collection.current();
+
+			this.$el.html(this.template({
+				count: collection.length,
+				selected: collection.checked ? collection.checked().length : 0
+			}));
+
+			return this;
+		}
+	});
+};
+
+},{}],25:[function(require,module,exports){
+'use strict';
+
+module.exports = function (app) {
+	return Backbone.View.extend({
+		el: '#gc-items-search',
+		template: wp.template('gc-table-search'),
+		events: {
+			'keyup #gc-search-input': 'filterCollection',
+			'search #gc-search-input': 'filterCollection'
+		},
+
+		initialize: function initialize() {
+			this.render();
+		},
+
+		filterCollection: _.debounce(function (evt) {
+			this.collection.search(evt.target.value);
+		}, 100),
+
+		render: function render() {
+			this.$el.html(this.template());
+			return this;
 		}
 
 	});

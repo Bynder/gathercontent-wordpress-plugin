@@ -9,7 +9,7 @@
 	<a href="<?php $this->output( 'url' ); ?>item/{{ data.item }}" target="_blank">{{ data.itemName }}</a>
 </td>
 <td>
-	<?php echo new self( 'underscore-data-updated', $this->args ); ?>
+	<?php echo new self( 'underscore-data-updated' ); ?>
 </td>
 <td>
 	<?php echo new self( 'underscore-data-mapping-name' ); ?>

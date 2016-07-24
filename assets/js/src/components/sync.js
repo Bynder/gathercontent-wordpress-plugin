@@ -9,6 +9,8 @@ window.GatherContent = window.GatherContent || {};
 	// Initiate base objects.
 	require( './initiate-objects.js' )( app );
 
+	app.views.tableBase = require( './views/table-base.js' )( app, $, gc );
+
 	/*
 	 * Item setup
 	 */
@@ -18,12 +20,10 @@ window.GatherContent = window.GatherContent || {};
 	app.views.item = require( './views/item.js' )( app );
 	app.views.items = require( './views/items.js' )( app, $, gc );
 
-	app.views.tableSearch = require( './views/table-search.js' )( app, $, gc );
-	app.views.tableNav = require( './views/table-nav.js' )( app, $, gc );
-
 	app.init = function() {
 		// Kick it off.
 		app.syncView = new app.views.items( {
+			el         : $( '.gc-admin-wrap' ),
 			collection : new app.collections.items( gc._items )
 		} );
 

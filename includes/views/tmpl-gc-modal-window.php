@@ -44,23 +44,14 @@
 		<# } #>
 
 		<div class="media-frame-content gc-bb-modal-main">
-			<div class="tablenav top">
-				<div class="tablenav-pages one-page">
-					<span class="displaying-num"><span class="gc-item-count">{{ data.count }}</span> <?php _e( 'items', 'gathercontent-import' ); ?></span>
-				</div>
-				<br class="clear">
-			</div>
+			<div id="gc-tablenav" class="tablenav top"></div>
 			<table id="gc-modal-{{ data.currID }}" class="gc-modal-tabs widefat striped gc-table">
 				<thead>
 					<tr>
 						<td id="cb" class="gc-field-th manage-column column-cb check-column"><label class="screen-reader-text" for="cb-select-all-1"><?php _e( 'Select All', 'gathercontent-import' ); ?></label>
 							<input <# if ( data.checked ) { #>checked="checked"<# } #> id="cb-select-all-1" type="checkbox">
 						</td>
-						<th class="gc-field-th"><?php _e( 'Status', 'gathercontent-import' ); ?></th>
-						<th class="gc-field-th"><?php _e( 'Item', 'gathercontent-import' ); ?></th>
-						<th class="gc-field-th"><?php _e( 'Updated', 'gathercontent-import' ); ?></th>
-						<th class="gc-field-th"><?php _e( 'Template Mapping', 'gathercontent-import' ); ?></th>
-						<th class="gc-field-th"><?php _e( 'WordPress Title', 'gathercontent-import' ); ?></th>
+						<?php echo new self( 'table-headers', $this->args ); ?>
 					</tr>
 				</thead>
 
@@ -80,11 +71,7 @@
 						<td class="gc-field-th manage-column column-cb check-column"><label class="screen-reader-text" for="cb-select-all-1"><?php _e( 'Select All', 'gathercontent-import' ); ?></label>
 							<input <# if ( data.checked ) { #>checked="checked"<# } #> id="cb-select-all-1" type="checkbox">
 						</td>
-						<th class="gc-field-th"><?php _e( 'Status', 'gathercontent-import' ); ?></th>
-						<th class="gc-field-th"><?php _e( 'Item', 'gathercontent-import' ); ?></th>
-						<th class="gc-field-th"><?php _e( 'Updated', 'gathercontent-import' ); ?></th>
-						<th class="gc-field-th"><?php _e( 'Template Mapping', 'gathercontent-import' ); ?></th>
-						<th class="gc-field-th"><?php _e( 'WordPress Title', 'gathercontent-import' ); ?></th>
+						<?php echo new self( 'table-headers', $this->args ); ?>
 					</tr>
 				</tfoot>
 			</table>

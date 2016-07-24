@@ -6,7 +6,7 @@
 			<td id="cb" class="gc-field-th manage-column column-cb check-column"><label class="screen-reader-text" for="cb-select-all-1"><?php _e( 'Select All', 'gathercontent-import' ); ?></label>
 				<input <# if ( data.checked ) { #>checked="checked"<# } #> id="cb-select-all-1" type="checkbox">
 			</td>
-			<?php echo new self( 'tmpl-gc-items-table-header' ); ?>
+			<?php echo new self( 'table-headers', $this->args ); ?>
 		</tr>
 	</thead>
 	<tbody>
@@ -17,7 +17,7 @@
 			<td class="gc-field-th manage-column column-cb check-column"><label class="screen-reader-text" for="cb-select-all-1"><?php _e( 'Select All', 'gathercontent-import' ); ?></label>
 				<input <# if ( data.checked ) { #>checked="checked"<# } #> id="cb-select-all-1" type="checkbox">
 			</td>
-			<?php echo new self( 'tmpl-gc-items-table-header' ); ?>
+			<?php echo new self( 'table-headers', $this->args ); ?>
 		</tr>
 	</tfoot>
 </table>

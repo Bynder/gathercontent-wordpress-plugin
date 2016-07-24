@@ -172,7 +172,15 @@ class Items_Sync extends Base {
 		return array(
 			'tmpl-gc-table-search' => array(),
 			'tmpl-gc-table-nav' => array(),
-			'tmpl-gc-items-sync' => array(),
+			'tmpl-gc-items-sync' => array(
+				'headers' => array(
+					'status'      => __( 'Status', 'gathercontent-import' ),
+					'itemName'    => __( 'Item', 'gathercontent-import' ),
+					'updated_at'  => __( 'Updated', 'gathercontent-import' ),
+					'mappingName' => __( 'Template Mapping', 'gathercontent-import' ),
+					'post_title'  => __( 'WordPress Title', 'gathercontent-import' ),
+				),
+			),
 			'tmpl-gc-item' => array(
 				'url' => $this->url,
 			),

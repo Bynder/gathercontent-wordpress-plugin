@@ -1,5 +1,5 @@
 /**
- * GatherContent Importer - v3.0.0 - 2016-07-23
+ * GatherContent Importer - v3.0.0 - 2016-07-24
  * http://www.gathercontent.com
  *
  * Copyright (c) 2016 GatherContent
@@ -69,11 +69,11 @@ module.exports = function (gc) {
 			id: 0,
 			item: 0,
 			itemName: '',
-			updated: '',
+			updated_at: '',
 			current: true,
 			editLink: '',
 			mapping: 0,
-			mappingName: 0,
+			mappingName: '',
 			mappingLink: '',
 			mappingStatus: '',
 			mappingStatusId: '',
@@ -83,8 +83,11 @@ module.exports = function (gc) {
 			canPull: false,
 			canPush: false,
 			statuses: [],
-			statusesChecked: false
+			statusesChecked: false,
+			ptLabel: false
 		},
+
+		searchAttributes: ['itemName', 'mappingName', 'post_title'],
 
 		url: function url() {
 			var url = window.ajaxurl + '?action=gc_fetch_js_post&id=' + this.get('id');
@@ -575,8 +578,8 @@ module.exports = function (app, $, gc) {
 				if (data[id].itemName) {
 					this.model.set('itemName', data[id].itemName);
 				}
-				if (data[id].updated) {
-					this.model.set('updated', data[id].updated);
+				if (data[id].updated_at) {
+					this.model.set('updated_at', data[id].updated_at);
 				}
 			}
 		},

@@ -1,5 +1,5 @@
 /**
- * GatherContent Importer - v3.0.0 - 2016-07-23
+ * GatherContent Importer - v3.0.0 - 2016-07-24
  * http://www.gathercontent.com
  *
  * Copyright (c) 2016 GatherContent
@@ -38,7 +38,6 @@ module.exports = function (app) {
 			this.listenTo(this, 'checkSome', this.toggleCheckedIf);
 			this.listenTo(this, 'change:checked', this.checkChecked);
 			this.listenTo(this, 'sortByColumn', this.sortByColumn);
-			this.listenTo(this, 'searchResults', this.transferProperties);
 
 			this.totalChecked = this.checked().length;
 
@@ -57,18 +56,19 @@ module.exports = function (app) {
 		},
 
 		checkChecked: function checkChecked(model) {
-			var render = false;
-
 			if (model.changed.checked) {
 				this.totalChecked++;
 			} else {
 				if (this.totalChecked === this.length) {
 					this.allChecked = false;
-					render = true;
 				}
 				this.totalChecked--;
 			}
 
+			this.checkAllStatus();
+		},
+
+		checkAllStatus: function checkAllStatus(checked) {
 			var syncWasEnabled = this.syncEnabled;
 			this.syncEnabled = this.totalChecked > 0;
 
@@ -83,10 +83,19 @@ module.exports = function (app) {
 
 		toggleCheckedIf: function toggleCheckedIf(checked) {
 			this.processing = true;
+
+			this.stopListening(this, 'change:checked', this.checkChecked);
 			this.each(function (model) {
 				model.set('checked', Boolean('function' === typeof checked ? checked(model) : checked));
 			});
+			this.listenTo(this, 'change:checked', this.checkChecked);
+
+			this.totalChecked = this.checked().length;
+			this.allChecked = this.totalChecked >= this.length;
+			this.checkAllStatus();
+
 			this.processing = false;
+
 			this.trigger('render');
 		},
 
@@ -184,7 +193,7 @@ module.exports = function (Collection) {
 			// Filter
 			var matcher = this.matcher;
 			var results = !keyword ? this.models : this.filter(function (model) {
-				attributes = attributes ? attributes : _.keys(model.searchAttributes || model.attributes);
+				attributes = attributes ? attributes : model.searchAttributes || _.keys(model.attributes);
 				return _.some(attributes, function (attribute) {
 					return matcher(keyword, model.get(attribute));
 				});
@@ -349,13 +358,11 @@ module.exports = function (app, gc) {
 			due_dates: null,
 			expanded: false,
 			checked: false,
-			post_title: false
+			post_title: false,
+			ptLabel: false
 		},
 
-		searchAttributes: {
-			itemName: 0,
-			post_title: false
-		},
+		searchAttributes: ['itemName', 'post_title'],
 
 		_get_item: function _get_item(value) {
 			return this.get('id');
@@ -408,6 +415,8 @@ window.GatherContent = window.GatherContent || {};
 	// Initiate base objects.
 	require('./initiate-objects.js')(app);
 
+	app.views.tableBase = require('./views/table-base.js')(app, $, gc);
+
 	/*
   * Item setup
   */
@@ -417,12 +426,10 @@ window.GatherContent = window.GatherContent || {};
 	app.views.item = require('./views/item.js')(app);
 	app.views.items = require('./views/items.js')(app, $, gc);
 
-	app.views.tableSearch = require('./views/table-search.js')(app, $, gc);
-	app.views.tableNav = require('./views/table-nav.js')(app, $, gc);
-
 	app.init = function () {
 		// Kick it off.
 		app.syncView = new app.views.items({
+			el: $('.gc-admin-wrap'),
 			collection: new app.collections.items(gc._items)
 		});
 
@@ -444,7 +451,7 @@ window.GatherContent = window.GatherContent || {};
 	$(app.init);
 })(window, document, jQuery, window.GatherContent);
 
-},{"./collections/items.js":2,"./initiate-objects.js":4,"./models/item.js":7,"./views/item.js":11,"./views/items.js":12,"./views/table-nav.js":13,"./views/table-search.js":14}],10:[function(require,module,exports){
+},{"./collections/items.js":2,"./initiate-objects.js":4,"./models/item.js":7,"./views/item.js":11,"./views/items.js":12,"./views/table-base.js":13}],10:[function(require,module,exports){
 'use strict';
 
 module.exports = Backbone.View.extend({
@@ -516,47 +523,27 @@ module.exports = function (app) {
 
 module.exports = function (app, $, gc) {
 	var percent = gc.percent;
-	var thisView;
+	app.views.tableSearch = require('./../views/table-search.js')(app, $, gc);
+	app.views.tableNav = require('./../views/table-nav.js')(app, $, gc);
 
-	return app.views.base.extend({
-		el: '#sync-tabs',
+	return app.views.tableBase.extend({
 		template: wp.template('gc-items-sync'),
 		progressTemplate: wp.template('gc-items-sync-progress'),
-		$wrap: $('.gc-admin-wrap'),
-		timeoutID: null,
-		ajax: null,
-		tableNavView: null,
-		searchView: null,
+		modelView: app.views.item,
 
 		events: {
 			'click .gc-cancel-sync': 'clickCancelSync',
 			'click .gc-field-th.sortable': 'sortRowsByColumn',
-			'change .gc-field-th.check-column input': 'checkAll'
+			'change .gc-field-th.check-column input': 'checkAll',
+			'submit form': 'submit'
 		},
 
 		initialize: function initialize() {
-			thisView = this;
-
-			this.setupAjax();
+			app.views.tableBase.prototype.initialize.call(this);
 
 			this.listenTo(this.ajax, 'response', this.ajaxResponse);
-			this.listenTo(this.collection, 'render', this.render);
 			this.listenTo(this.collection, 'enabledChange', this.checkEnableButton);
-			this.listenTo(this.collection, 'notAllChecked', this.allCheckedStatus);
-			this.listenTo(this.collection, 'search', this.searchQuery);
-			this.listenTo(this.collection, 'change:checked', this.renderNav);
-
-			this.listenTo(this, 'render', this.render);
-
-			this.$wrap.on('submit', 'form', this.submit.bind(this));
-
-			this.tableNavView = new app.views.tableNav({
-				collection: this.collection
-			});
-
-			this.searchView = new app.views.tableSearch({
-				collection: this.collection
-			});
+			this.listenTo(this.collection, 'search', this.initRender);
 
 			this.initRender();
 		},
@@ -575,55 +562,8 @@ module.exports = function (app, $, gc) {
 			});
 		},
 
-		sortRowsByColumn: function sortRowsByColumn(evt) {
-			evt.preventDefault();
-			var collection = this.collection.current();
-
-			var $this = $(evt.currentTarget);
-			var column = $this.find('a').data('id');
-			var direction = false;
-
-			if ($this.hasClass('asc')) {
-				direction = 'desc';
-			}
-
-			if ($this.hasClass('desc')) {
-				direction = 'asc';
-			}
-
-			if (!direction) {
-				direction = collection.sortDirection;
-			}
-
-			if ('asc' === direction) {
-				$this.addClass('desc').removeClass('asc');
-			} else {
-				$this.addClass('asc').removeClass('desc');
-			}
-
-			collection.trigger('sortByColumn', column, direction);
-			this.initRender();
-		},
-
-		searchQuery: function searchQuery() {
-			this.initRender();
-		},
-
 		checkEnableButton: function checkEnableButton(syncEnabled) {
 			this.buttonStatus(syncEnabled);
-		},
-
-		buttonStatus: function buttonStatus(enable) {
-			this.$wrap.find('.button-primary').prop('disabled', !enable);
-		},
-
-		allCheckedStatus: function allCheckedStatus(checked) {
-			this.$wrap.find('.gc-field-th.check-column input').prop('checked', checked);
-		},
-
-		checkAll: function checkAll(evt) {
-			console.warn('click checkall', $(evt.target).is(':checked'));
-			this.collection.trigger('checkAll', $(evt.target).is(':checked'));
 		},
 
 		clickCancelSync: function clickCancelSync(evt) {
@@ -631,14 +571,9 @@ module.exports = function (app, $, gc) {
 			this.cancelSync();
 		},
 
-		doSpinner: function doSpinner() {
-			var html = this.blankRow('<span class="gc-loader spinner is-active"></span>');
-			this.renderRows(html);
-		},
-
 		submit: function submit(evt) {
 			evt.preventDefault();
-			this.startSync(this.$wrap.find('form').serialize());
+			this.startSync(this.$('form').serialize());
 		},
 
 		startSync: function startSync(formData) {
@@ -699,11 +634,6 @@ module.exports = function (app, $, gc) {
 			this.timeoutID = window.setTimeout(callback, this.ajax.get('time'));
 		},
 
-		clearInterval: function clearInterval() {
-			window.clearTimeout(this.timeoutID);
-			this.timeoutID = null;
-		},
-
 		checkProgress: function checkProgress() {
 			this.doAjax('check', percent);
 		},
@@ -735,35 +665,17 @@ module.exports = function (app, $, gc) {
 		},
 
 		renderProgress: function renderProgress(percent) {
-			this.$wrap.addClass('gc-sync-progress');
+			this.$el.addClass('gc-sync-progress');
 			this.buttonStatus(false);
-			this.$el.html(this.progressTemplate({ percent: percent }));
-		},
-
-		getRenderedRows: function getRenderedRows() {
-			var rows;
-
-			if (this.collection.current().length) {
-				rows = this.getRenderedModels(app.views.item, this.collection.current());
-			} else {
-				rows = this.blankRow(gc._text.no_items);
-			}
-
-			return rows;
-		},
-
-		blankRow: function blankRow(html) {
-			var cols = this.$('thead tr > *').length;
-			return '<tr><td colspan="' + cols + '">' + html + '</td></tr>';
+			this.$('#sync-tabs').html(this.progressTemplate({ percent: percent }));
 		},
 
 		renderRows: function renderRows(html) {
-			this.$el.find('tbody').html(html || this.getRenderedRows());
+			this.$('#sync-tabs tbody').html(html || this.getRenderedRows());
 		},
 
-		renderNav: function renderNav() {
-			// Re-render table nav
-			this.$el.find('.tablenav.top').html(this.tableNavView.render().el);
+		sortRender: function sortRender() {
+			this.initRender();
 		},
 
 		initRender: function initRender() {
@@ -772,7 +684,7 @@ module.exports = function (app, $, gc) {
 			if (percent > 0 && percent < 100) {
 				this.startSync('check');
 			} else {
-				this.$el.html(this.template({
+				this.$('#sync-tabs').html(this.template({
 					checked: collection.allChecked,
 					sortKey: collection.sortKey,
 					sortDirection: collection.sortDirection
@@ -782,10 +694,142 @@ module.exports = function (app, $, gc) {
 		},
 
 		render: function render() {
+			// Not syncing, so remove wrap-class
+			this.$el.removeClass('gc-sync-progress');
+
+			return app.views.tableBase.prototype.render.call(this);
+		}
+
+	});
+};
+
+},{"./../models/ajax.js":5,"./../views/table-nav.js":14,"./../views/table-search.js":15}],13:[function(require,module,exports){
+'use strict';
+
+module.exports = function (app, $, gc) {
+	app.views.tableSearch = require('./../views/table-search.js')(app, $, gc);
+	app.views.tableNav = require('./../views/table-nav.js')(app, $, gc);
+
+	return app.views.base.extend({
+		timeoutID: null,
+		ajax: null,
+		tableNavView: null,
+		searchView: null,
+		modelView: null, // Need to override.
+		timeoutTime: 1000,
+
+		events: {
+			'click .gc-field-th.sortable': 'sortRowsByColumn',
+			'change .gc-field-th.check-column input': 'checkAll'
+		},
+
+		initialize: function initialize() {
+			this.setupAjax();
+
+			this.listenTo(this.collection, 'render', this.render);
+			this.listenTo(this.collection, 'notAllChecked', this.allCheckedStatus);
+			this.listenTo(this.collection, 'change:checked', this.renderNav);
+			this.listenTo(this, 'render', this.render);
+
+			this.tableNavView = new app.views.tableNav({
+				collection: this.collection
+			});
+
+			this.searchView = new app.views.tableSearch({
+				collection: this.collection
+			});
+		},
+
+		// Need to override.
+		setupAjax: function setupAjax() {},
+
+		sortRowsByColumn: function sortRowsByColumn(evt) {
+			evt.preventDefault();
 			var collection = this.collection.current();
 
-			// Not syncing, so remove wrap-class
-			this.$wrap.removeClass('gc-sync-progress');
+			var $this = $(evt.currentTarget);
+			var column = $this.find('a').data('id');
+			var direction = false;
+
+			if ($this.hasClass('asc')) {
+				direction = 'desc';
+			}
+
+			if ($this.hasClass('desc')) {
+				direction = 'asc';
+			}
+
+			if (!direction) {
+				direction = collection.sortDirection;
+			}
+
+			if ('asc' === direction) {
+				$this.addClass('desc').removeClass('asc');
+			} else {
+				$this.addClass('asc').removeClass('desc');
+			}
+
+			collection.trigger('sortByColumn', column, direction);
+			this.sortRender();
+		},
+
+		buttonStatus: function buttonStatus(enable) {
+			this.$('.button-primary').prop('disabled', !enable);
+		},
+
+		allCheckedStatus: function allCheckedStatus() {
+			this.$('.gc-field-th.check-column input').prop('checked', this.collection.allChecked);
+		},
+
+		checkAll: function checkAll(evt) {
+			this.collection.trigger('checkAll', $(evt.target).is(':checked'));
+		},
+
+		doSpinner: function doSpinner() {
+			var html = this.blankRow('<span class="gc-loader spinner is-active"></span>');
+			this.renderRows(html);
+		},
+
+		setTimeout: function setTimeout(callback) {
+			this.timeoutID = window.setTimeout(callback, this.timeoutTime);
+		},
+
+		clearInterval: function clearInterval() {
+			window.clearTimeout(this.timeoutID);
+			this.timeoutID = null;
+		},
+
+		getRenderedRows: function getRenderedRows() {
+			var rows;
+
+			if (this.collection.current().length) {
+				rows = this.getRenderedModels(this.modelView, this.collection.current());
+			} else {
+				rows = this.blankRow(gc._text.no_items);
+			}
+
+			return rows;
+		},
+
+		sortRender: function sortRender() {
+			this.render();
+		},
+
+		blankRow: function blankRow(html) {
+			var cols = this.$('thead tr > *').length;
+			return '<tr><td colspan="' + cols + '">' + html + '</td></tr>';
+		},
+
+		renderRows: function renderRows(html) {
+			this.$('tbody').html(html || this.getRenderedRows());
+		},
+
+		renderNav: function renderNav() {
+			this.$('#gc-tablenav').html(this.tableNavView.render().el);
+		},
+
+		render: function render() {
+			var collection = this.collection.current();
 
 			// Re-render and replace table rows.
 			this.renderRows();
@@ -805,7 +849,7 @@ module.exports = function (app, $, gc) {
 	});
 };
 
-},{"./../models/ajax.js":5}],13:[function(require,module,exports){
+},{"./../views/table-nav.js":14,"./../views/table-search.js":15}],14:[function(require,module,exports){
 'use strict';
 
 module.exports = function (app, $, gc) {
@@ -825,7 +869,7 @@ module.exports = function (app, $, gc) {
 	});
 };
 
-},{}],14:[function(require,module,exports){
+},{}],15:[function(require,module,exports){
 'use strict';
 
 module.exports = function (app) {
