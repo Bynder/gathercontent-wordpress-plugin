@@ -1,24 +1,21 @@
 module.exports = function( app, $, gc ) {
 	var percent = gc.percent;
 	var thisView;
-	var masterCheckSelector = '.gc-field-th.check-column input';
 
 	return app.views.base.extend({
-		el : '#sync-tabs',
-		template : wp.template( 'gc-items-sync' ),
+		el               : '#sync-tabs',
+		template         : wp.template( 'gc-items-sync' ),
 		progressTemplate : wp.template( 'gc-items-sync-progress' ),
-		spinnerRow : '<tr><td colspan="6"><span class="gc-loader spinner is-active"></span></td></tr>',
-		$wrap : $( '.gc-admin-wrap' ),
-		timeoutID : null,
-		ajax : null,
+		$wrap            : $( '.gc-admin-wrap' ),
+		timeoutID        : null,
+		ajax             : null,
+		tableNavView     : null,
+		searchView       : null,
 
-		events : function() {
-			var evts = {
-				'click .gc-cancel-sync' : 'clickCancelSync'
-			};
-			evts[ 'change '+ masterCheckSelector ] = 'checkAll';
-
-			return evts;
+		events : {
+			'click .gc-cancel-sync'       : 'clickCancelSync',
+			'click .gc-field-th.sortable' : 'sortRowsByColumn',
+			'change .gc-field-th.check-column input' : 'checkAll'
 		},
 
 		initialize: function() {
@@ -30,9 +27,20 @@ module.exports = function( app, $, gc ) {
 			this.listenTo( this.collection, 'render', this.render );
 			this.listenTo( this.collection, 'enabledChange', this.checkEnableButton );
 			this.listenTo( this.collection, 'notAllChecked', this.allCheckedStatus );
+			this.listenTo( this.collection, 'search', this.searchQuery );
+			this.listenTo( this.collection, 'change:checked', this.renderNav );
+
 			this.listenTo( this, 'render', this.render );
 
 			this.$wrap.on( 'submit', 'form', this.submit.bind( this ) );
+
+			this.tableNavView = new app.views.tableNav( {
+				collection : this.collection
+			} );
+
+			this.searchView = new app.views.tableSearch( {
+				collection : this.collection
+			} );
 
 			this.initRender();
 		},
@@ -51,6 +59,40 @@ module.exports = function( app, $, gc ) {
 			} );
 		},
 
+		sortRowsByColumn: function( evt ) {
+			evt.preventDefault();
+			var collection = this.collection.current();
+
+			var $this     = $( evt.currentTarget );
+			var column    = $this.find( 'a' ).data( 'id' );
+			var direction = false;
+
+			if ( $this.hasClass( 'asc' ) ) {
+				direction = 'desc';
+			}
+
+			if ( $this.hasClass( 'desc' ) ) {
+				direction = 'asc';
+			}
+
+			if ( ! direction ) {
+				direction = collection.sortDirection;
+			}
+
+			if ( 'asc' === direction ) {
+				$this.addClass( 'desc' ).removeClass( 'asc' );
+			} else {
+				$this.addClass( 'asc' ).removeClass( 'desc' );
+			}
+
+			collection.trigger( 'sortByColumn', column, direction );
+			this.initRender();
+		},
+
+		searchQuery: function() {
+			this.initRender();
+		},
+
 		checkEnableButton: function( syncEnabled ) {
 			this.buttonStatus( syncEnabled );
 		},
@@ -60,10 +102,11 @@ module.exports = function( app, $, gc ) {
 		},
 
 		allCheckedStatus: function( checked ) {
-			this.$wrap.find( masterCheckSelector ).prop( 'checked', checked );
+			this.$wrap.find( '.gc-field-th.check-column input' ).prop( 'checked', checked );
 		},
 
 		checkAll: function( evt ) {
+			console.warn('click checkall', $( evt.target ).is( ':checked' ));
 			this.collection.trigger( 'checkAll', $( evt.target ).is( ':checked' ) );
 		},
 
@@ -73,7 +116,8 @@ module.exports = function( app, $, gc ) {
 		},
 
 		doSpinner: function() {
-			this.$el.find( 'tbody' ).html( this.spinnerRow );
+			var html = this.blankRow( '<span class="gc-loader spinner is-active"></span>' );
+			this.renderRows( html );
 		},
 
 		submit: function( evt ) {
@@ -182,33 +226,67 @@ module.exports = function( app, $, gc ) {
 			this.$el.html( this.progressTemplate( { percent: percent } ) );
 		},
 
+		getRenderedRows: function() {
+			var rows;
+
+			if ( this.collection.current().length ) {
+				rows = this.getRenderedModels( app.views.item, this.collection.current() ) ;
+			} else {
+				rows = this.blankRow( gc._text.no_items );
+			}
+
+			return rows;
+		},
+
+		blankRow: function( html ) {
+			var cols = this.$( 'thead tr > *' ).length;
+			return '<tr><td colspan="'+ cols +'">'+ html +'</td></tr>';
+		},
+
+		renderRows: function( html ) {
+			this.$el.find( 'tbody' ).html( html || this.getRenderedRows() );
+		},
+
+		renderNav: function() {
+			// Re-render table nav
+			this.$el.find( '.tablenav.top' ).html( this.tableNavView.render().el );
+		},
+
 		initRender: function() {
+			var collection = this.collection.current();
 			// If sync is going, show that status.
 			if ( percent > 0 && percent < 100 ) {
 				this.startSync( 'check' );
 			} else {
 				this.$el.html( this.template( {
-					checked : this.collection.allChecked,
-					count   : this.collection.length
+					checked       : collection.allChecked,
+					sortKey       : collection.sortKey,
+					sortDirection : collection.sortDirection,
 				} ) );
 				this.render();
 			}
 		},
 
 		render: function() {
+			var collection = this.collection.current();
+
 			// Not syncing, so remove wrap-class
 			this.$wrap.removeClass( 'gc-sync-progress' );
 
 			// Re-render and replace table rows.
-			this.$el.find( 'tbody' ).html( this.getRenderedModels( app.views.item ) );
+			this.renderRows();
+
+			// Re-render table nav
+			this.renderNav();
 
 			// Make sync button enabled/disabled
-			this.buttonStatus( this.collection.syncEnabled );
+			this.buttonStatus( collection.syncEnabled );
 
 			// Make check-all inputs checked/unchecked
-			this.allCheckedStatus( this.collection.allChecked );
+			this.allCheckedStatus( collection.allChecked );
 
 			return this;
 		},
+
 	});
 };

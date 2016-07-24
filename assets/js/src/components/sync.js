@@ -18,6 +18,9 @@ window.GatherContent = window.GatherContent || {};
 	app.views.item = require( './views/item.js' )( app );
 	app.views.items = require( './views/items.js' )( app, $, gc );
 
+	app.views.tableSearch = require( './views/table-search.js' )( app, $, gc );
+	app.views.tableNav = require( './views/table-nav.js' )( app, $, gc );
+
 	app.init = function() {
 		// Kick it off.
 		app.syncView = new app.views.items( {

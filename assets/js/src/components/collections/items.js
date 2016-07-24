@@ -1,16 +1,36 @@
 module.exports = function( app ) {
-	return app.collections.base.extend({
-		model : app.models.item,
+	var sortKey       = null;
+	var sortDirection = 'asc';
+	var Collection = app.collections.base.extend({
+		model         : app.models.item,
+		totalChecked  : 0,
+		allChecked    : false,
+		syncEnabled   : false,
+		processing    : false,
+		sortKey       : sortKey,
+		sortDirection : sortDirection,
 
-		totalChecked : 0,
-		allChecked   : false,
-		syncEnabled  : false,
-		processing   : false,
-
-		initialize: function() {
+		initialize: function( models, options ) {
 			this.listenTo( this, 'checkAll', this.toggleChecked );
 			this.listenTo( this, 'checkSome', this.toggleCheckedIf );
 			this.listenTo( this, 'change:checked', this.checkChecked );
+			this.listenTo( this, 'sortByColumn', this.sortByColumn );
+			this.listenTo( this, 'searchResults', this.transferProperties );
+
+			this.totalChecked = this.checked().length;
+
+			if ( options && options.reinit ) {
+				this.reinit( models );
+			}
+		},
+
+		reinit: function( models ) {
+			this.totalChecked  = this.checked( models ).length;
+			this.syncEnabled   = this.totalChecked > 0;
+			this.allChecked    = this.totalChecked >= models.length;
+			this.sortKey       = sortKey;
+			this.sortDirection = sortDirection;
+			this.sort();
 		},
 
 		checkChecked: function( model ) {
@@ -38,10 +58,10 @@ module.exports = function( app ) {
 			}
 		},
 
-		toggleCheckedIf: function( cb ) {
+		toggleCheckedIf: function( checked ) {
 			this.processing = true;
 			this.each( function( model ) {
-				model.set( 'checked', Boolean( 'function' === typeof cb ? cb( model ) : cb ) );
+				model.set( 'checked', Boolean( 'function' === typeof checked ? checked( model ) : checked ) );
 			} );
 			this.processing = false;
 			this.trigger( 'render' );
@@ -52,26 +72,61 @@ module.exports = function( app ) {
 			this.toggleCheckedIf( checked );
 		},
 
-		checkedCan: function( pushOrPull ) {
-			switch( pushOrPull ) {
-				case 'pull' :
-					pushOrPull = 'canPull';
-					break;
-				case 'assign' :
-					pushOrPull = 'disabled';
-					break;
-				// case 'push':
-				default :
-					pushOrPull = 'canPush';
-					break;
+		checked: function( models ) {
+			models = models || this;
+			return models.filter( function( model ) {
+				return model.get( 'checked' );
+			} );
+		},
+
+		comparator: function( a, b ) {
+			if ( ! this.sortKey ) {
+				return;
 			}
 
-			var can = this.find( function( model ){
-				return model.get( pushOrPull ) && model.get( 'checked' );
-			} );
+			var dataA = a.get( this.sortKey );
+			var dataB = b.get( this.sortKey );
 
-			return can;
+			if ( 'updated_at' === this.sortKey ) {
+				dataA = dataA.date || dataA;
+				dataB = dataB.date || dataB;
+			}
+
+			if ( 'status' === this.sortKey ) {
+				dataA = dataA.name || dataA;
+				dataB = dataB.name || dataB;
+			}
+
+			if ( 'asc' === this.sortDirection ) {
+				if ( dataA > dataB ) {
+					return -1;
+				}
+				if ( dataB > dataA ) {
+					return 1;
+				}
+				return 0;
+
+			} else {
+
+				if ( dataA < dataB ) {
+					return -1;
+				}
+				if ( dataB < dataA ) {
+					return 1;
+				}
+
+				return 0;
+			}
+		},
+
+		sortByColumn: function( column, direction ) {
+			this.sortKey = sortKey = column;
+			this.sortDirection = sortDirection = direction;
+			this.sort();
 		}
 
-	});
+	} );
+
+	return require( './../collections/search-extension.js' )( Collection );
+
 };

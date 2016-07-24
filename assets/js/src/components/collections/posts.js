@@ -3,8 +3,8 @@ module.exports = function( app ) {
 	return items.extend({
 		model : app.models.post,
 
-		initialize: function() {
-			items.prototype.initialize.call( this );
+		initialize: function( models, options ) {
+			items.prototype.initialize.call( this, models, options );
 
 			this.listenTo( this, 'updateItems', this.updateItems );
 		},
@@ -24,6 +24,28 @@ module.exports = function( app ) {
 					}
 				}
 			} );
-		}
+		},
+
+		checkedCan: function( pushOrPull ) {
+			switch( pushOrPull ) {
+				case 'pull' :
+					pushOrPull = 'canPull';
+					break;
+				case 'assign' :
+					pushOrPull = 'disabled';
+					break;
+				// case 'push':
+				default :
+					pushOrPull = 'canPush';
+					break;
+			}
+
+			var can = this.find( function( model ){
+				return model.get( pushOrPull ) && model.get( 'checked' );
+			} );
+
+			return can;
+		},
+
 	});
 };

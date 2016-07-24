@@ -136,6 +136,7 @@ class Items_Sync extends Base {
 		<?php foreach ( $_GET as $key => $value ) : if ( 'mapping' === $key ) { continue; } ?>
 			<input type="hidden" name="<?php echo esc_attr( $key ); ?>" id="gc-input-<?php echo esc_attr( $key ); ?>" value="<?php echo esc_attr( $value ); ?>" />
 		<?php endforeach; ?>
+		<div id="gc-items-search"></div>
 		<div id="sync-tabs"><span class="gc-loader spinner is-active"></span></div>
 		<p class="description">
 			<a href="<?php echo $this->mapping->get_edit_post_link(); ?>"><?php echo $this->mappings->args->labels->edit_item; ?></a>
@@ -152,8 +153,11 @@ class Items_Sync extends Base {
 	 */
 	protected function get_localize_data() {
 		return array(
-			'_items'  => $this->items,
 			'percent' => $this->mapping->get_pull_percent(),
+			'_items'  => $this->items,
+			'_text'   => array(
+				'no_items' => esc_html__( 'No items found.', 'gathercontent-import' ),
+			),
 		);
 	}
 
@@ -166,6 +170,8 @@ class Items_Sync extends Base {
 	 */
 	protected function get_underscore_templates() {
 		return array(
+			'tmpl-gc-table-search' => array(),
+			'tmpl-gc-table-nav' => array(),
 			'tmpl-gc-items-sync' => array(),
 			'tmpl-gc-item' => array(
 				'url' => $this->url,

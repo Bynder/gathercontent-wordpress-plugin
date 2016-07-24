@@ -1,5 +1,5 @@
 /**
- * GatherContent Importer - v3.0.0 - 2016-07-22
+ * GatherContent Importer - v3.0.0 - 2016-07-23
  * http://www.gathercontent.com
  *
  * Copyright (c) 2016 GatherContent
@@ -22,18 +22,38 @@ module.exports = Backbone.Collection.extend({
 'use strict';
 
 module.exports = function (app) {
-	return app.collections.base.extend({
+	var sortKey = null;
+	var sortDirection = 'asc';
+	var Collection = app.collections.base.extend({
 		model: app.models.item,
-
 		totalChecked: 0,
 		allChecked: false,
 		syncEnabled: false,
 		processing: false,
+		sortKey: sortKey,
+		sortDirection: sortDirection,
 
-		initialize: function initialize() {
+		initialize: function initialize(models, options) {
 			this.listenTo(this, 'checkAll', this.toggleChecked);
 			this.listenTo(this, 'checkSome', this.toggleCheckedIf);
 			this.listenTo(this, 'change:checked', this.checkChecked);
+			this.listenTo(this, 'sortByColumn', this.sortByColumn);
+			this.listenTo(this, 'searchResults', this.transferProperties);
+
+			this.totalChecked = this.checked().length;
+
+			if (options && options.reinit) {
+				this.reinit(models);
+			}
+		},
+
+		reinit: function reinit(models) {
+			this.totalChecked = this.checked(models).length;
+			this.syncEnabled = this.totalChecked > 0;
+			this.allChecked = this.totalChecked >= models.length;
+			this.sortKey = sortKey;
+			this.sortDirection = sortDirection;
+			this.sort();
 		},
 
 		checkChecked: function checkChecked(model) {
@@ -61,10 +81,10 @@ module.exports = function (app) {
 			}
 		},
 
-		toggleCheckedIf: function toggleCheckedIf(cb) {
+		toggleCheckedIf: function toggleCheckedIf(checked) {
 			this.processing = true;
 			this.each(function (model) {
-				model.set('checked', Boolean('function' === typeof cb ? cb(model) : cb));
+				model.set('checked', Boolean('function' === typeof checked ? checked(model) : checked));
 			});
 			this.processing = false;
 			this.trigger('render');
@@ -75,31 +95,64 @@ module.exports = function (app) {
 			this.toggleCheckedIf(checked);
 		},
 
-		checkedCan: function checkedCan(pushOrPull) {
-			switch (pushOrPull) {
-				case 'pull':
-					pushOrPull = 'canPull';
-					break;
-				case 'assign':
-					pushOrPull = 'disabled';
-					break;
-				// case 'push':
-				default:
-					pushOrPull = 'canPush';
-					break;
+		checked: function checked(models) {
+			models = models || this;
+			return models.filter(function (model) {
+				return model.get('checked');
+			});
+		},
+
+		comparator: function comparator(a, b) {
+			if (!this.sortKey) {
+				return;
 			}
 
-			var can = this.find(function (model) {
-				return model.get(pushOrPull) && model.get('checked');
-			});
+			var dataA = a.get(this.sortKey);
+			var dataB = b.get(this.sortKey);
 
-			return can;
+			if ('updated_at' === this.sortKey) {
+				dataA = dataA.date || dataA;
+				dataB = dataB.date || dataB;
+			}
+
+			if ('status' === this.sortKey) {
+				dataA = dataA.name || dataA;
+				dataB = dataB.name || dataB;
+			}
+
+			if ('asc' === this.sortDirection) {
+				if (dataA > dataB) {
+					return -1;
+				}
+				if (dataB > dataA) {
+					return 1;
+				}
+				return 0;
+			} else {
+
+				if (dataA < dataB) {
+					return -1;
+				}
+				if (dataB < dataA) {
+					return 1;
+				}
+
+				return 0;
+			}
+		},
+
+		sortByColumn: function sortByColumn(column, direction) {
+			this.sortKey = sortKey = column;
+			this.sortDirection = sortDirection = direction;
+			this.sort();
 		}
 
 	});
+
+	return require('./../collections/search-extension.js')(Collection);
 };
 
-},{}],3:[function(require,module,exports){
+},{"./../collections/search-extension.js":5}],3:[function(require,module,exports){
 'use strict';
 
 module.exports = function (app) {
@@ -134,8 +187,8 @@ module.exports = function (app) {
 	return items.extend({
 		model: app.models.post,
 
-		initialize: function initialize() {
-			items.prototype.initialize.call(this);
+		initialize: function initialize(models, options) {
+			items.prototype.initialize.call(this, models, options);
 
 			this.listenTo(this, 'updateItems', this.updateItems);
 		},
@@ -155,11 +208,128 @@ module.exports = function (app) {
 					}
 				}
 			});
+		},
+
+		checkedCan: function checkedCan(pushOrPull) {
+			switch (pushOrPull) {
+				case 'pull':
+					pushOrPull = 'canPull';
+					break;
+				case 'assign':
+					pushOrPull = 'disabled';
+					break;
+				// case 'push':
+				default:
+					pushOrPull = 'canPush';
+					break;
+			}
+
+			var can = this.find(function (model) {
+				return model.get(pushOrPull) && model.get('checked');
+			});
+
+			return can;
 		}
+
 	});
 };
 
 },{"./../collections/items.js":2}],5:[function(require,module,exports){
+'use strict';
+
+module.exports = function (Collection) {
+
+	_.extend(Collection.prototype, {
+
+		//_Cache
+		_searchResults: null,
+
+		//@ Search wrapper function
+		search: function search(keyword, attributes) {
+			var results = this._doSearch(keyword, attributes);
+
+			this.trigger('search', results);
+
+			// For use of returning un-async
+			return results;
+		},
+
+		//@ Search function
+		_doSearch: function _doSearch(keyword, attributes) {
+			attributes = attributes && attributes.length ? attributes : false;
+
+			// If collection empty get out
+			if (!this.models.length) {
+				return [];
+			}
+
+			// Filter
+			var matcher = this.matcher;
+			var results = !keyword ? this.models : this.filter(function (model) {
+				attributes = attributes ? attributes : _.keys(model.searchAttributes || model.attributes);
+				return _.some(attributes, function (attribute) {
+					return matcher(keyword, model.get(attribute));
+				});
+			});
+
+			this.trigger('searchResults', results);
+
+			// Instantiate new Collection
+			var collection = new Collection(results, { reinit: true });
+
+			collection.searching = {
+				keyword: keyword,
+				attributes: attributes
+			};
+
+			collection.getSearchQuery = function () {
+				return this.searching;
+			};
+
+			// Cache the recently searched metadata
+			this._searchResults = collection;
+
+			this.trigger('search', collection);
+
+			// For use of returning un-async
+			return collection;
+		},
+
+		//@ Default Matcher - may be overwritten
+		matcher: function matcher(needle, haystack) {
+			if (!needle || !haystack) {
+				return;
+			}
+			needle = needle.toString().toLowerCase();
+			haystack = haystack.toString().toLowerCase();
+			return haystack.indexOf(needle) >= 0;
+		},
+
+		//@ Get recent search value
+		getSearchValue: function getSearchValue() {
+			return this.getSearchQuery().keyword;
+		},
+
+		//@ Get recent search query
+		getSearchQuery: function getSearchQuery() {
+			return this._searchResults && this._searchResults.getSearchQuery() || {};
+		},
+
+		//@ Get recent search results
+		getSearchResults: function getSearchResults() {
+			return this._searchResults;
+		},
+
+		current: function current() {
+			return this._searchResults || this;
+		}
+
+	});
+
+	return Collection;
+};
+
+},{}],6:[function(require,module,exports){
 'use strict';
 
 window.GatherContent = window.GatherContent || {};
@@ -251,7 +421,7 @@ window.GatherContent = window.GatherContent || {};
 	$(app.init);
 })(window, document, jQuery, window.GatherContent);
 
-},{"./collections/modal-nav-items.js":3,"./collections/posts.js":4,"./initiate-objects.js":6,"./models/modal-nav-item.js":9,"./models/post.js":11,"./views/modal-post-row.js":17,"./views/modal.js":18,"./views/post-row.js":19,"./views/post-rows.js":20,"./views/status-select2.js":21}],6:[function(require,module,exports){
+},{"./collections/modal-nav-items.js":3,"./collections/posts.js":4,"./initiate-objects.js":7,"./models/modal-nav-item.js":10,"./models/post.js":12,"./views/modal-post-row.js":18,"./views/modal.js":19,"./views/post-row.js":20,"./views/post-rows.js":21,"./views/status-select2.js":22}],7:[function(require,module,exports){
 'use strict';
 
 module.exports = function (app) {
@@ -260,7 +430,7 @@ module.exports = function (app) {
 	app.views = { base: require('./views/base.js') };
 };
 
-},{"./collections/base.js":1,"./models/base.js":8,"./views/base.js":12}],7:[function(require,module,exports){
+},{"./collections/base.js":1,"./models/base.js":9,"./views/base.js":13}],8:[function(require,module,exports){
 'use strict';
 
 module.exports = function (app, defaults) {
@@ -316,7 +486,7 @@ module.exports = function (app, defaults) {
 	});
 };
 
-},{}],8:[function(require,module,exports){
+},{}],9:[function(require,module,exports){
 "use strict";
 
 module.exports = Backbone.Model.extend({
@@ -325,7 +495,7 @@ module.exports = Backbone.Model.extend({
 	}
 });
 
-},{}],9:[function(require,module,exports){
+},{}],10:[function(require,module,exports){
 'use strict';
 
 module.exports = function (app) {
@@ -339,7 +509,7 @@ module.exports = function (app) {
 	});
 };
 
-},{}],10:[function(require,module,exports){
+},{}],11:[function(require,module,exports){
 'use strict';
 
 module.exports = function (model) {
@@ -363,7 +533,7 @@ module.exports = function (model) {
 	return model;
 };
 
-},{}],11:[function(require,module,exports){
+},{}],12:[function(require,module,exports){
 'use strict';
 
 module.exports = function (gc) {
@@ -427,7 +597,7 @@ module.exports = function (gc) {
 	}));
 };
 
-},{"./../models/modify-json.js":10}],12:[function(require,module,exports){
+},{"./../models/modify-json.js":11}],13:[function(require,module,exports){
 'use strict';
 
 module.exports = Backbone.View.extend({
@@ -461,7 +631,7 @@ module.exports = Backbone.View.extend({
 	}
 });
 
-},{}],13:[function(require,module,exports){
+},{}],14:[function(require,module,exports){
 'use strict';
 
 module.exports = function (app) {
@@ -494,7 +664,7 @@ module.exports = function (app) {
 	});
 };
 
-},{}],14:[function(require,module,exports){
+},{}],15:[function(require,module,exports){
 'use strict';
 
 module.exports = function (app, $, gc) {
@@ -674,7 +844,7 @@ module.exports = function (app, $, gc) {
 	});
 };
 
-},{"./../views/metabox-base.js":15}],15:[function(require,module,exports){
+},{"./../views/metabox-base.js":16}],16:[function(require,module,exports){
 'use strict';
 
 module.exports = function (app, $, gc) {
@@ -709,7 +879,7 @@ module.exports = function (app, $, gc) {
 	});
 };
 
-},{}],16:[function(require,module,exports){
+},{}],17:[function(require,module,exports){
 'use strict';
 
 module.exports = function (app, $, gc) {
@@ -743,7 +913,7 @@ module.exports = function (app, $, gc) {
 	};
 };
 
-},{"./../views/mapping-metabox.js":14}],17:[function(require,module,exports){
+},{"./../views/mapping-metabox.js":15}],18:[function(require,module,exports){
 'use strict';
 
 module.exports = function (app, gc) {
@@ -781,7 +951,7 @@ module.exports = function (app, gc) {
 	});
 };
 
-},{"./../views/item.js":13}],18:[function(require,module,exports){
+},{"./../views/item.js":14}],19:[function(require,module,exports){
 'use strict';
 
 module.exports = function (app, gc, $) {
@@ -1153,7 +1323,7 @@ module.exports = function (app, gc, $) {
 	});
 };
 
-},{"./../models/ajax.js":7,"./../views/modal-assign-mapping.js":16}],19:[function(require,module,exports){
+},{"./../models/ajax.js":8,"./../views/modal-assign-mapping.js":17}],20:[function(require,module,exports){
 'use strict';
 
 module.exports = function (app, gc) {
@@ -1182,7 +1352,7 @@ module.exports = function (app, gc) {
 	});
 };
 
-},{}],20:[function(require,module,exports){
+},{}],21:[function(require,module,exports){
 'use strict';
 
 module.exports = function (app, gc, $) {
@@ -1323,7 +1493,7 @@ module.exports = function (app, gc, $) {
 	});
 };
 
-},{}],21:[function(require,module,exports){
+},{}],22:[function(require,module,exports){
 'use strict';
 
 module.exports = function (app) {
@@ -1371,4 +1541,4 @@ module.exports = function (app) {
 	});
 };
 
-},{}]},{},[5]);
+},{}]},{},[6]);

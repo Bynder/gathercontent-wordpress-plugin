@@ -1,5 +1,5 @@
 /**
- * GatherContent Importer - v3.0.0 - 2016-07-22
+ * GatherContent Importer - v3.0.0 - 2016-07-23
  * http://www.gathercontent.com
  *
  * Copyright (c) 2016 GatherContent
@@ -518,7 +518,6 @@ module.exports = function (app, $, gc) {
 			this.listenTo(this.collection, 'render', this.render);
 			this.listenTo(this, 'render', this.render);
 			this.listenTo(this, 'saveEnabled', this.enableSave);
-			this.listenTo(this.collection, 'saveEnabled', this.enableSave);
 			this.listenTo(this, 'saveDisabled', this.disableSave);
 
 			if (this.initial) {
@@ -531,7 +530,6 @@ module.exports = function (app, $, gc) {
 		},
 
 		initMapping: function initMapping() {
-			console.warn('initMapping');
 			this.initial = false;
 
 			this.stopListening(this.collection, 'change:post_type', this.initMapping);
@@ -548,7 +546,6 @@ module.exports = function (app, $, gc) {
 
 		triggerSaveEnabled: function triggerSaveEnabled(model) {
 			if (model.changed.field_value) {
-				console.warn('triggerSaveEnabled', model.changed.field_value, model);
 				this.trigger('saveEnabled');
 				this.stopListening(this.collection, 'rowChange');
 			}
@@ -639,7 +636,6 @@ module.exports = function (app, $, gc) {
 		},
 
 		enableSave: function enableSave() {
-			console.warn('enableSave');
 			// Enable save button.
 			$('.submit .button-primary').prop('disabled', false);
 		},

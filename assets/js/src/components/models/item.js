@@ -3,6 +3,7 @@ module.exports = function( app, gc ) {
 		defaults: {
 			id              : 0,
 			item            : 0,
+			itemName        : 0,
 			project_id      : 0,
 			parent_id       : 0,
 			template_id     : 0,
@@ -22,6 +23,12 @@ module.exports = function( app, gc ) {
 			due_dates       : null,
 			expanded        : false,
 			checked         : false,
+			post_title      : false,
+		},
+
+		searchAttributes: {
+			itemName   : 0,
+			post_title : false,
 		},
 
 		_get_item : function( value ) {
