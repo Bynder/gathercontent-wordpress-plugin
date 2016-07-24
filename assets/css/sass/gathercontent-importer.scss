@@ -211,21 +211,6 @@ ul.gc-radio-desc li, ul.gc-reveal-items-list li {
 		border: 1px solid #b1b1b1;
 	}
 }
-#sync-tabs {
-	margin-bottom: 1.5em;
-	.check-column {
-		width: 20px;
-		padding: 6px 0 6px 6px;
-		vertical-align: middle;
-	}
-	#gc-edit {
-		width: 20px;
-	}
-	// For now, until we can have more than one mapping on this page.
-	th:nth-child( 5 ), td:nth-child( 5 ) {
-		display: none;
-	}
-}
 .select2-gc_status, .select2-post_status_mapping_after {
 	.gc-status-color {
 		float: right;
@@ -236,43 +221,6 @@ ul.gc-radio-desc li, ul.gc-reveal-items-list li {
 			position: relative;
 			top: .4em;
 		}
-	}
-}
-
-.gc-sync-progress {
-	#progress {
-		padding: 0;
-	}
-	table {
-		background: none;
-	}
-}
-
-.gc-progress-bar {
-	position: relative;
-	&:before {
-		content: '';
-		background: #dbf4f6;
-		height: 38px;
-		display: block;
-		width: 100%;
-	}
-}
-.gc-progress-bar-partial {
-	background: #0ab3c4;
-	height: 38px;
-	color: #fff;
-	text-align: center;
-	line-height: 38px;
-	font-weight: bold;
-	margin-top: -38px;
-	-webkit-transition: width 200ms ease-in-out;
-	-moz-transition: width 200ms ease-in-out;
-	-o-transition: width 200ms ease-in-out;
-	transition: width 200ms ease-in-out;
-	span {
-		display: block;
-		min-width: 3.2em;
 	}
 }
 
@@ -321,5 +269,6 @@ ul.gc-radio-desc li, ul.gc-reveal-items-list li {
 	}
 }
 
+@import 'sync';
 @import 'modal';
 @import 'single';

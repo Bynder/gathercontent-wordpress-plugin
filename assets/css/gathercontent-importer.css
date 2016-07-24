@@ -149,17 +149,6 @@ ul.gc-radio-desc li, ul.gc-reveal-items-list li {
   .gc-status-color.gc-status-color-white {
     border: 1px solid #b1b1b1; }
 
-#sync-tabs {
-  margin-bottom: 1.5em; }
-  #sync-tabs .check-column {
-    width: 20px;
-    padding: 6px 0 6px 6px;
-    vertical-align: middle; }
-  #sync-tabs #gc-edit {
-    width: 20px; }
-  #sync-tabs th:nth-child(5), #sync-tabs td:nth-child(5) {
-    display: none; }
-
 .select2-gc_status .gc-status-color, .select2-post_status_mapping_after .gc-status-color {
   float: right;
   margin-right: 0; }
@@ -167,34 +156,6 @@ ul.gc-radio-desc li, ul.gc-reveal-items-list li {
 .select2-gc_status.select2-container--default .gc-status-color, .select2-post_status_mapping_after.select2-container--default .gc-status-color {
   position: relative;
   top: .4em; }
-
-.gc-sync-progress #progress {
-  padding: 0; }
-
-.gc-sync-progress table {
-  background: none; }
-
-.gc-progress-bar {
-  position: relative; }
-  .gc-progress-bar:before {
-    content: '';
-    background: #dbf4f6;
-    height: 38px;
-    display: block;
-    width: 100%; }
-
-.gc-progress-bar-partial {
-  background: #0ab3c4;
-  height: 38px;
-  color: #fff;
-  text-align: center;
-  line-height: 38px;
-  font-weight: bold;
-  margin-top: -38px;
-  transition: width 200ms ease-in-out; }
-  .gc-progress-bar-partial span {
-    display: block;
-    min-width: 3.2em; }
 
 .gc-logo-column {
   overflow: hidden;
@@ -225,6 +186,51 @@ ul.gc-radio-desc li, ul.gc-reveal-items-list li {
     background-color: #00ABBD;
     border: 1px solid #00ABBD;
     color: #fff; }
+
+#gc-items-search {
+  float: left; }
+
+#sync-tabs .tablenav {
+  clear: none; }
+
+#sync-tabs {
+  margin-bottom: 1.5em; }
+  #sync-tabs .check-column {
+    width: 20px;
+    padding: 6px 0 6px 6px;
+    vertical-align: middle; }
+  #sync-tabs #gc-edit {
+    width: 20px; }
+  #sync-tabs th:nth-child(5), #sync-tabs td:nth-child(5) {
+    display: none; }
+
+.gc-sync-progress #progress {
+  padding: 0; }
+
+.gc-sync-progress table {
+  background: none; }
+
+.gc-progress-bar {
+  position: relative; }
+  .gc-progress-bar:before {
+    content: '';
+    background: #dbf4f6;
+    height: 38px;
+    display: block;
+    width: 100%; }
+
+.gc-progress-bar-partial {
+  background: #0ab3c4;
+  height: 38px;
+  color: #fff;
+  text-align: center;
+  line-height: 38px;
+  font-weight: bold;
+  margin-top: -38px;
+  transition: width 200ms ease-in-out; }
+  .gc-progress-bar-partial span {
+    display: block;
+    min-width: 3.2em; }
 
 /*
 	The styles below were ripped from the Media Modal in WordPress 3.5
