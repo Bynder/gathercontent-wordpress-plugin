@@ -15,7 +15,6 @@ module.exports = function( app ) {
 			this.listenTo( this, 'checkSome', this.toggleCheckedIf );
 			this.listenTo( this, 'change:checked', this.checkChecked );
 			this.listenTo( this, 'sortByColumn', this.sortByColumn );
-			this.listenTo( this, 'searchResults', this.transferProperties );
 
 			this.totalChecked = this.checked().length;
 
@@ -34,18 +33,19 @@ module.exports = function( app ) {
 		},
 
 		checkChecked: function( model ) {
-			var render = false;
-
 			if ( model.changed.checked ) {
 				this.totalChecked++;
 			} else {
 				if ( this.totalChecked === this.length ) {
 					this.allChecked = false;
-					render = true;
 				}
 				this.totalChecked--;
 			}
 
+			this.checkAllStatus();
+		},
+
+		checkAllStatus: function( checked ) {
 			var syncWasEnabled = this.syncEnabled;
 			this.syncEnabled = this.totalChecked > 0;
 
@@ -60,10 +60,19 @@ module.exports = function( app ) {
 
 		toggleCheckedIf: function( checked ) {
 			this.processing = true;
+
+			this.stopListening( this, 'change:checked', this.checkChecked );
 			this.each( function( model ) {
 				model.set( 'checked', Boolean( 'function' === typeof checked ? checked( model ) : checked ) );
 			} );
+			this.listenTo( this, 'change:checked', this.checkChecked );
+
+			this.totalChecked  = this.checked().length;
+			this.allChecked    = this.totalChecked >= this.length;
+			this.checkAllStatus();
+
 			this.processing = false;
+
 			this.trigger( 'render' );
 		},
 
