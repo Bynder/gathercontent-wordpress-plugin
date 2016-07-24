@@ -27,7 +27,7 @@ window.GatherContent = window.GatherContent || {};
 		// Handle error notice dismissals.
 		$( document.body )
 			.on( 'click', '#setting-error-gc-import-last-error .notice-dismiss, #setting-error-gc-import-errors .notice-dismiss', function() {
-				var lastError = $( this ).parents( '#setting-error-gc-import-last-error' ).length > 1;
+				var lastError = $( this ).parents( '#setting-error-gc-import-last-error' ).length > 0;
 				$.post( window.ajaxurl, {
 					action    : 'gc_dismiss_notice',
 					lastError : lastError ? 1 : 0,
