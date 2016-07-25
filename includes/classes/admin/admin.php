@@ -130,7 +130,7 @@ class Admin extends Base {
 	 */
 	function admin_menu() {
 		$page = add_menu_page(
-			$this->logo,
+			'GatherContent',
 			'GatherContent',
 			\GatherContent\Importer\view_capability(),
 			self::SLUG,

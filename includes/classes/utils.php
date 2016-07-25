@@ -180,5 +180,33 @@ class Utils extends Base {
 		return isset( $types[ $type ] ) ? $types[ $type ] : $type;
 	}
 
+	/**
+	 * Get the GatherContent wizzard step label.
+	 *
+	 * @since  3.0.0
+	 *
+	 * @param  string $step The step to get the name for. 'all' to get the entire array.
+	 *
+	 * @return mixed        The step nice-name, or the entire types array.
+	 */
+	public static function get_step_label( $step ) {
+		static $labels = null;
+
+		if ( null === $labels ) {
+			$labels = array(
+				'accounts' => esc_html__( 'Select an account:', 'gathercontent-importer' ),
+				'projects' => esc_html__( 'Select a project:', 'gathercontent-importer' ),
+				'templates' => esc_html__( 'Select a template:', 'gathercontent-importer' ),
+				'mappings' => sprintf( esc_html_x( 'Select a %s:', 'Select a template mapping', 'gathercontent-importer' ), General::get_instance()->admin->mapping_wizzard->mappings->args->labels->singular_name ),
+				'import' => esc_html__( 'Import Items:', 'gathercontent-importer' ),
+			);
+		}
+
+		if ( 'all' === $step ) {
+			return $labels;
+		}
+
+		return isset( $labels[ $step ] ) ? $labels[ $step ] : $step;
+	}
 
 }

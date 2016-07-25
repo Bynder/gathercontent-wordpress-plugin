@@ -53,9 +53,9 @@ abstract class Enqueue extends Plugin_Base {
 	 */
 	public function script_localize() {
 		wp_localize_script( 'gathercontent', 'GatherContent', apply_filters( 'gathercontent_localized_data', array(
-			'debug'     => defined( 'SCRIPT_DEBUG' ) && SCRIPT_DEBUG,
+			'debug'       => defined( 'SCRIPT_DEBUG' ) && SCRIPT_DEBUG,
 			// @codingStandardsIgnoreStart
-			'queryargs' => $_GET,
+			'queryargs'   => $_GET,
 			// @codingStandardsIgnoreEnd
 			'_type_names' => Utils::gc_field_type_name( 'all' ),
 		) ) );

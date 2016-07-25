@@ -9,6 +9,7 @@ namespace GatherContent\Importer\Admin;
 use GatherContent\Importer\General;
 use GatherContent\Importer\API;
 use GatherContent\Importer\Admin\Mapping\Base as UI_Base;
+use GatherContent\Importer\Utils;
 
 /**
  * Because Enqueue is abstract.
@@ -86,11 +87,7 @@ abstract class Post_Base extends UI_Base {
 			'_errors' => array(
 				'unknown' => __( 'There was an unknown error', 'gathercontent-importer' ),
 			),
-			'_step_labels' => array(
-				'accounts' => esc_html__( 'Select an account:', 'gathercontent-importer' ),
-				'projects' => esc_html__( 'Select a project:', 'gathercontent-importer' ),
-				'mappings' => sprintf( esc_html_x( 'Select a %s:', 'Select a template mapping', 'gathercontent-importer' ), General::get_instance()->admin->mapping_wizzard->mappings->args->labels->singular_name ),
-			),
+			'_step_labels' => Utils::get_step_label( 'all'  ),
 		);
 	}
 }

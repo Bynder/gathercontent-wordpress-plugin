@@ -99,7 +99,7 @@ class Mapping_Wizzard extends Base {
 	function admin_menu() {
 		$page = add_submenu_page(
 			$this->parent_page_slug,
-			$this->logo,
+			$this->get_step_label(),
 			__( 'New Mapping', 'gathercontent-import' ),
 			\GatherContent\Importer\view_capability(),
 			self::SLUG,
@@ -110,6 +110,31 @@ class Mapping_Wizzard extends Base {
 		add_action( 'admin_print_styles-' . $page, array( $this, 'admin_enqueue_style' ) );
 		add_action( 'admin_print_styles-' . $page, array( $this, 'admin_enqueue_script' ) );
 		add_action( 'load-' . $page, array( $this, 'add_help_tabs' ) );
+	}
+
+	protected function get_step_label() {
+		$label = 'GatherContent';
+		switch ( $this->step ) {
+			case self::ACCOUNT:
+				$label = Utils::get_step_label( 'projects' );
+				break;
+			case self::PROJECT:
+				$label = Utils::get_step_label( 'templates' );
+				break;
+			case self::TEMPLATE:
+				$label = $this->_get_val( 'mapping' )
+					? $this->mappings->args->labels->edit_item
+					: $this->mappings->args->labels->new_item;
+				break;
+			case self::SYNC:
+				$label = Utils::get_step_label( 'import' );
+				break;
+			default:
+				$label = Utils::get_step_label( 'accounts' );
+				break;
+		}
+
+		return $label;
 	}
 
 	public function add_help_tabs() {
