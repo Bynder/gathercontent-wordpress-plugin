@@ -247,6 +247,10 @@ ul.gc-radio-desc li, ul.gc-reveal-items-list li {
     top: 0;
     left: 0;
     z-index: 160001; }
+  .gc-modal-open #gc-tablenav {
+    margin: 0 16px 0 0; }
+  .gc-modal-open #gc-items-search {
+    margin-left: 16px; }
 
 .gc-bb-modal {
   position: fixed;
@@ -302,7 +306,7 @@ ul.gc-radio-desc li, ul.gc-reveal-items-list li {
   top: 74px; }
 
 .gc-bb-modal-main {
-  top: 72px;
+  top: 105px;
   padding: 16px; }
   .gc-bb-modal-main.has-nav-tabs {
     top: 108px; }

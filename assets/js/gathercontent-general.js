@@ -980,9 +980,9 @@ module.exports = function (app, gc, $) {
 		id: 'gc-bb-modal-dialog',
 		template: wp.template('gc-modal-window'),
 		selected: [],
-		navItems: {},
+		navItems: null,
 		btns: {},
-		currID: '',
+		currID: 'select-items',
 		currNav: false,
 		metaboxView: null,
 		modelView: app.views.modalPostRow,
@@ -1016,11 +1016,14 @@ module.exports = function (app, gc, $) {
 
 			_.bindAll(this, 'render', 'preserveFocus', 'maybeClose', 'closeModal');
 
-			this.navItems = new app.collections.navItems(gc._nav_items);
-			this.btns = new app.collections.base(gc._modal_btns);
-			this.currNav = this.navItems.getActive();
+			if (gc._nav_items) {
+				this.navItems = new app.collections.navItems(gc._nav_items);
+				this.currNav = this.navItems.getActive();
+				this.listenTo(this.navItems, 'render', this.render);
+			}
 
-			this.listenTo(this.navItems, 'render', this.render);
+			this.btns = new app.collections.base(gc._modal_btns);
+
 			this.listenTo(this.collection, 'updateItems', this.maybeRender);
 			this.listenTo(this.collection, 'change:checked', this.checkEnableButton);
 			this.listenTo(this.collection, 'search', this.render);
@@ -1060,15 +1063,14 @@ module.exports = function (app, gc, $) {
    * @internal Obviously, if the templates fail to load, our modal never launches.
    */
 		render: function render() {
-
 			var collection = this.collection.current();
 
 			// Build the base window and backdrop, attaching them to the $el.
 			// Setting the tab index allows us to capture focus and redirect it in Application.preserveFocus
 			this.$el.removeClass('gc-set-mapping').attr('tabindex', '0').html(this.template({
 				btns: this.btns.toJSON(),
-				navItems: this.navItems.toJSON(),
-				currID: this.currNav ? this.currNav.get('id') : '',
+				navItems: this.navItems ? this.navItems.toJSON() : [],
+				currID: this.currNav ? this.currNav.get('id') : 'select-items',
 				checked: collection.allChecked,
 				sortKey: collection.sortKey,
 				sortDirection: collection.sortDirection

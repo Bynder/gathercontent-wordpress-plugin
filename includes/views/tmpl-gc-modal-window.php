@@ -31,6 +31,7 @@
 			<h1>
 				<img width="220px" height="39px" src="<?php echo GATHERCONTENT_URL; ?>images/logo.svg" alt="GatherContent" />
 			</h1>
+			<div id="gc-tablenav" class="tablenav top"></div>
 		</div>
 
 		<# if ( data.navItems.length ) { #>
@@ -44,7 +45,6 @@
 		<# } #>
 
 		<div class="media-frame-content gc-bb-modal-main">
-			<div id="gc-tablenav" class="tablenav top"></div>
 			<table id="gc-modal-{{ data.currID }}" class="gc-modal-tabs widefat striped gc-table">
 				<thead>
 					<tr>

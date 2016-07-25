@@ -13,6 +13,14 @@
 		left: 0;
 		z-index: 160001;
 	}
+
+	#gc-tablenav {
+		margin: 0 16px 0 0;
+	}
+
+	#gc-items-search {
+		margin-left: 16px;
+	}
 }
 
 .gc-bb-modal {
@@ -70,7 +78,7 @@
 	top: 74px;
 }
 .gc-bb-modal-main {
-	top: 72px;
+	top: 105px;
 	padding: 16px;
 	&.has-nav-tabs {
 		top: 108px;
