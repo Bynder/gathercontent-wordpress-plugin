@@ -88,6 +88,9 @@ ul.gc-radio-desc li, ul.gc-reveal-items-list li {
     .gc-template-tab td:nth-child(2) {
       vertical-align: top; }
 
+.gc-disabled label span, .gc-disabled .description {
+  opacity: .5; }
+
 .nav-tab.alignright {
   float: right; }
 

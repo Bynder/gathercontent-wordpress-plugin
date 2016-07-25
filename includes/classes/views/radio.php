@@ -21,7 +21,6 @@ class Radio extends Form_Element {
 		$index = 0;
 		foreach ( $options as $option_val => $option_label ) {
 			$index++;
-			$content .= '<li>';
 			$input_args = array(
 				'type'    => 'radio',
 				'class'   => 'radio-select',
@@ -32,6 +31,14 @@ class Radio extends Form_Element {
 
 			if ( $option_val == $value ) {
 				$input_args['checked'] = 'checked';
+			}
+
+			if ( is_array( $option_label ) && isset( $option_label['disabled'] ) ) {
+				$input_args['disabled'] = 'disabled';
+				unset( $input_args['checked'] );
+				$content .= '<li class="gc-disabled">';
+			} else {
+				$content .= '<li>';
 			}
 
 			$content .= new Input( $input_args );

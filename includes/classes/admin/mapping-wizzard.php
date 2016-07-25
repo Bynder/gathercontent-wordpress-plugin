@@ -414,21 +414,33 @@ class Mapping_Wizzard extends Base {
 		if ( $templates = $this->api()->get_project_templates( absint( $project_id ) ) ) {
 
 			foreach ( $templates as $template ) {
-				$desc = esc_attr( $template->description );
+				$template_id = esc_attr( $template->id );
 
-				if ( $items = $this->get_project_items_list( $project_id, $template->id ) ) {
-					$desc .= '</p>' . $items . '<p>';
-				}
-
-				$val = esc_attr( $template->id );
-
-				$options[ $val ] = array(
-					'label' => esc_attr( $template->name ),
-					'desc' => $desc,
+				$options[ $template_id ] = array(
+					'label' => '<span>'. esc_attr( $template->name ) .'</span>',
+					'desc' => esc_attr( $template->description ),
 				);
 
+				$exists = $this->mappings->get_by_project_template( $project_id, $template_id );
+				$mapping_id = $exists->have_posts() ? $exists->posts[0] : false;
+
+				if ( $mapping_id ) {
+
+					$options[ $template_id ]['label'] .= sprintf(
+						'%s <a href="%s">%s</a>',
+						'',
+						esc_url( get_permalink( $mapping_id ) ),
+						$this->mappings->args->labels->edit_item
+					);
+
+					$options[ $template_id ]['disabled'] = 'disabled';
+
+				} elseif ( $items = $this->get_project_items_list( $project_id, $template_id ) ) {
+					$options[ $template_id ]['desc'] .= '</p>' . $items . '<p>';
+				}
+
 				if ( ! $value ) {
-					$value = $val;
+					$value = $template_id;
 				}
 
 			}

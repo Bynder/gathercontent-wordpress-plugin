@@ -124,6 +124,12 @@ ul.gc-radio-desc li, ul.gc-reveal-items-list li {
 	}
 }
 
+.gc-disabled {
+	label span, .description {
+		opacity: .5;
+	}
+}
+
 .nav-tab.alignright {
 	float: right;
 }
