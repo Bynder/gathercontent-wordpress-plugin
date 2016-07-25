@@ -64,7 +64,7 @@ module.exports = function( app, $, gc ) {
 			percent = null;
 
 			this.ajax.reset();
-			this.clearInterval();
+			this.clearTimeout();
 
 			if ( url ) {
 				this.doAjax( 'cancel', 0, function() {
@@ -91,10 +91,10 @@ module.exports = function( app, $, gc ) {
 			var time = this.ajax.get( 'time' );
 
 			if ( hits > 25 && time < 2000 ) {
-				this.clearInterval();
+				this.clearTimeout();
 				this.ajax.set( 'time', 2000 );
 			} else if ( hits > 50 && time < 5000 ) {
-				this.clearInterval();
+				this.clearTimeout();
 				this.ajax.set( 'time', 5000 );
 			}
 

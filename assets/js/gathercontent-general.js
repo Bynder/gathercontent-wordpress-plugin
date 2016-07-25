@@ -1,5 +1,5 @@
 /**
- * GatherContent Importer - v3.0.0 - 2016-07-24
+ * GatherContent Importer - v3.0.0 - 2016-07-25
  * http://www.gathercontent.com
  *
  * Copyright (c) 2016 GatherContent
@@ -1639,7 +1639,7 @@ module.exports = function (app, $, gc) {
 			this.timeoutID = window.setTimeout(callback, this.timeoutTime);
 		},
 
-		clearInterval: function clearInterval() {
+		clearTimeout: function clearTimeout() {
 			window.clearTimeout(this.timeoutID);
 			this.timeoutID = null;
 		},

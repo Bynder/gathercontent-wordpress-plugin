@@ -1,5 +1,5 @@
 /**
- * GatherContent Importer - v3.0.0 - 2016-07-24
+ * GatherContent Importer - v3.0.0 - 2016-07-25
  * http://www.gathercontent.com
  *
  * Copyright (c) 2016 GatherContent
@@ -587,7 +587,7 @@ module.exports = function (app, $, gc) {
 			percent = null;
 
 			this.ajax.reset();
-			this.clearInterval();
+			this.clearTimeout();
 
 			if (url) {
 				this.doAjax('cancel', 0, function () {
@@ -614,10 +614,10 @@ module.exports = function (app, $, gc) {
 			var time = this.ajax.get('time');
 
 			if (hits > 25 && time < 2000) {
-				this.clearInterval();
+				this.clearTimeout();
 				this.ajax.set('time', 2000);
 			} else if (hits > 50 && time < 5000) {
-				this.clearInterval();
+				this.clearTimeout();
 				this.ajax.set('time', 5000);
 			}
 
@@ -794,7 +794,7 @@ module.exports = function (app, $, gc) {
 			this.timeoutID = window.setTimeout(callback, this.timeoutTime);
 		},
 
-		clearInterval: function clearInterval() {
+		clearTimeout: function clearTimeout() {
 			window.clearTimeout(this.timeoutID);
 			this.timeoutID = null;
 		},

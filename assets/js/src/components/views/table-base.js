@@ -86,7 +86,7 @@ module.exports = function( app, $, gc ) {
 			this.timeoutID = window.setTimeout( callback, this.timeoutTime );
 		},
 
-		clearInterval: function() {
+		clearTimeout: function() {
 			window.clearTimeout( this.timeoutID );
 			this.timeoutID = null;
 		},
