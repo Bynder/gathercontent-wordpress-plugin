@@ -22,10 +22,6 @@ module.exports = function( app, $, gc ) {
 			this.listenTo( this.collection, 'enabledChange', this.checkEnableButton );
 			this.listenTo( this.collection, 'search', this.initRender );
 
-			if ( this.collection.length > 10 ) {
-				$( '.gc-submit-top' ).removeClass( 'hidden' );
-			}
-
 			this.initRender();
 		},
 
