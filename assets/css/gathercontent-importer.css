@@ -45,6 +45,9 @@
   display: inline-block;
   vertical-align: bottom; }
 
+.form-table td .gc-submit-top {
+  margin-bottom: .5em; }
+
 .wp-core-ui p .gc-refresh-connection {
   vertical-align: bottom; }
 

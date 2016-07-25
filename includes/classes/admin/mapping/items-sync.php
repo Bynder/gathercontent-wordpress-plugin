@@ -136,6 +136,7 @@ class Items_Sync extends Base {
 		<?php foreach ( $_GET as $key => $value ) : if ( 'mapping' === $key ) { continue; } ?>
 			<input type="hidden" name="<?php echo esc_attr( $key ); ?>" id="gc-input-<?php echo esc_attr( $key ); ?>" value="<?php echo esc_attr( $value ); ?>" />
 		<?php endforeach; ?>
+		<p class="gc-submit-top hidden"><input type="submit" name="submit" id="gc-submit-2" class="button button-primary button-large" value="<?php esc_html_e( 'Import Selected Items', 'gathercontent-import' ); ?>"></p>
 		<div id="gc-items-search"></div>
 		<div id="sync-tabs"><span class="gc-loader spinner is-active"></span></div>
 		<p class="description">
