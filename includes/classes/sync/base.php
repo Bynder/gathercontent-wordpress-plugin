@@ -261,7 +261,7 @@ abstract class Base extends Plugin_Base {
 		$items = $this->mapping->get_items_to_sync( $this->direction );
 
 		if ( empty( $items['pending'] ) ) {
-			throw new Exception( sprintf( __( 'No items to pull for: %s', 'gathercontent-import' ), $this->mapping->ID ), __LINE__ );
+			throw new Exception( sprintf( __( 'No items to %s for: %s', 'gathercontent-import' ), $this->direction, $this->mapping->ID ), __LINE__ );
 		}
 
 		return $items;
