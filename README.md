@@ -14,6 +14,8 @@ Content can be imported as items, posts, media or custom post types. And you can
 
 The plugin allows you to specifically map each field on your items in GatherContent to various fields in WordPress, these include; title, body content, custom fields, tags, categories, Yoast fields, advanced custom fields, featured images … and many more. It also allows you to directly embed images and files.
 
+For additionaal developer documentation, please [review the wiki](https://github.com/gathercontent/wordpress-plugin/wiki).
+
 ## Installation ##
 
 This section describes how to install the plugin and get it working.
