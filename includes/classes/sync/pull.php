@@ -463,6 +463,9 @@ class Pull extends Base {
 				if ( isset( $post_data['post_type'] ) && ! post_type_supports( $post_data['post_type'], 'post-formats' ) ) {
 					throw new Exception( sprintf( __( 'The %s post-type does not support post-formats.', 'gathercontent-import' ), $post_data['post_type'] ), __LINE__ );
 				}
+			case 'post_title':
+				$value = strip_tags( $value, '<strong><em><del><ins><code>' );
+
 		}
 
 		return sanitize_post_field( $field, $value, $post_data['ID'], 'db' );
