@@ -527,6 +527,18 @@ module.exports = function (app, $, gc) {
 
 			this.defaultTab = this.collection.getById('mapping-defaults');
 			this.render();
+
+			if (!this.initial && gc._pointers.refresh_connection) {
+				window.setTimeout((function () {
+					this.pointer($('.submit .gc-refresh-connection'), 'refresh_connection', {
+						position: {
+							edge: 'top'
+						}
+					});
+
+					$('.gc-wp-pointer.refresh_connection').css({ 'margin-left': '-41px' });
+				}).bind(this), 500);
+			}
 		},
 
 		initMapping: function initMapping() {
@@ -645,10 +657,11 @@ module.exports = function (app, $, gc) {
 			$('.submit .button-primary').prop('disabled', true);
 		},
 
-		pointer: function pointer(selector, key, args) {
+		pointer: function pointer($selector, key, args) {
 			args = args || {};
 			var defaults = {
-				content: gc._pointers[key]
+				content: gc._pointers[key],
+				pointerClass: 'wp-pointer gc-wp-pointer ' + key
 			};
 
 			if (false !== args.dismissable) {
@@ -664,7 +677,8 @@ module.exports = function (app, $, gc) {
 				defaults.position = args.position;
 			}
 
-			this.$(selector).pointer(defaults).pointer('open');
+			$selector = $selector instanceof jQuery ? $selector : this.$($selector);
+			return $selector.pointer(defaults).pointer('open');
 		}
 
 	});

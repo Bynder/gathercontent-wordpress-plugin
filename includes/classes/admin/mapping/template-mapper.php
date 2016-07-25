@@ -222,11 +222,7 @@ class Template_Mapper extends Base {
 	 * @return array  Array of Pointers.
 	 */
 	protected function get_pointers( $initial ) {
-		if ( $initial ) {
-			wp_enqueue_script( 'wp-pointer' );
-			wp_enqueue_style( 'wp-pointer' );
-		}
-
+		$enqueue = false;
 		$dismissed = get_user_meta( get_current_user_id(), 'dismissed_wp_pointers', true );
 		// $dismissed = preg_replace( array( '~gc_select_tab_how_to,?~', '~gc_map_status_how_to,?~' ), '', $dismissed );
 		// update_user_meta( get_current_user_id(), 'dismissed_wp_pointers', $dismissed );
@@ -236,14 +232,17 @@ class Template_Mapper extends Base {
 			'select_type' => '<h3>'. __( 'Select your Post Type', 'gathercontent-import' ) .'</h3><p>' . __( 'To get started, select your default Post Type for this mapping.', 'gathercontent-import' ) . '</p>',
 			'select_tab_how_to' => '',
 			'map_status_how_to' => '',
+			'refresh_connection' => '',
 		);
 
 		if ( $initial ) {
+
 			if ( ! in_array( 'gc_select_tab_how_to', $dismissed, 1 ) ) {
 				$content = '<h3>'. __( 'Template Tabs and Fields', 'gathercontent-import' ) .'</h3>';
 				$content .= '<p>' . __( 'You\'ll find the tabs from the GatherContent Template here. Select a tab to start mapping the Template fields.', 'gathercontent-import' ) . '</p>';
 
 				$pointers['select_tab_how_to'] = $content;
+				$enqueue = true;
 			}
 
 			if ( ! in_array( 'gc_map_status_how_to', $dismissed, 1 ) ) {
@@ -251,7 +250,24 @@ class Template_Mapper extends Base {
 				$content .= '<p>' . __( 'Here you\'ll be able to map each individual GatherContent status to a WordPress status, and optionally, change the GatherContent status when your items are imported to WordPress.', 'gathercontent-import' ) . '</p>';
 
 				$pointers['map_status_how_to'] = $content;
+				$enqueue = true;
 			}
+		} else {
+
+			if ( ! in_array( 'gc_refresh_connection', $dismissed, 1 ) ) {
+				$content = '<h3>'. __( 'Refresh data from GatherContent', 'gathercontent-import' ) .'</h3>';
+				$content .= '<p>' . __( 'To make the plugin more speedy, we cache the requests to GatherContent for 1 day, but if you find that you need to update the data from GatherContent, just hit the "Refresh" button.', 'gathercontent-import' ) . '</p>';
+				$content .= '<p>' . __( 'For more help, click the "Help" tab in the upper-right-hand corner.', 'gathercontent-import' ) . '</p>';
+
+				$pointers['refresh_connection'] = $content;
+				$enqueue = true;
+			}
+
+		}
+
+		if ( $enqueue ) {
+			wp_enqueue_script( 'wp-pointer' );
+			wp_enqueue_style( 'wp-pointer' );
 		}
 
 		return $pointers;
