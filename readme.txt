@@ -37,9 +37,12 @@ This section describes how to install the plugin and get it working.
 
 
 == Screenshots ==
-1. Quickly find your items using filters and live search.
-2. Import GatherContent items as Pages, Posts, Media and various Custom Post Types.
+1. Create Template Mappings to map your GatherContent Templates to your WordPress content.
+2. Mappings allow you to import GatherContent items as Pages, Posts, Media and various Custom Post Types.
 3. Map individual fields to a huge range of places in WordPress.
+4. Quickly find your items by entering the bulk-edit view, and using filters and live search. 
+5. Using the post metabox, you can push and pull your GatherContent items, and change their status on GatherContent.
+6. Or change the item's GatherContent status in quick-edit mode.
 
 == Changelog ==
 

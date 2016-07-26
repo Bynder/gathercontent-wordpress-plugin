@@ -9,6 +9,7 @@ module.exports = {
 			'**',
 			'!**/**.xml',
 			'!**/**.DS_Store',
+			'!**/phploy.ini',
 			'!**/Dockunit.json',
 			'!**/package.json',
 			'!**/node_modules/**',
