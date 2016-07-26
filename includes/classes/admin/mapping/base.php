@@ -119,7 +119,9 @@ abstract class Base extends Plugin_Base {
 		add_filter( 'gathercontent_localized_data', array( $this, 'localize_data' ) );
 
 		$script_id = $this->script_id();
-		\GatherContent\Importer\enqueue_script( $script_id, $script_id, array( 'gathercontent' ) );
+
+		wp_enqueue_style( 'wp-pointer' );
+		\GatherContent\Importer\enqueue_script( $script_id, $script_id, array( 'wp-pointer', 'gathercontent' ) );
 	}
 
 	/**
