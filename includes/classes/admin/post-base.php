@@ -33,11 +33,11 @@ abstract class Post_Base extends UI_Base {
 	protected $api = null;
 
 	/**
-	 * GatherContent\Importer\Admin\Mapping_Wizzard instance
+	 * GatherContent\Importer\Admin\Mapping_Wizard instance
 	 *
-	 * @var GatherContent\Importer\Admin\Mapping_Wizzard
+	 * @var GatherContent\Importer\Admin\Mapping_Wizard
 	 */
-	protected $wizzard = null;
+	protected $wizard = null;
 
 	/**
 	 * GatherContent\Importer\Admin\Enqueue instance
@@ -59,11 +59,11 @@ abstract class Post_Base extends UI_Base {
 	 * @since 3.0.0
 	 *
 	 * @param API             $api      API object.
-	 * @param Mapping_Wizzard $wizzard Mapping_Wizzard object.
+	 * @param Mapping_Wizard $wizard Mapping_Wizard object.
 	 */
-	public function __construct( API $api, Mapping_Wizzard $wizzard ) {
+	public function __construct( API $api, Mapping_Wizard $wizard ) {
 		$this->api        = $api;
-		$this->wizzard    = $wizzard;
+		$this->wizard    = $wizard;
 		$this->doing_ajax = defined( 'DOING_AJAX' ) && DOING_AJAX;
 		$this->enqueue    = new Post_Enqueue;
 	}
@@ -77,7 +77,7 @@ abstract class Post_Base extends UI_Base {
 	 */
 	protected function get_localize_data() {
 		return array(
-			'_edit_nonce' => wp_create_nonce( General::get_instance()->admin->mapping_wizzard->option_group . '-options' ),
+			'_edit_nonce' => wp_create_nonce( General::get_instance()->admin->mapping_wizard->option_group . '-options' ),
 			'_statuses' => array(
 				'starting' => __( 'Starting Sync', 'gathercontent-importer' ),
 				'syncing'  => __( 'Syncing', 'gathercontent-importer' ),

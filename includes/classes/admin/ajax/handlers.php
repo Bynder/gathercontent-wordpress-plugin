@@ -290,7 +290,7 @@ class Handlers extends Plugin_Base {
 			wp_send_json_error();
 		}
 
-		$mappings = General::get_instance()->admin->mapping_wizzard->mappings;
+		$mappings = General::get_instance()->admin->mapping_wizard->mappings;
 		$objects = array();
 
 		switch ( $property ) {

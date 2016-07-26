@@ -6,11 +6,11 @@ use GatherContent\Importer\Settings\Form_Section;
 use GatherContent\Importer\Post_Types\Template_Mappings;
 
 /**
- * Class for the template mappings creation wizzard.
+ * Class for the template mappings creation wizard.
  *
  * @since 3.0.0
  */
-class Mapping_Wizzard extends Base {
+class Mapping_Wizard extends Base {
 
 	const SLUG = 'gathercontent-import-add-new-template';
 	const ACCOUNT = 0;
@@ -294,7 +294,7 @@ class Mapping_Wizzard extends Base {
 	}
 
 	/**
-	 * Step one of the mapping wizzard, pick a project from list of accounts.
+	 * Step one of the mapping wizard, pick a project from list of accounts.
 	 *
 	 * @since  3.0.0
 	 *
@@ -381,7 +381,7 @@ class Mapping_Wizzard extends Base {
 	}
 
 	/**
-	 * Step two of the mapping wizzard, pick a template in the chosen project.
+	 * Step two of the mapping wizard, pick a template in the chosen project.
 	 *
 	 * @since  3.0.0
 	 *
@@ -462,7 +462,7 @@ class Mapping_Wizzard extends Base {
 	}
 
 	/**
-	 * Step three, the final step of the mapping wizzard. Create a template-mapping.
+	 * Step three, the final step of the mapping wizard. Create a template-mapping.
 	 *
 	 * @since  3.0.0
 	 *
@@ -562,7 +562,7 @@ class Mapping_Wizzard extends Base {
 	 * and performs the appropriate action/redirect.
 	 *
 	 * Does not actually save fields, but simply uses the field values to determine where
-	 * we are in the process (wizzard).
+	 * we are in the process (wizard).
 	 *
 	 * @since  3.0.0
 	 *
@@ -597,7 +597,7 @@ class Mapping_Wizzard extends Base {
 	}
 
 	/**
-	 * Redirects to the template-picker page of the wizzard.
+	 * Redirects to the template-picker page of the wizard.
 	 *
 	 * @since  3.0.0
 	 *
@@ -611,7 +611,7 @@ class Mapping_Wizzard extends Base {
 	}
 
 	/**
-	 * Redirects to the (final) mapping-creator page of the wizzard.
+	 * Redirects to the (final) mapping-creator page of the wizard.
 	 *
 	 * @since  3.0.0
 	 *

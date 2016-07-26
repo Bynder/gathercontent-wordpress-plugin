@@ -213,8 +213,8 @@ function prepare_post_for_js( $post, $uncached = false ) {
 
 	if ( $js_post['item'] && ! $js_post['mapping'] || ! get_post( $js_post['mapping'] ) ) {
 		$admin = General::get_instance()->admin;
-		if ( isset( $admin->mapping_wizzard->mappings ) ) {
-			$js_post['mapping'] = $admin->mapping_wizzard->mappings->get_by_item_id( $js_post['item'] );
+		if ( isset( $admin->mapping_wizard->mappings ) ) {
+			$js_post['mapping'] = $admin->mapping_wizard->mappings->get_by_item_id( $js_post['item'] );
 			\GatherContent\Importer\update_post_mapping_id( $post->ID, $js_post['mapping'] );
 		}
 	}

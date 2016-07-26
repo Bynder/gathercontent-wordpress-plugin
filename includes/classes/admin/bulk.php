@@ -9,7 +9,7 @@ namespace GatherContent\Importer\Admin;
 use GatherContent\Importer\General;
 use GatherContent\Importer\API;
 use GatherContent\Importer\Admin\Enqueue;
-use GatherContent\Importer\Admin\Mapping_Wizzard;
+use GatherContent\Importer\Admin\Mapping_Wizard;
 
 /**
  * Handles the UI for the bulk/quick-editing on post-listing page.
@@ -48,7 +48,7 @@ class Bulk extends Post_Base {
 			return;
 		}
 
-		$this->post_types = $this->wizzard->mappings->get_mapping_post_types();
+		$this->post_types = $this->wizard->mappings->get_mapping_post_types();
 
 		global $pagenow;
 		if (
@@ -284,9 +284,9 @@ class Bulk extends Post_Base {
 			'tmpl-gc-select2-item'    => array(),
 			'tmpl-gc-modal-window'    => array(
 				'nav' => array(
-					$this->wizzard->parent_url            => __( 'Settings', 'gathercontent-import' ),
-					$this->wizzard->mappings->listing_url => $this->wizzard->mappings->args->label,
-					$this->wizzard->url                   => $this->wizzard->mappings->args->labels->new_item,
+					$this->wizard->parent_url            => __( 'Settings', 'gathercontent-import' ),
+					$this->wizard->mappings->listing_url => $this->wizard->mappings->args->label,
+					$this->wizard->url                   => $this->wizard->mappings->args->labels->new_item,
 				),
 				'headers' => array(
 					'status'      => __( 'Status', 'gathercontent-import' ),

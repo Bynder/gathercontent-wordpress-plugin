@@ -9,7 +9,7 @@ class Admin extends Base {
 
 	public $option_name  = General::OPTION_NAME;
 	public $option_group = 'gathercontent_importer_settings';
-	public $mapping_wizzard;
+	public $mapping_wizard;
 
 	/**
 	 * Default option value (if none is set)
@@ -72,7 +72,7 @@ class Admin extends Base {
 		}
 
 		if ( $this->step > 0 ) {
-			$this->mapping_wizzard = new Mapping_Wizzard( $this );
+			$this->mapping_wizard = new Mapping_Wizard( $this );
 		}
 
 	}
@@ -87,8 +87,8 @@ class Admin extends Base {
 	public function init_hooks() {
 		parent::init_hooks();
 
-		if ( $this->mapping_wizzard ) {
-			$this->mapping_wizzard->init_hooks();
+		if ( $this->mapping_wizard ) {
+			$this->mapping_wizard->init_hooks();
 		}
 	}
 

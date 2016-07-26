@@ -6,7 +6,7 @@
  */
 
 namespace GatherContent\Importer\Admin;
-use GatherContent\Importer\Admin\Mapping_Wizzard;
+use GatherContent\Importer\Admin\Mapping_Wizard;
 use GatherContent\Importer\Mapping_Post;
 use GatherContent\Importer\General;
 use GatherContent\Importer\API;
@@ -56,7 +56,7 @@ class Single extends Post_Base {
 			return;
 		}
 
-		$this->post_types = $this->wizzard->mappings->get_mapping_post_types();
+		$this->post_types = $this->wizard->mappings->get_mapping_post_types();
 
 		global $pagenow;
 		if (

@@ -78,14 +78,14 @@ class General extends Base {
 		$this->pull = new Sync\Pull( $this->api );
 		$this->push = new Sync\Push( $this->api );
 		$this->ajax_handler = new Admin\Ajax\Handlers( $this->api );
-		if ( isset( $this->admin->mapping_wizzard->mappings ) ) {
+		if ( isset( $this->admin->mapping_wizard->mappings ) ) {
 			$this->bulk_ui = new Admin\Bulk(
 				$this->api,
-				$this->admin->mapping_wizzard
+				$this->admin->mapping_wizard
 			);
 			$this->single_ui = new Admin\Single(
 				$this->api,
-				$this->admin->mapping_wizzard
+				$this->admin->mapping_wizard
 			);
 		}
 	}

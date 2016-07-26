@@ -37,7 +37,7 @@ class Sync_Items extends Plugin_Base {
 
 	protected function verify_nonce() {
 		// Get opt-group for nonce-verification
-		$opt_group = General::get_instance()->admin->mapping_wizzard->option_group;
+		$opt_group = General::get_instance()->admin->mapping_wizard->option_group;
 
  		// No nonce, no pass.
 		if ( ! wp_verify_nonce( $this->_post_val( 'nonce' ), $opt_group . '-options' ) ) {
