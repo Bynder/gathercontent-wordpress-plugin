@@ -30,6 +30,12 @@ Contact us directly via email for support [support@gathercontent.com](mailto:sup
 
 ## Changelog ##
 
+### 3.0.0.2 ###
+* Fix bug when creating a new mapping and trying to map GatherContent statuses before saving the mapping.
+
+### 3.0.0.1 ###
+* Fix bug where WordPress pointer script/css was not properly enqueued in some instances.
+
 ### 3.0.0 ###
 * Complete rewrite. Plugin no longer uses the legacy API, and allows mapping templates, and then importing/exporting items via the mapped templates.
 
