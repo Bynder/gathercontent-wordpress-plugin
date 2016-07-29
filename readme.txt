@@ -4,7 +4,7 @@ Donate link:       http://www.gathercontent.com
 Tags               structured content, gather content, gathercontent, import, migrate, export, mapping, production, writing, collaboration, platform, connect, link, gather, client, word, production
 Requires at least: 3.8
 Tested up to:      4.6
-Stable tag:        3.0.0.1
+Stable tag:        3.0.0.2
 License:           GPL-2.0+
 License URI:       https://opensource.org/licenses/GPL-2.0
 
@@ -48,6 +48,9 @@ This section describes how to install the plugin and get it working.
 6. Or change the item's GatherContent status in quick-edit mode.
 
 == Changelog ==
+
+= 3.0.0.2 =
+* Fix bug when creating a new mapping and trying to map GatherContent statuses before saving the mapping.
 
 = 3.0.0.1 =
 * Fix bug where WordPress pointer script/css was not properly enqueued in some instances.
