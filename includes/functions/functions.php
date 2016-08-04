@@ -1,8 +1,8 @@
 <?php
 /**
- * GatherContent Importer
+ * GatherContent Plugin
  *
- * @package GatherContent Importer
+ * @package GatherContent Plugin
  */
 
 namespace GatherContent\Importer;

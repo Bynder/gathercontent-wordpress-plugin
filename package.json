@@ -1,6 +1,6 @@
 {
   "name": "gathercontent-importer",
-  "title": "GatherContent Importer",
+  "title": "GatherContent Plugin",
   "description": "Imports items from GatherContent to your wordpress site",
   "version": "3.0.0",
   "license": "GPLv2",
