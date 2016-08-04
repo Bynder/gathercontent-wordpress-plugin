@@ -1,8 +1,8 @@
 <?php
 /**
- * GatherContent Importer, Base Field Type
+ * GatherContent Plugin, Base Field Type
  *
- * @package GatherContent Importer
+ * @package GatherContent Plugin
  */
 
 namespace GatherContent\Importer\Admin\Mapping\Field_Types;
@@ -10,7 +10,7 @@ use GatherContent\Importer\Base as Plugin_Base;
 use GatherContent\Importer\Views\View;
 
 /**
- * GatherContent Importer, Base Field Type
+ * GatherContent Plugin, Base Field Type
  *
  * @since 3.0.0
  */

@@ -1,8 +1,8 @@
 <?php
 /**
- * GatherContent Importer
+ * GatherContent Plugin
  *
- * @package GatherContent Importer
+ * @package GatherContent Plugin
  */
 
 namespace GatherContent\Importer;
@@ -10,7 +10,7 @@ use DateTime;
 use DateTimeZone;
 
 /**
- * GatherContent Importer Utilities
+ * GatherContent Plugin Utilities
  *
  * @since 3.0.0
  */

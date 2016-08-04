@@ -1,6 +1,6 @@
 msgid ""
 msgstr ""
-"Project-Id-Version: GatherContent Importer\n"
+"Project-Id-Version: GatherContent Plugin\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2015-07-22 00:40-0000\n"
 "PO-Revision-Date: 2015-07-22 00:41-0000\n"

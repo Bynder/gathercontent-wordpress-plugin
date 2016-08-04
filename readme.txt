@@ -1,10 +1,10 @@
-=== GatherContent Importer ===
+=== GatherContent Plugin ===
 Contributors:      gathercontent, mathew-chapman, namshee, justinsainton, jtsternberg
 Donate link:       http://www.gathercontent.com
 Tags               structured content, gather content, gathercontent, import, migrate, export, mapping, production, writing, collaboration, platform, connect, link, gather, client, word, production
 Requires at least: 3.8
 Tested up to:      4.6
-Stable tag:        3.0.0.1
+Stable tag:        3.0.0.2
 License:           GPL-2.0+
 License URI:       https://opensource.org/licenses/GPL-2.0
 
@@ -12,17 +12,24 @@ Quickly transfer structured content to and from your GatherContent projects and 
 
 == Description ==
 
-This plugin allows you to transfer content from your GatherContent projects into your WordPress site and vice-versa.
+Installing our WordPress plugin on your site allows you to quickly perform updates of your content from your GatherContent account to WordPress as well as push your WordPress content updates back to GatherContent. Content can be imported as new pages/posts or custom post types, and you can also import your WordPress content back to new GatherContent items.
+
+The plugin allows you to map each field in your GatherContent Templates with WordPress fields. This is accomplished by creating a Template Mapping, which allows you to map each field in GatherContent to various fields in WordPress; title, body content, custom fields, tags, categories, Yoast fields, advanced custom fields, featured images … and many more.
+
+The module currently supports the following features:
+
+* Import content from GatherContent
+* Export content to GatherContent
+* Update content in Wordpress from GatherContent
+* Update content from Wordpress to GatherContent
+
+For additional developer documentation, please [review the wiki](https://github.com/gathercontent/wordpress-plugin/wiki).
+
+### What is GatherContent?
 
 GatherContent is an online platform for pulling together, editing, and reviewing website content with your clients and colleagues. It's a reliable alternative to emailing around Word documents and pasting content into your CMS. This plugin replaces that process of copying and pasting content and allows you to bulk import structured content, and then continue to update it in WordPress with a few clicks.
 
 Connecting a powerful content production platform, to a powerful content publishing platform.
-
-Content can be imported as items, posts, media or custom post types. And you can choose to create new items etc. or overwrite existing entities.
-
-The plugin allows you to specifically map each field on your templates in GatherContent to various fields in WordPress, these include; title, body content, custom fields, tags, categories, Yoast fields, advanced custom fields, featured images … and many more. It also allows you to directly embed images and files.
-
-For additional developer documentation, please [review the wiki](https://github.com/gathercontent/wordpress-plugin/wiki).
 
 == Installation ==
 
@@ -31,13 +38,14 @@ This section describes how to install the plugin and get it working.
 1. Upload `gathercontent-import` to the `/wp-content/plugins/` directory
 2. Activate the GatherContent plugin through the 'Plugins' menu in WordPress
 3. Click on the menu item "GatherContent"
-3. Link your accounts. You will need to enter your GatherContent account URL (e.g. http://mywebsite.gathercontent.com) and your personal GatherContent API key. You can find your API key in your [Settings area within GatherContent](https://gathercontent.com/developers/authentication/).
+4. Link your accounts. You will need to enter your GatherContent account URL (e.g. http://mywebsite.gathercontent.com) and your personal GatherContent API key. You can find your API key in your [Settings area within GatherContent](https://gathercontent.com/developers/authentication/).
+
+For more detailed installation instructions please visit our [HelpCentre](https://gathercontent.com/support/wordpress-integration-installation/).
 
 == Frequently Asked Questions ==
 
 = If you need help =
 * Please [visit our support documentation](https://gathercontent.com/support/wordpress-integration).
-
 
 == Screenshots ==
 1. Create Template Mappings to map your GatherContent Templates to your WordPress content.
@@ -48,6 +56,9 @@ This section describes how to install the plugin and get it working.
 6. Or change the item's GatherContent status in quick-edit mode.
 
 == Changelog ==
+
+= 3.0.0.2 =
+* Fix bug when creating a new mapping and trying to map GatherContent statuses before saving the mapping.
 
 = 3.0.0.1 =
 * Fix bug where WordPress pointer script/css was not properly enqueued in some instances.

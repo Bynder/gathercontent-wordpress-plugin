@@ -1,9 +1,9 @@
 <?php
 /**
- * Plugin Name: GatherContent Importer
+ * Plugin Name: GatherContent Plugin
  * Plugin URI:  http://www.gathercontent.com
  * Description: Imports items from GatherContent to your wordpress site
- * Version:     3.0.0.1
+ * Version:     3.0.0.2
  * Author:      GatherContent
  * Author URI:  http://www.gathercontent.com
  * Text Domain: gathercontent-import
@@ -64,7 +64,7 @@ if ( version_compare( phpversion(), '5.3', '<' ) ) {
 function gathercontent_importer_php_version_too_low_notice() {
 	printf(
 		'<div id="message" class="error"><p>%s</p></div>',
-		__( 'Sorry, the GatherContent Importer plugin requires a minimum PHP version of 5.3. Please contact your host and ask them to upgrade. For convenience, you can use the note provided on the WordPress recommended host supports page: <a href="https://wordpress.org/about/requirements/">https://wordpress.org/about/requirements/</a>', 'gathercontent-import' )
+		__( 'Sorry, the GatherContent plugin requires a minimum PHP version of 5.3. Please contact your host and ask them to upgrade. For convenience, you can use the note provided on the WordPress recommended host supports page: <a href="https://wordpress.org/about/requirements/">https://wordpress.org/about/requirements/</a>', 'gathercontent-import' )
 	);
 }
 
@@ -78,7 +78,7 @@ function gathercontent_importer_php_version_too_low_notice() {
 function gathercontent_importer_wp_version_too_low_notice() {
 	printf(
 		'<div id="message" class="error"><p>%s</p></div>',
-		__( 'Sorry, for security and performance reasons, the GatherContent Importer plugin requires a minimum WordPress version of 4.4. Please update WordPress to the most recent version.', 'gathercontent-import' )
+		__( 'Sorry, for security and performance reasons, the GatherContent plugin requires a minimum WordPress version of 4.4. Please update WordPress to the most recent version.', 'gathercontent-import' )
 	);
 }
 
