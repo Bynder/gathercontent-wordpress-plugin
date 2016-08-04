@@ -3,7 +3,7 @@
  * Plugin Name: GatherContent Plugin
  * Plugin URI:  http://www.gathercontent.com
  * Description: Imports items from GatherContent to your wordpress site
- * Version:     3.0.0.2
+ * Version:     3.0.0.3
  * Author:      GatherContent
  * Author URI:  http://www.gathercontent.com
  * Text Domain: gathercontent-import
