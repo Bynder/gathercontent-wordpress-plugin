@@ -4,7 +4,7 @@ Donate link:       http://www.gathercontent.com
 Tags               structured content, gather content, gathercontent, import, migrate, export, mapping, production, writing, collaboration, platform, connect, link, gather, client, word, production
 Requires at least: 3.8
 Tested up to:      4.6
-Stable tag:        3.0.0.2
+Stable tag:        3.0.0.3
 License:           GPL-2.0+
 License URI:       https://opensource.org/licenses/GPL-2.0
 
@@ -56,6 +56,9 @@ For more detailed installation instructions please visit our [HelpCentre](https:
 6. Or change the item's GatherContent status in quick-edit mode.
 
 == Changelog ==
+
+= 3.0.0.3 =
+* Fix issue on PHP 5.4 with using shortand array syntax.
 
 = 3.0.0.2 =
 * Fix bug when creating a new mapping and trying to map GatherContent statuses before saving the mapping.

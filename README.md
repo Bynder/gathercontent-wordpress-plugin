@@ -1,4 +1,4 @@
-# GatherContent Plugin -- Version 3.0.0.2 #
+# GatherContent Plugin -- Version 3.0.0.3 #
 
 This plugin allows you to transfer content from your GatherContent projects into your WordPress site and vice-versa.
 
@@ -41,6 +41,9 @@ If you need help
 * Please [visit our support documentation](https://gathercontent.com/support/wordpress-integration).
 
 ## Changelog ##
+
+### 3.0.0.3 ###
+* Fix issue on PHP 5.4 with using shortand array syntax.
 
 ### 3.0.0.2 ###
 * Fix bug when creating a new mapping and trying to map GatherContent statuses before saving the mapping.
