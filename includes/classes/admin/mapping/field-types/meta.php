@@ -13,6 +13,7 @@ class Meta extends Base implements Type {
 	 */
 	protected $supported_types = array(
 		'text',
+		'files',
 		'text_rich',
 		'text_plain',
 		'choice_radio',
