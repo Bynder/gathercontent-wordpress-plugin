@@ -152,7 +152,11 @@ class Pull extends Base {
 				}
 
 				if ( ! empty( $replacements['meta_input'] ) ) {
-					$post_data['meta_input'] = $replacements['meta_input'];
+					$post_data['meta_input'] = array_map( function( $meta ) {
+						return is_array( $meta ) && count( $meta ) > 1
+							? $meta
+							: array_shift( $meta );
+					}, $replacements['meta_input'] );
 				}
 
 				// And update post (but don't create a revision for it).
