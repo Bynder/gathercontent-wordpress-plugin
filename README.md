@@ -1,4 +1,4 @@
-# GatherContent Plugin -- Version 3.0.0.4 #
+# GatherContent Plugin -- Version 3.0.0.5 #
 
 This plugin allows you to transfer content from your GatherContent projects into your WordPress site and vice-versa.
 
@@ -41,6 +41,9 @@ If you need help
 * Please [visit our support documentation](https://gathercontent.com/support/wordpress-integration).
 
 ## Changelog ##
+
+### 3.0.0.5 ###
+* Fix conflict with other plugins (notably WooCommerce) using the same script handle for select2, causing conflicts/errors.
 
 ### 3.0.0.4 ###
 * Allow file fields to be mapped to custom fields. Will store an array of WordPress attachment ids, or a single attachment id if the file field from GatherContent only contains a single file.
