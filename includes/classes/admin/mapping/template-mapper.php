@@ -209,7 +209,9 @@ class Template_Mapper extends Base {
 			$core_field_types[] = new Field_Types\WPSEO( $this->post_types() );
 		}
 
-		return ( new Field_Types\Types( $core_field_types ) )->register();
+		$type = new Field_Types\Types( $core_field_types );
+
+		return $type->register();
 	}
 
 	/**

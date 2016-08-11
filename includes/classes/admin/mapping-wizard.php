@@ -96,7 +96,7 @@ class Mapping_Wizard extends Base {
 	 *
 	 * @return void
 	 */
-	function admin_menu() {
+	public function admin_menu() {
 		$page = add_submenu_page(
 			$this->parent_page_slug,
 			$this->get_step_label(),
@@ -271,7 +271,7 @@ class Mapping_Wizard extends Base {
 	 *
 	 * @return void
 	 */
-	function initialize_settings_sections() {
+	public function initialize_settings_sections() {
 
 		switch ( $this->step ) {
 			case self::PROJECT:
