@@ -55,7 +55,29 @@ class Form_Section extends Base {
 
 	public function do_fields() {
 		ob_start();
-		do_settings_fields( $this->page, $this->id );
+
+		foreach ( $this->fields as $this->field ) {
+			$field = $this->field;
+			$class = '';
+
+			if ( ! empty( $field['args']['class'] ) ) {
+				$class = ' class="' . esc_attr( $field['args']['class'] ) . '"';
+			}
+
+			echo "<tr{$class}>";
+
+			if ( ! empty( $field['args']['label_for'] ) ) {
+				echo '<th scope="row"><label for="' . esc_attr( $field['args']['label_for'] ) . '">' . $field['title'] . '</label></th>';
+			} elseif ( ! empty( $field['title'] ) ) {
+				echo '<th scope="row">' . $field['title'] . '</th>';
+			}
+
+			echo '<td>';
+			call_user_func( $field['callback'], $this );
+			echo '</td>';
+			echo '</tr>';
+		}
+
 		// Kill empty label cells
 		return str_replace( '<th scope="row"></th>', '', ob_get_clean() );
 	}
@@ -70,32 +92,6 @@ class Form_Section extends Base {
 		$field = apply_filters( "gathercontent_importer_field_{$this->id}_{$id}", $field, $this );
 		$this->fields[ $field['id'] ] = $field;
 
-		if ( did_action( 'admin_menu' ) ) {
-			$this->_add_field( $field );
-		} else {
-			add_action( 'admin_menu', array( $this, '_add_fields' ) );
-		}
-
-	}
-
-	public function _add_fields() {
-		foreach ( $this->fields as $field ) {
-			$this->_add_field( $field );
-		}
-	}
-
-	protected function _add_field( $field ) {
-		add_settings_field(
-			$field['id'],
-			$field['title'],
-			function( $args ) use ( $field ) {
-				$this->field = $field;
-				call_user_func( $field['callback'], $this );
-			},
-			$this->page,
-			$this->id,
-			$field['args']
-		);
 	}
 
 	public function do_param( $key ) {
