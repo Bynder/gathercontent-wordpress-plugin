@@ -4,7 +4,7 @@ Donate link:       http://www.gathercontent.com
 Tags               structured content, gather content, gathercontent, import, migrate, export, mapping, production, writing, collaboration, platform, connect, link, gather, client, word, production
 Requires at least: 3.8
 Tested up to:      4.6
-Stable tag:        3.0.0.5
+Stable tag:        3.0.0.6
 License:           GPL-2.0+
 License URI:       https://opensource.org/licenses/GPL-2.0
 
@@ -56,6 +56,9 @@ For more detailed installation instructions please visit our [HelpCentre](https:
 6. Or change the item's GatherContent status in quick-edit mode.
 
 == Changelog ==
+
+= 3.0.0.6 =
+* Fix conflicts/errors which occur on installations using PHP 5.3.
 
 = 3.0.0.5 =
 * Fix conflict with other plugins (notably WooCommerce) using the same script handle for select2, causing conflicts/errors.
@@ -128,5 +131,5 @@ For more detailed installation instructions please visit our [HelpCentre](https:
 
 == Upgrade Notice ==
 
-= 3.0.0.5 =
-* Fix conflict with other plugins (notably WooCommerce) using the same script handle for select2, causing conflicts/errors.
+= 3.0.0.6 =
+* Fix conflicts/errors which occur on installations using PHP 5.3.
