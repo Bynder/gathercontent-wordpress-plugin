@@ -7,6 +7,9 @@ class Form_Section extends Base {
 	protected $page;
 	protected $id;
 	public $field;
+	public $title = '';
+	public $callback = null;
+	protected $fields = array();
 	protected static $sections;
 
 	public function __construct( $id, $title, $callback, $page ) {
@@ -54,8 +57,11 @@ class Form_Section extends Base {
 	}
 
 	public function do_fields() {
-		ob_start();
+		if ( empty( $this->fields ) ) {
+			return '';
+		}
 
+		ob_start();
 		foreach ( $this->fields as $this->field ) {
 			$field = $this->field;
 			$class = '';
