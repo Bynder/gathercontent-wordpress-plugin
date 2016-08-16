@@ -1,4 +1,4 @@
-# GatherContent Plugin -- Version 3.0.0.5 #
+# GatherContent Plugin -- Version 3.0.0.7 #
 
 This plugin allows you to transfer content from your GatherContent projects into your WordPress site and vice-versa.
 
@@ -41,6 +41,13 @@ If you need help
 * Please [visit our support documentation](https://gathercontent.com/support/wordpress-integration).
 
 ## Changelog ##
+
+### 3.0.0.7 ###
+* Fix issue with sideloading images. Proper handling for `WP_Error`.
+* Fix "Undefined property" notice.
+
+### 3.0.0.6 ###
+* Fix conflicts/errors which occur on installations using PHP 5.3.
 
 ### 3.0.0.5 ###
 * Fix conflict with other plugins (notably WooCommerce) using the same script handle for select2, causing conflicts/errors.

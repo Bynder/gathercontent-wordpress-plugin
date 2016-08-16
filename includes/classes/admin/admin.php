@@ -128,7 +128,7 @@ class Admin extends Base {
 	 *
 	 * @return void
 	 */
-	function admin_menu() {
+	public function admin_menu() {
 		$page = add_menu_page(
 			'GatherContent',
 			'GatherContent',
@@ -164,7 +164,7 @@ class Admin extends Base {
 	 *
 	 * @return void
 	 */
-	function initialize_settings_sections() {
+	public function initialize_settings_sections() {
 		if ( $this->step > 0 ) {
 			$this->api_setup_complete();
 		}
@@ -179,113 +179,119 @@ class Admin extends Base {
 		$section = new Form_Section(
 			'step_1',
 			__( 'API Credentials', 'gathercontent-import' ),
-			function() {
-				if ( $key = $this->should_migrate() ) {
-					echo '<p><strong>' . __( 'NOTE:', 'gathercontent-import' ) . '</strong> ' . sprintf( __( 'It looks like you are migrating from a previous version of the GatherContent plugin.<br>You will need to set up new GatherContent API credentials to continue. Instructions for getting your API key can be found <a href="%s" target="_blank">here</a>.', 'gathercontent-import' ), 'https://gathercontent.com/developers/authentication/' ) . '</p>';
-
-					if ( $slug = get_option( $key . '_api_url' ) ) {
-						$this->settings()->options['platform_url_slug'] = $slug;
-					}
-
-				} else {
-					echo '<p>' . sprintf( __( 'Enter you GatherContent API credentials. Instructions for getting your API key can be found <a href="%s" target="_blank">here</a>.', 'gathercontent-import' ), 'https://gathercontent.com/developers/authentication/' ) . '</p>';
-				}
-
-			},
+			array( $this, 'api_setup_settings_cb' ),
 			self::SLUG
 		);
 
 		$section->add_field(
 			'account_email',
 			__( 'GatherContent Email Address', 'gathercontent-import' ),
-			function( $field ) {
-				$id = $field->param( 'id' );
-
-				$this->view( 'input', array(
-					'id' => $id,
-					'name' => $this->option_name .'['. $id .']',
-					'value' => esc_attr( $this->get_setting( $id ) ),
-				) );
-
-			}
+			array( $this, 'account_email_field_cb' )
 		);
 
 		$section->add_field(
 			'platform_url_slug',
 			__( 'Platform URL', 'gathercontent-import' ),
-			function( $field ) {
-				$id = $field->param( 'id' );
-
-				echo '<div class="platform-url-wrap">';
-
-				echo '<div class="platform-url-help gc-domain-prefix">https://</div>';
-
-				$this->view( 'input', array(
-					'id' => $id,
-					'name' => $this->option_name .'['. $id .']',
-					'value' => esc_attr( $this->get_setting( $id ) ),
-					'placeholder' => 'your-account',
-				) );
-
-				echo '<div class="platform-url-help gc-domain">.gathercontent.com</div>';
-
-				echo '</div>';
-			}
+			array( $this, 'platform_url_slug_field_cb' )
 		);
 
 		$section->add_field(
 			'api_key',
 			__( 'API Key', 'gathercontent-import' ),
-			function( $field ) {
-				$id = $field->param( 'id' );
-
-				$this->view( 'input', array(
-					'id' => $id,
-					'name' => $this->option_name .'['. $id .']',
-					'value' => esc_attr( $this->get_setting( $id ) ),
-					'placeholder' => 'XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX',
-					'desc' => '<a href="https://gathercontent.com/developers/authentication/" target="_blank">'. __( 'How to get your API key', 'gathercontent-import' ) . '</a>',
-				) );
-
-				$this->view( 'input', array(
-					'type'    => 'hidden',
-					'id'      => 'gc-is-migrated',
-					'name'    => $this->option_name .'[migrated]',
-					'value'   => $this->get_setting( 'migrated' ),
-				) );
-
-			}
+			array( $this, 'api_key_field_cb' )
 		);
+	}
+
+	public function api_setup_settings_cb() {
+		if ( $key = $this->should_migrate() ) {
+			echo '<p><strong>' . __( 'NOTE:', 'gathercontent-import' ) . '</strong> ' . sprintf( __( 'It looks like you are migrating from a previous version of the GatherContent plugin.<br>You will need to set up new GatherContent API credentials to continue. Instructions for getting your API key can be found <a href="%s" target="_blank">here</a>.', 'gathercontent-import' ), 'https://gathercontent.com/developers/authentication/' ) . '</p>';
+
+			if ( $slug = get_option( $key . '_api_url' ) ) {
+				$this->settings()->options['platform_url_slug'] = $slug;
+			}
+
+		} else {
+			echo '<p>' . sprintf( __( 'Enter you GatherContent API credentials. Instructions for getting your API key can be found <a href="%s" target="_blank">here</a>.', 'gathercontent-import' ), 'https://gathercontent.com/developers/authentication/' ) . '</p>';
+		}
+	}
+
+	public function account_email_field_cb( $field ) {
+		$id = $field->param( 'id' );
+
+		$this->view( 'input', array(
+			'id' => $id,
+			'name' => $this->option_name .'['. $id .']',
+			'value' => esc_attr( $this->get_setting( $id ) ),
+		) );
+	}
+
+	public function platform_url_slug_field_cb( $field ) {
+		$id = $field->param( 'id' );
+
+		echo '<div class="platform-url-wrap">';
+
+		echo '<div class="platform-url-help gc-domain-prefix">https://</div>';
+
+		$this->view( 'input', array(
+			'id' => $id,
+			'name' => $this->option_name .'['. $id .']',
+			'value' => esc_attr( $this->get_setting( $id ) ),
+			'placeholder' => 'your-account',
+		) );
+
+		echo '<div class="platform-url-help gc-domain">.gathercontent.com</div>';
+
+		echo '</div>';
+	}
+
+	public function api_key_field_cb( $field ) {
+		$id = $field->param( 'id' );
+
+		$this->view( 'input', array(
+			'id' => $id,
+			'name' => $this->option_name .'['. $id .']',
+			'value' => esc_attr( $this->get_setting( $id ) ),
+			'placeholder' => 'XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX',
+			'desc' => '<a href="https://gathercontent.com/developers/authentication/" target="_blank">'. __( 'How to get your API key', 'gathercontent-import' ) . '</a>',
+		) );
+
+		$this->view( 'input', array(
+			'type'    => 'hidden',
+			'id'      => 'gc-is-migrated',
+			'name'    => $this->option_name .'[migrated]',
+			'value'   => $this->get_setting( 'migrated' ),
+		) );
 	}
 
 	public function api_setup_complete() {
 		$section = new Form_Section(
 			'steps_complete',
 			'',
-			function() {
-
-				if ( $user = $this->api()->get_me() ) {
-					if ( isset( $user->first_name ) ) {
-
-						$data = (array) $user;
-
-						$data['message'] = esc_html__( "You've successfully connected to the GatherContent API", 'gathercontent-import' );
-
-						$data['avatar'] = ! empty( $data['avatar'] )
-							? 'https://gathercontent-production-avatars.s3-us-west-2.amazonaws.com/' . $data['avatar']
-							: 'https://app.gathercontent.com/assets/img/avatar.png';
-
-						if ( $this->set_my_account() ) {
-
-							$data['message'] .= ' '. sprintf( esc_html__( "and the %s account.", 'gathercontent-import' ), '<a href="'. esc_url( $this->platform_url() ) .'" target="_blank">'. esc_html( $this->account->name ) .'</a>' );
-						}
-
-						$this->view( 'user-profile', $data );
-					}
-				}
-			},
+			array( $this, 'api_setup_complete_cb' ),
 			self::SLUG
 		);
+	}
+
+	public function api_setup_complete_cb() {
+		if ( $user = $this->api()->get_me() ) {
+			if ( isset( $user->first_name ) ) {
+
+				$data = (array) $user;
+
+				$data['message'] = esc_html__( "You've successfully connected to the GatherContent API", 'gathercontent-import' );
+
+				$data['avatar'] = ! empty( $data['avatar'] )
+					? 'https://gathercontent-production-avatars.s3-us-west-2.amazonaws.com/' . $data['avatar']
+					: 'https://app.gathercontent.com/assets/img/avatar.png';
+
+				if ( $this->set_my_account() ) {
+
+					$data['message'] .= ' '. sprintf( esc_html__( "and the %s account.", 'gathercontent-import' ), '<a href="'. esc_url( $this->platform_url() ) .'" target="_blank">'. esc_html( $this->account->name ) .'</a>' );
+				}
+
+				$this->view( 'user-profile', $data );
+			}
+		}
 	}
 
 	/**
