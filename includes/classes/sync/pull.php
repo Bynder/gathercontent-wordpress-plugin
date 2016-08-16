@@ -709,6 +709,10 @@ class Pull extends Base {
 		if ( ! empty( $file_url ) ) {
 			$file_array = $this->tmp_file( $file_url, $file_name );
 
+			if ( is_wp_error( $file_array ) ) {
+				return $file_array;
+			}
+
 			// Do the validation and storage stuff.
 			$id = media_handle_sideload( $file_array, $post_id );
 
