@@ -102,7 +102,7 @@ class Debug extends Base {
 		$section = new Form_Section(
 			'debug',
 			__( 'Debug Mode', 'gathercontent-import' ),
-			'__return_empty_string',
+			sprintf( __( 'Debug file location: %s', 'gathercontent-import' ), '<code>wp-content/'. self::$log_file .'</code>' ),
 			Admin::SLUG
 		);
 
@@ -119,10 +119,17 @@ class Debug extends Base {
 		);
 
 		$section->add_field(
-			'delete_gc_log_file',
-			__( 'Delete GatherContent debug log file?', 'gathercontent-import' ) . '<pre>wp-content/'. self::$log_file .'</pre>',
+			'view_gc_log_file',
+			__( 'View contents of the GatherContent debug log file?', 'gathercontent-import' ),
 			array( $this, 'debug_checkbox_field_cb' )
 		);
+
+		$section->add_field(
+			'delete_gc_log_file',
+			__( 'Delete GatherContent debug log file?', 'gathercontent-import' ),
+			array( $this, 'debug_checkbox_field_cb' )
+		);
+
 	}
 
 	public function debug_checkbox_field_cb( $field ) {
@@ -145,8 +152,11 @@ class Debug extends Base {
 		$debug = wp_parse_args( $settings['debug'], array(
 			'review_stuck_status' => false,
 			'delete_stuck_status' => false,
+			'view_gc_log_file'    => false,
 			'delete_gc_log_file'  => false,
 		) );
+
+		$back_button = isset( $_SERVER['HTTP_REFERER'] ) ? '<p><a href="'. $_SERVER['HTTP_REFERER'] . '">'. __( 'Go Back', 'gathercontent-import' ) .'</a></p>' : '';
 
 		if ( $debug['review_stuck_status'] || $debug['delete_stuck_status']  ) {
 				global $wpdb;
@@ -162,7 +172,7 @@ class Debug extends Base {
 						);
 					}
 				} else {
-					wp_die( __( 'There are no stuck statuses.', 'gathercontent-import' ), __( 'Debug Mode', 'gathercontent-import' ) );
+					wp_die( __( 'There are no stuck statuses.', 'gathercontent-import' ) . $back_button, __( 'Debug Mode', 'gathercontent-import' ) );
 				}
 
 				if ( $debug['delete_stuck_status'] ) {
@@ -171,16 +181,25 @@ class Debug extends Base {
 					}
 				}
 
-				wp_die( '<xmp>'. __LINE__ .') $options: '. print_r( $options, true ) .'</xmp>', __( 'Debug Mode', 'gathercontent-import' ) );
+				wp_die( '<xmp>'. __LINE__ .') $options: '. print_r( $options, true ) .'</xmp>' . $back_button, __( 'Debug Mode', 'gathercontent-import' ) );
 
 		} elseif ( $debug['delete_gc_log_file'] ) {
 			if ( unlink( self::$log_path ) ) {
-				wp_die( __( 'GatherContent log file deleted.', 'gathercontent-import' ), __( 'Debug Mode', 'gathercontent-import' ) );
+				wp_die( __( 'GatherContent log file deleted.', 'gathercontent-import' ) . $back_button, __( 'Debug Mode', 'gathercontent-import' ) );
 			} else {
-				wp_die( __( 'Failed to delete GatherContent log file.', 'gathercontent-import' ), __( 'Debug Mode', 'gathercontent-import' ) );
+				wp_die( __( 'Failed to delete GatherContent log file.' . $back_button, 'gathercontent-import' ), __( 'Debug Mode', 'gathercontent-import' ) );
 			}
+		} elseif ( $debug['view_gc_log_file'] ) {
+			$log_contents = file_get_contents( self::$log_path );
+
+			if ( ! $log_contents ) {
+				wp_die( __( 'GatherContent log file is empty.', 'gathercontent-import' ) . $back_button, __( 'Debug Mode', 'gathercontent-import' ) );
+			}
+
+			die( '<html><body>'. $back_button .'<pre><textarea style="width:100%;height:100%;min-height:1000px;font-size:14px;font-family:monospace;padding:.5em;">'. print_r( $log_contents, true ) .'</textarea></pre></body></html>' );
+
 		} else {
-			wp_die( '<xmp>'. __LINE__ .') $debug: '. print_r( $debug, true ) .'</xmp>' );
+			wp_die( '<xmp>'. __LINE__ .') $debug: '. print_r( $debug, true ) .'</xmp>' . $back_button, __( 'Debug Mode', 'gathercontent-import' ) );
 		}
 	}
 
