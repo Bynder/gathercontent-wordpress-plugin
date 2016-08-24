@@ -1,6 +1,7 @@
 <?php
 namespace GatherContent\Importer;
 use GatherContent\Importer\General;
+use GatherContent\Importer\Debug;
 use WP_Error;
 
 class API extends Base {
@@ -385,12 +386,12 @@ class API extends Base {
 			return new WP_Error( 'gc_api_setup_fail', $e->getMessage() );
 		}
 
-		if ( defined( 'GATHERCONTENT_DEBUG' ) && GATHERCONTENT_DEBUG ) {
-			error_log( '$uri: '. print_r( add_query_arg( array(
+		if ( Debug::debug_mode() ) {
+			Debug::debug_log( '$uri: '. print_r( add_query_arg( array(
 				'disable_cache' => $this->disable_cache,
 				'reset_request_cache' => $this->reset_request_cache,
 			), $uri ), true ) );
-			error_log( '$args: '. print_r( $args, true ) );
+			Debug::debug_log( '$args: '. print_r( $args, true ) );
 		}
 
 		$response = $this->http->{strtolower( $method )}( $uri, $args );
