@@ -209,4 +209,19 @@ class Utils extends Base {
 		return isset( $labels[ $step ] ) ? $labels[ $step ] : $step;
 	}
 
+	/**
+	 * Check if enqueued version of script is at least $version.
+	 *
+	 * @since  3.0.0.8
+	 *
+	 * @param  string $handle   The script's registered handle.
+	 * @param  string  $version Version string to compare.
+	 *
+	 * @return bool             Result of comparison check.
+	 */
+	public static function enqueued_at_least( $handle, $version ) {
+		$wpjs = wp_scripts();
+		return isset( $wpjs->registered[ $handle ] )
+			&& version_compare( $wpjs->registered[ $handle ]->ver, $version, '>=' );
+	}
 }
