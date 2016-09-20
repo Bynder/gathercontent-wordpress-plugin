@@ -34,6 +34,17 @@ class Support extends Base {
 		$this->admin = $admin;
 	}
 
+	/**
+	 * Outputs the system info page.
+	 *
+	 * @todo   Include info related to plugin (settings, etc?)
+	 * @todo   Include ajax tests and GC connectivity tests.
+	 * @todo   Output versions/locations of the JS libs we are using.
+	 *
+	 * @since  3.0.0.9
+	 *
+	 * @return void
+	 */
 	public function sys_info_page() {
 		if ( ! class_exists( 'Browser' ) ) {
 			require_once GATHERCONTENT_INC . 'vendor/edd/browser.php';
