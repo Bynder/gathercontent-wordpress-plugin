@@ -37,6 +37,16 @@ abstract class Enqueue extends Plugin_Base {
 	 */
 	public function admin_enqueue_script() {
 		\GatherContent\Importer\enqueue_script( 'gc-select2', 'vendor/select2-4.0.3/select2', array( 'jquery' ), '4.0.3' );
+
+		// If < WP 4.5, we need the newer version of underscore.js
+		if ( ! Utils::enqueued_at_least( 'underscore', '1.8.3' ) ) {
+
+			// Cannot use wp_deregister_script as WP will not allow it.
+			wp_scripts()->remove( 'underscore' );
+
+			\GatherContent\Importer\enqueue_script( 'underscore', 'vendor/underscore-1.8.3/underscore', array( 'jquery' ), '1.8.3' );
+		}
+
 		\GatherContent\Importer\enqueue_script( 'gathercontent', 'gathercontent', array( 'gc-select2', 'wp-backbone' ) );
 
 		// Localize in footer so that 'gathercontent_localized_data' filter is more useful.
