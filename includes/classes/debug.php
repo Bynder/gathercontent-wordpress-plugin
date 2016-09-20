@@ -78,9 +78,6 @@ class Debug extends Base {
 		add_filter( "sanitize_option_{$this->admin->option_name}", array( $this, 'do_debug_options_actions' ), 5 );
 
 		add_action( 'admin_init', array( $this, 'add_debug_fields' ), 50 );
-		add_action( 'gathercontent_do_debug_actions', array( $this, 'do_debug_actions' ), 50 );
-
-
 		add_action( 'gc_sync_items_result', array( $this, 'log_sync_results' ), 10, 2 );
 	}
 

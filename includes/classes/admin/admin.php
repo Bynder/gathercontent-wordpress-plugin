@@ -4,6 +4,8 @@ use GatherContent\Importer\API;
 use GatherContent\Importer\General;
 use GatherContent\Importer\Settings\Setting;
 use GatherContent\Importer\Settings\Form_Section;
+use GatherContent\Importer\Support;
+
 
 class Admin extends Base {
 
@@ -138,6 +140,15 @@ class Admin extends Base {
 			GATHERCONTENT_URL . 'images/menu-logo.svg'
 		);
 
+		$sub = add_submenu_page(
+			self::SLUG,
+			__( 'Support', 'gathercontent-import' ),
+			__( 'Support', 'gathercontent-import' ),
+			\GatherContent\Importer\view_capability(),
+			self::SLUG . '-support',
+			array( $this, 'support_page' )
+		);
+
 		add_action( 'admin_print_styles-' . $page, array( $this, 'admin_enqueue_style' ) );
 	}
 
@@ -155,6 +166,11 @@ class Admin extends Base {
 			'option_group'      => $this->option_group,
 			'settings_sections' => Form_Section::get_sections( self::SLUG ),
 		) );
+	}
+
+	public function support_page() {
+		$support = new Support( $this );
+		$support->sys_info_page();
 	}
 
 	/**
@@ -297,9 +313,6 @@ class Admin extends Base {
 	/**
 	 * Determine if settings need to be migrated from previous version.
 	 *
-	 * Since previous version used `plugin_basename( __FILE__ )` to determine
-	 * the option prefix, we have to check a couple possible variations.
-	 *
 	 * @since  3.0.0
 	 *
 	 * @return mixed Settings key prefix, if old settings are found.
@@ -309,6 +322,20 @@ class Admin extends Base {
 			return false;
 		}
 
+		return $this->prev_option_key();
+	}
+
+	/**
+	 * Get previous plugin's options key.
+	 *
+	 * Since previous version used `plugin_basename( __FILE__ )` to determine
+	 * the option prefix, we have to check a couple possible variations.
+	 *
+	 * @since  3.0.0.9
+	 *
+	 * @return mixed Settings key prefix, if old settings are found.
+	 */
+	public function prev_option_key() {
 		$prefixes = array(
 			'gathercontent-import', // from wordpress.org/plugins/gathercontent-import
 			'wordpress-plugin', // from github.com/gathercontent/wordpress-plugin
