@@ -35,6 +35,11 @@ class Support extends Base {
 	}
 
 	public function sys_info_page() {
+		if ( ! class_exists( 'Browser' ) ) {
+			require_once GATHERCONTENT_INC . 'vendor/edd/browser.php';
+		}
+		$browser = new \Browser();
+
 		// $sys_info = get_transient( 'gc_sys_info' );
 
 		// if ( ! $sys_info || $this->_get_val( 'flush_cache' ) ) {
@@ -49,6 +54,7 @@ class Support extends Base {
 				'permalink_structure'     => get_option( 'permalink_structure' ),
 				'theme'                   => $this->theme(),
 				'host'                    => $this->host(),
+				'browser'                 => $browser,
 
 				'php_version'             => PHP_VERSION,
 				'mysql_version'           => @mysql_get_server_info(),
