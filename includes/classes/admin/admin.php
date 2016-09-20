@@ -140,6 +140,16 @@ class Admin extends Base {
 			GATHERCONTENT_URL . 'images/menu-logo.svg'
 		);
 
+		if ( did_action( 'admin_menu' ) && 'admin_menu' !== current_filter() ) {
+			$this->support_sub_page();
+		} else {
+			add_action( 'admin_menu', array( $this, 'support_sub_page' ), $this->menu_priority + 100 );
+		}
+
+		add_action( 'admin_print_styles-' . $page, array( $this, 'admin_enqueue_style' ) );
+	}
+
+	public function support_sub_page() {
 		$sub = add_submenu_page(
 			self::SLUG,
 			__( 'Support', 'gathercontent-import' ),
@@ -148,8 +158,6 @@ class Admin extends Base {
 			self::SLUG . '-support',
 			array( $this, 'support_page' )
 		);
-
-		add_action( 'admin_print_styles-' . $page, array( $this, 'admin_enqueue_style' ) );
 	}
 
 	public function admin_page() {
