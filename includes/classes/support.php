@@ -51,6 +51,7 @@ class Support extends Base {
 		}
 		$browser = new \Browser();
 
+		global $wpdb;
 		// $sys_info = get_transient( 'gc_sys_info' );
 
 		// if ( ! $sys_info || $this->_get_val( 'flush_cache' ) ) {
@@ -68,7 +69,7 @@ class Support extends Base {
 				'browser'                 => $browser,
 
 				'php_version'             => PHP_VERSION,
-				'mysql_version'           => @mysql_get_server_info(),
+				'mysql_version'           => @$wpdb->db_version(),
 				'web_server_info'         => $_SERVER['SERVER_SOFTWARE'],
 
 				'wordpress_memory_limit'  => WP_MEMORY_LIMIT,
