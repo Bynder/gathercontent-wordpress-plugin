@@ -35,13 +35,32 @@ class Support extends Base {
 	}
 
 	/**
+	 * If user is allowed, downloads the current system info in a text file.
+	 *
+	 * @since  3.0.1
+	 *
+	 * @return void
+	 */
+	public static function maybe_download_sys_info() {
+		if ( \GatherContent\Importer\user_allowed() ) {
+			nocache_headers();
+
+			header( 'Content-Type: text/plain' );
+			header( 'Content-Disposition: attachment; filename="gathercontent-system-info.txt"' );
+
+			echo wp_strip_all_tags( $_POST['gc-sysinfo'] );
+			die();
+		}
+	}
+
+	/**
 	 * Outputs the system info page.
 	 *
 	 * @todo   Include info related to plugin (settings, etc?)
 	 * @todo   Include ajax tests and GC connectivity tests.
 	 * @todo   Output versions/locations of the JS libs we are using.
 	 *
-	 * @since  3.0.0.9
+	 * @since  3.0.1
 	 *
 	 * @return void
 	 */

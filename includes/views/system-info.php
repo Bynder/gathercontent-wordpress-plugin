@@ -89,7 +89,7 @@ do_action( 'gc_system_info_after' );
 
 ### End System Info ###</textarea>
 		<p class="submit">
-			<input type="hidden" name="gc-action" value="download_sysinfo" />
+			<?php wp_nonce_field( 'gc-download-sysinfo-nonce', 'gc-download-sysinfo-nonce' ); ?>
 			<?php submit_button( 'Download System Info File', 'primary', 'gc-download-sysinfo', false ); ?>
 		</p>
 	</form>

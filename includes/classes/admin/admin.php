@@ -157,6 +157,14 @@ class Admin extends Base {
 			self::SLUG . '-support',
 			array( $this, 'support_page' )
 		);
+
+		if (
+			isset( $_POST['gc-download-sysinfo-nonce'], $_POST['gc-sysinfo'] )
+			&& wp_verify_nonce( $_POST['gc-download-sysinfo-nonce'], 'gc-download-sysinfo-nonce' )
+		) {
+			Support::maybe_download_sys_info();
+		}
+
 	}
 
 	public function admin_page() {
