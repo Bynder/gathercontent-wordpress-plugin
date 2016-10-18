@@ -4,7 +4,7 @@ Donate link:       http://www.gathercontent.com
 Tags               structured content, gather content, gathercontent, import, migrate, export, mapping, production, writing, collaboration, platform, connect, link, gather, client, word, production
 Requires at least: 3.8
 Tested up to:      4.6
-Stable tag:        3.0.0.8
+Stable tag:        3.0.0.9
 License:           GPL-2.0+
 License URI:       https://opensource.org/licenses/GPL-2.0
 
@@ -56,6 +56,9 @@ For more detailed installation instructions please visit our [HelpCentre](https:
 6. Or change the item's GatherContent status in quick-edit mode.
 
 == Changelog ==
+
+= 3.0.0.9 =
+* Fix bug where a custom taxonomy could be saved in a template mapping but would appear to reset or not be saved.
 
 = 3.0.0.8 =
 * Re-register underscore.js script on our admin pages when on older WordPress versions (with older bundled underscore script).
@@ -137,6 +140,9 @@ For more detailed installation instructions please visit our [HelpCentre](https:
 * Complete rewrite of old plugin
 
 == Upgrade Notice ==
+
+= 3.0.0.9 =
+* Fix bug where a custom taxonomy could be saved in a template mapping but would appear to reset or not be saved.
 
 = 3.0.0.8 =
 * Re-register underscore.js script on our admin pages when on older WordPress versions (with older bundled underscore script).
