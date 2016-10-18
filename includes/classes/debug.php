@@ -13,7 +13,7 @@ use GatherContent\Importer\Admin\Admin;
 /**
  * GatherContent Plugin Debug
  *
- * @since 3.0.0.8
+ * @since 3.0.1
  */
 class Debug extends Base {
 
@@ -48,7 +48,7 @@ class Debug extends Base {
 	/**
 	 * Constructor. Sets the asset_suffix var.
 	 *
-	 * @since 3.0.0.8
+	 * @since 3.0.1
 	 */
 	public function __construct( Admin $admin ) {
 		$this->admin = $admin;
@@ -212,7 +212,7 @@ class Debug extends Base {
 	/**
 	 * Enable/disable the Debug Mode.
 	 *
-	 * @since  3.0.0.8
+	 * @since  3.0.1
 	 *
 	 * @param  bool  $debug_enabled Enable/Disable
 	 *
@@ -242,7 +242,7 @@ class Debug extends Base {
 	/**
 	 * Write a message to the log if debug enabled.
 	 *
-	 * @since  3.0.0.8
+	 * @since  3.0.1
 	 *
 	 * @param  string  $message Message to write to log file.
 	 *
@@ -257,7 +257,7 @@ class Debug extends Base {
 	/**
 	 * Write a message to the log.
 	 *
-	 * @since  3.0.0.8
+	 * @since  3.0.1
 	 *
 	 * @param  string  $message Message to write to log file.
 	 *

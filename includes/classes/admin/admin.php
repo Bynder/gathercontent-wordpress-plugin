@@ -6,7 +6,6 @@ use GatherContent\Importer\Settings\Setting;
 use GatherContent\Importer\Settings\Form_Section;
 use GatherContent\Importer\Support;
 
-
 class Admin extends Base {
 
 	public $option_name  = General::OPTION_NAME;

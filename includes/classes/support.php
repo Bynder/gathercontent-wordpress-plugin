@@ -14,7 +14,7 @@ use GatherContent\Importer\Utils;
 /**
  * GatherContent Plugin Support
  *
- * @since 3.0.0.8
+ * @since 3.0.1
  */
 class Support extends Base {
 
@@ -28,7 +28,7 @@ class Support extends Base {
 	/**
 	 * Constructor. Sets the asset_suffix var.
 	 *
-	 * @since 3.0.0.8
+	 * @since 3.0.1
 	 */
 	public function __construct( Admin $admin ) {
 		$this->admin = $admin;
