@@ -1,4 +1,4 @@
-# GatherContent Plugin -- Version 3.0.0.8 #
+# GatherContent Plugin -- Version 3.0.0.9 #
 
 This plugin allows you to transfer content from your GatherContent projects into your WordPress site and vice-versa.
 
@@ -41,6 +41,9 @@ If you need help
 * Please [visit our support documentation](https://gathercontent.com/support/wordpress-integration).
 
 ## Changelog ##
+
+### 3.0.0.9 ###
+* Fix bug where a custom taxonomy could be saved in a template mapping but would appear to reset or not be saved.
 
 ### 3.0.0.8 ###
 * Re-register underscore.js script on our admin pages when on older WordPress versions (with older bundled underscore script).
