@@ -284,6 +284,9 @@ class Template_Mapper extends Base {
 	 */
 	protected function get_tabs() {
 		$tabs = array();
+
+		$post_type = $this->get_value( 'post_type', 'esc_attr' );
+
 		foreach ( $this->template->config as $tab ) {
 
 			$rows = array();
@@ -310,6 +313,7 @@ class Template_Mapper extends Base {
 					$element->typeName = Utils::gc_field_type_name( $element->type );
 				}
 
+				$element->post_type = $post_type;
 				$rows[] = $element;
 			}
 
@@ -331,7 +335,7 @@ class Template_Mapper extends Base {
 			'rows'        => $this->post_options(),
 			'post_author' => $this->get_value( 'post_author', 'absint', 1 ),
 			'post_status' => $this->get_value( 'post_status', 'esc_attr', 'draft' ),
-			'post_type'   => $this->get_value( 'post_type', 'esc_attr' ),
+			'post_type'   => $post_type,
 			'gc_status'   => $this->get_gc_statuses(),
 		);
 
