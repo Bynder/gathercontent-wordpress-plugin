@@ -13,6 +13,8 @@ use GatherContent\Importer\Admin\Admin;
 /**
  * GatherContent Plugin Debug
  *
+ * Docs: https://github.com/gathercontent/wordpress-plugin/wiki/Developer-Debug-Mode
+ *
  * @since 3.0.1
  */
 class Debug extends Base {
