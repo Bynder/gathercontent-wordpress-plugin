@@ -8,7 +8,8 @@ class Setting {
 
 	public function __construct( $option_name, $default_options = array() ) {
 		$this->option_name = $option_name;
-		$this->options = get_option( $this->option_name );
+		$this->options = get_option( $this->option_name, array() );
+		$this->options = is_array( $this->options ) ? $this->options : array();
 
 		if ( false === $this->options && false !== $default_options ) {
 			$this->options = $default_options;

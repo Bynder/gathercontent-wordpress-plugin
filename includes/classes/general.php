@@ -6,6 +6,13 @@ class General extends Base {
 	protected static $single_instance = null;
 
 	/**
+	 * GatherContent\Importer\Debug instance
+	 *
+	 * @var GatherContent\Importer\Debug
+	 */
+	protected $debug;
+
+	/**
 	 * GatherContent\Importer\API instance
 	 *
 	 * @var GatherContent\Importer\API
@@ -13,11 +20,18 @@ class General extends Base {
 	protected $api;
 
 	/**
-	 * GatherContent\Importer\Admin instance
+	 * GatherContent\Importer\Admin\Admin instance
 	 *
-	 * @var GatherContent\Importer\Admin
+	 * @var GatherContent\Importer\Admin\Admin
 	 */
 	protected $admin;
+
+	/**
+	 * GatherContent\Importer\Admin\Support instance
+	 *
+	 * @var GatherContent\Importer\Admin\Support
+	 */
+	protected $support;
 
 	/**
 	 * GatherContent\Importer\importer Sync\Pull instance
@@ -75,8 +89,10 @@ class General extends Base {
 
 		$this->api   = new API( _wp_http_get_object() );
 		$this->admin = new Admin\Admin( $this->api );
-		$this->pull = new Sync\Pull( $this->api );
-		$this->push = new Sync\Push( $this->api );
+		$this->support = new Admin\Support();
+		$this->debug = new Debug( $this->admin );
+		$this->pull  = new Sync\Pull( $this->api );
+		$this->push  = new Sync\Push( $this->api );
 		$this->ajax_handler = new Admin\Ajax\Handlers( $this->api );
 		if ( isset( $this->admin->mapping_wizard->mappings ) ) {
 			$this->bulk_ui = new Admin\Bulk(
@@ -88,6 +104,7 @@ class General extends Base {
 				$this->admin->mapping_wizard
 			);
 		}
+
 	}
 
 	/**
@@ -99,6 +116,7 @@ class General extends Base {
 	 */
 	public function init_hooks() {
 		$this->admin->init_hooks();
+		$this->support->init_hooks();
 		$this->pull->init_hooks();
 		$this->push->init_hooks();
 		$this->ajax_handler->init_hooks();
@@ -106,6 +124,8 @@ class General extends Base {
 			$this->bulk_ui->init_hooks();
 			$this->single_ui->init_hooks();
 		}
+
+		$this->debug->init_hooks();
 	}
 
 	/**

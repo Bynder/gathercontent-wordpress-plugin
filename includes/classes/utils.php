@@ -17,11 +17,11 @@ use DateTimeZone;
 class Utils extends Base {
 
 	/**
-	 * The .min suffix if SCRIPT_DEBUG is disabled.
+	 * A flag to check if SCRIPT_DEBUG is enabled.
 	 *
-	 * @var string
+	 * @var boolean
 	 */
-	protected static $asset_suffix = '';
+	protected static $script_debug = false;
 
 	/**
 	 * A flag to check if this is an ajax request.
@@ -31,13 +31,22 @@ class Utils extends Base {
 	protected static $doing_ajax = false;
 
 	/**
-	 * Constructor. Sets the asset_suffix var.
+	 * Constructor. Sets the static vars.
 	 *
 	 * @since 3.0.0
 	 */
 	public function __construct() {
-		self::$asset_suffix = defined( 'SCRIPT_DEBUG' ) && SCRIPT_DEBUG ? '' : '.min';
-		self::$doing_ajax = defined( 'DOING_AJAX' ) && DOING_AJAX;
+		self::$script_debug = defined( 'SCRIPT_DEBUG' ) && SCRIPT_DEBUG;
+		self::$doing_ajax   = defined( 'DOING_AJAX' ) && DOING_AJAX;
+	}
+
+	/**
+	 * Check if SCRIPT_DEBUG is enabled.
+	 *
+	 * @return string
+	 */
+	public static function script_debug() {
+		return self::$script_debug || Debug::debug_mode();
 	}
 
 	/**
@@ -46,7 +55,7 @@ class Utils extends Base {
 	 * @return string
 	 */
 	public static function asset_suffix() {
-		return self::$asset_suffix;
+		return self::script_debug() ? '' : '.min';
 	}
 
 	/**

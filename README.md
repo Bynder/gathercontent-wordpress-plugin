@@ -1,4 +1,4 @@
-# GatherContent Plugin -- Version 3.0.0.9 #
+# GatherContent Plugin -- Version 3.0.1 #
 
 This plugin allows you to transfer content from your GatherContent projects into your WordPress site and vice-versa.
 
@@ -41,6 +41,12 @@ If you need help
 * Please [visit our support documentation](https://gathercontent.com/support/wordpress-integration).
 
 ## Changelog ##
+
+### 3.0.1 ###
+* Adds a support page to the GatherContent menu for gathering system information for support requests.
+* Adds a developer debug mode for advanced developer debugging.
+* Fix typos in a few i18n functions, from `_()` to `__()`.
+* Fix possible debug notices when options array is empty.
 
 ### 3.0.0.9 ###
 * Fix bug where a custom taxonomy could be saved in a template mapping but would appear to reset or not be saved.

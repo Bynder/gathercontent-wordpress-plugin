@@ -297,9 +297,6 @@ class Admin extends Base {
 	/**
 	 * Determine if settings need to be migrated from previous version.
 	 *
-	 * Since previous version used `plugin_basename( __FILE__ )` to determine
-	 * the option prefix, we have to check a couple possible variations.
-	 *
 	 * @since  3.0.0
 	 *
 	 * @return mixed Settings key prefix, if old settings are found.
@@ -309,6 +306,20 @@ class Admin extends Base {
 			return false;
 		}
 
+		return $this->prev_option_key();
+	}
+
+	/**
+	 * Get previous plugin's options key.
+	 *
+	 * Since previous version used `plugin_basename( __FILE__ )` to determine
+	 * the option prefix, we have to check a couple possible variations.
+	 *
+	 * @since  3.0.0.9
+	 *
+	 * @return mixed Settings key prefix, if old settings are found.
+	 */
+	public function prev_option_key() {
 		$prefixes = array(
 			'gathercontent-import', // from wordpress.org/plugins/gathercontent-import
 			'wordpress-plugin', // from github.com/gathercontent/wordpress-plugin
