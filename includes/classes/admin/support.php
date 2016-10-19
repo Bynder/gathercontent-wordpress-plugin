@@ -80,7 +80,6 @@ class Support extends Base {
 	/**
 	 * Outputs the system info page.
 	 *
-	 * @todo   Include info related to plugin (settings, etc?)
 	 * @todo   Include ajax tests and GC connectivity tests.
 	 * @todo   Output versions/locations of the JS libs we are using.
 	 *
@@ -153,6 +152,7 @@ class Support extends Base {
 
 				'active_plugins'          => $this->active_plugins(),
 				'network_active_plugins'  => $this->network_active_plugins(),
+				'gc_options'              => print_r( get_option( 'gathercontent_importer' ), 1 ),
 			), false );
 
 			// Store for a bit.

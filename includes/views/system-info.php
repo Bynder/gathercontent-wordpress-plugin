@@ -83,16 +83,17 @@ ACTIVE PLUGINS:
 NETWORK ACTIVE PLUGINS:
 
 <?php $this->output( 'network_active_plugins' ); ?>
-<?php
-endif;
-do_action( 'gc_system_info_after' );
-?>
+<?php endif; ?>
+
+Plugin Options:           <?php echo $this->get( 'gc_options' ), "\n" ?>
+<?php do_action( 'gc_system_info_after' ); ?>
 
 ### End System Info ###</textarea>
 		<p><strong><?php  _e( 'For more information:', 'gathercontent-import' ); ?></strong></p>
 		<p><a href="https://gathercontent.com/support/wordpress-integration/" target="_blank"><?php _e( 'Support for GatherContent WordPress Integration' ); ?></a></p>
 		<p><a href="https://wordpress.org/support/plugin/gathercontent-import" target="_blank"><?php _e( 'WordPress Plugin Support Forums' ); ?></a></p>
 
+		<p><?php _e( '<strong>This information contains potentially senstive data.</strong><br>Please be careful with where you post it. Do not post it in the WordPress support forums.', 'gathercontent-import' ); ?></p>
 		<p class="submit">
 			<?php wp_nonce_field( 'gc-download-sysinfo-nonce', 'gc-download-sysinfo-nonce' ); ?>
 			<?php submit_button( 'Download System Info File', 'primary', 'gc-download-sysinfo', false ); ?>
