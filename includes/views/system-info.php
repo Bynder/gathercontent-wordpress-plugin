@@ -1,4 +1,5 @@
 <div class="wrap gc-admin-wrap">
+	<h2><?php _e( 'System Information', 'gathercontent-import' ); ?></h2>
 	<style type="text/css" media="screen">
 		#system-info-textarea {
 			background: none;
@@ -9,9 +10,9 @@
 			width: 800px;
 			height: 400px;
 			min-height: 400px;
+			margin-bottom: 1.5em;
 		}
 	</style>
-	<h2><?php _e( 'System Information', 'gathercontent-import' ); ?></h2>
 	<br/>
 	<form action="<?php echo esc_url( admin_url( 'admin.php?page=gathercontent-import-support' ) ); ?>" method="post" dir="ltr">
 		<textarea readonly="readonly" onclick="this.focus();this.select()" id="system-info-textarea" name="gc-sysinfo" title="<?php _e( 'To copy the system info, click below then press Ctrl + C (PC) or Cmd + C (Mac).', 'gathercontent-import' ); ?>">
@@ -88,6 +89,10 @@ do_action( 'gc_system_info_after' );
 ?>
 
 ### End System Info ###</textarea>
+		<p><strong><?php  _e( 'For more information:', 'gathercontent-import' ); ?></strong></p>
+		<p><a href="https://gathercontent.com/support/wordpress-integration/" target="_blank"><?php _e( 'Support for GatherContent WordPress Integration' ); ?></a></p>
+		<p><a href="https://wordpress.org/support/plugin/gathercontent-import" target="_blank"><?php _e( 'WordPress Plugin Support Forums' ); ?></a></p>
+
 		<p class="submit">
 			<?php wp_nonce_field( 'gc-download-sysinfo-nonce', 'gc-download-sysinfo-nonce' ); ?>
 			<?php submit_button( 'Download System Info File', 'primary', 'gc-download-sysinfo', false ); ?>
