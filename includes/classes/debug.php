@@ -127,6 +127,12 @@ class Debug extends Base {
 			array( $this, 'debug_checkbox_field_cb' )
 		);
 
+		$section->add_field(
+			'disable_debug_mode',
+			__( 'Disable Debug Mode?', 'gathercontent-import' ),
+			array( $this, 'debug_checkbox_field_cb' )
+		);
+
 	}
 
 	public function debug_checkbox_field_cb( $field ) {
@@ -146,58 +152,81 @@ class Debug extends Base {
 			return $settings;
 		}
 
-		$debug = wp_parse_args( $settings['debug'], array(
+		$settings = wp_parse_args( $settings['debug'], array(
 			'review_stuck_status' => false,
 			'delete_stuck_status' => false,
 			'view_gc_log_file'    => false,
 			'delete_gc_log_file'  => false,
+			'disable_debug_mode'  => false,
 		) );
 
-		$back_button = isset( $_SERVER['HTTP_REFERER'] ) ? '<p><a href="'. $_SERVER['HTTP_REFERER'] . '">'. __( 'Go Back', 'gathercontent-import' ) .'</a></p>' : '';
+		$back_url = isset( $_SERVER['HTTP_REFERER'] ) ? $_SERVER['HTTP_REFERER'] : '';
+		$back_button = $back_url ? '<p><a href="'. $back_url . '">'. __( 'Go Back', 'gathercontent-import' ) .'</a></p>' : '';
 
-		if ( $debug['review_stuck_status'] || $debug['delete_stuck_status']  ) {
-				global $wpdb;
+		if ( $settings['review_stuck_status'] || $settings['delete_stuck_status']  ) {
 
-				$sql = "SELECT `option_name` FROM `$wpdb->options` WHERE `option_name` LIKE ('gc_pull_item_%') OR `option_name` LIKE ('gc_push_item_%');";
-				$options = $wpdb->get_results( $sql );
+			return $this->handle_stuck_statuses( $settings, $back_button );
 
-				if ( ! empty( $options ) ) {
-					foreach ( $options as $key => $option ) {
-						$options[ $key ] = array(
-							'name' => $option->option_name,
-							'value' => get_option( $option->option_name ),
-						);
-					}
-				} else {
-					wp_die( __( 'There are no stuck statuses.', 'gathercontent-import' ) . $back_button, __( 'Debug Mode', 'gathercontent-import' ) );
-				}
+		} elseif ( $settings['delete_gc_log_file'] ) {
 
-				if ( $debug['delete_stuck_status'] ) {
-					foreach ( $options as $key => $option ) {
-						$options[ $key ]['deleted'] = delete_option( $option['name'] );
-					}
-				}
+			return $this->delete_gc_log_file( $back_button );
 
-				wp_die( '<xmp>'. __LINE__ .') $options: '. print_r( $options, true ) .'</xmp>' . $back_button, __( 'Debug Mode', 'gathercontent-import' ) );
+		} elseif ( $settings['view_gc_log_file'] ) {
 
-		} elseif ( $debug['delete_gc_log_file'] ) {
-			if ( unlink( self::$log_path ) ) {
-				wp_die( __( 'GatherContent log file deleted.', 'gathercontent-import' ) . $back_button, __( 'Debug Mode', 'gathercontent-import' ) );
-			} else {
-				wp_die( __( 'Failed to delete GatherContent log file.' . $back_button, 'gathercontent-import' ), __( 'Debug Mode', 'gathercontent-import' ) );
-			}
-		} elseif ( $debug['view_gc_log_file'] ) {
-			$log_contents = file_get_contents( self::$log_path );
+			return $this->view_gc_log_file( $back_button );
 
-			if ( ! $log_contents ) {
-				wp_die( __( 'GatherContent log file is empty.', 'gathercontent-import' ) . $back_button, __( 'Debug Mode', 'gathercontent-import' ) );
-			}
+		} elseif ( $settings['disable_debug_mode'] ) {
 
-			die( '<html><body>'. $back_button .'<pre><textarea style="width:100%;height:100%;min-height:1000px;font-size:14px;font-family:monospace;padding:.5em;">'. print_r( $log_contents, true ) .'</textarea></pre></body></html>' );
+			wp_safe_redirect( add_query_arg( 'gathercontent_debug_mode', 0, $back_url ) );
+			exit;
 
-		} else {
-			wp_die( '<xmp>'. __LINE__ .') $debug: '. print_r( $debug, true ) .'</xmp>' . $back_button, __( 'Debug Mode', 'gathercontent-import' ) );
 		}
+
+		wp_die( '<xmp>'. __LINE__ .') $settings: '. print_r( $settings, true ) .'</xmp>' . $back_button, __( 'Debug Mode', 'gathercontent-import' ) );
+	}
+
+	public function handle_stuck_statuses( $settings, $back_button ) {
+		global $wpdb;
+
+		$sql = "SELECT `option_name` FROM `$wpdb->options` WHERE `option_name` LIKE ('gc_pull_item_%') OR `option_name` LIKE ('gc_push_item_%');";
+		$options = $wpdb->get_results( $sql );
+
+		if ( ! empty( $options ) ) {
+			foreach ( $options as $key => $option ) {
+				$options[ $key ] = array(
+					'name' => $option->option_name,
+					'value' => get_option( $option->option_name ),
+				);
+			}
+		} else {
+			wp_die( __( 'There are no stuck statuses.', 'gathercontent-import' ) . $back_button, __( 'Debug Mode', 'gathercontent-import' ) );
+		}
+
+		if ( $settings['delete_stuck_status'] ) {
+			foreach ( $options as $key => $option ) {
+				$options[ $key ]['deleted'] = delete_option( $option['name'] );
+			}
+		}
+
+		wp_die( '<xmp>'. __LINE__ .') $options: '. print_r( $options, true ) .'</xmp>' . $back_button, __( 'Debug Mode', 'gathercontent-import' ) );
+	}
+
+	public function delete_gc_log_file( $back_button ) {
+		if ( unlink( self::$log_path ) ) {
+			wp_die( __( 'GatherContent log file deleted.', 'gathercontent-import' ) . $back_button, __( 'Debug Mode', 'gathercontent-import' ) );
+		}
+
+		wp_die( __( 'Failed to delete GatherContent log file.' . $back_button, 'gathercontent-import' ), __( 'Debug Mode', 'gathercontent-import' ) );
+	}
+
+	public function view_gc_log_file( $back_button ) {
+		$log_contents = file_exists( self::$log_path ) ? file_get_contents( self::$log_path ) : '';
+
+		if ( ! $log_contents ) {
+			wp_die( __( 'GatherContent log file is empty.', 'gathercontent-import' ) . $back_button, __( 'Debug Mode', 'gathercontent-import' ) );
+		}
+
+		die( '<html><body>'. $back_button .'<pre><textarea style="width:100%;height:100%;min-height:1000px;font-size:14px;font-family:monospace;padding:.5em;">'. print_r( $log_contents, true ) .'</textarea></pre></body></html>' );
 	}
 
 	/**
