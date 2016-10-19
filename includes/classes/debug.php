@@ -257,6 +257,8 @@ class Debug extends Base {
 		} elseif ( date( 'm-d-Y' ) === $debug_enabled ) {
 			update_option( 'gathercontent_debug_mode', time() + DAY_IN_SECONDS );
 			$changed = empty( self::$debug_mode );
+		} else {
+			$debug_enabled = self::$debug_mode;
 		}
 
 		if ( $changed ) {
