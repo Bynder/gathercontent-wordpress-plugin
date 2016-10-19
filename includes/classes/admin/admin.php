@@ -4,7 +4,6 @@ use GatherContent\Importer\API;
 use GatherContent\Importer\General;
 use GatherContent\Importer\Settings\Setting;
 use GatherContent\Importer\Settings\Form_Section;
-use GatherContent\Importer\Support;
 
 class Admin extends Base {
 
@@ -139,32 +138,7 @@ class Admin extends Base {
 			GATHERCONTENT_URL . 'images/menu-logo.svg'
 		);
 
-		if ( did_action( 'admin_menu' ) && 'admin_menu' !== current_filter() ) {
-			$this->support_sub_page();
-		} else {
-			add_action( 'admin_menu', array( $this, 'support_sub_page' ), $this->menu_priority + 100 );
-		}
-
 		add_action( 'admin_print_styles-' . $page, array( $this, 'admin_enqueue_style' ) );
-	}
-
-	public function support_sub_page() {
-		$sub = add_submenu_page(
-			self::SLUG,
-			__( 'Support', 'gathercontent-import' ),
-			__( 'Support', 'gathercontent-import' ),
-			\GatherContent\Importer\view_capability(),
-			self::SLUG . '-support',
-			array( $this, 'support_page' )
-		);
-
-		if (
-			isset( $_POST['gc-download-sysinfo-nonce'], $_POST['gc-sysinfo'] )
-			&& wp_verify_nonce( $_POST['gc-download-sysinfo-nonce'], 'gc-download-sysinfo-nonce' )
-		) {
-			Support::maybe_download_sys_info();
-		}
-
 	}
 
 	public function admin_page() {
@@ -181,11 +155,6 @@ class Admin extends Base {
 			'option_group'      => $this->option_group,
 			'settings_sections' => Form_Section::get_sections( self::SLUG ),
 		) );
-	}
-
-	public function support_page() {
-		$support = new Support( $this );
-		$support->sys_info_page();
 	}
 
 	/**

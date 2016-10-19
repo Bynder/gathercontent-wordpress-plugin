@@ -5,11 +5,7 @@
  * @package GatherContent Plugin
  */
 
-namespace GatherContent\Importer;
-
-
-use GatherContent\Importer\Admin\Admin;
-use GatherContent\Importer\Utils;
+namespace GatherContent\Importer\Admin;
 
 /**
  * GatherContent Plugin Support
@@ -18,39 +14,67 @@ use GatherContent\Importer\Utils;
  */
 class Support extends Base {
 
-	/**
-	 * GatherContent\Importer\Admin\Admin instance.
-	 *
-	 * @var GatherContent\Importer\Admin\Admin
-	 */
-	protected $admin;
+	public $menu_priority = 100;
 
 	/**
 	 * Constructor. Sets the asset_suffix var.
 	 *
 	 * @since 3.0.1
 	 */
-	public function __construct( Admin $admin ) {
-		$this->admin = $admin;
+	public function __construct() {
+		if (
+			isset( $_POST['gc-download-sysinfo-nonce'], $_POST['gc-sysinfo'] )
+			&& wp_verify_nonce( $this->_post_val( 'gc-download-sysinfo-nonce' ), 'gc-download-sysinfo-nonce' )
+			&& \GatherContent\Importer\user_allowed()
+		) {
+			$this->download_sys_info();
+		}
 	}
 
 	/**
-	 * If user is allowed, downloads the current system info in a text file.
+	 * Downloads the current system info in a text file.
 	 *
 	 * @since  3.0.1
 	 *
 	 * @return void
 	 */
-	public static function maybe_download_sys_info() {
+	public function download_sys_info() {
 		if ( \GatherContent\Importer\user_allowed() ) {
 			nocache_headers();
 
 			header( 'Content-Type: text/plain' );
 			header( 'Content-Disposition: attachment; filename="gathercontent-system-info.txt"' );
 
-			echo wp_strip_all_tags( $_POST['gc-sysinfo'] );
+			echo wp_strip_all_tags( $this->_post_val( 'gc-sysinfo' ) );
 			die();
 		}
+	}
+
+	/**
+	 * Method needs to be empty.
+	 *
+	 * @since  3.0.1
+	 *
+	 * @return void
+	 */
+	public function initialize_settings_sections() {}
+
+	/**
+	 * Registers our menu item and admin page.
+	 *
+	 * @since  3.0.1
+	 *
+	 * @return void
+	 */
+	public function admin_menu() {
+		add_submenu_page(
+			self::SLUG,
+			__( 'Support', 'gathercontent-import' ),
+			__( 'Support', 'gathercontent-import' ),
+			\GatherContent\Importer\view_capability(),
+			self::SLUG . '-support',
+			array( $this, 'admin_page' )
+		);
 	}
 
 	/**
@@ -64,7 +88,7 @@ class Support extends Base {
 	 *
 	 * @return void
 	 */
-	public function sys_info_page() {
+	public function admin_page() {
 		if ( ! class_exists( 'Browser' ) ) {
 			require_once GATHERCONTENT_INC . 'vendor/edd/browser.php';
 		}
