@@ -44,6 +44,13 @@ For more detailed installation instructions please visit our [HelpCentre](https:
 
 == Frequently Asked Questions ==
 
+= What is the Support page? =
+* Under the GatherContent menu item, you will see a Support page. On this page, you'll find a large textarea filled with technical information about your server, browser, plugin, etc. This information is very useful when debugging, and the GatherContent support team may ask you for it at some point.
+
+Below the text box is a button that will allow you to simply save all of that information to a .txt file. This allows you to easily deliver it to anyone who needs it.
+
+**Note:** This information contains potentially senstive data. Please be careful with where you post it. Do not post it in the WordPress support forums.
+
 = If you need help =
 * Please [visit our support documentation](https://gathercontent.com/support/wordpress-integration).
 

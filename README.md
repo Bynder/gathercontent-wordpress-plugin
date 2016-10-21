@@ -36,9 +36,14 @@ For more detailed installation instructions please visit our [HelpCentre](https:
 
 ## Support ##
 
-If you need help
+If you need help, Please [visit our support documentation](https://gathercontent.com/support/wordpress-integration).
 
-* Please [visit our support documentation](https://gathercontent.com/support/wordpress-integration).
+Also note, in your WordPress dashboard, under the GatherContent menu item, you will see a Support page. On this page, you'll find a large textarea filled with technical information about your server, browser, plugin, etc. This information is very useful when debugging, and the GatherContent support team may ask you for it at some point.
+
+Below the text box is a button that will allow you to simply save all of that information to a .txt file. This allows you to easily deliver it to anyone who needs it.
+
+**However**, this information contains potentially senstive data. Please be careful with where you post it. Do not post it in the WordPress support forums.
+
 
 ## Changelog ##
 
