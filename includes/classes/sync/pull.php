@@ -37,6 +37,17 @@ class Pull extends Base {
 	}
 
 	/**
+	 * Initiate plugins_loaded hooks.
+	 *
+	 * @since  3.0.2
+	 *
+	 * @return void
+	 */
+	public static function init_plugins_loaded_hooks() {
+		add_action( 'gc_associate_hierarchy', array( __CLASS__, 'associate_hierarchy' ) );
+	}
+
+	/**
 	 * Initiate admin hooks
 	 *
 	 * @since  3.0.0
@@ -46,6 +57,7 @@ class Pull extends Base {
 	public function init_hooks() {
 		parent::init_hooks();
 		add_action( 'wp_async_gc_pull_items', array( $this, 'sync_items' ) );
+		add_action( 'gc_pull_complete', array( __CLASS__, 'associate_hierarchy' ) );
 	}
 
 	/**
@@ -137,6 +149,8 @@ class Pull extends Base {
 			'updated_at' => $this->item->updated_at->date,
 		) );
 
+		$updated_post_data = array();
+
 		if ( $attachments ) {
 			$attachments = apply_filters( 'gc_media_objects', $attachments, $post_data );
 			$replacements = $this->sideload_attachments( $attachments, $post_data );
@@ -144,26 +158,44 @@ class Pull extends Base {
 			if ( ! empty( $replacements ) ) {
 				// Do replacements.
 				if ( ! empty( $replacements['post_content'] ) ) {
-					$post_data['post_content'] = strtr( $post_data['post_content'], $replacements['post_content'] );
+					$updated_post_data['post_content'] = strtr( $post_data['post_content'], $replacements['post_content'] );
 				}
 
 				if ( ! empty( $replacements['post_excerpt'] ) ) {
-					$post_data['post_excerpt'] = strtr( $post_data['post_excerpt'], $replacements['post_excerpt'] );
+					$updated_post_data['post_excerpt'] = strtr( $post_data['post_excerpt'], $replacements['post_excerpt'] );
 				}
 
 				if ( ! empty( $replacements['meta_input'] ) ) {
-					$post_data['meta_input'] = array_map( function( $meta ) {
+					$updated_post_data['meta_input'] = array_map( function( $meta ) {
 						return is_array( $meta ) && count( $meta ) > 1
 							? $meta
 							: array_shift( $meta );
 					}, $replacements['meta_input'] );
 				}
-
-				// And update post (but don't create a revision for it).
-				remove_action( 'post_updated', 'wp_save_post_revision' );
-				$post_id = wp_update_post( $post_data );
-				add_action( 'post_updated', 'wp_save_post_revision' );
 			}
+		}
+
+		// Check if we need to set hierarchies.
+		if ( is_post_type_hierarchical( $post_data['post_type'] ) && isset( $this->item->parent_id ) && $this->item->parent_id ) {
+
+			// Check if an associated WordPress item exists for the parent item id.
+			$parent_post = \GatherContent\Importer\get_post_by_item_id( absint( $this->item->parent_id ), array(
+				'post_type' => $post_data['post_type'],
+			) );
+
+			// If so, we'll go ahead and update the post_parent value.
+			if ( $parent_post && isset( $parent_post->ID ) ) {
+				$updated_post_data['post_parent'] = absint( $parent_post->ID );
+			}
+			// Otherwise, let's save this to the array of IDs needed to be checked later (let the import finish).
+			else {
+				$this->schedule_hierarchy_update( $post_id );
+			}
+		}
+
+		if ( ! empty( $updated_post_data ) ) {
+			// And update post (but don't create a revision for it).
+			self::post_update_no_revision( array_merge( $post_data, $updated_post_data ) );
 		}
 
 		if ( $status = $this->mapping->get_item_new_status( $this->item ) ) {
@@ -207,6 +239,10 @@ class Pull extends Base {
 			foreach ( $files as $file ) {
 				$this->item->files[ $file->field ][] = $file;
 			}
+		}
+
+		if ( is_post_type_hierarchical( $post_data['post_type'] ) && isset( $this->item->position ) ) {
+			$post_data['menu_order'] = absint( $this->item->position );
 		}
 
 		$post_data = $this->loop_item_elements_and_map( $post_data );
@@ -840,5 +876,113 @@ class Pull extends Base {
 		return $file_array;
 	}
 
+	/**
+	 * wp_update_post wrapper that prevents a post revision.
+	 *
+	 * @since  3.0.2
+	 *
+	 * @param  array        $post_data Array of post data.
+	 *
+	 * @return int|WP_Error The value 0 or WP_Error on failure. The post ID on success.
+	 */
+	protected static function post_update_no_revision( $post_data ) {
+		// Update post (but don't create a revision for it).
+		remove_action( 'post_updated', 'wp_save_post_revision' );
+		$post_id = wp_update_post( $post_data );
+		add_action( 'post_updated', 'wp_save_post_revision' );
+
+		return $post_id;
+	}
+
+	/**
+	 * Add/create list of post/parent item ids to set WP hierarchy later.
+	 *
+	 * @since  3.0.2
+	 *
+	 * @param  int  $post_id WordPress post id to eventually update.
+	 *
+	 * @return void
+	 */
+	public function schedule_hierarchy_update( $post_id ) {
+
+		$option = "gc_associate_hierarchy_{$this->mapping->ID}";
+
+		// Check we have existing pending hierchies to set.
+		$pending = get_option( "gc_associate_hierarchy_{$this->mapping->ID}", array() );
+		if ( empty( $pending ) || ! is_array( $pending ) ) {
+			$pending = array( $post_id => $this->item->parent_id );
+		} else {
+			$pending[ $post_id ] = $this->item->parent_id;
+		}
+
+		// Update list of pending hierarchies for this mapping.
+		update_option( "gc_associate_hierarchy_{$this->mapping->ID}", $pending, false );
+
+		$args = array( $this->mapping->ID );
+
+		// We'll want to restart our 'timer'.
+		if ( wp_next_scheduled( 'gc_associate_hierarchy', $args ) ) {
+			wp_clear_scheduled_hook( 'gc_associate_hierarchy', $args );
+		}
+
+		/*
+		 * Schedule an event to associate hierarchy for these posts.
+		 * Will likely never be hit, as the gc_pull_complete event will take precedence.
+		 */
+		wp_schedule_single_event( time() + 60, 'gc_associate_hierarchy', $args );
+	}
+
+	/**
+	 * Hooked into cron event, loops through list of pending hierarchies for given mapping,
+	 * and attempts to set the parent post id based on the parent GC item.
+	 *
+	 * @since  3.0.2
+	 *
+	 * @param  int $mapping Mapping object or ID.
+	 *
+	 * @return void
+	 */
+	public static function associate_hierarchy( $mapping ) {
+		$mapping = Mapping_Post::get( $mapping, true );
+		if ( ! $mapping ) {
+			return;
+		}
+
+		$mapping_id = $mapping->ID;
+
+		$opt_name = "gc_associate_hierarchy_{$mapping_id}";
+		$pending = get_option( $opt_name, array() );
+
+		if ( ! empty( $pending ) && is_array( $pending ) ) {
+			foreach ( $pending as $post_id => $parent_item_id ) {
+				$post = get_post( absint( $post_id ) );
+
+				if ( ! $post ) {
+					continue;
+				}
+
+				$parent_post = \GatherContent\Importer\get_post_by_item_id( $parent_item_id, array(
+					'post_type' => $post->post_type
+				) );
+
+				if ( ! $parent_post || ! isset( $parent_post->ID ) ) {
+					continue;
+				}
+
+				// And update post (but don't create a revision for it).
+				$post_id = self::post_update_no_revision( array(
+					'ID'          => $post->ID,
+					'post_parent' => absint( $parent_post->ID ),
+				) );
+			}
+		}
+
+		// We'll want to clear any scheduled events, since we completed them.
+		if ( wp_next_scheduled( 'gc_associate_hierarchy', array( $mapping_id ) ) ) {
+			wp_clear_scheduled_hook( 'gc_associate_hierarchy', array( $mapping_id ) );
+		}
+
+		return delete_option( $opt_name );
+	}
 
 }
