@@ -20,16 +20,16 @@
 		$search      : gc.$id( 'gc-items-search' ),
 
 		events: {
-			'click .gc-bb-modal-close'               : 'closeModal',
-			'click #btn-cancel'                      : 'closeModal',
-			'click .gc-bb-modal-backdrop'            : 'closeModal',
-			'click .gc-bb-modal-nav-tabs a'          : 'clickSelectTab',
-			'change .gc-field-th.check-column input' : 'checkAll',
-			'click #gc-btn-pull'                     : 'startPull',
-			'click #gc-btn-push'                     : 'startPush',
-			'click .gc-cloak'                        : 'maybeResetMetaboxView',
-			'click #gc-btn-assign-mapping'           : 'startAssignment',
-			'click .gc-field-th.sortable'            : 'sortRowsByColumn',
+			'click .gc-bb-modal-close'                  : 'closeModal',
+			'click #btn-cancel'                         : 'closeModal',
+			'click .gc-bb-modal-backdrop'               : 'closeModal',
+			'click .gc-bb-modal-nav-tabs a'             : 'clickSelectTab',
+			'change .gc-field-th.gc-check-column input' : 'checkAll',
+			'click #gc-btn-pull'                        : 'startPull',
+			'click #gc-btn-push'                        : 'startPush',
+			'click .gc-cloak'                           : 'maybeResetMetaboxView',
+			'click #gc-btn-assign-mapping'              : 'startAssignment',
+			'click .gc-field-th.sortable'               : 'sortRowsByColumn',
 		},
 
 		/**

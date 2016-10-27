@@ -3,7 +3,7 @@
 <table class="widefat striped gc-table">
 	<thead>
 		<tr>
-			<td id="cb-for-gc" class="gc-field-th manage-column column-cb check-column"><label class="screen-reader-text" for="gc-select-all-1"><?php _e( 'Select All', 'gathercontent-import' ); ?></label>
+			<td id="cb-for-gc" class="gc-field-th manage-column column-cb gc-check-column"><label class="screen-reader-text" for="gc-select-all-1"><?php _e( 'Select All', 'gathercontent-import' ); ?></label>
 				<input <# if ( data.checked ) { #>checked="checked"<# } #> id="gc-select-all-1" type="checkbox">
 			</td>
 			<?php echo new self( 'table-headers', $this->args ); ?>
@@ -14,7 +14,7 @@
 	</tbody>
 	<tfoot>
 		<tr>
-			<td class="gc-field-th manage-column column-cb check-column"><label class="screen-reader-text" for="gc-select-all-2"><?php _e( 'Select All', 'gathercontent-import' ); ?></label>
+			<td class="gc-field-th manage-column column-cb gc-check-column"><label class="screen-reader-text" for="gc-select-all-2"><?php _e( 'Select All', 'gathercontent-import' ); ?></label>
 				<input <# if ( data.checked ) { #>checked="checked"<# } #> id="gc-select-all-2" type="checkbox">
 			</td>
 			<?php echo new self( 'table-headers', $this->args ); ?>

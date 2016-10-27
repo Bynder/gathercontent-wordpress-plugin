@@ -1,5 +1,5 @@
 /**
- * GatherContent Importer - v3.0.0 - 2016-07-25
+ * GatherContent Plugin - v3.0.0 - 2016-10-27
  * http://www.gathercontent.com
  *
  * Copyright (c) 2016 GatherContent
@@ -498,7 +498,7 @@ module.exports = function (app) {
 		},
 
 		events: {
-			'change .check-column input': 'toggleCheck',
+			'change .gc-check-column input': 'toggleCheck',
 			'click .gc-reveal-items': 'toggleExpanded',
 			'click .gc-status-column': 'toggleCheckAndRender'
 		},
@@ -534,7 +534,7 @@ module.exports = function (app, $, gc) {
 		events: {
 			'click .gc-cancel-sync': 'clickCancelSync',
 			'click .gc-field-th.sortable': 'sortRowsByColumn',
-			'change .gc-field-th.check-column input': 'checkAll',
+			'change .gc-field-th.gc-check-column input': 'checkAll',
 			'submit form': 'submit'
 		},
 
@@ -720,7 +720,7 @@ module.exports = function (app, $, gc) {
 
 		events: {
 			'click .gc-field-th.sortable': 'sortRowsByColumn',
-			'change .gc-field-th.check-column input': 'checkAll'
+			'change .gc-field-th.gc-check-column input': 'checkAll'
 		},
 
 		initialize: function initialize() {
@@ -778,7 +778,7 @@ module.exports = function (app, $, gc) {
 		},
 
 		allCheckedStatus: function allCheckedStatus() {
-			this.$('.gc-field-th.check-column input').prop('checked', this.collection.allChecked);
+			this.$('.gc-field-th.gc-check-column input').prop('checked', this.collection.allChecked);
 		},
 
 		checkAll: function checkAll(evt) {

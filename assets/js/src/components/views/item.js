@@ -8,9 +8,9 @@ module.exports = function( app ) {
 		},
 
 		events : {
-			'change .check-column input' : 'toggleCheck',
-			'click .gc-reveal-items'     : 'toggleExpanded',
-			'click .gc-status-column'    : 'toggleCheckAndRender'
+			'change .gc-check-column input' : 'toggleCheck',
+			'click .gc-reveal-items'        : 'toggleExpanded',
+			'click .gc-status-column'       : 'toggleCheckAndRender'
 		},
 
 		initialize: function() {
