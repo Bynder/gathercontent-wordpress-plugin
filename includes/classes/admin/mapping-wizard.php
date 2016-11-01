@@ -469,12 +469,14 @@ class Mapping_Wizard extends Base {
 	 * @return void
 	 */
 	public function map_template() {
-		$template   = $this->api()->get_template( absint( $this->_get_val( 'template' ) ) );
-		$project    = $this->api()->get_project( absint( $this->_get_val( 'project' ) ) );
-		$mapping_id = absint( $this->_get_val( 'mapping' ) );
-		$mapping_id = $mapping_id && get_post( $mapping_id ) ? $mapping_id : false;
-		$sync_items = $mapping_id && $this->_get_val( 'sync-items' );
-		$notes      = '';
+		$template    = $this->api()->get_template( absint( $this->_get_val( 'template' ) ) );
+		$template_id = isset( $template->id ) ? $template->id : null;
+		$project     = $this->api()->get_project( absint( $this->_get_val( 'project' ) ) );
+		$project_id  = isset( $project->id ) ? $project->id : null;
+		$mapping_id  = absint( $this->_get_val( 'mapping' ) );
+		$mapping_id  = $mapping_id && get_post( $mapping_id ) ? $mapping_id : false;
+		$sync_items  = $mapping_id && $this->_get_val( 'sync-items' );
+		$notes       = '';
 
 		if ( ! $sync_items && $mapping_id ) {
 			$notes .= $this->view( 'existing-mapping-notice', array(
@@ -483,7 +485,7 @@ class Mapping_Wizard extends Base {
 			), false );
 		}
 
-		if ( ! isset( $project->id, $template->id ) ) {
+		if ( ! $project_id || ! $template_id ) {
 			$notes = $this->view( 'no-mapping-or-template-available', array(), false ) . $notes;
 		}
 
@@ -534,7 +536,7 @@ class Mapping_Wizard extends Base {
 				'option_name'  => $this->option_name,
 			) );
 
-			$callback = isset( $project->id, $template->id )
+			$callback = $project_id && $template_id
 				? array( $this->template_mapper, 'ui' )
 				: '__return_empty_string';
 
@@ -550,7 +552,7 @@ class Mapping_Wizard extends Base {
 				'template'     => $template,
 				'url'          => $this->platform_url(),
 				'mappings'     => $this->mappings,
-				'items'        => $this->filter_items_by_template( $project->id, $template->id ),
+				'items'        => $this->filter_items_by_template( $project_id, $template_id ),
 			) );
 
 			$section->add_field( 'mapping', '', array( $this->items_sync, 'ui' ) );

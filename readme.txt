@@ -4,7 +4,7 @@ Donate link:       http://www.gathercontent.com
 Tags               structured content, gather content, gathercontent, import, migrate, export, mapping, production, writing, collaboration, platform, connect, link, gather, client, word, production
 Requires at least: 3.8
 Tested up to:      4.6
-Stable tag:        3.0.1
+Stable tag:        3.0.2
 License:           GPL-2.0+
 License URI:       https://opensource.org/licenses/GPL-2.0
 
@@ -63,6 +63,14 @@ Below the text box is a button that will allow you to simply save all of that in
 6. Or change the item's GatherContent status in quick-edit mode.
 
 == Changelog ==
+
+= 3.0.2 =
+* Now supports mapping GatherContent hiearchy to WordPress hierarchy for hierarchical post-types (like pages). Default behavior can be overridden with the `gc_map_hierarchy` filter.
+* Adds a constant to enable developer debug mode (`GATHERCONTENT_DEBUG_MODE`).
+* Give GatherContent selectors IDs and classes which do not conflict with WordPress core UI.
+* Add a `gc_pull_complete` and `gc_push_complete` hook which is triggered after all items are asynchronously synced.
+* Update support instructions on the Support page.
+* Fix a few php notices when failing to fetch a project or template from the GatherContent API.
 
 = 3.0.1 =
 * Adds a support page to the GatherContent menu for gathering system information for support requests.
@@ -153,6 +161,14 @@ Below the text box is a button that will allow you to simply save all of that in
 * Complete rewrite of old plugin
 
 == Upgrade Notice ==
+
+= 3.0.2 =
+* Now supports mapping GatherContent hiearchy to WordPress hierarchy for hierarchical post-types (like pages). Default behavior can be overridden with the `gc_map_hierarchy` filter.
+* Adds a constant to enable developer debug mode (`GATHERCONTENT_DEBUG_MODE`).
+* Give GatherContent selectors IDs and classes which do not conflict with WordPress core UI.
+* Add a `gc_pull_complete` and `gc_push_complete` hook which is triggered after all items are asynchronously synced.
+* Update support instructions on the Support page.
+* Fix a few php notices when failing to fetch a project or template from the GatherContent API.
 
 = 3.0.1 =
 * Adds a support page to the GatherContent menu for gathering system information for support requests.

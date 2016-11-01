@@ -11,8 +11,8 @@ module.exports = function( app, $, gc ) {
 		timeoutTime  : 1000,
 
 		events : {
-			'click .gc-field-th.sortable'            : 'sortRowsByColumn',
-			'change .gc-field-th.check-column input' : 'checkAll'
+			'click .gc-field-th.sortable'               : 'sortRowsByColumn',
+			'change .gc-field-th.gc-check-column input' : 'checkAll'
 		},
 
 		initialize: function() {
@@ -70,7 +70,7 @@ module.exports = function( app, $, gc ) {
 		},
 
 		allCheckedStatus: function() {
-			this.$( '.gc-field-th.check-column input' ).prop( 'checked', this.collection.allChecked );
+			this.$( '.gc-field-th.gc-check-column input' ).prop( 'checked', this.collection.allChecked );
 		},
 
 		checkAll: function( evt ) {

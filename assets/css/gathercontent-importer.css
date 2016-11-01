@@ -113,7 +113,7 @@ ul.gc-radio-desc li, ul.gc-reveal-items-list li {
 .gathercontent-admin .wp-field-th {
   width: 60%; }
 
-.gathercontent-admin .gc-field-th.check-column {
+.gathercontent-admin .gc-field-th.gc-check-column {
   width: 20px;
   padding: 6px 0 6px 6px;
   vertical-align: middle; }
@@ -201,7 +201,7 @@ ul.gc-radio-desc li, ul.gc-reveal-items-list li {
 
 #sync-tabs {
   margin-bottom: 1.5em; }
-  #sync-tabs .check-column {
+  #sync-tabs .gc-check-column {
     width: 20px;
     padding: 6px 0 6px 6px;
     vertical-align: middle; }

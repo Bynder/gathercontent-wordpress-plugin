@@ -9,10 +9,10 @@ module.exports = function( app, $, gc ) {
 		modelView        : app.views.item,
 
 		events : {
-			'click .gc-cancel-sync'                  : 'clickCancelSync',
-			'click .gc-field-th.sortable'            : 'sortRowsByColumn',
-			'change .gc-field-th.check-column input' : 'checkAll',
-			'submit form'                            : 'submit'
+			'click .gc-cancel-sync'                     : 'clickCancelSync',
+			'click .gc-field-th.sortable'               : 'sortRowsByColumn',
+			'change .gc-field-th.gc-check-column input' : 'checkAll',
+			'submit form'                               : 'submit'
 		},
 
 		initialize: function() {
