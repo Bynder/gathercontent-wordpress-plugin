@@ -63,6 +63,9 @@ class Debug extends Base {
 			} else {
 				self::$debug_mode = true;
 			}
+		} else {
+			// Check if constant is set.
+			self::$debug_mode = self::has_debug_constant();
 		}
 	}
 
@@ -232,6 +235,15 @@ class Debug extends Base {
 	}
 
 	/**
+	 * Check if GATHERCONTENT_DEBUG_MODE constant is set.
+	 *
+	 * @return string
+	 */
+	public static function has_debug_constant() {
+		return defined( 'GATHERCONTENT_DEBUG_MODE' ) && GATHERCONTENT_DEBUG_MODE;
+	}
+
+	/**
 	 * Check if SCRIPT_DEBUG is enabled.
 	 *
 	 * @return string
@@ -261,15 +273,17 @@ class Debug extends Base {
 			$debug_enabled = self::$debug_mode;
 		}
 
+		self::$debug_mode = $debug_enabled || self::has_debug_constant();
+
 		if ( $changed ) {
-			$status = $debug_enabled
+			$status = self::$debug_mode
 				? esc_html__( 'Enabled', 'gathercontent-import' )
 				: esc_html__( 'Disabled', 'gathercontent-import' );
 
 			self::_debug_log( sprintf( esc_html__( 'GatherContent Debug Mode: %s', 'gathercontent-import' ), $status ) );
 		}
 
-		return self::$debug_mode = !! $debug_enabled;
+		return self::$debug_mode;
 	}
 
 	/**
