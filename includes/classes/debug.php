@@ -69,6 +69,13 @@ class Debug extends Base {
 		}
 	}
 
+	/**
+	 * Initiate admin hooks
+	 *
+	 * @since  3.0.1
+	 *
+	 * @return void
+	 */
 	public function init_hooks() {
 		if ( is_admin() && isset( $_GET['gathercontent_debug_mode'] ) ) {
 			$enabled = self::toggle_debug_mode( $_GET['gathercontent_debug_mode'] );
@@ -86,20 +93,49 @@ class Debug extends Base {
 		add_action( 'gc_sync_items_result', array( $this, 'log_sync_results' ), 10, 2 );
 	}
 
+	/**
+	 * Hooked to `gc_sync_items_result`, logs results to the debug mode log.
+	 *
+	 * @since  3.0.1
+	 *
+	 * @param  mixed  $maybe_error Result of sync.
+	 * @param  object $sync        The GatherContent\Importer\Sync\Pull or GatherContent\Importer\Sync\Push object.
+	 *
+	 * @return void
+	 */
 	public function log_sync_results( $maybe_error, $sync ) {
 		self::debug_log( $maybe_error );
 	}
 
+	/**
+	 * Outputs admin notice that the debug mode has been disabled.
+	 *
+	 * @since  3.0.1
+	 *
+	 * @return void
+	 */
 	public function debug_disabled_notice() {
 		$msg = esc_html__( 'GatherContent Debug Mode: Disabled', 'gathercontent-import' );
 		echo '<div id="message" class="updated"><p>' . $msg . '</p></div>';
 	}
 
+	/**
+	 * Outputs admin notice that the debug mode has been enabled.
+	 *
+	 * @since  3.0.1
+	 *
+	 * @return void
+	 */
 	public function debug_enabled_notice() {
 		$msg = esc_html__( 'GatherContent Debug Mode: Enabled', 'gathercontent-import' );
 		echo '<div id="message" class="updated"><p>' . $msg . '</p></div>';
 	}
 
+	/**
+	 * Adds debug fields to the GatherConent API connection settings page.
+	 *
+	 * @since 3.0.1
+	 */
 	public function add_debug_fields() {
 		$section = new Form_Section(
 			'debug',
@@ -140,6 +176,15 @@ class Debug extends Base {
 
 	}
 
+	/**
+	 * The Debug mode checkbox toggle field callback.
+	 *
+	 * @since  3.0.1
+	 *
+	 * @param  GatherContent\Importer\Settings\Form_Section $field Form_Section object.
+	 *
+	 * @return void
+	 */
 	public function debug_checkbox_field_cb( $field ) {
 		$id = $field->param( 'id' );
 
@@ -152,6 +197,15 @@ class Debug extends Base {
 		) );
 	}
 
+	/**
+	 * Handles the actions associated with the debug checkbox toggle fields.
+	 *
+	 * @since  3.0.1
+	 *
+	 * @param  array  $settings Array of settings.
+	 *
+	 * @return void
+	 */
 	public function do_debug_options_actions( $settings ) {
 		if ( ! isset( $settings['debug'] ) || empty( $settings['debug'] ) ) {
 			return $settings;
@@ -190,6 +244,16 @@ class Debug extends Base {
 		wp_die( '<xmp>'. __LINE__ .') $settings: '. print_r( $settings, true ) .'</xmp>' . $back_button, __( 'Debug Mode', 'gathercontent-import' ) );
 	}
 
+	/**
+	 * Handles the actions associated with the stuck statuses checkboxes.
+	 *
+	 * @since  3.0.1
+	 *
+	 * @param  array  $settings    Array of settings
+	 * @param  string $back_button The back button markup.
+	 *
+	 * @return void
+	 */
 	public function handle_stuck_statuses( $settings, $back_button ) {
 		global $wpdb;
 
@@ -216,6 +280,15 @@ class Debug extends Base {
 		wp_die( '<xmp>'. __LINE__ .') $options: '. print_r( $options, true ) .'</xmp>' . $back_button, __( 'Debug Mode', 'gathercontent-import' ) );
 	}
 
+	/**
+	 * Handles the deleting the debug mode log.
+	 *
+	 * @since  3.0.1
+	 *
+	 * @param  string $back_button The back button markup.
+	 *
+	 * @return void
+	 */
 	public function delete_gc_log_file( $back_button ) {
 		if ( unlink( self::$log_path ) ) {
 			wp_die( __( 'GatherContent log file deleted.', 'gathercontent-import' ) . $back_button, __( 'Debug Mode', 'gathercontent-import' ) );
@@ -224,6 +297,15 @@ class Debug extends Base {
 		wp_die( __( 'Failed to delete GatherContent log file.' . $back_button, 'gathercontent-import' ), __( 'Debug Mode', 'gathercontent-import' ) );
 	}
 
+	/**
+	 * Handles the view for the debug mode log.
+	 *
+	 * @since  3.0.1
+	 *
+	 * @param  string $back_button The back button markup.
+	 *
+	 * @return void
+	 */
 	public function view_gc_log_file( $back_button ) {
 		$log_contents = file_exists( self::$log_path ) ? file_get_contents( self::$log_path ) : '';
 
@@ -237,6 +319,8 @@ class Debug extends Base {
 	/**
 	 * Check if GATHERCONTENT_DEBUG_MODE constant is set.
 	 *
+	 * @since  3.0.2
+	 *
 	 * @return string
 	 */
 	public static function has_debug_constant() {
@@ -245,6 +329,8 @@ class Debug extends Base {
 
 	/**
 	 * Check if SCRIPT_DEBUG is enabled.
+	 *
+	 * @since  3.0.1
 	 *
 	 * @return string
 	 */
