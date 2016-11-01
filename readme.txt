@@ -65,7 +65,7 @@ Below the text box is a button that will allow you to simply save all of that in
 == Changelog ==
 
 = 3.0.2 =
-* Now supports mapping GatherContent hiearchy to WordPress hierarchy for hierarchical post-types (like pages).
+* Now supports mapping GatherContent hiearchy to WordPress hierarchy for hierarchical post-types (like pages). Default behavior can be overridden with the `gc_map_hierarchy` filter.
 * Adds a constant to enable developer debug mode (`GATHERCONTENT_DEBUG_MODE`).
 * Give GatherContent selectors IDs and classes which do not conflict with WordPress core UI.
 * Add a `gc_pull_complete` and `gc_push_complete` hook which is triggered after all items are asynchronously synced.
@@ -163,7 +163,7 @@ Below the text box is a button that will allow you to simply save all of that in
 == Upgrade Notice ==
 
 = 3.0.2 =
-* Now supports mapping GatherContent hiearchy to WordPress hierarchy for hierarchical post-types (like pages).
+* Now supports mapping GatherContent hiearchy to WordPress hierarchy for hierarchical post-types (like pages). Default behavior can be overridden with the `gc_map_hierarchy` filter.
 * Adds a constant to enable developer debug mode (`GATHERCONTENT_DEBUG_MODE`).
 * Give GatherContent selectors IDs and classes which do not conflict with WordPress core UI.
 * Add a `gc_pull_complete` and `gc_push_complete` hook which is triggered after all items are asynchronously synced.

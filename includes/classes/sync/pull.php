@@ -176,7 +176,7 @@ class Pull extends Base {
 		}
 
 		// Check if we need to set hierarchies.
-		if ( is_post_type_hierarchical( $post_data['post_type'] ) && isset( $this->item->parent_id ) && $this->item->parent_id ) {
+		if ( $this->should_map_hierarchy( $post_data['post_type'] ) && isset( $this->item->parent_id ) && $this->item->parent_id ) {
 
 			// Check if an associated WordPress item exists for the parent item id.
 			$parent_post = \GatherContent\Importer\get_post_by_item_id( absint( $this->item->parent_id ), array(
@@ -241,7 +241,7 @@ class Pull extends Base {
 			}
 		}
 
-		if ( is_post_type_hierarchical( $post_data['post_type'] ) && isset( $this->item->position ) ) {
+		if ( $this->should_map_hierarchy( $post_data['post_type'] ) && isset( $this->item->position ) ) {
 			$post_data['menu_order'] = absint( $this->item->position );
 		}
 
@@ -892,6 +892,21 @@ class Pull extends Base {
 		add_action( 'post_updated', 'wp_save_post_revision' );
 
 		return $post_id;
+	}
+
+	/**
+	 * Determines if hierarchy mapping is supported for this post-type (or any).
+	 * Defaults to `is_post_type_hierarchical` check.
+	 * Can be overridden with 'gc_map_hierarchy' filter.
+	 *
+	 * @since  3.0.2
+	 *
+	 * @param  string $post_type Post type to check if `is_post_type_hierarchical`
+	 *
+	 * @return bool              Whether post type supports hierarchy.
+	 */
+	public function should_map_hierarchy( $post_type ) {
+		return apply_filters( 'gc_map_hierarchy', is_post_type_hierarchical( $post_type ), $post_type, $this );
 	}
 
 	/**
