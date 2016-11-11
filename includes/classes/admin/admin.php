@@ -139,6 +139,24 @@ class Admin extends Base {
 		);
 
 		add_action( 'admin_print_styles-' . $page, array( $this, 'admin_enqueue_style' ) );
+		add_filter( 'plugin_action_links_' . plugin_basename( GATHERCONTENT_PATH . 'gathercontent-importer.php' ), array( $this, 'settings_link' ) );
+
+	}
+
+ 	/**
+	 * Add Settings page to plugin action links in the Plugins table.
+	 *
+	 * @since  3.0.3
+	 *
+	 * @param  array $links Default plugin action links.
+	 *
+	 * @return array $links Amended plugin action links.
+	 */
+	public function settings_link( $links ) {
+
+		$links[] = sprintf( '<a href="%s">%s</a>', $this->url, __( 'Settings', 'gathercontent-import' ) );
+
+		return $links;
 	}
 
 	public function admin_page() {
