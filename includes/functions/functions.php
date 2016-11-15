@@ -58,7 +58,7 @@ function enqueue_script( $handle, $filename, $deps = array(), $ver = GATHERCONTE
  */
 function get_post_by_item_id( $item_id, $args = array() ) {
 	$query = new WP_Query( wp_parse_args( $args, array(
-		'post_type'      => 'any',
+		'post_type'      => \GatherContent\Importer\available_mapping_post_types(),
 		'posts_per_page' => 1,
 		'no_found_rows'  => true,
 		// @codingStandardsIgnoreStart
@@ -391,4 +391,17 @@ function user_allowed() {
  */
 function view_capability() {
 	return apply_filters( 'gathercontent_settings_view_capability', 'publish_pages' );
+}
+
+/**
+ * The filtered list of post-types available for mapping to GC items.
+ * Modify with the 'gathercontent_mapping_post_types' filter.
+ *
+ * @since  3.0.3
+ *
+ * @return array  Array of post-type slugs.
+ */
+function available_mapping_post_types() {
+	$post_types = get_post_types( array( 'public' => true ) );
+	return apply_filters( 'gathercontent_mapping_post_types', $post_types );
 }
