@@ -1,4 +1,4 @@
-# GatherContent Plugin -- Version 3.0.2 #
+# GatherContent Plugin -- Version 3.0.3 #
 
 This plugin allows you to transfer content from your GatherContent projects into your WordPress site and vice-versa.
 
@@ -46,6 +46,11 @@ Below the text box is a button that will allow you to simply save all of that in
 
 
 ## Changelog ##
+
+### 3.0.3 ###
+* Fix bug where post-types with`'exclude_from_search' => true` would not be properly connected.
+* Add filter, `gathercontent_mapping_post_types`, for ability to filter allowed post-types for mapping.
+* Add GatherContent plugin settings link to inline action links on plugin page.
 
 ### 3.0.2 ###
 * Now supports mapping GatherContent hierarchy to WordPress hierarchy for hierarchical post-types (like pages). Default behavior can be overridden with the `gc_map_hierarchy` filter.
