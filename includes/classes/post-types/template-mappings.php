@@ -81,6 +81,8 @@ class Template_Mappings extends Base {
 		add_filter( 'post_row_actions', array( $this, 'remove_quick_edit' ), 10, 2 );
 		add_action( 'gc_mapping_pre_post_update', array( $this, 'store_post_type_references' ) );
 		add_action( "wp_async_save_post_{$post_type}", array( $this, 'clear_out_updated_at' ) );
+
+		add_filter( 'wp_insert_post_empty_content', array( $this, 'trigger_pre_actions' ), 10, 2 );
 	}
 
 	public function clear_out_updated_at( $post_id ) {
@@ -392,13 +394,18 @@ class Template_Mappings extends Base {
 			),
 		) );
 
+		return wp_insert_post( $post_data, $wp_error );
+	}
+
+	public function trigger_pre_actions( $ignore, $post_data ) {
+
 		if ( ! empty( $post_data['ID'] ) ) {
 			do_action( 'gc_mapping_pre_post_update', $post_data );
 		} else {
 			do_action( 'gc_mapping_pre_post_create', $post_data );
 		}
 
-		return wp_insert_post( $post_data, $wp_error );
+		return $ignore;
 	}
 
 	public static function get_mappings( $args = array() ) {
