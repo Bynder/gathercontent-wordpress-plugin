@@ -398,8 +398,7 @@ class Template_Mappings extends Base {
 	}
 
 	public function trigger_pre_actions( $ignore, $post_data ) {
-
-		if ( 'post_type' === self::SLUG ) {
+		if ( self::SLUG === $post_data['post_type'] ) {
 			if ( ! empty( $post_data['ID'] ) ) {
 				do_action( 'gc_mapping_pre_post_update', $post_data );
 			} else {
