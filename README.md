@@ -1,4 +1,4 @@
-# GatherContent Plugin -- Version 3.0.1 #
+# GatherContent Plugin -- Version 3.0.2 #
 
 This plugin allows you to transfer content from your GatherContent projects into your WordPress site and vice-versa.
 
@@ -46,6 +46,14 @@ Below the text box is a button that will allow you to simply save all of that in
 
 
 ## Changelog ##
+
+### 3.0.2 ###
+* Now supports mapping GatherContent hiearchy to WordPress hierarchy for hierarchical post-types (like pages). Default behavior can be overridden with the `gc_map_hierarchy` filter.
+* Adds a constant to enable developer debug mode (`GATHERCONTENT_DEBUG_MODE`).
+* Give GatherContent selectors IDs and classes which do not conflict with WordPress core UI.
+* Add a `gc_pull_complete` and `gc_push_complete` hook which is triggered after all items are asynchronously synced.
+* Update support instructions on the Support page.
+* Fix a few php notices when failing to fetch a project or template from the GatherContent API.
 
 ### 3.0.1 ###
 * Adds a support page to the GatherContent menu for gathering system information for support requests.

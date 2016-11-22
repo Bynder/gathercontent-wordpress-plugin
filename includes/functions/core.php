@@ -70,6 +70,8 @@ function setup() {
 	}
 
 	do_action( 'gathercontent_loaded' );
+
+	add_action( 'plugins_loaded', $n( 'General::init_plugins_loaded_hooks' ) );
 }
 
 /**

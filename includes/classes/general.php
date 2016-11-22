@@ -108,6 +108,17 @@ class General extends Base {
 	}
 
 	/**
+	 * Initiate plugins_loaded hooks.
+	 *
+	 * @since  3.0.2
+	 *
+	 * @return void
+	 */
+	public static function init_plugins_loaded_hooks() {
+		Sync\Pull::init_plugins_loaded_hooks();
+	}
+
+	/**
 	 * Initiate admin hooks
 	 *
 	 * @since  3.0.0
