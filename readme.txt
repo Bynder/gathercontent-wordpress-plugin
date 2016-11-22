@@ -4,7 +4,7 @@ Donate link:       http://www.gathercontent.com
 Tags               structured content, gather content, gathercontent, import, migrate, export, mapping, production, writing, collaboration, platform, connect, link, gather, client, word, production
 Requires at least: 3.8
 Tested up to:      4.7
-Stable tag:        3.0.3
+Stable tag:        3.0.4
 License:           GPL-2.0+
 License URI:       https://opensource.org/licenses/GPL-2.0
 
@@ -63,6 +63,10 @@ Below the text box is a button that will allow you to simply save all of that in
 6. Or change the item's GatherContent status in quick-edit mode.
 
 == Changelog ==
+
+= 3.0.4 =
+* Update to complement the 3.0.0.8 release to make sure that the minimum 1.8.3 version of underscore is loaded early so that it works when SCRIPT_DEBUG is disabled.
+* Fix bug where GatherContent admin column and metabox would not display for a mapped post-type occasionally (if the mapping was imported, or when it is first created).
 
 = 3.0.3 =
 * Fix bug where post-types with`'exclude_from_search' => true` would not be properly connected.
@@ -166,6 +170,10 @@ Below the text box is a button that will allow you to simply save all of that in
 * Complete rewrite of old plugin
 
 == Upgrade Notice ==
+
+= 3.0.4 =
+* Update to complement the 3.0.0.8 release to make sure that the minimum 1.8.3 version of underscore is loaded early so that it works when SCRIPT_DEBUG is disabled.
+* Fix bug where GatherContent admin column and metabox would not display for a mapped post-type occasionally (if the mapping was imported, or when it is first created).
 
 = 3.0.3 =
 * Fix bug where post-types with`'exclude_from_search' => true` would not be properly connected.

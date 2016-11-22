@@ -1,4 +1,4 @@
-# GatherContent Plugin -- Version 3.0.3 #
+# GatherContent Plugin -- Version 3.0.4 #
 
 This plugin allows you to transfer content from your GatherContent projects into your WordPress site and vice-versa.
 
@@ -46,6 +46,10 @@ Below the text box is a button that will allow you to simply save all of that in
 
 
 ## Changelog ##
+
+### 3.0.4 ###
+* Update to complement the 3.0.0.8 release to make sure that the minimum 1.8.3 version of underscore is loaded early so that it works when SCRIPT_DEBUG is disabled.
+* Fix bug where GatherContent admin column and metabox would not display for a mapped post-type occasionally (if the mapping was imported, or when it is first created).
 
 ### 3.0.3 ###
 * Fix bug where post-types with`'exclude_from_search' => true` would not be properly connected.
