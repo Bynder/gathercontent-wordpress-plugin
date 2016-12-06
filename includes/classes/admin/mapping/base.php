@@ -379,7 +379,7 @@ abstract class Base extends Plugin_Base {
 			return $post_types;
 		}
 
-		$post_types = get_post_types( array( 'public' => true ), 'objects' );
+		$post_types = array_map( 'get_post_type_object', \GatherContent\Importer\available_mapping_post_types() );
 
 		foreach ( $post_types as $index => $type ) {
 			$type->taxonomies = array();

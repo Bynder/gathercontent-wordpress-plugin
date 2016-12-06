@@ -3,8 +3,8 @@ Contributors:      gathercontent, mathew-chapman, namshee, justinsainton, jtster
 Donate link:       http://www.gathercontent.com
 Tags               structured content, gather content, gathercontent, import, migrate, export, mapping, production, writing, collaboration, platform, connect, link, gather, client, word, production
 Requires at least: 3.8
-Tested up to:      4.6
-Stable tag:        3.0.2
+Tested up to:      4.7
+Stable tag:        3.0.4
 License:           GPL-2.0+
 License URI:       https://opensource.org/licenses/GPL-2.0
 
@@ -64,8 +64,17 @@ Below the text box is a button that will allow you to simply save all of that in
 
 == Changelog ==
 
+= 3.0.4 =
+* Update to complement the 3.0.0.8 release to make sure that the minimum 1.8.3 version of underscore is loaded early so that it works when SCRIPT_DEBUG is disabled.
+* Fix bug where GatherContent admin column and metabox would not display for a mapped post-type occasionally (if the mapping was imported, or when it is first created).
+
+= 3.0.3 =
+* Fix bug where post-types with`'exclude_from_search' => true` would not be properly connected.
+* Add filter, `gathercontent_mapping_post_types`, for ability to filter allowed post-types for mapping.
+* Add GatherContent plugin settings link to inline action links on plugin page.
+
 = 3.0.2 =
-* Now supports mapping GatherContent hiearchy to WordPress hierarchy for hierarchical post-types (like pages). Default behavior can be overridden with the `gc_map_hierarchy` filter.
+* Now supports mapping GatherContent hierarchy to WordPress hierarchy for hierarchical post-types (like pages). Default behavior can be overridden with the `gc_map_hierarchy` filter.
 * Adds a constant to enable developer debug mode (`GATHERCONTENT_DEBUG_MODE`).
 * Give GatherContent selectors IDs and classes which do not conflict with WordPress core UI.
 * Add a `gc_pull_complete` and `gc_push_complete` hook which is triggered after all items are asynchronously synced.
@@ -162,8 +171,17 @@ Below the text box is a button that will allow you to simply save all of that in
 
 == Upgrade Notice ==
 
+= 3.0.4 =
+* Update to complement the 3.0.0.8 release to make sure that the minimum 1.8.3 version of underscore is loaded early so that it works when SCRIPT_DEBUG is disabled.
+* Fix bug where GatherContent admin column and metabox would not display for a mapped post-type occasionally (if the mapping was imported, or when it is first created).
+
+= 3.0.3 =
+* Fix bug where post-types with`'exclude_from_search' => true` would not be properly connected.
+* Add filter, `gathercontent_mapping_post_types`, for ability to filter allowed post-types for mapping.
+* Add GatherContent plugin settings link to inline action links on plugin page.
+
 = 3.0.2 =
-* Now supports mapping GatherContent hiearchy to WordPress hierarchy for hierarchical post-types (like pages). Default behavior can be overridden with the `gc_map_hierarchy` filter.
+* Now supports mapping GatherContent hierarchy to WordPress hierarchy for hierarchical post-types (like pages). Default behavior can be overridden with the `gc_map_hierarchy` filter.
 * Adds a constant to enable developer debug mode (`GATHERCONTENT_DEBUG_MODE`).
 * Give GatherContent selectors IDs and classes which do not conflict with WordPress core UI.
 * Add a `gc_pull_complete` and `gc_push_complete` hook which is triggered after all items are asynchronously synced.

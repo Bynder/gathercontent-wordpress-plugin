@@ -44,7 +44,10 @@ abstract class Enqueue extends Plugin_Base {
 			// Cannot use wp_deregister_script as WP will not allow it.
 			wp_scripts()->remove( 'underscore' );
 
-			\GatherContent\Importer\enqueue_script( 'underscore', 'vendor/underscore-1.8.3/underscore', array( 'jquery' ), '1.8.3' );
+			\GatherContent\Importer\enqueue_script( 'underscore', 'vendor/underscore-1.8.3/underscore', array(), '1.8.3' );
+
+			// Need to output underscore script early since WP may be using load-scripts.php which enqueues early.
+			wp_scripts()->print_scripts( 'underscore' );
 		}
 
 		\GatherContent\Importer\enqueue_script( 'gathercontent', 'gathercontent', array( 'gc-select2', 'wp-backbone' ) );

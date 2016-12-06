@@ -79,13 +79,14 @@ class Template_Mappings extends Base {
 		}
 
 		add_filter( 'post_row_actions', array( $this, 'remove_quick_edit' ), 10, 2 );
-		add_action( 'gc_mapping_pre_post_update', array( $this, 'store_post_type_references' ) );
 		add_action( "wp_async_save_post_{$post_type}", array( $this, 'clear_out_updated_at' ) );
+
+		add_filter( 'wp_insert_post_empty_content', array( $this, 'trigger_pre_actions' ), 5, 2 );
 	}
 
 	public function clear_out_updated_at( $post_id ) {
 		$types = array();
-		$all_types = $this->get_mapping_post_types();
+		$all_types = self::get_mapping_post_types();
 		foreach ( $all_types as $type => $mapping_ids ) {
 			if ( isset( $mapping_ids[ $post_id ] ) ) {
 				$types[] = $type;
@@ -344,15 +345,21 @@ class Template_Mappings extends Base {
 		return $actions;
 	}
 
-	public function store_post_type_references( $post_data ) {
-		$post_id = $post_data['ID'];
+	public static function store_post_type_references( $post_data, $post = null, $update = null ) {
+		if ( null !== $update ) {
+			$post_id   = $post_data;
+			$mapping   = Mapping_Post::get( $post );
+			$post_data = (array) $post;
+		} else {
+			$post_id = $post_data['ID'];
+			$mapping = Mapping_Post::get( $post_id );
+		}
 
-		$mapping = Mapping_Post::get( $post_id );
 		if ( ! $mapping ) {
 			return;
 		}
 
-		$all_types = $this->get_mapping_post_types();
+		$all_types = self::get_mapping_post_types();
 
 		$old_post_type = $mapping->data( 'post_type' );
 
@@ -368,7 +375,7 @@ class Template_Mappings extends Base {
 			$all_types[ $new_mapping['post_type'] ][ $mapping->ID ] = 1;
 		}
 
-		$this->update_mapping_post_types( $all_types );
+		self::update_mapping_post_types( $all_types );
 	}
 
 	public static function create_mapping( $mapping_args, $post_data = array(), $wp_error = false ) {
@@ -392,13 +399,21 @@ class Template_Mappings extends Base {
 			),
 		) );
 
-		if ( ! empty( $post_data['ID'] ) ) {
-			do_action( 'gc_mapping_pre_post_update', $post_data );
-		} else {
-			do_action( 'gc_mapping_pre_post_create', $post_data );
+		return wp_insert_post( $post_data, $wp_error );
+	}
+
+	public function trigger_pre_actions( $ignore, $post_data ) {
+		if ( self::SLUG === $post_data['post_type'] ) {
+			if ( ! empty( $post_data['ID'] ) ) {
+				do_action( 'gc_mapping_pre_post_update', $post_data );
+			} else {
+				do_action( 'gc_mapping_pre_post_create', $post_data );
+			}
+
+			add_action( 'save_post_' . self::SLUG, array( __CLASS__, 'store_post_type_references' ), 10, 3 );
 		}
 
-		return wp_insert_post( $post_data, $wp_error );
+		return $ignore;
 	}
 
 	public static function get_mappings( $args = array() ) {
@@ -623,12 +638,12 @@ class Template_Mappings extends Base {
 		return $objects;
 	}
 
-	public function get_mapping_post_types() {
+	public static function get_mapping_post_types() {
 		$all_types = get_option( 'gc_post_types', array() );
 		return is_array( $all_types ) ? $all_types : array();
 	}
 
-	public function update_mapping_post_types( $all_types = false ) {
+	public static function update_mapping_post_types( $all_types = false ) {
 		if ( ! is_array( $all_types ) || empty( $all_types ) ) {
 			return delete_option( 'gc_post_types' );
 		}
