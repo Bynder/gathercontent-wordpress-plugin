@@ -223,7 +223,9 @@ class Pull extends Base {
 		}
 
 		if ( $status = $this->mapping->get_wp_status_for_item( $this->item ) ) {
-			$post_data['post_status'] = $status;
+			if ( $status != 'nochange' ) {
+				$post_data['post_status'] = $status;
+			}
 		}
 
 		$backup = array();
