@@ -101,14 +101,6 @@ class Sync_Items extends Plugin_Base {
 		$in_progress = get_option( $progress_option_key );
 
 		if ( ! $in_progress ) {
-
-			// error_log( 'maybe_checking_status re-pull count: '. print_r( array(
-			// 	'$progress_option_key' => $progress_option_key,
-			// 	'$percent'             => $percent,
-			// 	'$_POST %'             => $this->_post_val( 'percent' ),
-			// 	'left'                 => count( $ids['pending'] ),
-			// ), true ) );
-
 			do_action( 'gc_pull_items', $this->mapping );
 		}
 

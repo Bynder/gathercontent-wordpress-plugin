@@ -172,11 +172,9 @@ abstract class Base extends Plugin_Base {
 			return new WP_Error( "gc_{$this->direction}_items_fail_" . $e->getCode(), $e->getMessage(), $e->get_data() );
 		}
 
-		$id = array_shift( $ids['pending'] );
+		$id                  = array_shift( $ids['pending'] );
 		$progress_option_key = "gc_{$this->direction}_item_{$id}";
-		$in_progress = get_option( $progress_option_key );
-
-		// error_log( $id .' in progress?: '. print_r( $in_progress, true ) );
+		$in_progress         = get_option( $progress_option_key );
 
 		if ( $in_progress ) {
 			return new WP_Error( "gc_{$this->direction}_item_in_progress", sprintf( __( 'Currently in progress: %d', 'gathercontent-import' ), $id ) );
