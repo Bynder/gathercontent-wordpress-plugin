@@ -4,7 +4,7 @@ Donate link:       http://www.gathercontent.com
 Tags               structured content, gather content, gathercontent, import, migrate, export, mapping, production, writing, collaboration, platform, connect, link, gather, client, word, production
 Requires at least: 3.8
 Tested up to:      4.7.1
-Stable tag:        3.0.5
+Stable tag:        3.0.6
 License:           GPL-2.0+
 License URI:       https://opensource.org/licenses/GPL-2.0
 
@@ -63,6 +63,9 @@ Below the text box is a button that will allow you to simply save all of that in
 6. Or change the item's GatherContent status in quick-edit mode.
 
 == Changelog ==
+
+= 3.0.6 =
+* Improved stability when importing a very large number of items.
 
 = 3.0.5 =
 * Add ability to set "Do not change" for WP status updates. Props [@achbed](https://github.com/achbed), [#23](https://github.com/gathercontent/wordpress-plugin/pull/23).
@@ -173,6 +176,9 @@ Below the text box is a button that will allow you to simply save all of that in
 * Complete rewrite of old plugin
 
 == Upgrade Notice ==
+
+= 3.0.6 =
+* Improved stability when importing a very large number of items.
 
 = 3.0.5 =
 * Add ability to set "Do not change" for WP status updates. Props [@achbed](https://github.com/achbed), [#23](https://github.com/gathercontent/wordpress-plugin/pull/23).
