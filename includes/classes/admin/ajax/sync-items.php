@@ -82,9 +82,28 @@ class Sync_Items extends Plugin_Base {
 
 		$percent = $this->mapping->get_pull_percent();
 
-		// do_action( 'gc_pull_items', $this->mapping );
+		if ( $percent < 100 && absint( $percent ) === absint( $this->_post_val( 'percent' ) ) ) {
+			$this->maybe_trigger_new_pull( $percent );
+		}
 
 		wp_send_json_success( compact( 'percent' ) );
+	}
+
+	public function maybe_trigger_new_pull( $percent ) {
+		$ids = $this->mapping->get_items_to_pull();
+		if ( empty( $ids['pending'] ) || ! is_array( $ids['pending'] ) ) {
+			return;
+		}
+
+		$id = array_shift( $ids['pending'] );
+
+		$progress_option_key = "gc_pull_item_{$id}";
+		$in_progress = get_option( $progress_option_key );
+
+		if ( ! $in_progress ) {
+			do_action( 'gc_pull_items', $this->mapping );
+		}
+
 	}
 
 	protected function get_fields() {

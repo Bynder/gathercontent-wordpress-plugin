@@ -104,7 +104,7 @@ class Debug extends Base {
 	 * @return void
 	 */
 	public function log_sync_results( $maybe_error, $sync ) {
-		self::debug_log( $maybe_error );
+		self::debug_log( $maybe_error, $sync->direction . ' items result' );
 	}
 
 	/**
@@ -378,12 +378,13 @@ class Debug extends Base {
 	 * @since  3.0.1
 	 *
 	 * @param  string  $message Message to write to log file.
+	 * @param  string  $title   Describes what is being logged.
 	 *
 	 * @return void
 	 */
-	public static function debug_log( $message = '' ) {
+	public static function debug_log( $message = '', $title = '' ) {
 		if ( self::$debug_mode ) {
-			self::_debug_log( $message );
+			self::_debug_log( $message, $title );
 		}
 	}
 
@@ -396,8 +397,12 @@ class Debug extends Base {
 	 *
 	 * @return void
 	 */
-	protected static function _debug_log( $message = '' ) {
-		error_log( date('Y-m-d H:i:s') .': '. print_r( $message, 1 ) ."\r\n", 3, self::$log_path );
+	protected static function _debug_log( $message = '', $title = '' ) {
+		$message = print_r( $message, 1 );
+		if ( $title ) {
+			$message = print_r( $title, 1 ) . ': ' . $message;
+		}
+		error_log( date('Y-m-d H:i:s') .': '. $message ."\r\n", 3, self::$log_path );
 	}
 
 }

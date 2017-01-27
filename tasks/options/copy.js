@@ -9,6 +9,7 @@ module.exports = {
 			'!node_modules/**',
 			'!vendor/**',
 			'!tests/**',
+			'!release',
 			'!release/**',
 			'!assets/css/sass/**',
 			'!assets/css/src/**',

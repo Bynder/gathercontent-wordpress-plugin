@@ -15,6 +15,7 @@ module.exports = {
 			'!**/node_modules/**',
 			'!**/.git/**',
 			'!**/bin/**',
+			'!**/.svn/**',
 			'!**/tests/**',
 			'!**/sass/**',
 			'!**.zip',
@@ -30,6 +31,7 @@ module.exports = {
 			'!**/**bower.json',
 			'!**/**bower.json',
 			'!assets/js/src/**',
+			'!release/**',
 			'!tasks/**'
 		],
 		dest: 'gathercontent-importer/'
