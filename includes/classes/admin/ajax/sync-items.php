@@ -80,10 +80,13 @@ class Sync_Items extends Plugin_Base {
 			return false;
 		}
 
+		$prev_percent = absint( $this->_post_val( 'percent' ) );
 		$percent = $this->mapping->get_pull_percent();
 
-		if ( $percent < 100 && absint( $percent ) === absint( $this->_post_val( 'percent' ) ) ) {
+		if ( $percent < 100 && absint( $percent ) === $prev_percent ) {
 			$this->maybe_trigger_new_pull( $percent );
+		} elseif ( $prev_percent > $percent ) {
+			$percent = $prev_percent;
 		}
 
 		wp_send_json_success( compact( 'percent' ) );
@@ -145,7 +148,7 @@ class Sync_Items extends Plugin_Base {
 
 		do_action( 'gc_pull_items', $this->mapping );
 
-		$percent = 0.1;
+		$percent = round( ( .25 / count( $fields['import'] ) ) * 100 );
 
 		wp_send_json_success( compact( 'percent' ) );
 	}

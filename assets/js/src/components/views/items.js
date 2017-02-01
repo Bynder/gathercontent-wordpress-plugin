@@ -1,4 +1,5 @@
 module.exports = function( app, $, gc ) {
+	var thisView;
 	var percent = gc.percent;
 	app.views.tableSearch = require( './../views/table-search.js' )( app, $, gc );
 	app.views.tableNav = require( './../views/table-nav.js' )( app, $, gc );
@@ -16,6 +17,7 @@ module.exports = function( app, $, gc ) {
 		},
 
 		initialize: function() {
+			thisView = this;
 			app.views.tableBase.prototype.initialize.call( this );
 
 			this.listenTo( this.ajax, 'response', this.ajaxResponse );
@@ -101,6 +103,15 @@ module.exports = function( app, $, gc ) {
 			this.setTimeout( this.checkProgress.bind( this ) );
 
 			if ( percent > 99 ) {
+				// This is to allow the slight css animation.
+				this.renderProgressUpdate( 100 );
+
+				// This is to render the loading spinner. Wait long enough for css animation to copmlete.
+				window.setTimeout( function() {
+					thisView.renderProgress( 100, true );
+				}, 100 );
+
+				// Finally, cancel the sync, and redirect.
 				this.cancelSync( window.location.href + '&updated=1&flush_cache=1&redirect=1' );
 			} else {
 				this.renderProgressUpdate( percent );
@@ -143,10 +154,13 @@ module.exports = function( app, $, gc ) {
 				.find( 'span' ).text( percent + '%' );
 		},
 
-		renderProgress: function( percent ) {
+		renderProgress: function( percent, showLoader ) {
 			this.$el.addClass( 'gc-sync-progress' );
 			this.buttonStatus( false );
-			this.$( '#sync-tabs' ).html( this.progressTemplate( { percent: percent } ) );
+			this.$( '#sync-tabs' ).html( this.progressTemplate( {
+				percent: null === percent ? 0 : percent,
+				loader: true === showLoader
+			} ) );
 		},
 
 		renderRows: function( html ) {

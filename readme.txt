@@ -64,6 +64,9 @@ Below the text box is a button that will allow you to simply save all of that in
 
 == Changelog ==
 
+= 3.0.7 =
+* Improved percentage accuracy, and loader animations with the import/sync process.
+
 = 3.0.6 =
 * Improved stability when importing a very large number of items.
 
@@ -176,6 +179,9 @@ Below the text box is a button that will allow you to simply save all of that in
 * Complete rewrite of old plugin
 
 == Upgrade Notice ==
+
+= 3.0.7 =
+* Improved percentage accuracy, and loader animations with the import/sync process.
 
 = 3.0.6 =
 * Improved stability when importing a very large number of items.
