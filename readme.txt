@@ -3,8 +3,8 @@ Contributors:      gathercontent, mathew-chapman, namshee, justinsainton, jtster
 Donate link:       http://www.gathercontent.com
 Tags               structured content, gather content, gathercontent, import, migrate, export, mapping, production, writing, collaboration, platform, connect, link, gather, client, word, production
 Requires at least: 3.8
-Tested up to:      4.7.1
-Stable tag:        3.0.6
+Tested up to:      4.7.2
+Stable tag:        3.0.7
 License:           GPL-2.0+
 License URI:       https://opensource.org/licenses/GPL-2.0
 
@@ -185,7 +185,7 @@ Below the text box is a button that will allow you to simply save all of that in
 * Improved percentage accuracy, and loader animations with the import/sync process.
 * Detects if site has HTTP authentication enabled, and provides settings fields for storing authentication credentials. (Plugin sync processes will not work if they are not provided)
 
-= 3.0.6 =
+= 3.0.7 =
 * Improved stability when importing a very large number of items.
 
 = 3.0.5 =
