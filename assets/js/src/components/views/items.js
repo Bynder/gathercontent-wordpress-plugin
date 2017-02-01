@@ -143,7 +143,13 @@ module.exports = function( app, $, gc ) {
 				this.renderProgressUpdate( 0 );
 				this.cancelSync();
 				if ( response.data ) {
-					return window.alert( response.data );
+					if ( response.data.url ) {
+						window.alert( response.data.message );
+						window.location.href = response.data.url;
+					} else {
+						window.alert( response.data );
+					}
+					return;
 				}
 			}
 		},

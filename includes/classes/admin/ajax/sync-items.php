@@ -18,6 +18,8 @@ class Sync_Items extends Plugin_Base {
 
 		$this->maybe_cancelling();
 
+		$this->check_http_auth();
+
 		$this->maybe_checking_status();
 
 		$fields = $this->get_fields();
@@ -31,6 +33,19 @@ class Sync_Items extends Plugin_Base {
 			wp_send_json_error( sprintf(
 				__( 'Error %d: Missing required data.', 'gathercontent-import' ),
 				__LINE__
+			) );
+		}
+	}
+
+	protected function check_http_auth() {
+		$admin = General::get_instance()->admin;
+		if (
+			\GatherContent\Importer\auth_enabled()
+			&& ! $admin->get_setting( 'auth_verified' )
+		) {
+			wp_send_json_error( array(
+				'message' => __( 'Syncing is disabled until authentication credentials are provided. Redirecting to the settings page.', 'gathercontent-import' ),
+				'url'     => add_query_arg( 'auth-required', 1, $admin->url ),
 			) );
 		}
 	}

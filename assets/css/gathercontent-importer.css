@@ -193,6 +193,9 @@ ul.gc-radio-desc li, ul.gc-reveal-items-list li {
     border: 1px solid #00ABBD;
     color: #fff; }
 
+.gc-auth-required .gc-section-auth table {
+  background-color: #f5bfbf; }
+
 #gc-items-search {
   float: left; }
 
