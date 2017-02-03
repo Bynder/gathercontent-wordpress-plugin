@@ -47,6 +47,9 @@ Below the text box is a button that will allow you to simply save all of that in
 
 ## Changelog ##
 
+### 3.0.8 ###
+* Fix occasional bug when "Do not import" being selected could cause issues when pushing content back to GatherContent.
+
 ### 3.0.7 ###
 * Improved percentage accuracy, and loader animations with the import/sync process.
 * Specific to the "1%" sync error, Now detects if site has HTTP authentication enabled, and provides settings fields for storing authentication credentials. (Plugin sync processes will not work if they are not provided)
