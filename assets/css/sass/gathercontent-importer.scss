@@ -282,6 +282,10 @@ ul.gc-radio-desc li, ul.gc-reveal-items-list li {
 	}
 }
 
+.gc-auth-required .gc-section-auth table {
+	background-color: #f5bfbf;
+}
+
 @import 'sync';
 @import 'modal';
 @import 'single';
