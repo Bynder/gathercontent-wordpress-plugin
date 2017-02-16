@@ -480,10 +480,14 @@ abstract class Base extends Plugin_Base {
 		$image = '';
 
 		$atts = wp_parse_args( $atts, array(
+			'size'   => 'full',
 			'align'  => '',
 			'linkto' => '',
-			'size'   => 'full',
+			'class'  => '',
+			'alt'    => '',
 		) );
+
+		$atts = array_map( 'esc_attr', $atts );
 
 		if ( ! $atts['linkto'] && ! ( $atts['size'] || $atts['align'] ) ) {
 			return $image;
@@ -515,7 +519,7 @@ abstract class Base extends Plugin_Base {
 			$atts['size'] = array_map( 'absint', $atts['size'] );
 			$size_class = join( 'x', $atts['size'] );
 		} else {
-			$atts['size'] = $size_class = sanitize_text_field( $atts['size'] );
+			$atts['size'] = $size_class = $atts['size'];
 			if ( 'full' === $atts['size'] ) {
 				$atts['size'] = '';
 			}
@@ -528,8 +532,12 @@ abstract class Base extends Plugin_Base {
 		$args = array(
 			'data-gcid'   => $media_id,
 			'data-gcatts' => wp_json_encode( array_filter( $atts ) ),
-			'class'       => "gathercontent-image $alignclass attachment-$size_class size-$size_class wp-image-$attach_id",
+			'class'       => "gathercontent-image $alignclass attachment-$size_class size-$size_class wp-image-$attach_id" . ( $atts['class'] ? ' ' . $atts['class'] : '' ),
 		);
+
+		if ( ! empty( $atts['alt'] ) ) {
+			$args['alt'] = $atts['alt'];
+		}
 
 		if ( $atts['linkto'] ) {
 			$image = wp_get_attachment_link(
