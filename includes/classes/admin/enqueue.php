@@ -38,6 +38,16 @@ abstract class Enqueue extends Plugin_Base {
 	 * @return void
 	 */
 	public function admin_enqueue_script() {
+
+		// BadgeOS is a bad citizen as it is enqueueing its (old) version of select2 in the entire admin.
+		// It is incompatible with the new version, so we need to remove it on our pages.
+		if ( wp_script_is( 'badgeos-select2', 'enqueued' ) ) {
+			wp_dequeue_script( 'badgeos-select2' );
+			wp_deregister_script( 'badgeos-select2' );
+			wp_dequeue_style( 'badgeos-select2-css' );
+			wp_deregister_style( 'badgeos-select2-css' );
+		}
+
 		\GatherContent\Importer\enqueue_script( 'gc-select2', 'vendor/select2-4.0.3/select2', array( 'jquery' ), '4.0.3' );
 
 		// If < WP 4.5, we need the newer version of underscore.js
