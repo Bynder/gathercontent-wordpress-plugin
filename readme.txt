@@ -64,6 +64,9 @@ Below the text box is a button that will allow you to simply save all of that in
 
 == Changelog ==
 
+= 3.0.9 =
+* Fix issue when BadgeOS is installed. BadgeOS is enqueueing its (old) version of select2 in the entire admin. It is incompatible with the new version, so we need to remove it on our pages.
+
 = 3.0.8 =
 * Fix occasional bug when "Do not import" being selected could cause issues when pushing content back to GatherContent.
 
@@ -183,6 +186,9 @@ Below the text box is a button that will allow you to simply save all of that in
 * Complete rewrite of old plugin
 
 == Upgrade Notice ==
+
+= 3.0.9 =
+* Fix issue when BadgeOS is installed. BadgeOS is enqueueing its (old) version of select2 in the entire admin. It is incompatible with the new version, so we need to remove it on our pages.
 
 = 3.0.8 =
 * Fix occasional bug when "Do not import" being selected could cause issues when pushing content back to GatherContent.
