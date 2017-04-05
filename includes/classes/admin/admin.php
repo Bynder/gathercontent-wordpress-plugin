@@ -334,11 +334,12 @@ class Admin extends Base {
 	public function auth_username_field_cb( $field ) {
 		$id = $field->param( 'id' );
 
+		$enabled = \GatherContent\Importer\auth_enabled();
 		$this->view( 'input', array(
 			'id'    => $id,
 			'name'  => $this->option_name .'['. $id .']',
 			'value' => esc_attr( $this->get_setting( $id ) ),
-			'placeholder' => esc_attr( \GatherContent\Importer\auth_enabled() ),
+			'placeholder' => is_string( $enabled ) ? esc_attr( $enabled ) : '',
 		) );
 	}
 

@@ -1,10 +1,10 @@
 === GatherContent Plugin ===
-Contributors:      gathercontent, mathew-chapman, namshee, justinsainton, jtsternberg
+Contributors:      gathercontent, mathew-chapman, namshee, jtsternberg, justinsainton
 Donate link:       http://www.gathercontent.com
 Tags               structured content, gather content, gathercontent, import, migrate, export, mapping, production, writing, collaboration, platform, connect, link, gather, client, word, production
 Requires at least: 3.8
-Tested up to:      4.7.2
-Stable tag:        3.0.7
+Tested up to:      4.7.3
+Stable tag:        3.0.8
 License:           GPL-2.0+
 License URI:       https://opensource.org/licenses/GPL-2.0
 
@@ -65,6 +65,12 @@ Below the text box is a button that will allow you to simply save all of that in
 == Changelog ==
 
 = 3.0.8 =
+* Update the error message to indicate user may not have proper permission in GatherContent to view GatherContent Templates/Projects.
+* Add "class" and "alt" to whitelisted shortcode attributes for the GatherContent `[media]` shortcode.
+* Add the `wp_get_attachment_image()` attributes array to the `gc_content_image` filter.
+* Add `gc_admin_enqueue_style` and `gc_admin_enqueue_script` actions.
+* Fix issue when BadgeOS is installed. BadgeOS is enqueueing its (old) version of select2 in the entire admin. It is incompatible with the new version, so we need to remove it on our pages.
+* Check multiple server variable keys to detect if HTTP authentication is enabled on the site. ([https://wordpress.org/support/topic/import-hangs-at-1/](https://wordpress.org/support/topic/import-hangs-at-1/))
 * Fix occasional bug when "Do not import" being selected could cause issues when pushing content back to GatherContent.
 
 = 3.0.7 =
@@ -185,6 +191,12 @@ Below the text box is a button that will allow you to simply save all of that in
 == Upgrade Notice ==
 
 = 3.0.8 =
+* Update the error message to indicate user may not have proper permission in GatherContent to view GatherContent Templates/Projects.
+* Add "class" and "alt" to whitelisted shortcode attributes for the GatherContent `[media]` shortcode.
+* Add the `wp_get_attachment_image()` attributes array to the `gc_content_image` filter.
+* Add `gc_admin_enqueue_style` and `gc_admin_enqueue_script` actions.
+* Fix issue when BadgeOS is installed. BadgeOS is enqueueing its (old) version of select2 in the entire admin. It is incompatible with the new version, so we need to remove it on our pages.
+* Check multiple server variable keys to detect if HTTP authentication is enabled on the site. ([https://wordpress.org/support/topic/import-hangs-at-1/](https://wordpress.org/support/topic/import-hangs-at-1/))
 * Fix occasional bug when "Do not import" being selected could cause issues when pushing content back to GatherContent.
 
 = 3.0.7 =

@@ -616,10 +616,11 @@ class Pull extends Base {
 				} elseif ( in_array( $attachment['destination'], array( 'content_image', 'excerpt_image' ), true ) ) {
 					$field = 'excerpt_image' === $attachment['destination'] ? 'post_excerpt' : 'post_content';
 
-					$image = wp_get_attachment_image( $attach_id, 'full', false, array(
+					$atts = array(
 						'data-gcid' => $media->id,
-						'class'     => 'attachment-full size-full gathercontent-image',
-					) );
+						'class'     => "gathercontent-image attachment-full size-full wp-image-$attach_id",
+					);
+					$image = wp_get_attachment_image( $attach_id, 'full', false, $atts );
 
 					// If we've found a GC "shortcode"...
 					if ( $media_replace = $this->get_media_shortcode_attributes( $post_data[ $field ], $media->position ) ) {
@@ -634,7 +635,7 @@ class Pull extends Base {
 							$img = $maybe_image ? $maybe_image : $image;
 
 							// Replace the GC "shortcode" with the image/link.
-							$img = apply_filters( 'gc_content_image', $img, $media, $attach_id, $post_data );
+							$img = apply_filters( 'gc_content_image', $img, $media, $attach_id, $post_data, $atts );
 							$replacements[ $field ][ $replace_val ] = $img;
 						}
 
@@ -644,7 +645,7 @@ class Pull extends Base {
 					} else {
 
 						// Replace the token with the image.
-						$image = apply_filters( 'gc_content_image', $image, $media, $attach_id, $post_data );
+						$image = apply_filters( 'gc_content_image', $image, $media, $attach_id, $post_data, $atts );
 						$replacements[ $field ][ $token ] = $image;
 
 					}
