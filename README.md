@@ -1,4 +1,4 @@
-# GatherContent Plugin -- Version 3.0.8 #
+# GatherContent Plugin -- Version 3.1.0 #
 
 This plugin allows you to transfer content from your GatherContent projects into your WordPress site and vice-versa.
 
@@ -46,6 +46,12 @@ Below the text box is a button that will allow you to simply save all of that in
 
 
 ## Changelog ##
+
+### 3.1.0 ###
+* Do not require logged-in cookies for wp-async requests (which performa push/pull operations). Fixes [#27](https://github.com/gathercontent/wordpress-plugin/issues/27).
+
+### 3.0.9 ###
+* Fix improperly cast object property for php 7 compatibility.
 
 ### 3.0.8 ###
 * Update the error message to indicate user may not have proper permission in GatherContent to view GatherContent Templates/Projects.
