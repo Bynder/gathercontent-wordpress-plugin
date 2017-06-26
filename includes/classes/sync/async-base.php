@@ -46,19 +46,12 @@ abstract class Async_Base extends \WP_Async_Task {
 	 */
 	public function launch_on_shutdown() {
 		if ( ! empty( $this->_body_data ) ) {
-			$cookies = array();
-			foreach ( $_COOKIE as $name => $value ) {
-				$cookies[] = "$name=" . urlencode( is_array( $value ) ? serialize( $value ) : $value );
-			}
-
 			$request_args = array(
 				'timeout'   => 0.01,
 				'blocking'  => false,
 				'sslverify' => apply_filters( 'https_local_ssl_verify', true ),
 				'body'      => $this->_body_data,
-				'headers'   => array(
-					'cookie' => implode( '; ', $cookies ),
-				),
+				'headers'   => array(),
 			);
 
 			if ( \GatherContent\Importer\auth_enabled() ) {

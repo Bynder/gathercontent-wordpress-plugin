@@ -68,6 +68,7 @@ class Push extends Base {
 	public function init_hooks() {
 		parent::init_hooks();
 		add_action( 'wp_async_gc_push_items', array( $this, 'sync_items' ) );
+		add_action( 'wp_async_nopriv_gc_push_items', array( $this, 'sync_items' ) );
 	}
 
 	/**
