@@ -145,6 +145,12 @@ class Debug extends Base {
 		);
 
 		$section->add_field(
+			'log_importer_requests',
+			__( 'Log Importer Requests?', 'gathercontent-import' ),
+			array( $this, 'debug_checkbox_field_cb' )
+		);
+
+		$section->add_field(
 			'review_stuck_status',
 			__( 'Review stuck sync statuses?', 'gathercontent-import' ),
 			array( $this, 'debug_checkbox_field_cb' )
@@ -188,13 +194,19 @@ class Debug extends Base {
 	public function debug_checkbox_field_cb( $field ) {
 		$id = $field->param( 'id' );
 
-		$this->view( 'input', array(
+		$args = array(
 			'id' => $id,
 			'name' => $this->admin->option_name .'[debug]['. $id .']',
 			'type' => 'checkbox',
 			'class' => '',
 			'value' => 1,
-		) );
+		);
+
+		if ( $this->admin->get_setting( $id ) ) {
+			$args['checked'] = 'checked';
+		}
+
+		$this->view( 'input', $args );
 	}
 
 	/**
@@ -207,16 +219,24 @@ class Debug extends Base {
 	 * @return void
 	 */
 	public function do_debug_options_actions( $settings ) {
-		if ( ! isset( $settings['debug'] ) || empty( $settings['debug'] ) ) {
+		if ( empty( $settings['debug']['log_importer_requests'] ) ) {
+			$settings['log_importer_requests'] = false;
+			unset( $settings['debug'] );
 			return $settings;
 		}
 
+		if ( empty( $settings['debug'] ) ) {
+			return $settings;
+		}
+
+		$orig_settings = $settings;
 		$settings = wp_parse_args( $settings['debug'], array(
-			'review_stuck_status' => false,
-			'delete_stuck_status' => false,
-			'view_gc_log_file'    => false,
-			'delete_gc_log_file'  => false,
-			'disable_debug_mode'  => false,
+			'log_importer_requests' => false,
+			'review_stuck_status'   => false,
+			'delete_stuck_status'   => false,
+			'view_gc_log_file'      => false,
+			'delete_gc_log_file'    => false,
+			'disable_debug_mode'    => false,
 		) );
 
 		$back_url = isset( $_SERVER['HTTP_REFERER'] ) ? $_SERVER['HTTP_REFERER'] : '';
@@ -239,6 +259,10 @@ class Debug extends Base {
 			wp_safe_redirect( add_query_arg( 'gathercontent_debug_mode', 0, $back_url ) );
 			exit;
 
+		} elseif ( $settings['log_importer_requests'] ) {
+			$orig_settings['log_importer_requests'] = true;
+			unset( $orig_settings['debug'] );
+			return $orig_settings;
 		}
 
 		wp_die( '<xmp>'. __LINE__ .') $settings: '. print_r( $settings, true ) .'</xmp>' . $back_button, __( 'Debug Mode', 'gathercontent-import' ) );
