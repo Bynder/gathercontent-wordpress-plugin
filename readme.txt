@@ -4,7 +4,7 @@ Donate link:       http://www.gathercontent.com
 Tags               structured content, gather content, gathercontent, import, migrate, export, mapping, production, writing, collaboration, platform, connect, link, gather, client, word, production
 Requires at least: 3.8
 Tested up to:      4.7.3
-Stable tag:        3.1.1
+Stable tag:        3.1.2
 License:           GPL-2.0+
 License URI:       https://opensource.org/licenses/GPL-2.0
 
@@ -63,6 +63,9 @@ Below the text box is a button that will allow you to simply save all of that in
 6. Or change the item's GatherContent status in quick-edit mode.
 
 == Changelog ==
+
+= 3.1.2 =
+* Allow side-loading non-image files/media from GatherContent.
 
 = 3.1.1 =
 * Added ability log the async requests in debug mode.
@@ -199,6 +202,9 @@ Below the text box is a button that will allow you to simply save all of that in
 * Complete rewrite of old plugin
 
 == Upgrade Notice ==
+
+= 3.1.2 =
+* Allow side-loading non-image files/media from GatherContent.
 
 = 3.1.1 =
 * Added ability log the async requests in debug mode.
