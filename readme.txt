@@ -4,7 +4,7 @@ Donate link:       http://www.gathercontent.com
 Tags               structured content, gather content, gathercontent, import, migrate, export, mapping, production, writing, collaboration, platform, connect, link, gather, client, word, production
 Requires at least: 3.8
 Tested up to:      4.7.3
-Stable tag:        3.1.1
+Stable tag:        3.1.2
 License:           GPL-2.0+
 License URI:       https://opensource.org/licenses/GPL-2.0
 
@@ -64,9 +64,12 @@ Below the text box is a button that will allow you to simply save all of that in
 
 == Changelog ==
 
+= 3.1.2 =
+* Allow side-loading non-image files/media from GatherContent.
+
 = 3.1.1 =
 * Added ability log the async requests in debug mode.
-* Removeed duplicated abstract method. Fixes "Can't inherit abstract function" error which may occur on some servers.
+* Removed duplicated abstract method. Fixes "Can't inherit abstract function" error which may occur on some servers.
 
 = 3.1.0 =
 * Do not require logged-in cookies for wp-async requests (which performa push/pull operations). Fixes [#27](https://github.com/gathercontent/wordpress-plugin/issues/27).
@@ -200,9 +203,12 @@ Below the text box is a button that will allow you to simply save all of that in
 
 == Upgrade Notice ==
 
+= 3.1.2 =
+* Allow side-loading non-image files/media from GatherContent.
+
 = 3.1.1 =
 * Added ability log the async requests in debug mode.
-* Removeed duplicated abstract method. Fixes "Can't inherit abstract function" error which may occur on some servers.
+* Removed duplicated abstract method. Fixes "Can't inherit abstract function" error which may occur on some servers.
 
 = 3.1.0 =
 * Do not require logged-in cookies for wp-async requests (which performa push/pull operations). Fixes [#27](https://github.com/gathercontent/wordpress-plugin/issues/27).
