@@ -1,4 +1,4 @@
-# GatherContent Plugin -- Version 3.1.2 #
+# GatherContent Plugin -- Version 3.1.3 #
 
 This plugin allows you to transfer content from your GatherContent projects into your WordPress site and vice-versa.
 
@@ -46,6 +46,9 @@ Below the text box is a button that will allow you to simply save all of that in
 
 
 ## Changelog ##
+
+### 3.1.3 ###
+* Fix bug where some taxonomy terms were not being set (caused by changes made for [#27](https://github.com/gathercontent/wordpress-plugin/issues/27)).
 
 ### 3.1.2 ###
 * Allow side-loading non-image files/media from GatherContent.
