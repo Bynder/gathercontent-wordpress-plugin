@@ -58,7 +58,9 @@ abstract class Async_Base extends \WP_Async_Task {
 			'blocking'  => false,
 			'sslverify' => apply_filters( 'https_local_ssl_verify', true ),
 			'body'      => $this->_body_data,
-			'headers'   => array(),
+			'headers'   => array(
+				// 'cookie' => self::get_cookies(),
+			),
 		);
 
 		if ( \GatherContent\Importer\auth_enabled() ) {
@@ -86,6 +88,23 @@ abstract class Async_Base extends \WP_Async_Task {
 				'body'    => wp_remote_retrieve_body( $response ),
 			), 'async request response' );
 		}
+	}
+
+	/**
+	 * Get the current request cookies.
+	 * Not currently used, but left for posterity.
+	 *
+	 * @since  3.1.4
+	 *
+	 * @return array
+	 */
+	public static function get_cookies() {
+		$cookies = array();
+		foreach ( $_COOKIE as $name => $value ) {
+			$cookies[] = "$name=" . urlencode( is_array( $value ) ? serialize( $value ) : $value );
+		}
+
+		return implode( '; ', $cookies );
 	}
 
 	/**
