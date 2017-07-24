@@ -121,11 +121,7 @@ abstract class Async_Base extends \WP_Async_Task {
 		$data['ran_action'] = false;
 
 		if ( isset( $_POST['_nonce'] ) && $this->verify_async_nonce( $_POST['_nonce'] ) ) {
-			if ( ! is_user_logged_in() ) {
-				$this->action = "nopriv_$this->action";
-			}
-			$this->run_action();
-			$data['ran_action'] = true;
+			$data['ran_action'] = $this->run_action();
 		}
 
 		if ( ! General::get_instance()->admin->get_setting( 'log_importer_requests' ) ) {
@@ -150,12 +146,35 @@ abstract class Async_Base extends \WP_Async_Task {
 	}
 
 	/**
-	 * Run the async task action
+	 * Run the async task action.
+	 * We do this rather than changing $this->action so that nested calls work correctly.
+	 *
+	 * @return bool Whether the do_action was called.
 	 */
 	protected function run_action() {
-		$mapping_id = absint( $_POST['mapping_id'] );
-		if ( $mapping_id && ( $mapping_post = get_post( $mapping_id ) ) ) {
-			do_action( "wp_async_$this->action", $mapping_post );
+		$action_name = $this->action;
+		if ( ! is_user_logged_in() ) {
+			$action_name = "nopriv_$action_name";
 		}
+
+		return $this->run_given_action( $action_name );
+	}
+
+	/**
+	 * Run the given async task action
+	 *
+	 * @since  3.1.4
+	 *
+	 * @return bool Whether the do_action was called.
+	 */
+	protected function run_given_action( $action_name ) {
+		$mapping_id = absint( $_POST['mapping_id'] );
+
+		if ( $mapping_id && ( $mapping_post = get_post( $mapping_id ) ) ) {
+			do_action( "wp_async_$action_name", $mapping_post );
+			return true;
+		}
+
+		return false;
 	}
 }
