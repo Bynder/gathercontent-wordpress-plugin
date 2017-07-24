@@ -58,7 +58,9 @@ abstract class Async_Base extends \WP_Async_Task {
 			'blocking'  => false,
 			'sslverify' => apply_filters( 'https_local_ssl_verify', true ),
 			'body'      => $this->_body_data,
-			'headers'   => array(),
+			'headers'   => array(
+				// 'cookie' => self::get_cookies(),
+			),
 		);
 
 		if ( \GatherContent\Importer\auth_enabled() ) {
@@ -89,6 +91,23 @@ abstract class Async_Base extends \WP_Async_Task {
 	}
 
 	/**
+	 * Get the current request cookies.
+	 * Not currently used, but left for posterity.
+	 *
+	 * @since  3.1.4
+	 *
+	 * @return array
+	 */
+	public static function get_cookies() {
+		$cookies = array();
+		foreach ( $_COOKIE as $name => $value ) {
+			$cookies[] = "$name=" . urlencode( is_array( $value ) ? serialize( $value ) : $value );
+		}
+
+		return implode( '; ', $cookies );
+	}
+
+	/**
 	 * Verify the postback is valid, then fire any scheduled events.
 	 *
 	 * @uses $_POST['_nonce']
@@ -102,11 +121,7 @@ abstract class Async_Base extends \WP_Async_Task {
 		$data['ran_action'] = false;
 
 		if ( isset( $_POST['_nonce'] ) && $this->verify_async_nonce( $_POST['_nonce'] ) ) {
-			if ( ! is_user_logged_in() ) {
-				$this->action = "nopriv_$this->action";
-			}
-			$this->run_action();
-			$data['ran_action'] = true;
+			$data['ran_action'] = $this->run_action();
 		}
 
 		if ( ! General::get_instance()->admin->get_setting( 'log_importer_requests' ) ) {
@@ -131,12 +146,35 @@ abstract class Async_Base extends \WP_Async_Task {
 	}
 
 	/**
-	 * Run the async task action
+	 * Run the async task action.
+	 * We do this rather than changing $this->action so that nested calls work correctly.
+	 *
+	 * @return bool Whether the do_action was called.
 	 */
 	protected function run_action() {
-		$mapping_id = absint( $_POST['mapping_id'] );
-		if ( $mapping_id && ( $mapping_post = get_post( $mapping_id ) ) ) {
-			do_action( "wp_async_$this->action", $mapping_post );
+		$action_name = $this->action;
+		if ( ! is_user_logged_in() ) {
+			$action_name = "nopriv_$action_name";
 		}
+
+		return $this->run_given_action( $action_name );
+	}
+
+	/**
+	 * Run the given async task action
+	 *
+	 * @since  3.1.4
+	 *
+	 * @return bool Whether the do_action was called.
+	 */
+	protected function run_given_action( $action_name ) {
+		$mapping_id = absint( $_POST['mapping_id'] );
+
+		if ( $mapping_id && ( $mapping_post = get_post( $mapping_id ) ) ) {
+			do_action( "wp_async_$action_name", $mapping_post );
+			return true;
+		}
+
+		return false;
 	}
 }

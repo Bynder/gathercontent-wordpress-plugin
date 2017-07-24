@@ -99,7 +99,7 @@ class Pull extends Base {
 		$this->set_item( $id );
 
 		$post_data = array();
-		$attachments = false;
+		$attachments = $tax_terms = false;
 
 		if ( $existing = \GatherContent\Importer\get_post_by_item_id( $id ) ) {
 			// Check if item is up-to-date and if pull is necessary.
@@ -130,6 +130,11 @@ class Pull extends Base {
 			unset( $post_data['attachments'] );
 		}
 
+		if ( ! empty( $post_data['tax_input'] ) ) {
+			$tax_terms = $post_data['tax_input'];
+			unset( $post_data['tax_input'] );
+		}
+
 		if ( empty( $post_data['post_title'] ) && ! empty( $this->item->name ) ) {
 			$post_data['post_title'] = sanitize_text_field( $this->item->name );
 		}
@@ -149,6 +154,25 @@ class Pull extends Base {
 			'created_at' => $this->item->created_at->date,
 			'updated_at' => $this->item->updated_at->date,
 		) );
+
+		if ( ! empty( $tax_terms ) ) {
+			foreach ( $tax_terms as $taxonomy => $terms ) {
+				$taxonomy_obj = get_taxonomy( $taxonomy );
+				if ( ! $taxonomy_obj ) {
+					/* translators: %s: taxonomy name */
+					_doing_it_wrong( __FUNCTION__, sprintf( __( 'Invalid taxonomy: %s.' ), $taxonomy ), '4.4.0' );
+					continue;
+				}
+
+				// array = hierarchical, string = non-hierarchical.
+				if ( is_array( $terms ) ) {
+					$terms = array_filter( $terms );
+				}
+
+				// Set post terms without the cap-check.
+				wp_set_post_terms( $post_id, $terms, $taxonomy );
+			}
+		}
 
 		$updated_post_data = array();
 

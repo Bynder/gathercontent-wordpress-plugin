@@ -136,12 +136,12 @@ abstract class Base extends Plugin_Base {
 	 *
 	 * @since  3.0.0
 	 *
-	 * @param  int $mapping_post_id Mapping post ID.
+	 * @param  int $mapping_post Mapping post object.
 	 *
 	 * @return mixed Result of sync. WP_Error on failure.
 	 */
-	public function sync_items( $mapping_post_id ) {
-		$result = $this->_sync_items( $mapping_post_id );
+	public function sync_items( $mapping_post ) {
+		$result = $this->_sync_items( $mapping_post );
 		do_action( 'gc_sync_items_result', $result, $this );
 		return $result;
 	}
@@ -151,15 +151,15 @@ abstract class Base extends Plugin_Base {
 	 *
 	 * @since  3.0.0
 	 *
-	 * @param  int $mapping_post_id Mapping post ID.
+	 * @param  int $mapping_post Mapping post object.
 	 *
 	 * @throws Exception On failure.
 	 *
 	 * @return mixed Result of sync.
 	 */
-	protected function _sync_items( $mapping_post_id ) {
+	protected function _sync_items( $mapping_post ) {
 		try {
-			$this->mapping = Mapping_Post::get( $mapping_post_id, true );
+			$this->mapping = Mapping_Post::get( $mapping_post, true );
 
 			$this->check_mapping_data();
 			$ids = $this->get_items_to_sync( $this->direction );

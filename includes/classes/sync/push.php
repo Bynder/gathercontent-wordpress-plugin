@@ -317,7 +317,9 @@ class Push extends Base {
 				foreach ( $values as $key => $value ) {
 					$keys = explode( ':', $key );
 
-					unset( $this->item->config[ $keys[0] ]->elements[ $keys[1] ] );
+					if ( isset( $this->item->config[ $keys[0] ]->elements[ $keys[1] ] ) ) {
+						unset( $this->item->config[ $keys[0] ]->elements[ $keys[1] ] );
+					}
 
 					if ( empty( $this->item->config[ $keys[0] ]->elements ) ) {
 						unset( $this->item->config[ $keys[0] ] );
