@@ -490,6 +490,11 @@ class Push extends Base {
 		$updated = false;
 		$meta_value = get_post_meta( $this->post->ID, $meta_key, 1 );
 
+		$check = apply_filters( 'gc_config_pre_meta_field_value_updated', null, $meta_value, $meta_key, $this );
+		if ( null !== $check ) {
+			return $check;
+		}
+
 		switch ( $this->element->type ) {
 
 			case 'text':
@@ -509,6 +514,7 @@ class Push extends Base {
 				break;
 
 			case 'choice_checkbox':
+
 				if ( empty( $meta_value ) ) {
 					$meta_value = array();
 				} else {
@@ -522,7 +528,7 @@ class Push extends Base {
 
 		}
 
-		return $updated;
+		return apply_filters( 'gc_config_meta_field_value_updated', $updated, $meta_value, $meta_key, $this );
 	}
 
 	/**
