@@ -22,14 +22,6 @@ class Compatibility extends Base {
 		'choice_checkbox' => 'checkbox',
 	);
 
-	protected $acf_type_pull_callbacks = array(
-		'checkbox' => 'maybe_transform_checkbox_pull_value',
-	);
-
-	protected $acf_type_push_callbacks = array(
-		'checkbox' => 'maybe_transform_checkbox_push_value',
-	);
-
 	/**
 	 * Initiate admin hooks
 	 *
@@ -76,18 +68,19 @@ class Compatibility extends Base {
 			foreach ( $fields as $field ) {
 				if ( ! isset(
 					$field['type'],
-					$this->acf_type_pull_callbacks[ $field['type'] ],
 					$field['name'],
-					$post_data['meta_input'][ $field['name'] ] )
-				) {
+					$post_data['meta_input'][ $field['name'] ]
+				) ) {
 					continue;
 				}
 
-				$meta_value = call_user_func(
-					array( $this, $this->acf_type_pull_callbacks[ $field['type'] ] ),
-					$post_data['meta_input'][ $field['name'] ],
-					$field
-				);
+				$cb = $this->has_pull_transform_method( $field['type'] );
+
+				if ( ! $cb ) {
+					continue;
+				}
+
+				$meta_value = $cb( $post_data['meta_input'][ $field['name'] ], $field );
 
 				$post_data['meta_input'][ $field['name'] ] = apply_filters( 'gc_transform_meta_for_acf', $meta_value, $field, $post_data, $pull );
 			}
@@ -132,19 +125,19 @@ class Compatibility extends Base {
 
 			foreach ( $fields as $field ) {
 				if (
-					! isset( $field['type'], $field['name'], $this->acf_type_push_callbacks[ $field['type'] ] )
+					! isset( $field['type'], $field['name'] )
 					|| $acf_type !== $field['type']
 				) {
 					continue;
 				}
 
-				$updated = call_user_func(
-					array( $this, $this->acf_type_push_callbacks[ $field['type'] ] ),
-					$meta_key,
-					$meta_value,
-					$push,
-					$field
-				);
+				$cb = $this->has_push_transform_method( $field['type'] );
+
+				if ( ! $cb ) {
+					continue;
+				}
+
+				$updated = $cb( $meta_value, $push, $field );
 				break 2;
 					// $updated = $this->maybe_transform_checkbox_push_value( func_get_args() );
 			}
@@ -163,7 +156,7 @@ class Compatibility extends Base {
 	 *
 	 * @return mixed              Possibly modified meta value.
 	 */
-	public function maybe_transform_checkbox_pull_value( $meta_value, $field ) {
+	public function maybe_transform_pull_value_checkbox( $meta_value, $field ) {
 		if (
 			! empty( $meta_value )
 			&& is_array( $meta_value )
@@ -190,14 +183,13 @@ class Compatibility extends Base {
 	 *
 	 * @since  3.1.5
 	 *
-	 * @param  string $meta_key   The meta key to transform.
 	 * @param  mixed  $meta_value GC Checkbox Field value
 	 * @param  Push   $push       The Push object.
 	 * @param  array  $field      ACF Field array
 	 *
 	 * @return mixed              Possibly modified meta value.
 	 */
-	public function maybe_transform_checkbox_push_value( $meta_key, $meta_value, $push, $field ) {
+	public function maybe_transform_push_value_checkbox( $meta_value, $push, $field ) {
 		$updated = false;
 		if ( empty( $field['choices'] ) ) {
 			return $updated;
@@ -278,6 +270,20 @@ class Compatibility extends Base {
 		}
 
 		return $fields;
+	}
+
+	public function has_pull_transform_method( $type ) {
+		return is_callable( array( $this, "maybe_transform_pull_value_{$type}" ) )
+			? array( $this, "maybe_transform_pull_value_{$type}" )
+			: false;
+
+	}
+
+	public function has_push_transform_method( $type ) {
+		return is_callable( array( $this, "maybe_transform_push_value_{$type}" ) )
+			? array( $this, "maybe_transform_push_value_{$type}" )
+			: false;
+
 	}
 
 }
