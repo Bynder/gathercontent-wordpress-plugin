@@ -1,4 +1,4 @@
-# GatherContent Plugin -- Version 3.1.4 #
+# GatherContent Plugin -- Version 3.1.5 #
 
 This plugin allows you to transfer content from your GatherContent projects into your WordPress site and vice-versa.
 
@@ -46,6 +46,11 @@ Below the text box is a button that will allow you to simply save all of that in
 
 
 ## Changelog ##
+
+### 3.1.5 ###
+* Update to enable the Yoast SEO focus keyword again (a Yoast SEO plugin update changed the field type).
+* Add ACF compatibility shim for transforming ACF checkbox values to/from GatherContent checkbox values.
+* Two new filters, `gc_config_pre_meta_field_value_updated` and `gc_config_meta_field_value_updated`.
 
 ### 3.1.4 ###
 * Fix issue where syncing multiple items would not work (only syncing the first). Caused by nested wp-async tasks causing the action name name to be modified and the hooked callbacks not to be called.
