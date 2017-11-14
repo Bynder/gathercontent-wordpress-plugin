@@ -452,9 +452,13 @@ class API extends Base {
 			}
 		}
 
+		$wp_version     = get_bloginfo( 'version' );
+		$plugin_version = GATHERCONTENT_VERSION;
+
 		$headers = array(
 			'Authorization' => 'Basic ' . base64_encode( $this->user . ':' . $this->api_key ),
 			'Accept'        => 'application/vnd.gathercontent.v0.5+json',
+			'user-agent'    => "Integration-WordPress-{$wp_version}/{$plugin_version}",
 		);
 
 		$args['headers'] = isset( $args['headers'] )

@@ -1,4 +1,4 @@
-# GatherContent Plugin -- Version 3.1.5 #
+# GatherContent Plugin -- Version 3.1.6 #
 
 This plugin allows you to transfer content from your GatherContent projects into your WordPress site and vice-versa.
 
@@ -46,6 +46,11 @@ Below the text box is a button that will allow you to simply save all of that in
 
 
 ## Changelog ##
+
+### 3.1.6 ###
+* Update `\GatherContent\Importer\get_post_by_item_id()` to remove any WPML `WP_Query` filters so the mapped post is properly located.
+* Remove `.misc-pub-post-status` class from GC metabod, as it was adding a redundant pin icon.
+* Set user-agent when making GatherContent API calls.
 
 ### 3.1.5 ###
 * Update to enable the Yoast SEO focus keyword again (a Yoast SEO plugin update changed the field type).

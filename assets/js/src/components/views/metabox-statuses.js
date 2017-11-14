@@ -1,7 +1,7 @@
 module.exports = function( app, $, gc ) {
 	var thisView;
 	return app.views.statusSelect2.extend({
-		className       : 'misc-pub-section misc-pub-post-status',
+		className       : 'misc-pub-section',
 		select2template : wp.template( 'gc-status-select2' ),
 		template        : wp.template( 'gc-metabox-statuses' ),
 		isOpen          : false,

@@ -3,8 +3,8 @@ Contributors:      gathercontent, mathew-chapman, namshee, jtsternberg, justinsa
 Donate link:       http://www.gathercontent.com
 Tags               structured content, gather content, gathercontent, import, migrate, export, mapping, production, writing, collaboration, platform, connect, link, gather, client, word, production
 Requires at least: 3.8
-Tested up to:      4.8.0
-Stable tag:        3.1.5
+Tested up to:      4.8.3
+Stable tag:        3.1.6
 License:           GPL-2.0+
 License URI:       https://opensource.org/licenses/GPL-2.0
 
@@ -63,6 +63,11 @@ Below the text box is a button that will allow you to simply save all of that in
 6. Or change the item's GatherContent status in quick-edit mode.
 
 == Changelog ==
+
+= 3.1.6 =
+* Update `\GatherContent\Importer\get_post_by_item_id()` to remove any WPML `WP_Query` filters so the mapped post is properly located.
+* Remove `.misc-pub-post-status` class from GC metabod, as it was adding a redundant pin icon.
+* Set user-agent when making GatherContent API calls.
 
 = 3.1.5 =
 * Update to enable the Yoast SEO focus keyword again (a Yoast SEO plugin update changed the field type).
@@ -214,6 +219,11 @@ Below the text box is a button that will allow you to simply save all of that in
 * Complete rewrite of old plugin
 
 == Upgrade Notice ==
+
+= 3.1.6 =
+* Update `\GatherContent\Importer\get_post_by_item_id()` to remove any WPML `WP_Query` filters so the mapped post is properly located.
+* Remove `.misc-pub-post-status` class from GC metabod, as it was adding a redundant pin icon.
+* Set user-agent when making GatherContent API calls.
 
 = 3.1.5 =
 * Update to enable the Yoast SEO focus keyword again (a Yoast SEO plugin update changed the field type).
