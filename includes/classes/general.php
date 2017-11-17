@@ -75,6 +75,13 @@ class General extends Base {
 	 */
 	protected $compatibility_acf;
 
+	/**
+	 * GatherContent\Importer\Compatibility\WPML instance
+	 *
+	 * @var GatherContent\Importer\Compatibility\WPML
+	 */
+	protected $compatibility_wml;
+
 	const OPTION_NAME = 'gathercontent_importer';
 
 	/**
@@ -115,6 +122,10 @@ class General extends Base {
 		if ( class_exists( 'acf' ) ) {
 			$this->compatibility_acf  = new Compatibility\ACF();
 		}
+
+		if ( defined( 'ICL_SITEPRESS_VERSION' ) ) {
+			$this->compatibility_wml  = new Compatibility\WPML();
+		}
 	}
 
 	/**
@@ -150,6 +161,10 @@ class General extends Base {
 
 		if ( class_exists( 'acf' ) ) {
 			$this->compatibility_acf->init_hooks();
+		}
+
+		if ( defined( 'ICL_SITEPRESS_VERSION' ) ) {
+			$this->compatibility_wml->init_hooks();
 		}
 	}
 
