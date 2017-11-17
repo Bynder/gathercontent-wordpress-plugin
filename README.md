@@ -1,4 +1,4 @@
-# GatherContent Plugin -- Version 3.1.6 #
+# GatherContent Plugin -- Version 3.1.7 #
 
 This plugin allows you to transfer content from your GatherContent projects into your WordPress site and vice-versa.
 
@@ -46,6 +46,19 @@ Below the text box is a button that will allow you to simply save all of that in
 
 
 ## Changelog ##
+
+### 3.1.7 ###
+* Add WPML compatibility shim for properly mapping GatherContent taxonomy terms to translated language taxonomy terms where applicable, and vice-versa. **Note:** If the GC item uses the foreign language term name, then this will need to be unhooked. This can be done via:
+```php
+if ( class_exists( 'GatherContent\\Importer\\General' ) ) {
+	$general     = GatherContent\Importer\General::get_instance();
+	$wpml_compat = isset( $general->compatibility_wml ) ? $general->compatibility_wml : null;
+
+	remove_filter( 'gc_new_wp_post_data', array( $wpml_compat, 'maybe_transform_meta_for_wpml' ), 10, 2 );
+	remove_filter( 'gc_update_wp_post_data', array( $wpml_compat, 'maybe_transform_meta_for_wpml' ), 10, 2 );
+	remove_filter( 'gc_config_taxonomy_field_value_updated', array( $wpml_compat, 'maybe_update_taxonomy_item_value_from_wpml' ), 10, 4 );
+}
+```
 
 ### 3.1.6 ###
 * Update `\GatherContent\Importer\get_post_by_item_id()` to remove any WPML `WP_Query` filters so the mapped post is properly located.

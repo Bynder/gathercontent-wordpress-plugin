@@ -5,8 +5,9 @@
  * @package GatherContent Plugin
  */
 
-namespace GatherContent\Importer\ACF;
+namespace GatherContent\Importer\Compatibility;
 use GatherContent\Importer\Sync\Pull;
+use GatherContent\Importer\Sync\Push;
 use GatherContent\Importer\Base;
 
 /**
@@ -16,7 +17,7 @@ use GatherContent\Importer\Base;
  *
  * @since 3.1.5
  */
-class Compatibility extends Base {
+class ACF extends Base {
 
 	protected $gc_acf_type_map = array(
 		'choice_checkbox' => 'checkbox',
@@ -101,7 +102,7 @@ class Compatibility extends Base {
 	 *
 	 * @return bool               Whether the config element is updated.
 	 */
-	public function maybe_transform_config_meta_from_acf( $updated, $meta_value, $meta_key, $push ) {
+	public function maybe_transform_config_meta_from_acf( $updated, $meta_value, $meta_key, Push $push ) {
 		if ( ! isset( $push->element->type, $this->gc_acf_type_map[ $push->element->type ] ) || empty( $meta_value ) ) {
 			return $updated;
 		}
