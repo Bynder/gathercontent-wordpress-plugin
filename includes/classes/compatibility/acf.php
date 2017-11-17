@@ -7,6 +7,7 @@
 
 namespace GatherContent\Importer\Compatibility;
 use GatherContent\Importer\Sync\Pull;
+use GatherContent\Importer\Sync\Push;
 use GatherContent\Importer\Base;
 
 /**
@@ -101,7 +102,7 @@ class ACF extends Base {
 	 *
 	 * @return bool               Whether the config element is updated.
 	 */
-	public function maybe_transform_config_meta_from_acf( $updated, $meta_value, $meta_key, $push ) {
+	public function maybe_transform_config_meta_from_acf( $updated, $meta_value, $meta_key, Push $push ) {
 		if ( ! isset( $push->element->type, $this->gc_acf_type_map[ $push->element->type ] ) || empty( $meta_value ) ) {
 			return $updated;
 		}
