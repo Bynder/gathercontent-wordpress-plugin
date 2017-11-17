@@ -425,11 +425,18 @@ class Push extends Base {
 	 * @return bool $updated Whether value was updated.
 	 */
 	protected function set_taxonomy_field_value( $taxonomy ) {
-		$updated = false;
-		$terms = get_the_terms( $this->post, $taxonomy );
+		$terms      = get_the_terms( $this->post, $taxonomy );
 		$term_names = ! is_wp_error( $terms ) && ! empty( $terms )
 			? wp_list_pluck( $terms, 'name' )
 			: array();
+
+		$updated = $this->set_taxonomy_field_value_from_names( $term_names );
+
+		return apply_filters( 'gc_config_taxonomy_field_value_updated', $updated, $taxonomy, $terms, $this );
+	}
+
+	public function set_taxonomy_field_value_from_names( $term_names ) {
+		$updated = false;
 
 		switch ( $this->element->type ) {
 
