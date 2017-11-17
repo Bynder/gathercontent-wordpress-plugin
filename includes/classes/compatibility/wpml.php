@@ -159,7 +159,7 @@ class WPML extends Base {
 	}
 
 	protected function get_lang_term( $term_id, $taxonomy, $lang_code ) {
-		return apply_filters( 'wpml_object_id', $term_id, $taxonomy, $lang_code );
+		return apply_filters( 'wpml_object_id', $term_id, $taxonomy, false, $lang_code );
 	}
 
 	protected function get_default_lang() {
