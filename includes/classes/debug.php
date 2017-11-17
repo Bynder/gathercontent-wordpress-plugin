@@ -48,6 +48,17 @@ class Debug extends Base {
 	protected static $log_path = '';
 
 	/**
+	 * The query string used to trigger debug mode.
+	 * The query string value must be in the current date in the 'm-d-Y' format.
+	 * e.g. ?gathercontent_debug_mode=11-17-2017
+	 *
+	 * @since 3.1.7
+	 *
+	 * @var string
+	 */
+	protected static $query_string = 'gathercontent_debug_mode';
+
+	/**
 	 * Constructor. Sets the asset_suffix var.
 	 *
 	 * @since 3.0.1
@@ -57,9 +68,9 @@ class Debug extends Base {
 
 		self::$log_path = WP_CONTENT_DIR . '/' . self::$log_file;
 
-		if ( $debug_mode_enabled = get_option( 'gathercontent_debug_mode' ) ) {
+		if ( $debug_mode_enabled = get_option( self::$query_string ) ) {
 			if ( time() > $debug_mode_enabled ) {
-				delete_option( 'gathercontent_debug_mode' );
+				delete_option( self::$query_string );
 			} else {
 				self::$debug_mode = true;
 			}
@@ -77,9 +88,9 @@ class Debug extends Base {
 	 * @return void
 	 */
 	public function init_hooks() {
-		if ( is_admin() && isset( $_GET['gathercontent_debug_mode'] ) ) {
-			$enabled = self::toggle_debug_mode( $_GET['gathercontent_debug_mode'] );
-			unset( $_GET['gathercontent_debug_mode'] );
+		if ( is_admin() && isset( $_GET[ self::$query_string ] ) ) {
+			$enabled = self::toggle_debug_mode( $_GET[ self::$query_string ] );
+			unset( $_GET[ self::$query_string ] );
 			add_action( 'all_admin_notices', array( $this, $enabled ? 'debug_enabled_notice' : 'debug_disabled_notice' ) );
 		}
 
@@ -256,7 +267,7 @@ class Debug extends Base {
 
 		} elseif ( $settings['disable_debug_mode'] ) {
 
-			wp_safe_redirect( add_query_arg( 'gathercontent_debug_mode', 0, $back_url ) );
+			wp_safe_redirect( add_query_arg( self::$query_string, 0, $back_url ) );
 			exit;
 
 		} elseif ( $settings['log_importer_requests'] ) {
@@ -374,10 +385,10 @@ class Debug extends Base {
 	public static function toggle_debug_mode( $debug_enabled ) {
 		$changed = false;
 		if ( ! $debug_enabled ) {
-			delete_option( 'gathercontent_debug_mode' );
+			delete_option( self::$query_string );
 			$changed = ! empty( self::$debug_mode );
 		} elseif ( date( 'm-d-Y' ) === $debug_enabled ) {
-			update_option( 'gathercontent_debug_mode', time() + DAY_IN_SECONDS );
+			update_option( self::$query_string, time() + DAY_IN_SECONDS );
 			$changed = empty( self::$debug_mode );
 		} else {
 			$debug_enabled = self::$debug_mode;
