@@ -69,11 +69,11 @@ class General extends Base {
 	protected $single_ui;
 
 	/**
-	 * GatherContent\Importer\ACF\Compatibility instance
+	 * GatherContent\Importer\Compatibility\ACF instance
 	 *
-	 * @var GatherContent\Importer\ACF\Compatibility
+	 * @var GatherContent\Importer\Compatibility\ACF
 	 */
-	protected $acf_compatibility;
+	protected $compatibility_acf;
 
 	const OPTION_NAME = 'gathercontent_importer';
 
@@ -113,7 +113,7 @@ class General extends Base {
 		}
 
 		if ( class_exists( 'acf' ) ) {
-			$this->acf_compatibility  = new ACF\Compatibility();
+			$this->compatibility_acf  = new Compatibility\ACF();
 		}
 	}
 
@@ -149,7 +149,7 @@ class General extends Base {
 		$this->debug->init_hooks();
 
 		if ( class_exists( 'acf' ) ) {
-			$this->acf_compatibility->init_hooks();
+			$this->compatibility_acf->init_hooks();
 		}
 	}
 

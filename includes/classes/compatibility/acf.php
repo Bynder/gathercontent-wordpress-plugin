@@ -5,7 +5,7 @@
  * @package GatherContent Plugin
  */
 
-namespace GatherContent\Importer\ACF;
+namespace GatherContent\Importer\Compatibility;
 use GatherContent\Importer\Sync\Pull;
 use GatherContent\Importer\Base;
 
@@ -16,7 +16,7 @@ use GatherContent\Importer\Base;
  *
  * @since 3.1.5
  */
-class Compatibility extends Base {
+class ACF extends Base {
 
 	protected $gc_acf_type_map = array(
 		'choice_checkbox' => 'checkbox',
