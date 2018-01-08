@@ -1,4 +1,4 @@
-# GatherContent Plugin -- Version 3.1.7 #
+# GatherContent Plugin -- Version 3.1.8 #
 
 This plugin allows you to transfer content from your GatherContent projects into your WordPress site and vice-versa.
 
@@ -46,6 +46,10 @@ Below the text box is a button that will allow you to simply save all of that in
 
 
 ## Changelog ##
+
+### 3.1.8 ###
+* If mapping does not map a field to the `post_title`, be sure to update title from the GC item name.
+* Fix bug with item updated dates not being properly formatted in some languages.
 
 ### 3.1.7 ###
 * Add WPML compatibility shim for properly mapping GatherContent taxonomy terms to translated language taxonomy terms where applicable, and vice-versa. **Note:** If the GC item uses the foreign language term name, then this will need to be unhooked. This can be done via:
