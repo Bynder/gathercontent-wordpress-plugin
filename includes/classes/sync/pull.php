@@ -135,10 +135,6 @@ class Pull extends Base {
 			unset( $post_data['tax_input'] );
 		}
 
-		if ( empty( $post_data['post_title'] ) && ! empty( $this->item->name ) ) {
-			$post_data['post_title'] = sanitize_text_field( $this->item->name );
-		}
-
 		$post_id = wp_insert_post( $post_data, 1 );
 
 		if ( is_wp_error( $post_id ) ) {
@@ -280,6 +276,10 @@ class Pull extends Base {
 			}
 		}
 
+		if ( $this->should_update_title_with_item_name( $post_data ) ) {
+			$post_data['post_title'] = sanitize_text_field( $this->item->name );
+		}
+
 		if ( ! empty( $post_data['ID'] ) ) {
 			$post_data = apply_filters( 'gc_update_wp_post_data', $post_data, $this );
 		} else {
@@ -287,6 +287,47 @@ class Pull extends Base {
 		}
 
 		return $post_data;
+	}
+
+	/**
+	 * Check if post title should be updated with item title.
+	 *
+	 * Only if the post title is empty, or there is no post_title field mapped.
+	 *
+	 * @since  3.1.8
+	 *
+	 * @return boolean
+	 */
+	public function should_update_title_with_item_name( $post_data ) {
+		$should = ! empty( $this->item->name );
+		$empty_title = empty( $post_data['post_title'] );
+		if ( ! $empty_title ) {
+			$should = ! $this->has_post_title_mapping();
+		}
+
+		return $should;
+	}
+
+	/**
+	 * Check if mapping has a mapping for the post_title. (To fallback to item title)
+	 *
+	 * @since  3.1.8
+	 *
+	 * @return boolean
+	 */
+	public function has_post_title_mapping() {
+		try {
+			array_filter( $this->mapping->data(), function( $mapped ) {
+				if ( isset( $mapped['type'], $mapped['value'] )
+					&& 'wp-type-post' === $mapped['type']
+					&& 'post_title' === $mapped['value'] ) {
+					throw new \Exception( 'found' );
+				}
+			} );
+		} catch ( \Exception $e ) {
+			return true;
+		}
+		return false;
 	}
 
 	/**

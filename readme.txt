@@ -4,7 +4,7 @@ Donate link:       http://www.gathercontent.com
 Tags               structured content, gather content, gathercontent, import, migrate, export, mapping, production, writing, collaboration, platform, connect, link, gather, client, word, production
 Requires at least: 3.8
 Tested up to:      4.8.3
-Stable tag:        3.1.7
+Stable tag:        3.1.8
 License:           GPL-2.0+
 License URI:       https://opensource.org/licenses/GPL-2.0
 
@@ -63,6 +63,10 @@ Below the text box is a button that will allow you to simply save all of that in
 6. Or change the item's GatherContent status in quick-edit mode.
 
 == Changelog ==
+
+= 3.1.8 =
+* If mapping does not map a field to the `post_title`, be sure to update title from the GC item name.
+* Fix bug with item updated dates not being properly formatted in some languages.
 
 = 3.1.7 =
 * Add WPML compatibility shim for properly mapping GatherContent taxonomy terms to translated language taxonomy terms where applicable, and vice-versa. **Note:** If the GC item uses the foreign language term name, then this will need to be unhooked. This can be done via:
@@ -232,6 +236,10 @@ if ( class_exists( 'GatherContent\\Importer\\General' ) ) {
 * Complete rewrite of old plugin
 
 == Upgrade Notice ==
+
+= 3.1.8 =
+* If mapping does not map a field to the `post_title`, be sure to update title from the GC item name.
+* Fix bug with item updated dates not being properly formatted in some languages.
 
 = 3.1.7 =
 * Add WPML compatibility shim for properly mapping GatherContent taxonomy terms to translated language taxonomy terms where applicable, and vice-versa. **Note:** If the GC item uses the foreign language term name, then this will need to be unhooked. This can be done via:
