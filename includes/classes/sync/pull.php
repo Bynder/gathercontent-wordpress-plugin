@@ -415,7 +415,7 @@ class Pull extends Base {
 			$this->element->value = implode( ', ', $this->element->value );
 		}
 
-		$value = $this->sanitize_post_field( $post_column, $this->element->value, $post_data['ID'] );
+		$value = $this->sanitize_post_field( $post_column, $this->element->value, $post_data );
 
 		return $this->maybe_append( $post_column, $value, $post_data );
 	}
