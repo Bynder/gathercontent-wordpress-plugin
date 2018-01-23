@@ -40,7 +40,7 @@ This section describes how to install the plugin and get it working.
 3. Click on the menu item "GatherContent"
 4. Link your accounts. You will need to enter your GatherContent account URL (e.g. http://mywebsite.gathercontent.com) and your personal GatherContent API key. You can find your API key in your [Settings area within GatherContent](https://gathercontent.com/developers/authentication/).
 
-For more detailed installation instructions please visit our [HelpCentre](https://gathercontent.com/support/wordpress-integration-installation/).
+For more detailed installation instructions please visit our [Help Centre](http://help.gathercontent.com/importing-and-exporting-content#wordpress-integration).
 
 == Frequently Asked Questions ==
 
@@ -52,7 +52,7 @@ Below the text box is a button that will allow you to simply save all of that in
 **Note:** This information contains potentially senstive data. Please be careful with where you post it. Do not post it in the WordPress support forums.
 
 = If you need help =
-* Please [visit our support documentation](https://gathercontent.com/support/wordpress-integration).
+* Please [visit our support documentation](http://help.gathercontent.com/importing-and-exporting-content#wordpress-integration).
 
 == Screenshots ==
 1. Create Template Mappings to map your GatherContent Templates to your WordPress content.
