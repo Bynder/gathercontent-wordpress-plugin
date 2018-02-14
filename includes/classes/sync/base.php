@@ -454,6 +454,7 @@ abstract class Base extends Plugin_Base {
 		preg_match_all( "/$pattern/", $content, $matches );
 
 		if ( isset( $matches[3], $matches[0] ) && is_array( $matches[3] ) ) {
+			$matches[3] = wp_unslash( $matches[3] ); // Fixes quoted attributes.
 			$replace = array();
 			foreach ( $matches[0] as $index => $shortcode ) {
 				$replace[ $shortcode ] = shortcode_parse_atts( $matches[3][ $index ] );
