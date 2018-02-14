@@ -3,8 +3,8 @@ Contributors:      gathercontent, mathew-chapman, namshee, jtsternberg, justinsa
 Donate link:       http://www.gathercontent.com
 Tags               structured content, gather content, gathercontent, import, migrate, export, mapping, production, writing, collaboration, platform, connect, link, gather, client, word, production
 Requires at least: 3.8
-Tested up to:      4.8.3
-Stable tag:        3.1.8
+Tested up to:      4.9.4
+Stable tag:        3.1.9
 License:           GPL-2.0+
 License URI:       https://opensource.org/licenses/GPL-2.0
 
@@ -63,6 +63,12 @@ Below the text box is a button that will allow you to simply save all of that in
 6. Or change the item's GatherContent status in quick-edit mode.
 
 == Changelog ==
+
+= 3.1.9 =
+* Fix the 3rd param passed to `Pull::sanitize_post_field()`, which needs to be the entire post data array.
+* Updated the help centre links.
+* Fixed quoted attributes (like alt text) for the pseudo-shortcodes used for media in the GatherContent content, e.g. `[media-1 align=right linkto=file alt="This will go to the image alt tag"]`
+* Allow using new shortcode syntax (like `[media_2-1]`) to include media from multiple media fields in GatherContent mapped to the content or excerpt. The original syntax will continue to work (e.g. `[media-1]`), but will be assumed to be the first media field, and will be the same as using the new syntax, `[media_1-1]`.
 
 = 3.1.8 =
 * If mapping does not map a field to the `post_title`, be sure to update title from the GC item name.
@@ -236,6 +242,12 @@ if ( class_exists( 'GatherContent\\Importer\\General' ) ) {
 * Complete rewrite of old plugin
 
 == Upgrade Notice ==
+
+= 3.1.9 =
+* Fix the 3rd param passed to `Pull::sanitize_post_field()`, which needs to be the entire post data array.
+* Updated the help centre links.
+* Fixed quoted attributes (like alt text) for the pseudo-shortcodes used for media in the GatherContent content, e.g. `[media-1 align=right linkto=file alt="This will go to the image alt tag"]`
+* Allow using new shortcode syntax (like `[media_2-1]`) to include media from multiple media fields in GatherContent mapped to the content or excerpt. The original syntax will continue to work (e.g. `[media-1]`), but will be assumed to be the first media field, and will be the same as using the new syntax, `[media_1-1]`.
 
 = 3.1.8 =
 * If mapping does not map a field to the `post_title`, be sure to update title from the GC item name.

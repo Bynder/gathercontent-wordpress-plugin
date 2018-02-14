@@ -1,4 +1,4 @@
-# GatherContent Plugin -- Version 3.1.8 #
+# GatherContent Plugin -- Version 3.1.9 #
 
 This plugin allows you to transfer content from your GatherContent projects into your WordPress site and vice-versa.
 
@@ -46,6 +46,12 @@ Below the text box is a button that will allow you to simply save all of that in
 
 
 ## Changelog ##
+
+### 3.1.9 ###
+* Fix the 3rd param passed to `Pull::sanitize_post_field()`, which needs to be the entire post data array.
+* Updated the help centre links.
+* Fixed quoted attributes (like alt text) for the pseudo-shortcodes used for media in the GatherContent content, e.g. `[media-1 align=right linkto=file alt="This will go to the image alt tag"]`
+* Allow using new shortcode syntax (like `[media_2-1]`) to include media from multiple media fields in GatherContent mapped to the content or excerpt. The original syntax will continue to work (e.g. `[media-1]`), but will be assumed to be the first media field, and will be the same as using the new syntax, `[media_1-1]`.
 
 ### 3.1.8 ###
 * If mapping does not map a field to the `post_title`, be sure to update title from the GC item name.
