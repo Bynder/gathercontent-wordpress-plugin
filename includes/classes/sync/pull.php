@@ -415,7 +415,7 @@ class Pull extends Base {
 			$this->element->value = implode( ', ', $this->element->value );
 		}
 
-		$value = $this->sanitize_post_field( $post_column, $this->element->value, $post_data['ID'] );
+		$value = $this->sanitize_post_field( $post_column, $this->element->value, $post_data );
 
 		return $this->maybe_append( $post_column, $value, $post_data );
 	}
@@ -480,15 +480,18 @@ class Pull extends Base {
 	 * @return array  $post_data   The modified WP Post data array.
 	 */
 	protected function set_media_field_value( $destination, $post_data ) {
+		static $field_number = 0;
 		$media_items = $this->sanitize_element_media();
 
 		if (
 			in_array( $destination, array( 'gallery', 'content_image', 'excerpt_image' ), true )
 			&& is_array( $media_items )
 		) {
+			$field_number++;
 			$position = 0;
 			foreach ( $media_items as $index => $media ) {
 				$media_items[ $index ]->position = ++$position;
+				$media_items[ $index ]->field_number = $field_number;
 
 				$token = '#_gc_media_id_' . $media->id . '#';
 				$field = 'excerpt_image' === $destination ? 'post_excerpt' : 'post_content';
@@ -690,7 +693,7 @@ class Pull extends Base {
 						$image = wp_get_attachment_image( $attach_id, 'full', false, $atts );
 
 						// If we've found a GC "shortcode"...
-						if ( $media_replace = $this->get_media_shortcode_attributes( $post_data[ $field ], $media->position ) ) {
+						if ( $media_replace = $this->get_media_shortcode_attributes( $post_data[ $field ], (array) $media ) ) {
 
 							foreach ( $media_replace as $replace_val => $atts ) {
 
@@ -739,7 +742,7 @@ class Pull extends Base {
 						$link = '<a href="' . esc_url( wp_get_attachment_url( $attach_id ) ) . '" data-gcid="' . $atts['data-gcid']. '" class="' . $atts['class'] . '">' . get_the_title( $attach_id  ) . '</a>';
 
 						// If we've found a GC "shortcode"...
-						if ( $media_replace = $this->get_media_shortcode_attributes( $post_data[ $field ], $media->position ) ) {
+						if ( $media_replace = $this->get_media_shortcode_attributes( $post_data[ $field ], (array) $media ) ) {
 
 							foreach ( $media_replace as $replace_val => $atts ) {
 								// Replace the GC "shortcode" with the file/link.
