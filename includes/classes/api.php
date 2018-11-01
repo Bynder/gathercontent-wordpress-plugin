@@ -141,8 +141,8 @@ class API extends Base {
 	 * @param  int   $item_id Item ID.
 	 * @return mixed          Results of request.
 	 */
-	public function get_item( $item_id ) {
-		return $this->get( 'items/'. $item_id );
+	public function get_item( $item_id, $args = array() ) {
+		return $this->get( 'items/'. $item_id, $args );
 	}
 
 	/**
@@ -170,7 +170,11 @@ class API extends Base {
 	 * @return mixed             Results of request.
 	 */
 	public function get_project_templates( $project_id ) {
-		return $this->get( 'templates?project_id=' . $project_id );
+		return $this->get( 'templates?projectId=' . $project_id, array(
+			'headers' => array(
+				'Accept' => 'application/vnd.gathercontent.v0.6+json'
+			)
+		) );
 	}
 
 	/**
@@ -183,8 +187,8 @@ class API extends Base {
 	 * @param  int   $template_id Template ID.
 	 * @return mixed              Results of request.
 	 */
-	public function get_template( $template_id ) {
-		return $this->get( 'templates/' . $template_id );
+	public function get_template( $template_id, $args = array() ) {
+		return $this->get( 'templates/' . $template_id, $args );
 	}
 
 	/**
@@ -244,6 +248,34 @@ class API extends Base {
 	}
 
 	/**
+	 * GC API request to update an items content.
+	 *
+	 * /items/<ITEM_ID>/update-content
+	 *
+	 * @since 3.0.0
+	 *
+	 * @param  int   $item_id GatherContent Item Id.
+	 * @param  array $content  Data to save.
+	 * @return bool           If request was successful.
+	 */
+	public function update_item( $item_id, $content ) {
+		$args = array(
+			'body'    => wp_json_encode(compact( 'content' )),
+			'headers' => array(
+				'Accept'       => 'application/vnd.gathercontent.v0.6+json',
+				'Content-Type' => 'application/json',
+			),
+		);
+
+		$response = $this->post(
+			'items/' . absint( $item_id ) . '/update-content',
+			$args
+		);
+
+		return is_wp_error( $response ) ? $response : 202 === $response['response']['code'];
+	}
+
+	/**
 	 * GC API request to save an item.
 	 *
 	 * /items
@@ -264,19 +296,59 @@ class API extends Base {
 		);
 
 		if ( ! empty( $config ) ) {
-			$args['body']['config'] = $config;
+			$args['body']['config'] = base64_encode( wp_json_encode( $config ) );
 		}
 
 		$response = $this->post( 'items', $args );
-		$item_id = false;
+		$item_id = null;
+
+		if ( is_wp_error( $response ) ) {
+			return $response;
+		}
 
 		if (
 			202 === $response['response']['code']
 			&& ! empty( $response['headers']['location'] )
 			&& ( $location = $response['headers']['location'] )
-			&& ( false !== strpos( $location, 'http://api.gathercontent.com/items/' ) )
+			&& ( false !== strpos( $location, $this->base_url . 'items/' ) )
 		) {
-			$item_id = str_replace( 'http://api.gathercontent.com/items/', '', $location );
+			$item_id = str_replace( $this->base_url . 'items/', '', $location );
+		}
+
+		return $item_id;
+	}
+
+	/**
+	 * GC API request to save an item.
+	 *
+	 * /items/create
+	 *
+	 * @param  int $project_id Project ID.
+	 * @param  int $template_id Template ID.
+	 * @param  string $name Item name.
+	 * @param array $content
+	 *
+	 * @return bool                If request was successful.
+	 */
+	public function create_structured_item( $project_id, $template_id, $name, $content = array() ) {
+
+		$args = array(
+			'body'    => compact( 'project_id', 'template_id', 'name', 'content' ),
+			'headers' => array(
+				'Accept' => 'application/vnd.gathercontent.v0.6+json',
+			),
+		);
+
+		$response = $this->post( 'items/create', $args );
+
+		$item_id = null;
+
+		if ( is_wp_error( $response ) ) {
+			return $response;
+		}
+
+		if ( 201 === $response['response']['code'] ) {
+			$item_id = json_decode( wp_remote_retrieve_body( $response ) )->data->id;
 		}
 
 		return $item_id;
