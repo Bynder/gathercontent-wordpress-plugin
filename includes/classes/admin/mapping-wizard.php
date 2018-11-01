@@ -474,7 +474,15 @@ class Mapping_Wizard extends Base {
 	 * @return void
 	 */
 	public function map_template() {
-		$template    = $this->api()->get_template( absint( $this->_get_val( 'template' ) ) );
+		$template    = $this->api()->get_template( absint( $this->_get_val('template') ), array(
+			'headers' => array(
+				'Accept' => 'application/vnd.gathercontent.v0.6+json'
+			)
+		) );
+
+		$structure_uuid = $template->structure_uuid;
+
+		$template    = $this->api()->get_template( absint( $this->_get_val('template') ) );
 		$template_id = isset( $template->id ) ? $template->id : null;
 		$project     = $this->api()->get_project( absint( $this->_get_val( 'project' ) ) );
 		$project_id  = isset( $project->id ) ? $project->id : null;
@@ -532,13 +540,14 @@ class Mapping_Wizard extends Base {
 		if ( ! $sync_items ) {
 
 			$this->template_mapper = new Mapping\Template_Mapper( array(
-				'mapping_id'   => $mapping_id,
-				'account_id'   => $account_id,
-				'account_slug' => $account_slug,
-				'project'      => $project,
-				'template'     => $template,
-				'statuses'     => $this->api()->get_project_statuses( absint( $this->_get_val( 'project' ) ) ),
-				'option_name'  => $this->option_name,
+				'mapping_id'     => $mapping_id,
+				'structure_uuid' => $structure_uuid,
+				'account_id'     => $account_id,
+				'account_slug'   => $account_slug,
+				'project'        => $project,
+				'template'       => $template,
+				'statuses'       => $this->api()->get_project_statuses( absint( $this->_get_val( 'project' ) ) ),
+				'option_name'    => $this->option_name,
 			) );
 
 			$callback = $project_id && $template_id
@@ -550,14 +559,15 @@ class Mapping_Wizard extends Base {
 		} else {
 
 			$this->items_sync = new Mapping\Items_Sync( array(
-				'mapping_id'   => $mapping_id,
-				'account_id'   => $account_id,
-				'account_slug' => $account_slug,
-				'project'      => $project,
-				'template'     => $template,
-				'url'          => $this->platform_url(),
-				'mappings'     => $this->mappings,
-				'items'        => $this->filter_items_by_template( $project_id, $template_id ),
+				'mapping_id'     => $mapping_id,
+				'structure_uuid' => $structure_uuid,
+				'account_id'     => $account_id,
+				'account_slug'   => $account_slug,
+				'project'        => $project,
+				'template'       => $template,
+				'url'            => $this->platform_url(),
+				'mappings'       => $this->mappings,
+				'items'          => $this->filter_items_by_template( $project_id, $template_id ),
 			) );
 
 			$section->add_field( 'mapping', '', array( $this->items_sync, 'ui' ) );
