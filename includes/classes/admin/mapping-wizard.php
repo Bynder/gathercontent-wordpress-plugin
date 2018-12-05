@@ -474,20 +474,34 @@ class Mapping_Wizard extends Base {
 	 * @return void
 	 */
 	public function map_template() {
-		$template    = $this->api()->get_template( absint( $this->_get_val('template') ), array(
-			'headers' => array(
-				'Accept' => 'application/vnd.gathercontent.v0.6+json'
-			)
-		) );
+		$mapping_id  = absint( $this->_get_val( 'mapping' ) );
+		$mapping_id  = $mapping_id && get_post( $mapping_id ) ? $mapping_id : false;
 
-		$structure_uuid = $template->structure_uuid;
+		if ( $mapping_id ) {
+			$account_id = $this->mappings->get_mapping_account_id( $mapping_id );
+			$account_slug = $this->mappings->get_mapping_account_slug( $mapping_id );
+		} else {
+			$account_id = $this->_get_account_id();
+			$account_slug = $this->_get_account_slug();
+		}
+
+		$account     = $this->api()->get_account( absint( $account_id ));
+		$features 	 = array_flip( $account->features );
+
+		if ( isset( $features['editor:new'] ) ) {
+			$template    = $this->api()->get_template( absint( $this->_get_val('template') ), array(
+				'headers' => array(
+					'Accept' => 'application/vnd.gathercontent.v0.6+json'
+				)
+			) );
+
+			$structure_uuid = $template->structure_uuid;
+		}
 
 		$template    = $this->api()->get_template( absint( $this->_get_val('template') ) );
 		$template_id = isset( $template->id ) ? $template->id : null;
 		$project     = $this->api()->get_project( absint( $this->_get_val( 'project' ) ) );
 		$project_id  = isset( $project->id ) ? $project->id : null;
-		$mapping_id  = absint( $this->_get_val( 'mapping' ) );
-		$mapping_id  = $mapping_id && get_post( $mapping_id ) ? $mapping_id : false;
 		$sync_items  = $mapping_id && $this->_get_val( 'sync-items' );
 		$notes       = '';
 
@@ -528,14 +542,6 @@ class Mapping_Wizard extends Base {
 			$desc,
 			self::SLUG
 		);
-
-		if ( $mapping_id ) {
-			$account_id = $this->mappings->get_mapping_account_id( $mapping_id );
-			$account_slug = $this->mappings->get_mapping_account_slug( $mapping_id );
-		} else {
-			$account_id = $this->_get_account_id();
-			$account_slug = $this->_get_account_slug();
-		}
 
 		if ( ! $sync_items ) {
 

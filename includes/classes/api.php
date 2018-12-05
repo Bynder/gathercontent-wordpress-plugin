@@ -76,6 +76,23 @@ class API extends Base {
 	}
 
 	/**
+	 * GC API request to get the results from the "/account/<ACCOUNT_ID>" endpoint.
+	 *
+	 * @since  3.0.0
+	 *
+	 * @link https://gathercontent.com/developers/accounts/get-account/
+	 *
+	 * @return mixed Results of request.
+	 */
+	public function get_account( $account_id ) {
+		return $this->get( 'accounts/' . $account_id, array(
+			'headers' => array(
+				'Accept' => 'application/vnd.gathercontent.v0.6+json'
+			)
+		));
+	}
+
+	/**
 	 * GC API request to get the results from the "/projects?account_id=<ACCOUNT_ID>" endpoint.
 	 *
 	 * @since  3.0.0
