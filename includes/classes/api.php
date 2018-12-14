@@ -327,9 +327,9 @@ class API extends Base {
 			202 === $response['response']['code']
 			&& ! empty( $response['headers']['location'] )
 			&& ( $location = $response['headers']['location'] )
-			&& ( false !== strpos( $location, $this->base_url . 'items/' ) )
+			&& ( false !== strpos( $location, 'http://api.gathercontent.com/items/' ) )
 		) {
-			$item_id = str_replace( $this->base_url . 'items/', '', $location );
+			$item_id = str_replace( 'http://api.gathercontent.com/items/', '', $location );
 		}
 
 		return $item_id;
