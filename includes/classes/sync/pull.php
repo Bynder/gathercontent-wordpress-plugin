@@ -825,7 +825,7 @@ class Pull extends Base {
 		$attachment = \GatherContent\Importer\get_post_by_item_id( $media->id, array( 'post_status' => 'inherit' ) );
 
 		if ( ! $attachment ) {
-			return $this->sideload_file( $media->url, $media->filename, $post_id );
+			return $this->sideload_file( $media->id, $media->filename, $post_id );
 		}
 
 		$attach_id = $attachment->ID;
@@ -842,7 +842,7 @@ class Pull extends Base {
 				$replace_data = apply_filters( 'gc_replace_attachment_data_on_update', false, $attachment );
 
 				// @todo How to handle failures?
-				$attach_id = $this->sideload_and_update_attachment( $media->url, $media->filename, $attachment, $replace_data );
+				$attach_id = $this->sideload_and_update_attachment( $media->id, $media->filename, $attachment, $replace_data );
 			}
 		}
 
@@ -962,12 +962,12 @@ class Pull extends Base {
 	 *
 	 * @since  3.0.0
 	 *
-	 * @param  string $file_url  The file to dowload.
+	 * @param  string $file_id  The file to download.
 	 * @param  string $file_name The name of the file being downloaded.
 	 *
 	 * @return array              The temporary file array.
 	 */
-	protected function tmp_file( $file_url, $file_name ) {
+	protected function tmp_file( $file_id, $file_name ) {
 		require_once( ABSPATH . '/wp-admin/includes/file.php' );
 		require_once( ABSPATH . '/wp-admin/includes/media.php' );
 		require_once( ABSPATH . '/wp-admin/includes/image.php' );
@@ -975,7 +975,7 @@ class Pull extends Base {
 		$file_array = array();
 
 		// Download file to temp location.
-		$file_array['tmp_name'] = download_url( $file_url );
+		$file_array['tmp_name'] = $this->api->get_file( $file_id );
 
 		// If error storing temporarily, return the error.
 		if ( is_wp_error( $file_array['tmp_name'] ) ) {
