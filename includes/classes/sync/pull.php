@@ -6,7 +6,6 @@
  */
 
 namespace GatherContent\Importer\Sync;
-use GatherContent\Importer\Post_Types\Template_Mappings;
 use GatherContent\Importer\Mapping_Post;
 use GatherContent\Importer\API;
 use WP_Error;
@@ -344,6 +343,8 @@ class Pull extends Base {
 			return $post_data;
 		}
 
+		$columns = [];
+
 		foreach ( $this->item->config as $tab ) {
 			if ( ! isset( $tab->elements ) || ! $tab->elements ) {
 				continue;
@@ -352,9 +353,18 @@ class Pull extends Base {
 			foreach ( $tab->elements as $this->element ) {
 				$destination = $this->mapping->data( $this->element->name );
 				if ( $destination && isset( $destination['type'], $destination['value'] ) ) {
+					$columns[ $destination['value'] ] = true;
 					$post_data = $this->set_post_values( $destination, $post_data );
 				}
 			}
+		}
+
+		if ( isset( $columns['post_date'] ) && ! isset( $columns['post_date_gmt'] ) ) {
+			$post_data['post_date_gmt'] = get_gmt_from_date( $post_data['post_date'] );
+		}
+
+		if ( isset( $columns['post_modified'] ) && ! isset( $columns['post_modified_gmt'] ) ) {
+			$post_data['post_modified_gmt'] = get_gmt_from_date( $post_data['post_modified'] );
 		}
 
 		return $post_data;
