@@ -197,7 +197,6 @@ class API extends Base {
 				'filename' => $tmpfname
 			]
 		);
-		Debug::debug_log($response, 'response file');
 		return $tmpfname;
 	}
 
