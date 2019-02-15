@@ -9,6 +9,7 @@
 $yellow: #ffa200;
 $dkyellow: #cc8200;
 $gcblue: #00ABBD;
+$gcred: #fc5c54;
 $dkblue: #11284A;
 $green: #4ab545;
 $greendk: #49ab00;
@@ -265,21 +266,36 @@ ul.gc-radio-desc li, ul.gc-reveal-items-list li {
 }
 
 .gc-button-primary {
-	background-color: #fff;
+  background-color: #fff;
+  border: 1px solid $gcblue;
+  color: $gcblue;
+  font-weight: bold;
+  &:hover {
+	background-color: $gcblue;
 	border: 1px solid $gcblue;
-	color: $gcblue;
-	font-weight: bold;
-	&:hover {
-		background-color: $gcblue;
-		border: 1px solid $gcblue;
-		color: #fff;
-	}
+	color: #fff;
+  }
+}
+
+.gc-button-danger {
+  background-color: #fff;
+  border: 1px solid $gcred;
+  color: $gcred;
+  font-weight: bold;
+  &:hover {
+	background-color: $gcred;
+	border: 1px solid $gcred;
+	color: #fff;
+  }
 }
 
 .wp-core-ui .button {
-	&.gc-button-primary {
-		@extend .gc-button-primary;
-	}
+  &.gc-button-primary {
+	@extend .gc-button-primary;
+  }
+  &.gc-button-danger {
+	@extend .gc-button-danger;
+  }
 }
 
 .gc-auth-required .gc-section-auth table {
