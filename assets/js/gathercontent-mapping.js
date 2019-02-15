@@ -1,5 +1,5 @@
 /**
- * GatherContent Plugin - v3.1.11 - 2019-02-13
+ * GatherContent Plugin - v3.1.11 - 2019-02-15
  * http://www.gathercontent.com
  *
  * Copyright (c) 2019 GatherContent

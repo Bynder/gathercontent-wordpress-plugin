@@ -31,7 +31,7 @@
 
 // Useful global constants
 define( 'GATHERCONTENT_VERSION', '3.1.11' );
-define( 'GATHERCONTENT_ENQUEUE_VERSION', '3.1.5' );
+define( 'GATHERCONTENT_ENQUEUE_VERSION', '3.1.11' );
 define( 'GATHERCONTENT_SLUG', 'gathercontent-import' );
 define( 'GATHERCONTENT_PLUGIN', __FILE__ );
 define( 'GATHERCONTENT_URL', plugin_dir_url( __FILE__ ) );
