@@ -195,7 +195,7 @@ class Pull extends Base {
 			}
 		}
 
-		// Check if we need to set hierarchies.
+		/*// Check if we need to set hierarchies.
 		if ( $this->should_map_hierarchy( $post_data['post_type'] ) && isset( $this->item->parent_id ) && $this->item->parent_id ) {
 
 			// Check if an associated WordPress item exists for the parent item id.
@@ -211,7 +211,7 @@ class Pull extends Base {
 			else {
 				$this->schedule_hierarchy_update( $post_id );
 			}
-		}
+		}*/
 
 		if ( ! empty( $updated_post_data ) ) {
 			// And update post (but don't create a revision for it).
