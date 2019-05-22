@@ -442,7 +442,7 @@ class API extends Base {
 	 * @param  array  $args       Optional. Request arguments. Default empty array.
 	 * @return array              The response.
 	 */
-	public function cache_get( $endpoint, $expiration = HOUR_IN_SECONDS, $args = array() ) {
+	public function cache_get( $endpoint, $expiration = HOUR_IN_SECONDS, $args = array(), $method = 'get' ) {
 		$trans_key = 'gctr-' . md5( serialize( compact( 'endpoint', 'args', 'method' ) ) );
 		$response = get_transient( $trans_key );
 
