@@ -491,7 +491,7 @@ class Mapping_Wizard extends Base {
 		if ( isset( $features['editor:new'] ) ) {
 			$template    = $this->api()->get_template( absint( $this->_get_val('template') ), array(
 				'headers' => array(
-					'Accept' => 'application/vnd.gathercontent.v0.6+json'
+					'Accept' => 'application/vnd.gathercontent.v2+json'
 				)
 			) );
 

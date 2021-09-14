@@ -247,6 +247,7 @@ class Bulk extends Post_Base {
 	 * @param object $post    Post object.
 	 */
 	public function set_gc_status( $post_id, $post ) {
+		
 		if (
 			wp_is_post_autosave( $post )
 			|| wp_is_post_revision( $post )

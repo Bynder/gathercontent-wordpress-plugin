@@ -144,8 +144,27 @@ class API extends Base {
 	 * @param  int   $project_id Project ID.
 	 * @return mixed             Results of request.
 	 */
+	public function get_project_items_v0_6( $project_id ) {
+		return $this->get( 'items?project_id=' . $project_id );
+	}
+
+	/**
+	 * GC API request to get the results from the "projects/{project_id}/items" endpoint.
+	 *
+	 * @since  3.0.0
+	 *
+	 * @link https://docs.gathercontent.com/reference/listitems
+	 *
+	 * @param  int   $project_id Project ID.
+	 * @return mixed             Results of request.
+	 */
 	public function get_project_items( $project_id ) {
 		return $this->get( 'items?project_id=' . $project_id );
+		// return $this->get( 'projects/'.$project_id.'/items', array(
+		// 	'headers' => array(
+		// 		'Accept' => 'application/vnd.gathercontent.v2+json'
+		// 	)
+		// ) );
 	}
 
 	/**
@@ -158,7 +177,26 @@ class API extends Base {
 	 * @param  int   $item_id Item ID.
 	 * @return mixed          Results of request.
 	 */
+	public function get_item_v0_6( $item_id, $args = array() ) {
+		$args['headers']['Accept']='application/vnd.gathercontent.v2+json';
+		return $this->get( 'items/'. $item_id, $args );
+	}
+
+
+	/**
+	 * GC V2 API request to get the results from the "/items/{item_id}" endpoint.
+	 *
+	 * @since  3.0.0
+	 *
+	 * @link https://docs.gathercontent.com/reference/getitem
+	 *
+	 * @param  int   $item_id Item ID.
+	 * @return mixed          Results of request.
+	 */
 	public function get_item( $item_id, $args = array() ) {
+
+		$args['headers']['Accept']='application/vnd.gathercontent.v2+json';
+		
 		return $this->get( 'items/'. $item_id, $args );
 	}
 
@@ -210,10 +248,29 @@ class API extends Base {
 	 * @param  int   $project_id Project ID.
 	 * @return mixed             Results of request.
 	 */
-	public function get_project_templates( $project_id ) {
+	public function get_project_templates_v0_6( $project_id ) {
 		return $this->get( 'templates?projectId=' . $project_id, array(
 			'headers' => array(
 				'Accept' => 'application/vnd.gathercontent.v0.6+json'
+			)
+		) );
+	}
+
+	/**
+	 * GC V2 API request to get the results from the "/projects/{project_id}/templates" endpoint.
+	 *
+	 * @since  3.0.0
+	 *
+	 * @link https://docs.gathercontent.com/reference/listtemplates/
+	 *
+	 * @param  int   $project_id Project ID.
+	 * @return mixed             Results of request.
+	 */
+	public function get_project_templates( $project_id ) {
+		
+		return $this->get( 'projects/'.$project_id.'/templates', array(
+			'headers' => array(
+				'Accept' => 'application/vnd.gathercontent.v2+json'
 			)
 		) );
 	}
@@ -224,6 +281,20 @@ class API extends Base {
 	 * @since  3.0.0
 	 *
 	 * @link https://gathercontent.com/developers/templates/get-templates-by-id/
+	 *
+	 * @param  int   $template_id Template ID.
+	 * @return mixed              Results of request.
+	 */
+	public function get_template_v0_6( $template_id, $args = array() ) {
+		return $this->get( 'templates/' . $template_id, $args );
+	}
+
+	/**
+	 * GC V2 API request to get the results from the "/templates/<template_id>" endpoint.
+	 *
+	 * @since  3.0.0
+	 *
+	 * @link https://docs.gathercontent.com/reference/gettemplate
 	 *
 	 * @param  int   $template_id Template ID.
 	 * @return mixed              Results of request.
@@ -422,7 +493,10 @@ class API extends Base {
 	 * @return mixed            The response.
 	 */
 	public function get( $endpoint, $args = array() ) {
+		// echo $endpoint;
+		// echo "</br>";
 		$data = $this->cache_get( $endpoint, DAY_IN_SECONDS, $args, 'GET' );
+		//print_r($data);
 		if ( isset( $data->data ) ) {
 			return $data->data;
 		}
@@ -443,7 +517,8 @@ class API extends Base {
 	 * @return array              The response.
 	 */
 	public function cache_get( $endpoint, $expiration = HOUR_IN_SECONDS, $args = array(), $method = 'get' ) {
-		$trans_key = 'gctr-' . md5( serialize( compact( 'endpoint', 'args', 'method' ) ) );
+
+		 $trans_key = 'gctr-' . md5( serialize( compact( 'endpoint', 'args', 'method' ) ) );
 		$response = get_transient( $trans_key );
 
 		if ( $this->only_cached ) {
