@@ -44,7 +44,7 @@ class Template_Mapper extends Base {
 	 * @return void
 	 */
 	public function ui_page() {
-echo "here123";exit;
+
 		// Output the markup for the JS to build on.
 		echo '<div id="mapping-tabs"><span class="gc-loader spinner is-active"></span></div>';
 
@@ -169,7 +169,6 @@ echo "here123";exit;
 	 * @return array
 	 */
 	protected function get_underscore_templates() {
-
 		$post_status_options = $this->get_default_field_options( 'post_status' );
 
 		return array(

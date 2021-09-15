@@ -196,7 +196,6 @@ class API extends Base {
 	public function get_item( $item_id, $args = array() ) {
 
 		$args['headers']['Accept']='application/vnd.gathercontent.v2+json';
-		
 		return $this->get( 'items/'. $item_id, $args );
 	}
 
@@ -213,7 +212,7 @@ class API extends Base {
 	public function get_item_files( $item_id ) {
 		return $this->get( 'items/'. $item_id .'/files' );
 	}
-
+    
 	/**
 	 * GC API request to get download a file from "/files/<FILE_ID>/download" endpoint.
 	 *
@@ -267,7 +266,6 @@ class API extends Base {
 	 * @return mixed             Results of request.
 	 */
 	public function get_project_templates( $project_id ) {
-		
 		return $this->get( 'projects/'.$project_id.'/templates', array(
 			'headers' => array(
 				'Accept' => 'application/vnd.gathercontent.v2+json'
@@ -300,6 +298,8 @@ class API extends Base {
 	 * @return mixed              Results of request.
 	 */
 	public function get_template( $template_id, $args = array() ) {
+
+		//$args['headers']['Accept']='application/vnd.gathercontent.v2+json';
 		return $this->get( 'templates/' . $template_id, $args );
 	}
 
@@ -493,10 +493,8 @@ class API extends Base {
 	 * @return mixed            The response.
 	 */
 	public function get( $endpoint, $args = array() ) {
-		// echo $endpoint;
-		// echo "</br>";
+		
 		$data = $this->cache_get( $endpoint, DAY_IN_SECONDS, $args, 'GET' );
-		//print_r($data);
 		if ( isset( $data->data ) ) {
 			return $data->data;
 		}

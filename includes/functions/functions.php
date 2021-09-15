@@ -205,6 +205,7 @@ function prepare_item_for_js( $item, $mapping_id = 0 ) {
  * @return array           JS post array.
  */
 function prepare_post_for_js( $post, $uncached = false ) {
+	
 	$post = $post instanceof WP_Post ? $post : get_post( $post );
 	if ( ! $post ) {
 		return false;
