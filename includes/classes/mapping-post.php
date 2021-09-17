@@ -367,7 +367,6 @@ class Mapping_Post extends Base {
 	 *                  false on failure.
 	 */
 	public function update_items_to_push( $items ) {
-		echo "here";exit;
 		return $this->update_items_to_sync( $items, 'push' );
 	}
 

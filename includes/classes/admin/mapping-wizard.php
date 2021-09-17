@@ -65,6 +65,7 @@ class Mapping_Wizard extends Base {
 	 * @since 3.0.0
 	 */
 	public function __construct( Admin $parent ) {
+
 		$this->option_name      = $parent->option_name . '_add_new_template';
 		$this->option_group     = $parent->option_group . '_add_new_template';
 		$this->parent_page_slug = parent::SLUG;
@@ -474,6 +475,7 @@ class Mapping_Wizard extends Base {
 	 * @return void
 	 */
 	public function map_template() {
+
 		$mapping_id  = absint( $this->_get_val( 'mapping' ) );
 		$mapping_id  = $mapping_id && get_post( $mapping_id ) ? $mapping_id : false;
 
@@ -499,9 +501,12 @@ class Mapping_Wizard extends Base {
 		}
 
 		$template    = $this->api()->get_template( absint( $this->_get_val('template') ) );
+
 		$template_id = isset( $template->id ) ? $template->id : null;
 		$project     = $this->api()->get_project( absint( $this->_get_val( 'project' ) ) );
 		$project_id  = isset( $project->id ) ? $project->id : null;
+		$components=$this->api()->get_components( absint( $this->_get_val( 'project' ) ) );
+		
 		$sync_items  = $mapping_id && $this->_get_val( 'sync-items' );
 		$notes       = '';
 

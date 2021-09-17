@@ -64,6 +64,7 @@ class Sync_Items extends Plugin_Base {
 	}
 
 	protected function set_mapping_post() {
+
 		try {
 			$this->mapping = Mapping_Post::get( absint( $this->_post_val( 'id' ) ), true );
 		} catch( \Exception $e ) {
@@ -125,6 +126,7 @@ class Sync_Items extends Plugin_Base {
 	}
 
 	protected function get_fields() {
+		
 		$data = $this->_post_val( 'data' );
 
 		if ( empty( $data ) || ! is_string( $data ) ) {

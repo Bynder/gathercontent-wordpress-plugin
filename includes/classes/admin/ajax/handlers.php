@@ -49,6 +49,7 @@ class Handlers extends Plugin_Base {
 	 * @param API $api API object.
 	 */
 	public function __construct( API $api ) {
+
 		$this->api = $api;
 		$this->sync_items = new Sync_Items();
 		$this->sync_bulk = new Sync_Bulk();
@@ -115,6 +116,7 @@ class Handlers extends Plugin_Base {
 	 * @return void
 	 */
 	public function gc_get_posts_cb() {
+
 		$posts = $this->_post_val( 'posts' );
 		if ( empty( $posts ) || ! is_array( $posts ) ) {
 			wp_send_json_error();
@@ -225,6 +227,7 @@ class Handlers extends Plugin_Base {
 	 * @return void
 	 */
 	public function gc_fetch_js_post_cb() {
+		echo "here";exit;
 		if ( $post_id = $this->_get_val( 'id' ) ) {
 			wp_send_json( \GatherContent\Importer\prepare_post_for_js(
 				absint( $post_id ),
