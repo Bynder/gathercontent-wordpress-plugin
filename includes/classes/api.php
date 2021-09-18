@@ -232,11 +232,7 @@ class API extends Base {
 	 */
 	public function get_template( $template_id, $args = array() ) {
 		
-		return $this->get( 'templates/' . $template_id, array(
-			'headers' => array(
-				'Accept' => 'application/vnd.gathercontent.v2+json'
-			)
-		));
+		return $this->get( 'templates/' . $template_id, $args);
 	}
 
 	/**
