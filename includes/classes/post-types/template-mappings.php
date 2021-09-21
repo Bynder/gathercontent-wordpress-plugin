@@ -1,13 +1,14 @@
 <?php
 namespace GatherContent\Importer\Post_Types;
+
 use GatherContent\Importer\Mapping_Post;
 use GatherContent\Importer\API;
 use WP_Query;
 use WP_Error;
 
 class Template_Mappings extends Base {
-	const SLUG = 'gc_templates';
-	public $slug = self::SLUG;
+	const SLUG          = 'gc_templates';
+	public $slug        = self::SLUG;
 	public $listing_url = '';
 
 	/**
@@ -26,7 +27,7 @@ class Template_Mappings extends Base {
 	 * @param $api API object
 	 */
 	public function __construct( $parent_menu_slug, API $api ) {
-		$this->api = $api;
+		$this->api         = $api;
 		$this->listing_url = admin_url( 'edit.php?post_type=' . self::SLUG );
 		new Async_Save_Hook( self::SLUG );
 
@@ -53,11 +54,11 @@ class Template_Mappings extends Base {
 				'items_list'            => __( 'Template Mappings list', 'gathercontent-import' ),
 			),
 			array(
-				'show_ui'              => true,
-				'show_in_menu'         => false,
-				'show_in_menu'         => $parent_menu_slug,
-				'supports'             => array( 'title' ),
-				'rewrite'              => false,
+				'show_ui'      => true,
+				'show_in_menu' => false,
+				'show_in_menu' => $parent_menu_slug,
+				'supports'     => array( 'title' ),
+				'rewrite'      => false,
 			)
 		);
 	}
@@ -85,7 +86,7 @@ class Template_Mappings extends Base {
 	}
 
 	public function clear_out_updated_at( $post_id ) {
-		$types = array();
+		$types     = array();
 		$all_types = self::get_mapping_post_types();
 		foreach ( $all_types as $type => $mapping_ids ) {
 			if ( isset( $mapping_ids[ $post_id ] ) ) {
@@ -139,8 +140,8 @@ class Template_Mappings extends Base {
 	 * @param array $columns Array of registered columns for the mapping post-type.
 	 */
 	public function register_column_headers( $columns ) {
-		$columns['account'] = __( 'Account slug', 'gathercontent-import' );
-		$columns['project'] = __( 'Project id', 'gathercontent-import' );
+		$columns['account']  = __( 'Account slug', 'gathercontent-import' );
+		$columns['project']  = __( 'Project id', 'gathercontent-import' );
 		$columns['template'] = __( 'Template id', 'gathercontent-import' );
 
 		return $columns;
@@ -154,8 +155,8 @@ class Template_Mappings extends Base {
 	 * @param array $columns Array of registered columns for the mapping post-type.
 	 */
 	public function register_sortable_columns( $columns ) {
-		$columns['account'] = '_gc_account';
-		$columns['project'] = '_gc_project';
+		$columns['account']  = '_gc_account';
+		$columns['project']  = '_gc_project';
 		$columns['template'] = '_gc_template';
 
 		return $columns;
@@ -197,7 +198,7 @@ class Template_Mappings extends Base {
 		}
 
 		$data = $this->column_post_data( $post_id );
-		$url = $value = '';
+		$url  = $value = '';
 
 		switch ( $column ) {
 			case 'account':
@@ -209,20 +210,20 @@ class Template_Mappings extends Base {
 			case 'project':
 				$value = $data[ $column ] ?: __( '&mdash;' );
 				if ( $data['base_url'] && $value ) {
-					$url = esc_url( $data['base_url'] .'projects/view/'. $value );
+					$url = esc_url( $data['base_url'] . 'projects/view/' . $value );
 				}
 				break;
 			case 'template':
 				$value = $data[ $column ] ?: __( '&mdash;' );
 				if ( $data['base_url'] && $data['project'] && $value ) {
-					$url = esc_url( $data['base_url'] .'templates/'. $data['project'] );
+					$url = esc_url( $data['base_url'] . 'templates/' . $data['project'] );
 				}
 				break;
 		}
 
 		if ( $value ) {
 			if ( $url ) {
-				echo '<a href="'. esc_url( $url ) .'" target="_blank">';
+				echo '<a href="' . esc_url( $url ) . '" target="_blank">';
 					print_r( $value );
 				echo '</a>';
 			} else {
@@ -236,7 +237,7 @@ class Template_Mappings extends Base {
 	 *
 	 * @since  3.0.0
 	 *
-	 * @param  int  $post_id Mapping post id
+	 * @param  int $post_id Mapping post id
 	 *
 	 * @return array         Array of meta dat.
 	 */
@@ -252,7 +253,7 @@ class Template_Mappings extends Base {
 			);
 
 			if ( $post_data['account'] ) {
-				$post_data['base_url'] = 'https://'. $post_data['account'] .'.gathercontent.com/';
+				$post_data['base_url'] = 'https://' . $post_data['account'] . '.gathercontent.com/';
 			}
 
 			$posts_data[ $post_id ] = $post_data;
@@ -264,14 +265,14 @@ class Template_Mappings extends Base {
 	public function output_mapping_data( $post ) {
 		if ( self::SLUG === $post->post_type ) {
 			echo '<p class="postbox" style="padding: 1em;background: #f5f5f5;margin: -4px 0 0">';
-			echo '<strong>' . __( 'Project ID:', 'gathercontent-import' ) . '</strong> '. get_post_meta( get_the_id(), '_gc_project', 1 );
+			echo '<strong>' . __( 'Project ID:', 'gathercontent-import' ) . '</strong> ' . get_post_meta( get_the_id(), '_gc_project', 1 );
 			echo ',&nbsp;';
-			echo '<strong>' . __( 'Template ID:', 'gathercontent-import' ) . '</strong> '. get_post_meta( get_the_id(), '_gc_template', 1 );
+			echo '<strong>' . __( 'Template ID:', 'gathercontent-import' ) . '</strong> ' . get_post_meta( get_the_id(), '_gc_template', 1 );
 
 			if ( $account = get_post_meta( get_the_id(), '_gc_account', 1 ) ) {
-				$account = 'https://'. $account .'.gathercontent.com/';
+				$account = 'https://' . $account . '.gathercontent.com/';
 				echo ',&nbsp;';
-				echo '<strong>' . __( 'Account:', 'gathercontent-import' ) . '</strong> <a href="'. esc_url( $account ) .'" target="_blank">'. esc_url( $account ) .'</a>';
+				echo '<strong>' . __( 'Account:', 'gathercontent-import' ) . '</strong> <a href="' . esc_url( $account ) . '" target="_blank">' . esc_url( $account ) . '</a>';
 			}
 
 			echo '</p>';
@@ -284,7 +285,7 @@ class Template_Mappings extends Base {
 				}
 			}
 
-			echo '<pre><textarea name="content" id="content" rows="20" style="width:100%;">'. print_r( $content, true ) .'</textarea></pre>';
+			echo '<pre><textarea name="content" id="content" rows="20" style="width:100%;">' . print_r( $content, true ) . '</textarea></pre>';
 		}
 	}
 
@@ -292,27 +293,28 @@ class Template_Mappings extends Base {
 		$post_type = '';
 
 		if ( isset( $post->ID ) ) {
-			$post_id = $post->ID;
+			$post_id   = $post->ID;
 			$post_type = $post->post_type;
 		} elseif ( is_numeric( $post ) ) {
-			$post_id = $post;
+			$post_id   = $post;
 			$post_type = get_post_type( $post_id );
 		}
 
 		if ( self::SLUG === $post_type ) {
 
-			$project_id = $this->get_mapping_project( $post_id );
+			$project_id  = $this->get_mapping_project( $post_id );
 			$template_id = $this->get_mapping_template( $post_id );
 
 			if ( $project_id && $template_id ) {
-				$link = admin_url( sprintf(
-					'admin.php?page=gathercontent-import-add-new-template&project=%s&template=%s&mapping=%s',
-					$project_id,
-					$template_id,
-					$post_id
-				) );
+				$link = admin_url(
+					sprintf(
+						'admin.php?page=gathercontent-import-add-new-template&project=%s&template=%s&mapping=%s',
+						$project_id,
+						$template_id,
+						$post_id
+					)
+				);
 			}
-
 		}
 
 		return $link;
@@ -323,9 +325,9 @@ class Template_Mappings extends Base {
 	 *
 	 * @since  3.0.0
 	 *
-	 * @param array $actions An array of row action links. Defaults are
-	 *                         'Edit', 'Quick Edit', 'Restore, 'Trash',
-	 *                         'Delete Permanently', 'Preview', and 'View'.
+	 * @param array   $actions An array of row action links. Defaults are
+	 *                           'Edit', 'Quick Edit', 'Restore, 'Trash',
+	 *                           'Delete Permanently', 'Preview', and 'View'.
 	 * @param WP_Post $post  The post object.
 	 *
 	 * @return array         Modified $actions.
@@ -336,7 +338,7 @@ class Template_Mappings extends Base {
 
 			$actions['sync-items'] = sprintf(
 				'<a href="%s" aria-label="%s">%s</a>',
-				add_query_arg( 'sync-items', 1,  get_edit_post_link( $post->ID, 'raw' ) ),
+				add_query_arg( 'sync-items', 1, get_edit_post_link( $post->ID, 'raw' ) ),
 				esc_attr( __( 'Review Items for Import', 'gathercontent-import' ) ),
 				__( 'Review Items for Import', 'gathercontent-import' )
 			);
@@ -379,33 +381,42 @@ class Template_Mappings extends Base {
 	}
 
 	public static function create_mapping( $mapping_args, $post_data = array(), $wp_error = false ) {
-		$mapping_args = wp_parse_args( $mapping_args, array(
-			'title'          => '',
-			'content'        => '',
-			'account'        => null,
-			'project'        => null,
-			'template'       => null,
-			'structure_uuid' => null,
-		) );
+		$mapping_args = wp_parse_args(
+			$mapping_args,
+			array(
+				'title'          => '',
+				'content'        => '',
+				'account'        => null,
+				'project'        => null,
+				'template'       => null,
+				'structure_uuid' => null,
+			)
+		);
 
 		if ( ! empty( $mapping_args['content']['mapping'] ) ) {
-			$mapping_args['content']['mapping'] = array_filter( $mapping_args['content']['mapping'], function( $opt ) {
-				return ! empty( $opt['value'] ) ? $opt : false;
-			} );
+			$mapping_args['content']['mapping'] = array_filter(
+				$mapping_args['content']['mapping'],
+				function( $opt ) {
+					return ! empty( $opt['value'] ) ? $opt : false;
+				}
+			);
 		}
 
-		$post_data = wp_parse_args( $post_data, array(
-			'post_content' => wp_json_encode( $mapping_args['content'] ),
-			'post_title'   => $mapping_args['title'],
-			'post_status'  => 'publish',
-			'post_type'    => self::SLUG,
-			'meta_input'   => array(
-				'_gc_account'        => $mapping_args['account'],
-				'_gc_project'        => $mapping_args['project'],
-				'_gc_template'       => $mapping_args['template'],
-				'_gc_structure_uuid' => $mapping_args['structure_uuid'],
-			),
-		) );
+		$post_data = wp_parse_args(
+			$post_data,
+			array(
+				'post_content' => wp_json_encode( $mapping_args['content'] ),
+				'post_title'   => $mapping_args['title'],
+				'post_status'  => 'publish',
+				'post_type'    => self::SLUG,
+				'meta_input'   => array(
+					'_gc_account'        => $mapping_args['account'],
+					'_gc_project'        => $mapping_args['project'],
+					'_gc_template'       => $mapping_args['template'],
+					'_gc_structure_uuid' => $mapping_args['structure_uuid'],
+				),
+			)
+		);
 
 		return wp_insert_post( $post_data, $wp_error );
 	}
@@ -502,10 +513,13 @@ class Template_Mappings extends Base {
 			? $args['meta_query'] + $meta_query
 			: $meta_query;
 
-		$args = wp_parse_args( $args, array(
-			'posts_per_page' => 1,
-			'fields'         => 'ids',
-		) );
+		$args = wp_parse_args(
+			$args,
+			array(
+				'posts_per_page' => 1,
+				'fields'         => 'ids',
+			)
+		);
 
 		return self::get_by_project( $project_id, $args );
 	}
@@ -547,7 +561,7 @@ class Template_Mappings extends Base {
 		if ( $gotten->have_posts() ) {
 			foreach ( $gotten->posts as $post ) {
 				$objects[] = array(
-					'id' => $post->ID,
+					'id'   => $post->ID,
 					'name' => $post->post_title,
 				);
 			}
@@ -586,7 +600,6 @@ class Template_Mappings extends Base {
 
 		$gotten = $this->get_by_account_id( $account_id, $args );
 
-
 		$objects = array();
 
 		if ( $gotten->have_posts() ) {
@@ -611,11 +624,13 @@ class Template_Mappings extends Base {
 			$all_accounts[ $account->slug ] = (array) $account;
 		}
 
-		$gotten = $this->get_mappings( array(
-			'posts_per_page' => 500,
-			'fields'         => 'ids',
-			'no_found_rows'  => true,
-		) );
+		$gotten = $this->get_mappings(
+			array(
+				'posts_per_page' => 500,
+				'fields'         => 'ids',
+				'no_found_rows'  => true,
+			)
+		);
 
 		$objects = array();
 
@@ -641,7 +656,6 @@ class Template_Mappings extends Base {
 			} else {
 				$objects[ $object_id ]['mappings'][] = $post_id;
 			}
-
 		}
 		return $objects;
 	}
@@ -730,7 +744,7 @@ class Template_Mappings extends Base {
 	public function is_mapping_post( $post ) {
 		try {
 			return Mapping_Post::get_post( $post );
-		} catch( \Exception $e ) {
+		} catch ( \Exception $e ) {
 			return false;
 		}
 	}

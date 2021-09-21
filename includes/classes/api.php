@@ -1,18 +1,19 @@
 <?php
 namespace GatherContent\Importer;
+
 use GatherContent\Importer\General;
 use GatherContent\Importer\Debug;
 use WP_Error;
 
 class API extends Base {
 
-	protected $base_url = 'https://api.gathercontent.com/';
-	protected $user = '';
-	protected $api_key = '';
-	protected $only_cached = false;
+	protected $base_url            = 'https://api.gathercontent.com/';
+	protected $user                = '';
+	protected $api_key             = '';
+	protected $only_cached         = false;
 	protected $reset_request_cache = false;
-	protected $disable_cache = false;
-	protected $last_response = false;
+	protected $disable_cache       = false;
+	protected $last_response       = false;
 
 	/**
 	 * WP_Http instance
@@ -29,7 +30,7 @@ class API extends Base {
 	public function __construct( \WP_Http $http ) {
 		parent::__construct();
 
-		$this->http = $http;
+		$this->http          = $http;
 		$this->disable_cache = $this->_get_val( 'flush_cache' ) && 'false' !== $this->_get_val( 'flush_cache' );
 		if ( ! $this->disable_cache ) {
 			$this->disable_cache = $this->_post_val( 'flush_cache' ) && 'false' !== $this->_post_val( 'flush_cache' );
@@ -85,11 +86,14 @@ class API extends Base {
 	 * @return mixed Results of request.
 	 */
 	public function get_account( $account_id ) {
-		return $this->get( 'accounts/' . $account_id, array(
-			'headers' => array(
-				'Accept' => 'application/vnd.gathercontent.v0.6+json'
+		return $this->get(
+			'accounts/' . $account_id,
+			array(
+				'headers' => array(
+					'Accept' => 'application/vnd.gathercontent.v0.6+json',
+				),
 			)
-		));
+		);
 	}
 
 	/**
@@ -99,7 +103,7 @@ class API extends Base {
 	 *
 	 * @link https://gathercontent.com/developers/projects/get-projects/
 	 *
-	 * @param  int   $account_id Account ID.
+	 * @param  int $account_id Account ID.
 	 * @return mixed             Results of request.
 	 */
 	public function get_account_projects( $account_id ) {
@@ -113,7 +117,7 @@ class API extends Base {
 	 *
 	 * @link https://gathercontent.com/developers/projects/get-projects-by-id/
 	 *
-	 * @param  int   $project_id Project ID.
+	 * @param  int $project_id Project ID.
 	 * @return mixed             Results of request.
 	 */
 	public function get_project( $project_id ) {
@@ -127,11 +131,11 @@ class API extends Base {
 	 *
 	 * @link https://gathercontent.com/developers/projects/get-projects-statuses/
 	 *
-	 * @param  int   $project_id Project ID.
+	 * @param  int $project_id Project ID.
 	 * @return mixed             Results of request.
 	 */
 	public function get_project_statuses( $project_id ) {
-		return $this->get( 'projects/' . $project_id .'/statuses' );
+		return $this->get( 'projects/' . $project_id . '/statuses' );
 	}
 
 	/**
@@ -141,7 +145,7 @@ class API extends Base {
 	 *
 	 * @link https://gathercontent.com/developers/items/get-items/
 	 *
-	 * @param  int   $project_id Project ID.
+	 * @param  int $project_id Project ID.
 	 * @return mixed             Results of request.
 	 */
 	public function get_project_items( $project_id ) {
@@ -156,12 +160,12 @@ class API extends Base {
 	 *
 	 * @link https://gathercontent.com/developers/items/get-items-by-id/
 	 *
-	 * @param  int   $item_id Item ID.
+	 * @param  int $item_id Item ID.
 	 * @return mixed          Results of request.
 	 */
 	public function get_item( $item_id, $args = array() ) {
 
-		return $this->get( 'items/'. $item_id, $args );
+		return $this->get( 'items/' . $item_id, $args );
 	}
 
 	/**
@@ -171,11 +175,11 @@ class API extends Base {
 	 *
 	 * @link https://gathercontent.com/developers/items/get-items-files/
 	 *
-	 * @param  int   $item_id Item ID.
+	 * @param  int $item_id Item ID.
 	 * @return mixed          Results of request.
 	 */
 	public function get_item_files( $item_id ) {
-		return $this->get( 'items/'. $item_id .'/files' );
+		return $this->get( 'items/' . $item_id . '/files' );
 	}
 
 	/**
@@ -185,19 +189,21 @@ class API extends Base {
 	 *
 	 * @link https://docs.gathercontent.com/reference#get-filesfile_iddownload
 	 *
-	 * @param  int   $file_id File ID.
+	 * @param  int $file_id File ID.
 	 * @return mixed          Results of request.
 	 */
 	public function get_file( $file_id ) {
 		$tmpfname = wp_tempnam();
-		if ( ! $tmpfname )
-			return new WP_Error('http_no_file', __('Could not create Temporary file.'));
+		if ( ! $tmpfname ) {
+			return new WP_Error( 'http_no_file', __( 'Could not create Temporary file.' ) );
+		}
 
-		$response = $this->get( 'files/'. $file_id .'/download',
-			[
-				'stream' => true,
-				'filename' => $tmpfname
-			]
+		$response = $this->get(
+			'files/' . $file_id . '/download',
+			array(
+				'stream'   => true,
+				'filename' => $tmpfname,
+			)
 		);
 		return $tmpfname;
 	}
@@ -209,15 +215,18 @@ class API extends Base {
 	 *
 	 * @link https://gathercontent.com/developers/templates/get-templates/
 	 *
-	 * @param  int   $project_id Project ID.
+	 * @param  int $project_id Project ID.
 	 * @return mixed             Results of request.
 	 */
 	public function get_project_templates( $project_id ) {
-		return $this->get( 'templates?projectId=' . $project_id, array(
-			'headers' => array(
-				'Accept' => 'application/vnd.gathercontent.v0.6+json'
+		return $this->get(
+			'templates?projectId=' . $project_id,
+			array(
+				'headers' => array(
+					'Accept' => 'application/vnd.gathercontent.v0.6+json',
+				),
 			)
-		) );
+		);
 	}
 
 	/**
@@ -227,11 +236,11 @@ class API extends Base {
 	 *
 	 * @link https://gathercontent.com/developers/templates/get-templates-by-id/
 	 *
-	 * @param  int   $template_id Template ID.
+	 * @param  int $template_id Template ID.
 	 * @return mixed              Results of request.
 	 */
 	public function get_template( $template_id, $args = array() ) {
-		return $this->get( 'templates/' . $template_id, $args);
+		return $this->get( 'templates/' . $template_id, $args );
 	}
 
 	/**
@@ -243,16 +252,19 @@ class API extends Base {
 	 *
 	 * @link https://gathercontent.com/developers/items/post-items-choose_status/
 	 *
-	 * @param  int  $item_id   GatherContent Item Id.
-	 * @param  int  $status_id Id of status to set.
+	 * @param  int $item_id   GatherContent Item Id.
+	 * @param  int $status_id Id of status to set.
 	 * @return bool            If request was successful.
 	 */
 	public function set_item_status( $item_id, $status_id ) {
-		$response = $this->post( 'items/'. absint( $item_id ) .'/choose_status', array(
-			'body' => array(
-				'status_id' => absint( $status_id ),
-			),
-		) );
+		$response = $this->post(
+			'items/' . absint( $item_id ) . '/choose_status',
+			array(
+				'body' => array(
+					'status_id' => absint( $status_id ),
+				),
+			)
+		);
 
 		if ( 202 === $response['response']['code'] ) {
 			$data = json_decode( wp_remote_retrieve_body( $response ) );
@@ -281,11 +293,14 @@ class API extends Base {
 	 * @return bool           If request was successful.
 	 */
 	public function save_item( $item_id, $config ) {
-		$response = $this->post( 'items/'. absint( $item_id ) .'/save', array(
-			'body' => array(
-				'config' => base64_encode( wp_json_encode( $config ) ),
-			),
-		) );
+		$response = $this->post(
+			'items/' . absint( $item_id ) . '/save',
+			array(
+				'body' => array(
+					'config' => base64_encode( wp_json_encode( $config ) ),
+				),
+			)
+		);
 
 		return is_wp_error( $response ) ? $response : 202 === $response['response']['code'];
 	}
@@ -303,7 +318,7 @@ class API extends Base {
 	 */
 	public function update_item( $item_id, $content ) {
 		$args = array(
-			'body'    => wp_json_encode(compact( 'content' )),
+			'body'    => wp_json_encode( compact( 'content' ) ),
 			'headers' => array(
 				'Accept'       => 'application/vnd.gathercontent.v0.6+json',
 				'Content-Type' => 'application/json',
@@ -335,7 +350,7 @@ class API extends Base {
 	 */
 	public function create_item( $project_id, $template_id, $name, $config = array() ) {
 		$args = array(
-			'body' => compact( 'project_id', 'template_id', 'name' )
+			'body' => compact( 'project_id', 'template_id', 'name' ),
 		);
 
 		if ( ! empty( $config ) ) {
@@ -343,7 +358,7 @@ class API extends Base {
 		}
 
 		$response = $this->post( 'items', $args );
-		$item_id = null;
+		$item_id  = null;
 
 		if ( is_wp_error( $response ) ) {
 			return $response;
@@ -366,10 +381,10 @@ class API extends Base {
 	 *
 	 * /items/create
 	 *
-	 * @param  int $project_id Project ID.
-	 * @param  int $template_id Template ID.
+	 * @param  int    $project_id Project ID.
+	 * @param  int    $template_id Template ID.
 	 * @param  string $name Item name.
-	 * @param array $content
+	 * @param array  $content
 	 *
 	 * @return bool                If request was successful.
 	 */
@@ -405,15 +420,18 @@ class API extends Base {
 	 *
 	 * @link https://docs.gathercontent.com/reference/listcomponents
 	 *
-	 * @param  int   $project_id Project Id.
+	 * @param  int $project_id Project Id.
 	 * @return mixed              Results of request.
 	 */
-	public function get_components( $project_id) {
-		return $this->get( 'projects/'.$project_id.'/components/', array(
-			'headers' => array(
-				'Accept' => 'application/vnd.gathercontent.v2+json'
+	public function get_components( $project_id ) {
+		return $this->get(
+			'projects/' . $project_id . '/components/',
+			array(
+				'headers' => array(
+					'Accept' => 'application/vnd.gathercontent.v2+json',
+				),
 			)
-		));
+		);
 	}
 	/**
 	 * GC V2 API request to get the results from the "/components/{component_uuid}" endpoint.
@@ -422,15 +440,18 @@ class API extends Base {
 	 *
 	 * @link https://docs.gathercontent.com/reference/getcomponent
 	 *
-	 * @param  int   $component_uuid Component UUid.
+	 * @param  int $component_uuid Component UUid.
 	 * @return mixed              Results of request.
 	 */
-	public function get_component( $component_uuid) {
-		return $this->get( 'components/'.$component_uuid, array(
-			'headers' => array(
-				'Accept' => 'application/vnd.gathercontent.v2+json'
+	public function get_component( $component_uuid ) {
+		return $this->get(
+			'components/' . $component_uuid,
+			array(
+				'headers' => array(
+					'Accept' => 'application/vnd.gathercontent.v2+json',
+				),
 			)
-		));
+		);
 	}
 
 
@@ -484,7 +505,7 @@ class API extends Base {
 	 */
 	public function cache_get( $endpoint, $expiration = HOUR_IN_SECONDS, $args = array(), $method = 'get' ) {
 		$trans_key = 'gctr-' . md5( serialize( compact( 'endpoint', 'args', 'method' ) ) );
-		$response = get_transient( $trans_key );
+		$response  = get_transient( $trans_key );
 
 		if ( $this->only_cached ) {
 			$this->only_cached = false;
@@ -503,8 +524,8 @@ class API extends Base {
 			// delete_option( 'gathercontent_transients' );
 			set_transient( $trans_key, $response, $expiration );
 
-			$keys = get_option( 'gathercontent_transients' );
-			$keys = is_array( $keys ) ? $keys : array();
+			$keys                = get_option( 'gathercontent_transients' );
+			$keys                = is_array( $keys ) ? $keys : array();
 			$keys[ $endpoint ][] = $trans_key;
 			update_option( 'gathercontent_transients', $keys, false );
 
@@ -540,10 +561,16 @@ class API extends Base {
 		}
 
 		if ( Debug::debug_mode() ) {
-			Debug::debug_log( add_query_arg( array(
-				'disable_cache' => $this->disable_cache,
-				'reset_request_cache' => $this->reset_request_cache,
-			), $uri ), 'api $uri' );
+			Debug::debug_log(
+				add_query_arg(
+					array(
+						'disable_cache'       => $this->disable_cache,
+						'reset_request_cache' => $this->reset_request_cache,
+					),
+					$uri
+				),
+				'api $uri'
+			);
 			// Only log if we have more than authorization/accept headers.
 			if ( count( $args ) > 1 || isset( $args['headers'] ) && count( $args['headers'] ) > 2 ) {
 				Debug::debug_log( $args, 'api $args' );
@@ -556,26 +583,39 @@ class API extends Base {
 			return $response;
 		} else {
 
-			$code     = $response['response']['code'];
-			$success  = $code >= 200 && $code < 300;
+			$code    = $response['response']['code'];
+			$success = $code >= 200 && $code < 300;
 
 			if ( 500 === $response['response']['code'] && ( $error = wp_remote_retrieve_body( $response ) ) ) {
 
-				$error = json_decode( $error );
-				$message = isset( $error->message ) ? $error->message : __( 'Unknown Error', 'gathercontent-import' );
-				$response = new WP_Error( 'gc_api_error', $message, array( 'error' => $error, 'code' => 500 ) );
+				$error    = json_decode( $error );
+				$message  = isset( $error->message ) ? $error->message : __( 'Unknown Error', 'gathercontent-import' );
+				$response = new WP_Error(
+					'gc_api_error',
+					$message,
+					array(
+						'error' => $error,
+						'code'  => 500,
+					)
+				);
 
 			} elseif ( 401 === $response['response']['code'] && ( $error = wp_remote_retrieve_body( $response ) ) ) {
 
-				$message = $error ? $error : __( 'Unknown Error', 'gathercontent-import' );
-				$response = new WP_Error( 'gc_api_error', $message, array( 'error' => $error, 'code' => 401 ) );
+				$message  = $error ? $error : __( 'Unknown Error', 'gathercontent-import' );
+				$response = new WP_Error(
+					'gc_api_error',
+					$message,
+					array(
+						'error' => $error,
+						'code'  => 401,
+					)
+				);
 
-			} elseif( isset( $args['filename'] ) ) {
-				$response = (object) [ 'data' => true ];
-			} elseif( 'GET' === $method ) {
+			} elseif ( isset( $args['filename'] ) ) {
+				$response = (object) array( 'data' => true );
+			} elseif ( 'GET' === $method ) {
 				$response = $success ? json_decode( wp_remote_retrieve_body( $response ) ) : $response;
 			}
-
 		}
 
 		$this->last_response = $response;
@@ -588,7 +628,7 @@ class API extends Base {
 	 *
 	 * @since  3.0.0
 	 *
-	 * @param  array  $args Array of request args.
+	 * @param  array $args Array of request args.
 	 *
 	 * @return array        Modified array of request args.
 	 */
@@ -675,8 +715,8 @@ class API extends Base {
 	 */
 	public function flush_cache( $endpoint = '' ) {
 		$deleted = false;
-		$keys = get_option( 'gathercontent_transients' );
-		$keys = is_array( $keys ) ? $keys : array();
+		$keys    = get_option( 'gathercontent_transients' );
+		$keys    = is_array( $keys ) ? $keys : array();
 
 		if ( $endpoint ) {
 			if ( isset( $keys[ $endpoint ] ) ) {
@@ -694,7 +734,7 @@ class API extends Base {
 				}
 			}
 
-			$keys = array();
+			$keys    = array();
 			$deleted = true;
 		}
 

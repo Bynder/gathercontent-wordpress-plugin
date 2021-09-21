@@ -6,6 +6,7 @@
  */
 
 namespace GatherContent\Importer\Admin\Ajax;
+
 use GatherContent\Importer\Base as Plugin_Base;
 use GatherContent\Importer\General;
 use GatherContent\Importer\Utils;
@@ -50,9 +51,9 @@ class Handlers extends Plugin_Base {
 	 */
 	public function __construct( API $api ) {
 
-		$this->api = $api;
+		$this->api        = $api;
 		$this->sync_items = new Sync_Items();
-		$this->sync_bulk = new Sync_Bulk();
+		$this->sync_bulk  = new Sync_Bulk();
 	}
 
 	/**
@@ -129,13 +130,16 @@ class Handlers extends Plugin_Base {
 				continue;
 			}
 
-			$post = wp_parse_args( $post, array(
-				'id' => 0,
-				'item' => 0,
-			) );
+			$post = wp_parse_args(
+				$post,
+				array(
+					'id'   => 0,
+					'item' => 0,
+				)
+			);
 
 			$status = (object) array();
-			$item = false;
+			$item   = false;
 			if ( $post['item'] && '&mdash;' !== $post['item'] ) {
 				$item = $this->api->uncached()->get_item( $post['item'] );
 
@@ -171,7 +175,7 @@ class Handlers extends Plugin_Base {
 			wp_send_json_error( array( 'postId' => $post_id ) );
 		}
 
-		$item_id = absint( \GatherContent\Importer\get_post_item_id( $post_id ) );
+		$item_id    = absint( \GatherContent\Importer\get_post_item_id( $post_id ) );
 		$mapping_id = absint( \GatherContent\Importer\get_post_mapping_id( $post_id ) );
 
 		if (
@@ -184,10 +188,12 @@ class Handlers extends Plugin_Base {
 			wp_send_json_error( array( 'postId' => $post_id ) );
 		}
 
-		wp_send_json_success( array(
-			'postId'   => $post_id,
-			'statuses' => $statuses,
-		) );
+		wp_send_json_success(
+			array(
+				'postId'   => $post_id,
+				'statuses' => $statuses,
+			)
+		);
 	}
 
 	/**
@@ -199,8 +205,8 @@ class Handlers extends Plugin_Base {
 	 */
 	public function set_gc_status_cb() {
 		$post_data = $this->_post_val( 'post' );
-		$status = absint( $this->_post_val( 'status' ) );
-		$nonce = $this->_post_val( 'nonce' );
+		$status    = absint( $this->_post_val( 'status' ) );
+		$nonce     = $this->_post_val( 'nonce' );
 
 		if ( empty( $post_data ) || empty( $status ) || ! $this->verify_nonce( $nonce ) ) {
 			wp_send_json_error();
@@ -227,18 +233,21 @@ class Handlers extends Plugin_Base {
 	 * @return void
 	 */
 	public function gc_fetch_js_post_cb() {
-		echo "here";exit;
+		echo 'here';
+		exit;
 		if ( $post_id = $this->_get_val( 'id' ) ) {
-			wp_send_json( \GatherContent\Importer\prepare_post_for_js(
-				absint( $post_id ),
-				'force' === $this->_get_val( 'flush_cache' )
-			) );
+			wp_send_json(
+				\GatherContent\Importer\prepare_post_for_js(
+					absint( $post_id ),
+					'force' === $this->_get_val( 'flush_cache' )
+				)
+			);
 		}
 	}
 
 	public function gc_disconnect_post_cb() {
 		$post_data = $this->_post_val( 'post' );
-		$nonce = $this->_post_val( 'nonce' );
+		$nonce     = $this->_post_val( 'nonce' );
 
 		$opt_group = General::get_instance()->admin->mapping_wizard->option_group;
 
@@ -283,12 +292,14 @@ class Handlers extends Plugin_Base {
 				}
 			}
 
-			wp_send_json_success( array(
-				'ids'         => $done,
-				'mapping'     => $mapping->ID,
-				'mappingName' => $mapping->post_title,
-				'mappingLink' => $mapping->get_edit_post_link(),
-			) );
+			wp_send_json_success(
+				array(
+					'ids'         => $done,
+					'mapping'     => $mapping->ID,
+					'mappingName' => $mapping->post_title,
+					'mappingLink' => $mapping->get_edit_post_link(),
+				)
+			);
 
 		} elseif ( \GatherContent\Importer\update_post_mapping_id( absint( $post_data['id'] ), $mapping->ID ) ) {
 			wp_send_json_success();
@@ -307,14 +318,14 @@ class Handlers extends Plugin_Base {
 	 */
 	public function gc_wp_filter_mappings_cb() {
 		$post_data = $this->_post_val( 'post' );
-		$property = $this->_post_val( 'property' );
+		$property  = $this->_post_val( 'property' );
 
 		if ( empty( $post_data['id'] ) || empty( $property ) || ! $this->verify_nonce( $this->_post_val( 'nonce' ) ) ) {
 			wp_send_json_error();
 		}
 
 		$mappings = General::get_instance()->admin->mapping_wizard->mappings;
-		$objects = array();
+		$objects  = array();
 
 		switch ( $property ) {
 			case 'mapping':
@@ -412,17 +423,22 @@ class Handlers extends Plugin_Base {
 			wp_send_json_error();
 		}
 
-		$users = get_users( array(
-			'search' => '*' . $search_term . '*',
-			'number' => 30,
-		) );
+		$users = get_users(
+			array(
+				'search' => '*' . $search_term . '*',
+				'number' => 30,
+			)
+		);
 
-		$users = array_map( function( $user ) {
-			return array(
-				'text' => $user->user_login,
-				'id'   => $user->ID,
-			);
-		}, $users );
+		$users = array_map(
+			function( $user ) {
+				return array(
+					'text' => $user->user_login,
+					'id'   => $user->ID,
+				);
+			},
+			$users
+		);
 
 		return array( 'results' => $users );
 	}

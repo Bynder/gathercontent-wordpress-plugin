@@ -6,6 +6,7 @@
  */
 
 namespace GatherContent\Importer\Sync;
+
 use GatherContent\Importer\Mapping_Post;
 use GatherContent\Importer\API;
 use WP_Error;
@@ -73,7 +74,7 @@ class Pull extends Base {
 	public function maybe_pull_item( $mapping_post, $item_id ) {
 		try {
 			$this->mapping = Mapping_Post::get( $mapping_post, true );
-			$result = $this->do_item( $item_id );
+			$result        = $this->do_item( $item_id );
 		} catch ( \Exception $e ) {
 			$result = new WP_Error( 'gc_pull_item_fail_' . $e->getCode(), $e->getMessage(), $e->get_data() );
 		}
@@ -97,12 +98,12 @@ class Pull extends Base {
 
 		$this->set_item( $id );
 
-		$post_data = array();
+		$post_data   = array();
 		$attachments = $tax_terms = false;
 
 		if ( $existing = \GatherContent\Importer\get_post_by_item_id( $id ) ) {
 			// Check if item is up-to-date and if pull is necessary.
-			$meta = \GatherContent\Importer\get_post_item_meta( $existing->ID );
+			$meta       = \GatherContent\Importer\get_post_item_meta( $existing->ID );
 			$updated_at = isset( $meta['updated_at'] ) ? $meta['updated_at'] : 0;
 			$updated_at = is_object( $updated_at ) ? $updated_at->date : $updated_at;
 
@@ -114,7 +115,14 @@ class Pull extends Base {
 				// If it's not newer, then don't update (unless asked to via filter).
 				&& $is_up_to_date && apply_filters( 'gc_only_update_if_newer', true )
 			) {
-				throw new Exception( sprintf( __( 'WordPress has most recent changes for %1$s (Item ID: %2$d):', 'gathercontent-import' ), $this->item->name, $this->item->id ), __LINE__, array( 'post' => $existing->ID, 'item' => $this->item->id ) );
+				throw new Exception(
+					sprintf( __( 'WordPress has most recent changes for %1$s (Item ID: %2$d):', 'gathercontent-import' ), $this->item->name, $this->item->id ),
+					__LINE__,
+					array(
+						'post' => $existing->ID,
+						'item' => $this->item->id,
+					)
+				);
 			}
 
 			$post_data = (array) $existing;
@@ -145,10 +153,13 @@ class Pull extends Base {
 		// Store item ID reference to post-meta.
 		\GatherContent\Importer\update_post_item_id( $post_id, $id );
 		\GatherContent\Importer\update_post_mapping_id( $post_id, $this->mapping->ID );
-		\GatherContent\Importer\update_post_item_meta( $post_id, array(
-			'created_at' => $this->item->created_at->date,
-			'updated_at' => $this->item->updated_at->date,
-		) );
+		\GatherContent\Importer\update_post_item_meta(
+			$post_id,
+			array(
+				'created_at' => $this->item->created_at->date,
+				'updated_at' => $this->item->updated_at->date,
+			)
+		);
 
 		if ( ! empty( $tax_terms ) ) {
 			foreach ( $tax_terms as $taxonomy => $terms ) {
@@ -172,7 +183,7 @@ class Pull extends Base {
 		$updated_post_data = array();
 
 		if ( $attachments ) {
-			$attachments = apply_filters( 'gc_media_objects', $attachments, $post_data );
+			$attachments  = apply_filters( 'gc_media_objects', $attachments, $post_data );
 			$replacements = $this->sideload_attachments( $attachments, $post_data );
 
 			if ( ! empty( $replacements ) ) {
@@ -186,16 +197,20 @@ class Pull extends Base {
 				}
 
 				if ( ! empty( $replacements['meta_input'] ) ) {
-					$updated_post_data['meta_input'] = array_map( function( $meta ) {
-						return is_array( $meta ) && count( $meta ) > 1
+					$updated_post_data['meta_input'] = array_map(
+						function( $meta ) {
+							return is_array( $meta ) && count( $meta ) > 1
 							? $meta
 							: array_shift( $meta );
-					}, $replacements['meta_input'] );
+						},
+						$replacements['meta_input']
+					);
 				}
 			}
 		}
 
-		/*// Check if we need to set hierarchies.
+		/*
+		// Check if we need to set hierarchies.
 		if ( $this->should_map_hierarchy( $post_data['post_type'] ) && isset( $this->item->parent_id ) && $this->item->parent_id ) {
 
 			// Check if an associated WordPress item exists for the parent item id.
@@ -249,7 +264,7 @@ class Pull extends Base {
 
 		$backup = array();
 		foreach ( $this->append_types as $key ) {
-			$backup[ $key ] = isset( $post_data[ $key ] ) ? $post_data[ $key ] : '';
+			$backup[ $key ]    = isset( $post_data[ $key ] ) ? $post_data[ $key ] : '';
 			$post_data[ $key ] = 'gcinitial';
 		}
 
@@ -298,7 +313,7 @@ class Pull extends Base {
 	 * @return boolean
 	 */
 	public function should_update_title_with_item_name( $post_data ) {
-		$should = ! empty( $this->item->name );
+		$should      = ! empty( $this->item->name );
 		$empty_title = empty( $post_data['post_title'] );
 		if ( ! $empty_title ) {
 			$should = ! $this->has_post_title_mapping();
@@ -316,13 +331,16 @@ class Pull extends Base {
 	 */
 	public function has_post_title_mapping() {
 		try {
-			array_filter( $this->mapping->data(), function( $mapped ) {
-				if ( isset( $mapped['type'], $mapped['value'] )
+			array_filter(
+				$this->mapping->data(),
+				function( $mapped ) {
+					if ( isset( $mapped['type'], $mapped['value'] )
 					&& 'wp-type-post' === $mapped['type']
 					&& 'post_title' === $mapped['value'] ) {
-					throw new \Exception( 'found' );
+						throw new \Exception( 'found' );
+					}
 				}
-			} );
+			);
 		} catch ( \Exception $e ) {
 			return true;
 		}
@@ -343,7 +361,7 @@ class Pull extends Base {
 			return $post_data;
 		}
 
-		$columns = [];
+		$columns = array();
 
 		foreach ( $this->item->config as $tab ) {
 			if ( ! isset( $tab->elements ) || ! $tab->elements ) {
@@ -354,7 +372,7 @@ class Pull extends Base {
 				$destination = $this->mapping->data( $this->element->name );
 				if ( $destination && isset( $destination['type'], $destination['value'] ) ) {
 					$columns[ $destination['value'] ] = true;
-					$post_data = $this->set_post_values( $destination, $post_data );
+					$post_data                        = $this->set_post_values( $destination, $post_data );
 				}
 			}
 		}
@@ -491,7 +509,7 @@ class Pull extends Base {
 	 */
 	protected function set_media_field_value( $destination, $post_data ) {
 		static $field_number = 0;
-		$media_items = $this->sanitize_element_media();
+		$media_items         = $this->sanitize_element_media();
 
 		if (
 			in_array( $destination, array( 'gallery', 'content_image', 'excerpt_image' ), true )
@@ -500,7 +518,7 @@ class Pull extends Base {
 			$field_number++;
 			$position = 0;
 			foreach ( $media_items as $index => $media ) {
-				$media_items[ $index ]->position = ++$position;
+				$media_items[ $index ]->position     = ++$position;
 				$media_items[ $index ]->field_number = $field_number;
 
 				$token = '#_gc_media_id_' . $media->id . '#';
@@ -553,7 +571,7 @@ class Pull extends Base {
 	 * @param  array  $post_data The WP Post data array.
 	 *
 	 * @throws Exception Will fail if the wrong kind of GC field is
-	 *         				attempting to be sanitized.
+	 *                      attempting to be sanitized.
 	 *
 	 * @return mixed             The sanitized post field value.
 	 */
@@ -670,7 +688,7 @@ class Pull extends Base {
 	 * @return array              Array of replacement key/values for strtr.
 	 */
 	protected function sideload_attachments( $attachments, $post_data ) {
-		$post_id = $post_data['ID'];
+		$post_id         = $post_data['ID'];
 		$featured_img_id = false;
 
 		$replacements = $gallery_ids = array();
@@ -696,7 +714,7 @@ class Pull extends Base {
 					} elseif ( in_array( $attachment['destination'], array( 'content_image', 'excerpt_image' ), true ) ) {
 						$field = 'excerpt_image' === $attachment['destination'] ? 'post_excerpt' : 'post_content';
 
-						$atts = array(
+						$atts  = array(
 							'data-gcid' => $media->id,
 							'class'     => "gathercontent-image attachment-full size-full wp-image-$attach_id",
 						);
@@ -715,7 +733,7 @@ class Pull extends Base {
 								$img = $maybe_image ? $maybe_image : $image;
 
 								// Replace the GC "shortcode" with the image/link.
-								$img = apply_filters( 'gc_content_image', $img, $media, $attach_id, $post_data, $atts );
+								$img                                    = apply_filters( 'gc_content_image', $img, $media, $attach_id, $post_data, $atts );
 								$replacements[ $field ][ $replace_val ] = $img;
 							}
 
@@ -725,7 +743,7 @@ class Pull extends Base {
 						} else {
 
 							// Replace the token with the image.
-							$image = apply_filters( 'gc_content_image', $image, $media, $attach_id, $post_data, $atts );
+							$image                            = apply_filters( 'gc_content_image', $image, $media, $attach_id, $post_data, $atts );
 							$replacements[ $field ][ $token ] = $image;
 
 						}
@@ -749,14 +767,14 @@ class Pull extends Base {
 							'class'     => "gathercontent-file wp-file-$attach_id",
 						);
 
-						$link = '<a href="' . esc_url( wp_get_attachment_url( $attach_id ) ) . '" data-gcid="' . $atts['data-gcid']. '" class="' . $atts['class'] . '">' . get_the_title( $attach_id  ) . '</a>';
+						$link = '<a href="' . esc_url( wp_get_attachment_url( $attach_id ) ) . '" data-gcid="' . $atts['data-gcid'] . '" class="' . $atts['class'] . '">' . get_the_title( $attach_id ) . '</a>';
 
 						// If we've found a GC "shortcode"...
 						if ( $media_replace = $this->get_media_shortcode_attributes( $post_data[ $field ], (array) $media ) ) {
 
 							foreach ( $media_replace as $replace_val => $atts ) {
 								// Replace the GC "shortcode" with the file/link.
-								$link = apply_filters( 'gc_content_file', $link, $media, $attach_id, $post_data, $atts );
+								$link                                   = apply_filters( 'gc_content_file', $link, $media, $attach_id, $post_data, $atts );
 								$replacements[ $field ][ $replace_val ] = $link;
 							}
 
@@ -766,7 +784,7 @@ class Pull extends Base {
 						} else {
 
 							// Replace the token with the image.
-							$link = apply_filters( 'gc_content_file', $link, $media, $attach_id, $post_data, $atts );
+							$link                             = apply_filters( 'gc_content_file', $link, $media, $attach_id, $post_data, $atts );
 							$replacements[ $field ][ $token ] = $link;
 
 						}
@@ -780,17 +798,20 @@ class Pull extends Base {
 				\GatherContent\Importer\update_post_mapping_id( $attach_id, $this->mapping->ID );
 
 				// Store other media item meta to attachment post-meta.
-				\GatherContent\Importer\update_post_item_meta( $attach_id, array(
-					'user_id'    => $media->user_id,
-					'item_id'    => $media->item_id,
-					'field'      => $media->field,
-					'type'       => $media->type,
-					'url'        => $media->url,
-					'filename'   => $media->filename,
-					'size'       => $media->size,
-					'created_at' => isset( $media->created_at->date ) ? $media->created_at->date : $media->created_at,
-					'updated_at' => isset( $media->updated_at->date ) ? $media->updated_at->date : $media->updated_at,
-				) );
+				\GatherContent\Importer\update_post_item_meta(
+					$attach_id,
+					array(
+						'user_id'    => $media->user_id,
+						'item_id'    => $media->item_id,
+						'field'      => $media->field,
+						'type'       => $media->type,
+						'url'        => $media->url,
+						'filename'   => $media->filename,
+						'size'       => $media->size,
+						'created_at' => isset( $media->created_at->date ) ? $media->created_at->date : $media->created_at,
+						'updated_at' => isset( $media->updated_at->date ) ? $media->updated_at->date : $media->updated_at,
+					)
+				);
 			}
 		}
 
@@ -832,7 +853,7 @@ class Pull extends Base {
 
 		if ( $meta = \GatherContent\Importer\get_post_item_meta( $attach_id ) ) {
 
-			$meta = (object) $meta;
+			$meta        = (object) $meta;
 			$new_updated = strtotime( isset( $media->updated_at->date ) ? $media->updated_at->date : $media->updated_at );
 			$old_updated = strtotime( $meta->updated_at );
 
@@ -917,13 +938,13 @@ class Pull extends Base {
 			return new WP_Error( 'upload_error', $file['error'] );
 		}
 
-		$args = (array) $attachment;
+		$args                   = (array) $attachment;
 		$args['post_mime_type'] = $file['type'];
 
 		$_file = $file['file'];
 
 		if ( $replace_data ) {
-			$title = preg_replace( '/\.[^.]+$/', '', basename( $_file ) );
+			$title   = preg_replace( '/\.[^.]+$/', '', basename( $_file ) );
 			$content = '';
 
 			// Use image exif/iptc data for title and caption defaults if possible.
@@ -938,7 +959,7 @@ class Pull extends Base {
 				}
 			}
 
-			$args['post_title'] = $title;
+			$args['post_title']   = $title;
 			$args['post_content'] = $content;
 		}
 
@@ -968,9 +989,9 @@ class Pull extends Base {
 	 * @return array              The temporary file array.
 	 */
 	protected function tmp_file( $file_id, $file_name ) {
-		require_once( ABSPATH . '/wp-admin/includes/file.php' );
-		require_once( ABSPATH . '/wp-admin/includes/media.php' );
-		require_once( ABSPATH . '/wp-admin/includes/image.php' );
+		require_once ABSPATH . '/wp-admin/includes/file.php';
+		require_once ABSPATH . '/wp-admin/includes/media.php';
+		require_once ABSPATH . '/wp-admin/includes/image.php';
 
 		$file_array = array();
 
@@ -994,7 +1015,7 @@ class Pull extends Base {
 	 *
 	 * @since  3.1.2
 	 *
-	 * @param  int  $attach_id The attachement ID.
+	 * @param  int $attach_id The attachement ID.
 	 *
 	 * @return bool
 	 */
@@ -1007,7 +1028,7 @@ class Pull extends Base {
 	 *
 	 * @since  3.0.2
 	 *
-	 * @param  array        $post_data Array of post data.
+	 * @param  array $post_data Array of post data.
 	 *
 	 * @return int|WP_Error The value 0 or WP_Error on failure. The post ID on success.
 	 */
@@ -1040,7 +1061,7 @@ class Pull extends Base {
 	 *
 	 * @since  3.0.2
 	 *
-	 * @param  int  $post_id WordPress post id to eventually update.
+	 * @param  int $post_id WordPress post id to eventually update.
 	 *
 	 * @return void
 	 */
@@ -1092,7 +1113,7 @@ class Pull extends Base {
 		$mapping_id = $mapping->ID;
 
 		$opt_name = "gc_associate_hierarchy_{$mapping_id}";
-		$pending = get_option( $opt_name, array() );
+		$pending  = get_option( $opt_name, array() );
 
 		if ( ! empty( $pending ) && is_array( $pending ) ) {
 			foreach ( $pending as $post_id => $parent_item_id ) {
@@ -1102,19 +1123,24 @@ class Pull extends Base {
 					continue;
 				}
 
-				$parent_post = \GatherContent\Importer\get_post_by_item_id( $parent_item_id, array(
-					'post_type' => $post->post_type
-				) );
+				$parent_post = \GatherContent\Importer\get_post_by_item_id(
+					$parent_item_id,
+					array(
+						'post_type' => $post->post_type,
+					)
+				);
 
 				if ( ! $parent_post || ! isset( $parent_post->ID ) ) {
 					continue;
 				}
 
 				// And update post (but don't create a revision for it).
-				$post_id = self::post_update_no_revision( array(
-					'ID'          => $post->ID,
-					'post_parent' => absint( $parent_post->ID ),
-				) );
+				$post_id = self::post_update_no_revision(
+					array(
+						'ID'          => $post->ID,
+						'post_parent' => absint( $parent_post->ID ),
+					)
+				);
 			}
 		}
 

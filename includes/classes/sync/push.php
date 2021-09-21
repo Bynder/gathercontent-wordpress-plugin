@@ -6,6 +6,7 @@
  */
 
 namespace GatherContent\Importer\Sync;
+
 use GatherContent\Importer\Post_Types\Template_Mappings;
 use GatherContent\Importer\Mapping_Post;
 use GatherContent\Importer\API;
@@ -45,7 +46,7 @@ class Push extends Base {
 	 *
 	 * @var string
 	 */
-	protected $config = array();
+	protected $config      = array();
 	protected $item_config = array();
 
 	private $item_id = null;
@@ -86,7 +87,7 @@ class Push extends Base {
 	public function maybe_push_item( $mapping_post_id ) {
 		try {
 
-			$post = $this->get_post( $mapping_post_id );
+			$post       = $this->get_post( $mapping_post_id );
 			$mapping_id = \GatherContent\Importer\get_post_mapping_id( $post->ID );
 
 			$this->mapping = Mapping_Post::get( $mapping_id, true );
@@ -122,11 +123,15 @@ class Push extends Base {
 
 		// No updated data, so bail.
 		if ( empty( $config_update ) ) {
-			throw new Exception( sprintf( __( 'No update data found for that post ID: %d', 'gathercontent-import' ), $this->post->ID ), __LINE__, array(
-				'post_id'    => $this->post->ID,
-				'mapping_id' => $this->mapping->ID,
-				'item_id'    => $this->item->id,
-			) );
+			throw new Exception(
+				sprintf( __( 'No update data found for that post ID: %d', 'gathercontent-import' ), $this->post->ID ),
+				__LINE__,
+				array(
+					'post_id'    => $this->post->ID,
+					'mapping_id' => $this->mapping->ID,
+					'item_id'    => $this->item->id,
+				)
+			);
 		}
 
 		// If we found updates, do the update.
@@ -134,7 +139,7 @@ class Push extends Base {
 	}
 
 	private function get_structured_array( $config ) {
-		$structured_content = [];
+		$structured_content = array();
 
 		foreach ( $config as $tab ) {
 			foreach ( $tab->elements as $element ) {
@@ -165,7 +170,8 @@ class Push extends Base {
 							if ( $option->selected ) {
 								$selected_checkboxes[] = array(
 									'id' => $option->name,
-								);;
+								);
+
 							}
 						}
 
@@ -199,7 +205,6 @@ class Push extends Base {
 				$config[ $index ]->elements[ $element_index ] = $element;
 			}
 		}
-
 
 		if ( ! $this->mapping->data( 'structure_uuid' ) ) {
 
@@ -238,10 +243,13 @@ class Push extends Base {
 			$this->item = $this->api->uncached()->get_item( $this->item_id );
 
 			// and update the meta.
-			\GatherContent\Importer\update_post_item_meta( $this->post->ID, array(
-				'created_at' => $this->item->created_at->date,
-				'updated_at' => $this->item->updated_at->date,
-			) );
+			\GatherContent\Importer\update_post_item_meta(
+				$this->post->ID,
+				array(
+					'created_at' => $this->item->created_at->date,
+					'updated_at' => $this->item->updated_at->date,
+				)
+			);
 		}
 
 		return $result;
@@ -307,9 +315,9 @@ class Push extends Base {
 					$this->element->value = self::remove_zero_width( $this->element->value );
 				}
 
-				$source = $this->mapping->data( $this->element->name );
+				$source      = $this->mapping->data( $this->element->name );
 				$source_type = isset( $source['type'] ) ? $source['type'] : '';
-				$source_key = isset( $source['value'] ) ? $source['value'] : '';
+				$source_key  = isset( $source['value'] ) ? $source['value'] : '';
 
 				if ( $source_type ) {
 					if ( ! isset( $this->done[ $source_type ] ) ) {
@@ -430,10 +438,10 @@ class Push extends Base {
 	 * @return bool $updated Whether value was updated.
 	 */
 	protected function set_post_field_value( $post_column ) {
-		$updated = false;
+		$updated  = false;
 		$el_value = $this->element->value;
-		$value = ! empty( $this->post->{$post_column} ) ? self::remove_zero_width( $this->post->{$post_column} ) : false;
-		$value = apply_filters( "gc_get_{$post_column}", $value, $this );
+		$value    = ! empty( $this->post->{$post_column} ) ? self::remove_zero_width( $this->post->{$post_column} ) : false;
+		$value    = apply_filters( "gc_get_{$post_column}", $value, $this );
 
 		// Make element value match the WP versions formatting, to see if they are equal.
 		switch ( $post_column ) {
@@ -443,7 +451,7 @@ class Push extends Base {
 			case 'post_content':
 			case 'post_excerpt':
 				$el_value = wp_kses_post( $this->get_element_value() );
-				$value = $this->convert_media_to_shortcodes( $value );
+				$value    = $this->convert_media_to_shortcodes( $value );
 				if ( 'post_content' === $post_column ) {
 					$value = apply_filters( 'the_content', $value );
 				}
@@ -461,7 +469,7 @@ class Push extends Base {
 		if ( $value != $el_value ) {
 			// @codingStandardsIgnoreEnd
 			$this->element->value = $value;
-			$updated = true;
+			$updated              = true;
 		}
 
 		return $updated;
@@ -503,15 +511,17 @@ class Push extends Base {
 
 				if ( ! empty( $diff ) ) {
 					$this->element->value = ! empty( $term_names ) ? implode( ', ', $term_names ) : '';
-					$updated = true;
+					$updated              = true;
 				}
 				break;
 
 			case 'choice_checkbox':
 			case 'choice_radio':
-				$updated = $this->update_element_selected_options( function( $label ) use ( $term_names ) {
-					return in_array( $label, $term_names, true );
-				} );
+				$updated = $this->update_element_selected_options(
+					function( $label ) use ( $term_names ) {
+						return in_array( $label, $term_names, true );
+					}
+				);
 
 				// @codingStandardsIgnoreStart
 				/*
@@ -547,7 +557,7 @@ class Push extends Base {
 	 * @return bool $updated Whether value was updated.
 	 */
 	protected function set_meta_field_value( $meta_key ) {
-		$updated = false;
+		$updated    = false;
 		$meta_value = get_post_meta( $this->post->ID, $meta_key, 1 );
 
 		$check = apply_filters( 'gc_config_pre_meta_field_value_updated', null, $meta_value, $meta_key, $this );
@@ -563,27 +573,30 @@ class Push extends Base {
 				if ( $meta_value != $this->element->value ) {
 					// @codingStandardsIgnoreEnd
 					$this->element->value = $meta_value;
-					$updated = true;
+					$updated              = true;
 				}
 				break;
 
 			case 'choice_radio':
-				$updated = $this->update_element_selected_options( function( $label ) use ( $meta_value ) {
-					return $meta_value === $label;
-				} );
+				$updated = $this->update_element_selected_options(
+					function( $label ) use ( $meta_value ) {
+						return $meta_value === $label;
+					}
+				);
 				break;
 
 			case 'choice_checkbox':
-
 				if ( empty( $meta_value ) ) {
 					$meta_value = array();
 				} else {
 					$meta_value = is_array( $meta_value ) ? $meta_value : array( $meta_value );
 				}
 
-				$updated = $this->update_element_selected_options( function( $label ) use ( $meta_value ) {
-					return in_array( $label, $meta_value, true );
-				} );
+				$updated = $this->update_element_selected_options(
+					function( $label ) use ( $meta_value ) {
+						return in_array( $label, $meta_value, true );
+					}
+				);
 				break;
 
 		}
@@ -598,14 +611,14 @@ class Push extends Base {
 	 *
 	 * @param  callable $callback Closure.
 	 *
-	 * @return bool            	Whether the options were updated or not.
+	 * @return bool             Whether the options were updated or not.
 	 */
 	public function update_element_selected_options( $callback ) {
 		$pre_options = wp_json_encode( $this->element->options );
 
 		$last_key = false;
 		if ( isset( $this->element->other_option ) && $this->element->other_option ) {
-			$keys = array_keys( $this->element->options );
+			$keys     = array_keys( $this->element->options );
 			$last_key = end( $keys );
 		}
 

@@ -23,8 +23,8 @@ function autoload( $class_name ) {
 	// Does the class use the namespace prefix?
 	$len = strlen( $prefix );
 	if ( 0 !== strncmp( $prefix, $class_name, $len ) ) {
-	    // No, move to the next registered autoloader.
-	    return;
+		// No, move to the next registered autoloader.
+		return;
 	}
 
 	// base directory for the namespace prefix.
