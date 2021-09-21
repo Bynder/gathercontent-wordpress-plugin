@@ -231,7 +231,7 @@ class API extends Base {
 	 * @return mixed              Results of request.
 	 */
 	public function get_template( $template_id, $args = array() ) {
-		
+		//$args['headers']['Accept']='Accept: application/vnd.gathercontent.v2+json';
 		return $this->get( 'templates/' . $template_id, $args);
 	}
 
@@ -410,7 +410,24 @@ class API extends Base {
 	 * @return mixed              Results of request.
 	 */
 	public function get_components( $project_id) {
-		return $this->get( 'projects/'.$project_id.'/components/' . $template_id, array(
+		return $this->get( 'projects/'.$project_id.'/components/', array(
+			'headers' => array(
+				'Accept' => 'application/vnd.gathercontent.v2+json'
+			)
+		));
+	}
+	/**
+	 * GC V2 API request to get the results from the "/components/{component_uuid}" endpoint.
+	 *
+	 * @since  3.0.0
+	 *
+	 * @link https://docs.gathercontent.com/reference/getcomponent
+	 *
+	 * @param  int   $component_uuid Component UUid.
+	 * @return mixed              Results of request.
+	 */
+	public function get_component( $component_uuid) {
+		return $this->get( 'components/'.$component_uuid, array(
 			'headers' => array(
 				'Accept' => 'application/vnd.gathercontent.v2+json'
 			)

@@ -170,7 +170,6 @@ class Template_Mapper extends Base {
 	 */
 	protected function get_underscore_templates() {
 		$post_status_options = $this->get_default_field_options( 'post_status' );
-
 		return array(
 			'tmpl-gc-tabs-wrapper' => array(),
 			'tmpl-gc-tab-wrapper' => array(),

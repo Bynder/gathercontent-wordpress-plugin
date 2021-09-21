@@ -493,15 +493,16 @@ class Mapping_Wizard extends Base {
 		if ( isset( $features['editor:new'] ) ) {
 			$template    = $this->api()->get_template( absint( $this->_get_val('template') ), array(
 				'headers' => array(
-					'Accept' => 'application/vnd.gathercontent.v0.6+json'
+					'Accept' => 'application/vnd.gathercontent.v2+json'
 				)
 			) );
 
 			$structure_uuid = $template->structure_uuid;
+
 		}
 
-		$template    = $this->api()->get_template( absint( $this->_get_val('template') ) );
-
+		$template    = $this->api()->get_template( absint( $this->_get_val('template') ));
+		
 		$template_id = isset( $template->id ) ? $template->id : null;
 		$project     = $this->api()->get_project( absint( $this->_get_val( 'project' ) ) );
 		$project_id  = isset( $project->id ) ? $project->id : null;
@@ -557,6 +558,7 @@ class Mapping_Wizard extends Base {
 				'account_slug'   => $account_slug,
 				'project'        => $project,
 				'template'       => $template,
+				'components'       => $components,
 				'statuses'       => $this->api()->get_project_statuses( absint( $this->_get_val( 'project' ) ) ),
 				'option_name'    => $this->option_name,
 			) );
@@ -576,6 +578,7 @@ class Mapping_Wizard extends Base {
 				'account_slug'   => $account_slug,
 				'project'        => $project,
 				'template'       => $template,
+				'components'       => $components,
 				'url'            => $this->platform_url(),
 				'mappings'       => $this->mappings,
 				'items'          => $this->filter_items_by_template( $project_id, $template_id ),
