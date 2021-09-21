@@ -231,7 +231,6 @@ class API extends Base {
 	 * @return mixed              Results of request.
 	 */
 	public function get_template( $template_id, $args = array() ) {
-		//$args['headers']['Accept']='Accept: application/vnd.gathercontent.v2+json';
 		return $this->get( 'templates/' . $template_id, $args);
 	}
 

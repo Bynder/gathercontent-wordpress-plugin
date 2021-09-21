@@ -16,7 +16,6 @@
 	<strong>{{ data.label }}</strong>
 	<# } #>
 </td>
-
 <td>
 	<select class="wp-type-select" name="<?php $this->output( 'option_base' ); ?>[mapping][{{ data.name }}][type]">
 		<option <# if ( '' === data.field_type ) { #>selected="selected"<# } #> value=""><?php _e( 'Unused', 'gathercontent-import' ); ?></option>
