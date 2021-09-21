@@ -21,7 +21,7 @@
     "browserify-shim": "^3.8.14",
     "chai": "^3.5.0",
     "glob": "~5.0.15",
-    "grunt": "^0.4.5",
+    "grunt": "^1.4.1",
     "grunt-browserify": "^4.0.1",
     "grunt-contrib-clean": "^0.6.0",
     "grunt-contrib-compress": "^0.13.0",
@@ -42,5 +42,9 @@
   "browserify-shim": {
     "jquery": "global:jQuery"
   },
-  "keywords": []
+  "keywords": [],
+  "dependencies": {
+    "grunt-dev-update": "^2.3.0",
+    "grunt-update": "^0.2.3"
+  }
 }

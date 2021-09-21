@@ -1,5 +1,6 @@
 <?php
 namespace GatherContent\Importer\Admin;
+
 use GatherContent\Importer\Utils;
 use GatherContent\Importer\Settings\Setting;
 use GatherContent\Importer\Settings\Form_Section;
@@ -12,11 +13,11 @@ use GatherContent\Importer\Post_Types\Template_Mappings;
  */
 class Mapping_Wizard extends Base {
 
-	const SLUG = 'gathercontent-import-add-new-template';
-	const ACCOUNT = 0;
-	const PROJECT = 1;
+	const SLUG     = 'gathercontent-import-add-new-template';
+	const ACCOUNT  = 0;
+	const PROJECT  = 1;
 	const TEMPLATE = 2;
-	const SYNC = 3;
+	const SYNC     = 3;
 
 	protected $slugs = array(
 		self::ACCOUNT  => 'gc-account',
@@ -65,6 +66,7 @@ class Mapping_Wizard extends Base {
 	 * @since 3.0.0
 	 */
 	public function __construct( Admin $parent ) {
+
 		$this->option_name      = $parent->option_name . '_add_new_template';
 		$this->option_group     = $parent->option_group . '_add_new_template';
 		$this->parent_page_slug = parent::SLUG;
@@ -140,12 +142,17 @@ class Mapping_Wizard extends Base {
 	public function add_help_tabs() {
 		$screen = get_current_screen();
 
-		$screen->add_help_tab( array(
-			'id'      => 'gc-help-me',
-			'title'   => __( 'GatherContent', 'gathercontent-import' ),
-			'content' => __( '<p>Thank you for using the GatherContent WordPress plugin!</p>' .
-			'<p>To make the plugin more speedy, we cache the requests to GatherContent for 1 day, but if you find that you need to update the data from GatherContent, just hit the "Refresh" button.</p>', 'gathercontent-import' ) . '<p>'. $this->refresh_connection_link() .'</p>',
-		) );
+		$screen->add_help_tab(
+			array(
+				'id'      => 'gc-help-me',
+				'title'   => __( 'GatherContent', 'gathercontent-import' ),
+				'content' => __(
+					'<p>Thank you for using the GatherContent WordPress plugin!</p>' .
+					'<p>To make the plugin more speedy, we cache the requests to GatherContent for 1 day, but if you find that you need to update the data from GatherContent, just hit the "Refresh" button.</p>',
+					'gathercontent-import'
+				) . '<p>' . $this->refresh_connection_link() . '</p>',
+			)
+		);
 
 		$screen->set_help_sidebar(
 			'<p><strong>' . __( 'For more information:', 'gathercontent-import' ) . '</strong></p>' .
@@ -155,11 +162,13 @@ class Mapping_Wizard extends Base {
 
 		if ( self::TEMPLATE === $this->step ) {
 
-			$screen->add_help_tab( array(
-				'id'      => 'gc-field-details',
-				'title'   => __( 'Mapping Fields', 'gathercontent-import' ),
-				'content' => __( '<p><b>Note:</b> If mapping more than one GatherContent field to one WordPress field, you will not be able to "push" that content back to GatherContent, as there is not currently a way to split the fields back to individual fields.</p>', 'gathercontent-import' ),
-			) );
+			$screen->add_help_tab(
+				array(
+					'id'      => 'gc-field-details',
+					'title'   => __( 'Mapping Fields', 'gathercontent-import' ),
+					'content' => __( '<p><b>Note:</b> If mapping more than one GatherContent field to one WordPress field, you will not be able to "push" that content back to GatherContent, as there is not currently a way to split the fields back to individual fields.</p>', 'gathercontent-import' ),
+				)
+			);
 		}
 	}
 
@@ -180,7 +189,7 @@ class Mapping_Wizard extends Base {
 		switch ( $this->step ) {
 			case self::ACCOUNT:
 				$args['go_back_button_text'] = __( 'Back to API setup', 'gathercontent-import' );
-				$args['go_back_url'] = $this->parent_url;
+				$args['go_back_url']         = $this->parent_url;
 				break;
 
 			case self::PROJECT:
@@ -188,7 +197,7 @@ class Mapping_Wizard extends Base {
 				break;
 
 			case self::TEMPLATE:
-				$args['go_back_url'] = remove_query_arg( 'template', remove_query_arg( 'mapping' ) );
+				$args['go_back_url']        = remove_query_arg( 'template', remove_query_arg( 'mapping' ) );
 				$args['submit_button_text'] = __( 'Save Mapping', 'gathercontent-import' );
 				break;
 
@@ -213,7 +222,7 @@ class Mapping_Wizard extends Base {
 			delete_option( 'gc-api-updated' );
 		}
 
-		if ( $this->_get_val( 'updated' ) &&  $this->_get_val( 'project' ) &&  $this->_get_val( 'template' ) ) {
+		if ( $this->_get_val( 'updated' ) && $this->_get_val( 'project' ) && $this->_get_val( 'template' ) ) {
 
 			if ( $this->_get_val( 'sync-items' ) ) {
 				$notices[] = array(
@@ -231,7 +240,6 @@ class Mapping_Wizard extends Base {
 					'type'    => 'updated',
 				);
 			}
-
 		}
 
 		$notices = apply_filters( 'gc_admin_notices', $notices );
@@ -260,7 +268,7 @@ class Mapping_Wizard extends Base {
 			return $classes;
 		}
 
-		$classes .= ' gathercontent-admin '. $this->slugs[ $this->step ] .' ';
+		$classes .= ' gathercontent-admin ' . $this->slugs[ $this->step ] . ' ';
 
 		if ( isset( $_GET['auth-required'] ) ) {
 			$classes .= 'gc-auth-required ';
@@ -321,8 +329,8 @@ class Mapping_Wizard extends Base {
 	}
 
 	public function select_project_fields_ui( $field ) {
-		$field_id = $field->param( 'id' );
-		$my_account_slug =  $this->get_setting( 'platform_url_slug' );
+		$field_id        = $field->param( 'id' );
+		$my_account_slug = $this->get_setting( 'platform_url_slug' );
 
 		$accounts = $this->api()->get_accounts();
 
@@ -330,9 +338,9 @@ class Mapping_Wizard extends Base {
 			return $this->add_settings_error( $this->option_name, 'gc-missing-accounts', sprintf( __( 'We couldn\'t find any accounts associated with your GatherContent API credentials. Please <a href="%s">check your settings</a>.', 'gathercontent-import' ), $this->parent_url ) );
 		}
 
-		$tabs = array();
+		$tabs       = array();
 		$my_account = false;
-		$first = true;
+		$first      = true;
 
 		foreach ( $accounts as $index => $account ) {
 			if ( $my_account_slug === $account->slug ) {
@@ -351,11 +359,11 @@ class Mapping_Wizard extends Base {
 			}
 
 			$options = array();
-			$value = '';
+			$value   = '';
 
 			if ( $projects = $this->api()->get_account_projects( $account->id ) ) {
 				foreach ( $projects as $project ) {
-					$val = esc_attr( $project->id ) . ':' . esc_attr( $account->slug ) . ':' . esc_attr( $account->id );
+					$val             = esc_attr( $project->id ) . ':' . esc_attr( $account->slug ) . ':' . esc_attr( $account->id );
 					$options[ $val ] = esc_attr( $project->name );
 					if ( ! $value ) {
 						$value = $val;
@@ -364,24 +372,31 @@ class Mapping_Wizard extends Base {
 			}
 
 			$tabs[] = array(
-				'id' => $account->id,
-				'label' => sprintf( __( '%s', 'gathercontent-import' ), isset( $account->name ) ? $account->name : '' ),
+				'id'        => $account->id,
+				'label'     => sprintf( __( '%s', 'gathercontent-import' ), isset( $account->name ) ? $account->name : '' ),
 				'nav_class' => $first ? 'nav-tab-active' : '',
 				'tab_class' => $first ? '' : 'hidden',
-				'content' => $this->view( 'radio', array(
-					'id'      => $field_id . '-' . $account->id,
-					'name'    => $this->option_name .'['. $field_id .']',
-					'value'   => $value,
-					'options' => $options,
-				), false ),
+				'content'   => $this->view(
+					'radio',
+					array(
+						'id'      => $field_id . '-' . $account->id,
+						'name'    => $this->option_name . '[' . $field_id . ']',
+						'value'   => $value,
+						'options' => $options,
+					),
+					false
+				),
 			);
 
 			$first = false;
 		}
 
-		$this->view( 'tabs-wrapper', array(
-			'tabs' => $tabs,
-		) );
+		$this->view(
+			'tabs-wrapper',
+			array(
+				'tabs' => $tabs,
+			)
+		);
 
 	}
 
@@ -422,10 +437,10 @@ class Mapping_Wizard extends Base {
 				$template_id = esc_attr( $template->id );
 
 				$options[ $template_id ] = array(
-					'label' => '<span>'. esc_attr( $template->name ) .'</span>',
+					'label' => '<span>' . esc_attr( $template->name ) . '</span>',
 				);
 
-				$exists = $this->mappings->get_by_project_template( $project_id, $template_id );
+				$exists     = $this->mappings->get_by_project_template( $project_id, $template_id );
 				$mapping_id = $exists->have_posts() ? $exists->posts[0] : false;
 
 				if ( $mapping_id ) {
@@ -440,30 +455,36 @@ class Mapping_Wizard extends Base {
 					$options[ $template_id ]['disabled'] = 'disabled';
 
 				}
-				/*elseif ( $items = $this->get_project_items_list( $project_id, $template_id ) ) {
+				/*
+				elseif ( $items = $this->get_project_items_list( $project_id, $template_id ) ) {
 					$options[ $template_id ]['desc'] = $items;
 				}*/
 
 				if ( ! $value ) {
 					$value = $template_id;
 				}
-
 			}
 		}
 
-		$this->view( 'radio', array(
-			'id'      => $field_id,
-			'name'    => $this->option_name .'['. $field_id .']',
-			'value'   => $value,
-			'options' => $options,
-		) );
+		$this->view(
+			'radio',
+			array(
+				'id'      => $field_id,
+				'name'    => $this->option_name . '[' . $field_id . ']',
+				'value'   => $value,
+				'options' => $options,
+			)
+		);
 
-		$this->view( 'input', array(
-			'type'    => 'hidden',
-			'id'      => 'gc-project-id',
-			'name'    => $this->option_name .'[project]',
-			'value'   => $project_id,
-		) );
+		$this->view(
+			'input',
+			array(
+				'type'  => 'hidden',
+				'id'    => 'gc-project-id',
+				'name'  => $this->option_name . '[project]',
+				'value' => $project_id,
+			)
+		);
 	}
 
 	/**
@@ -474,42 +495,54 @@ class Mapping_Wizard extends Base {
 	 * @return void
 	 */
 	public function map_template() {
-		$mapping_id  = absint( $this->_get_val( 'mapping' ) );
-		$mapping_id  = $mapping_id && get_post( $mapping_id ) ? $mapping_id : false;
+
+		$mapping_id = absint( $this->_get_val( 'mapping' ) );
+		$mapping_id = $mapping_id && get_post( $mapping_id ) ? $mapping_id : false;
 
 		if ( $mapping_id ) {
-			$account_id = $this->mappings->get_mapping_account_id( $mapping_id );
+			$account_id   = $this->mappings->get_mapping_account_id( $mapping_id );
 			$account_slug = $this->mappings->get_mapping_account_slug( $mapping_id );
 		} else {
-			$account_id = $this->_get_account_id();
+			$account_id   = $this->_get_account_id();
 			$account_slug = $this->_get_account_slug();
 		}
 
-		$account     = $this->api()->get_account( absint( $account_id ));
-		$features 	 = array_flip( $account->features );
+		$account  = $this->api()->get_account( absint( $account_id ) );
+		$features = array_flip( $account->features );
 
 		if ( isset( $features['editor:new'] ) ) {
-			$template    = $this->api()->get_template( absint( $this->_get_val('template') ), array(
-				'headers' => array(
-					'Accept' => 'application/vnd.gathercontent.v0.6+json'
+			$template = $this->api()->get_template(
+				absint( $this->_get_val( 'template' ) ),
+				array(
+					'headers' => array(
+						'Accept' => 'application/vnd.gathercontent.v0.6+json',
+					),
 				)
-			) );
+			);
 
 			$structure_uuid = $template->structure_uuid;
+
 		}
 
-		$template    = $this->api()->get_template( absint( $this->_get_val('template') ) );
+		$template = $this->api()->get_template( absint( $this->_get_val( 'template' ) ) );
+
 		$template_id = isset( $template->id ) ? $template->id : null;
 		$project     = $this->api()->get_project( absint( $this->_get_val( 'project' ) ) );
 		$project_id  = isset( $project->id ) ? $project->id : null;
-		$sync_items  = $mapping_id && $this->_get_val( 'sync-items' );
-		$notes       = '';
+		$components  = $this->api()->get_components( absint( $this->_get_val( 'project' ) ) );
+
+		$sync_items = $mapping_id && $this->_get_val( 'sync-items' );
+		$notes      = '';
 
 		if ( ! $sync_items && $mapping_id ) {
-			$notes .= $this->view( 'existing-mapping-notice', array(
-				'name' => $this->mappings->args->labels->singular_name,
-				'id'   => $mapping_id,
-			), false );
+			$notes .= $this->view(
+				'existing-mapping-notice',
+				array(
+					'name' => $this->mappings->args->labels->singular_name,
+					'id'   => $mapping_id,
+				),
+				false
+			);
 		}
 
 		if ( ! $project_id || ! $template_id ) {
@@ -545,16 +578,19 @@ class Mapping_Wizard extends Base {
 
 		if ( ! $sync_items ) {
 
-			$this->template_mapper = new Mapping\Template_Mapper( array(
-				'mapping_id'     => $mapping_id,
-				'structure_uuid' => $structure_uuid,
-				'account_id'     => $account_id,
-				'account_slug'   => $account_slug,
-				'project'        => $project,
-				'template'       => $template,
-				'statuses'       => $this->api()->get_project_statuses( absint( $this->_get_val( 'project' ) ) ),
-				'option_name'    => $this->option_name,
-			) );
+			$this->template_mapper = new Mapping\Template_Mapper(
+				array(
+					'mapping_id'     => $mapping_id,
+					'structure_uuid' => $structure_uuid,
+					'account_id'     => $account_id,
+					'account_slug'   => $account_slug,
+					'project'        => $project,
+					'template'       => $template,
+					'components'     => $components,
+					'statuses'       => $this->api()->get_project_statuses( absint( $this->_get_val( 'project' ) ) ),
+					'option_name'    => $this->option_name,
+				)
+			);
 
 			$callback = $project_id && $template_id
 				? array( $this->template_mapper, 'ui' )
@@ -564,17 +600,20 @@ class Mapping_Wizard extends Base {
 
 		} else {
 
-			$this->items_sync = new Mapping\Items_Sync( array(
-				'mapping_id'     => $mapping_id,
-				'structure_uuid' => $structure_uuid,
-				'account_id'     => $account_id,
-				'account_slug'   => $account_slug,
-				'project'        => $project,
-				'template'       => $template,
-				'url'            => $this->platform_url(),
-				'mappings'       => $this->mappings,
-				'items'          => $this->filter_items_by_template( $project_id, $template_id ),
-			) );
+			$this->items_sync = new Mapping\Items_Sync(
+				array(
+					'mapping_id'     => $mapping_id,
+					'structure_uuid' => $structure_uuid,
+					'account_id'     => $account_id,
+					'account_slug'   => $account_slug,
+					'project'        => $project,
+					'template'       => $template,
+					'components'     => $components,
+					'url'            => $this->platform_url(),
+					'mappings'       => $this->mappings,
+					'items'          => $this->filter_items_by_template( $project_id, $template_id ),
+				)
+			);
 
 			$section->add_field( 'mapping', '', array( $this->items_sync, 'ui' ) );
 		}
@@ -589,7 +628,7 @@ class Mapping_Wizard extends Base {
 	 *
 	 * @since  3.0.0
 	 *
-	 * @param  array  $options Array of options
+	 * @param  array $options Array of options
 	 *
 	 * @return void
 	 */
@@ -651,7 +690,7 @@ class Mapping_Wizard extends Base {
 		$args = compact( 'project', 'template' );
 		if ( $exists->have_posts() ) {
 			// Yep, we found one.
-			$args['mapping'] = $exists->posts[0];
+			$args['mapping']          = $exists->posts[0];
 			$args['settings-updated'] = 1;
 		}
 
@@ -708,8 +747,8 @@ class Mapping_Wizard extends Base {
 		$project_name = '';
 
 		if ( isset( $project->name ) ) {
-			$url = $this->platform_url( 'templates/' . $project->id );
-			$project_name = '<p class="gc-project-name description">' . sprintf( _x( 'Project: %s', 'GatherContent project name', 'gathercontent-import' ), $project->name ) . ' | <a href="'. esc_url( $url ) .'" target="_blank">'. __( 'edit project templates', 'gathercontent-import' ) .'</a></p>';
+			$url          = $this->platform_url( 'templates/' . $project->id );
+			$project_name = '<p class="gc-project-name description">' . sprintf( _x( 'Project: %s', 'GatherContent project name', 'gathercontent-import' ), $project->name ) . ' | <a href="' . esc_url( $url ) . '" target="_blank">' . __( 'edit project templates', 'gathercontent-import' ) . '</a></p>';
 		}
 
 		return $project_name;
@@ -720,11 +759,15 @@ class Mapping_Wizard extends Base {
 
 		$list = '';
 		if ( ! empty( $items ) ) {
-			$list = $this->view( 'gc-items-list', array(
-				'class'         => $class,
-				'item_base_url' => $this->platform_url( 'item/' ),
-				'items'         => array_slice( $items, 0, 5 ),
-			), false );
+			$list = $this->view(
+				'gc-items-list',
+				array(
+					'class'         => $class,
+					'item_base_url' => $this->platform_url( 'item/' ),
+					'items'         => array_slice( $items, 0, 5 ),
+				),
+				false
+			);
 		}
 
 		return $list;

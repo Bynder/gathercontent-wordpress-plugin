@@ -6,6 +6,7 @@
  */
 
 namespace GatherContent\Importer\Sync;
+
 use GatherContent\Importer\Base as Plugin_Base;
 use GatherContent\Importer\Post_Types\Template_Mappings;
 use GatherContent\Importer\Exception as Base_Exception;
@@ -188,12 +189,15 @@ abstract class Base extends Plugin_Base {
 			if ( is_array( $data ) ) {
 				$data['sync_item_id'] = $id;
 			} else {
-				$data = array( 'data' => $data, 'sync_item_id' => $id );
+				$data = array(
+					'data'         => $data,
+					'sync_item_id' => $id,
+				);
 			}
 			$result = new WP_Error( "gc_{$this->direction}_item_fail_" . $e->getCode(), $e->getMessage(), $data );
 		}
 
-		$ids['complete'] = isset( $ids['complete'] ) ? $ids['complete'] : array();
+		$ids['complete']   = isset( $ids['complete'] ) ? $ids['complete'] : array();
 		$ids['complete'][] = $id;
 
 		$this->mapping->update_items_to_sync( $ids, $this->direction );
@@ -266,7 +270,7 @@ abstract class Base extends Plugin_Base {
 		$items = $this->mapping->get_items_to_sync( $this->direction );
 
 		if ( empty( $items['pending'] ) ) {
-			throw new Exception( sprintf( __( 'No items to %s for: %s', 'gathercontent-import' ), $this->direction, $this->mapping->ID ), __LINE__ );
+			throw new Exception( sprintf( __( 'No items to %1$s for: %2$s', 'gathercontent-import' ), $this->direction, $this->mapping->ID ), __LINE__ );
 		}
 
 		return $items;
@@ -321,14 +325,18 @@ abstract class Base extends Plugin_Base {
 					$val = preg_replace_callback(
 						'#\<p\>(.+?)\<\/p\>#s',
 						function ( $matches ) {
-							return '<p>' . str_replace( array(
-								"\n    ",
-								"\r\n    ",
-								"\r    ",
-								"\n",
-								"\r\n",
-								"\r",
-							), '', $matches[1] ) . '</p>';
+							return '<p>' . str_replace(
+								array(
+									"\n    ",
+									"\r\n    ",
+									"\r    ",
+									"\n",
+									"\r\n",
+									"\r",
+								),
+								'',
+								$matches[1]
+							) . '</p>';
 						},
 						$val
 					);
@@ -341,7 +349,8 @@ abstract class Base extends Plugin_Base {
 							'<ul><li',
 							'</li><li>',
 							'</li></ul>',
-						), array(
+						),
+						array(
 							"<ul>\n\t<li",
 							"</li>\n\t<li>",
 							"</li>\n</ul>",
@@ -354,9 +363,13 @@ abstract class Base extends Plugin_Base {
 
 					// Replace encoded ampersands in html entities.
 					// http://regexr.com/3dpcf -- example.
-					$val = preg_replace_callback( '~(&amp;)(?:[a-z,A-Z,0-9]+|#\d+|#x[0-9a-f]+);~', function( $matches ) {
-						return str_replace( '&amp;', '&', $matches[0] );
-					}, $val );
+					$val = preg_replace_callback(
+						'~(&amp;)(?:[a-z,A-Z,0-9]+|#\d+|#x[0-9a-f]+);~',
+						function( $matches ) {
+							return str_replace( '&amp;', '&', $matches[0] );
+						},
+						$val
+					);
 
 				}
 				$val = wp_kses_post( $val );
@@ -439,19 +452,22 @@ abstract class Base extends Plugin_Base {
 	 * @return false|array     Array of attributes on success.
 	 */
 	public function get_media_shortcode_attributes( $content, $args ) {
-		$args = wp_parse_args( $args, array(
-			'position'     => 1,
-			'field_number' => '',
-		) );
+		$args = wp_parse_args(
+			$args,
+			array(
+				'position'     => 1,
+				'field_number' => '',
+			)
+		);
 		preg_match_all( '@\[([^<>&/\[\]\x00-\x20=]++)@', $content, $matches );
 
-		$suffix = $args['field_number'] > 1 ? '_' . $args['field_number'] : '';
-		$to_find = array( "media{$suffix}-{$args['position']}" );
+		$suffix   = $args['field_number'] > 1 ? '_' . $args['field_number'] : '';
+		$to_find  = array( "media{$suffix}-{$args['position']}" );
 		$tagnames = array_intersect( $to_find, $matches[1] );
 
 		if ( empty( $tagnames ) ) {
 			if ( ! $suffix ) {
-				$to_find = array( "media_1-{$args['position']}" );
+				$to_find  = array( "media_1-{$args['position']}" );
 				$tagnames = array_intersect( $to_find, $matches[1] );
 				if ( empty( $tagnames ) ) {
 					return false;
@@ -468,7 +484,7 @@ abstract class Base extends Plugin_Base {
 
 		if ( isset( $matches[3], $matches[0] ) && is_array( $matches[3] ) ) {
 			$matches[3] = wp_unslash( $matches[3] ); // Fixes quoted attributes.
-			$replace = array();
+			$replace    = array();
 			foreach ( $matches[0] as $index => $shortcode ) {
 				$replace[ $shortcode ] = shortcode_parse_atts( $matches[3][ $index ] );
 			}
@@ -493,13 +509,16 @@ abstract class Base extends Plugin_Base {
 	public function get_requested_media( $atts, $media_id, $attach_id ) {
 		$image = '';
 
-		$atts = wp_parse_args( $atts, array(
-			'size'   => 'full',
-			'align'  => '',
-			'linkto' => '',
-			'class'  => '',
-			'alt'    => '',
-		) );
+		$atts = wp_parse_args(
+			$atts,
+			array(
+				'size'   => 'full',
+				'align'  => '',
+				'linkto' => '',
+				'class'  => '',
+				'alt'    => '',
+			)
+		);
 
 		$atts = array_map( 'esc_attr', $atts );
 
@@ -531,7 +550,7 @@ abstract class Base extends Plugin_Base {
 
 		if ( is_array( $atts['size'] ) ) {
 			$atts['size'] = array_map( 'absint', $atts['size'] );
-			$size_class = join( 'x', $atts['size'] );
+			$size_class   = join( 'x', $atts['size'] );
 		} else {
 			$atts['size'] = $size_class = $atts['size'];
 			if ( 'full' === $atts['size'] ) {
@@ -603,7 +622,7 @@ abstract class Base extends Plugin_Base {
 			// Mark this gc media id.
 			$ids[ $gcid ] = 1;
 
-			$string = '';
+			$string          = '';
 			$node_to_replace = $dom->saveHTML( $img );
 
 			if ( ! empty( $data ) ) {
@@ -624,7 +643,7 @@ abstract class Base extends Plugin_Base {
 				}
 			}
 
-			$shortcode = "[media-$index$string]";
+			$shortcode                        = "[media-$index$string]";
 			$replacements[ $node_to_replace ] = $shortcode;
 		}
 

@@ -6,6 +6,7 @@
  */
 
 namespace GatherContent\Importer;
+
 use GatherContent\Importer\Post_Types\Template_Mappings;
 use WP_Post;
 
@@ -166,7 +167,7 @@ class Mapping_Post extends Base {
 
 		if ( isset( $destination['type'] ) ) {
 			// Trim qualifiers (wpseo, acf, cmb2, etc).
-			$type = explode( '--', $destination['type'] );
+			$type                = explode( '--', $destination['type'] );
 			$destination['type'] = $type[0];
 		}
 
@@ -390,7 +391,7 @@ class Mapping_Post extends Base {
 	 *
 	 * @return array
 	 */
-	public function get_items_to_sync( $direction = 'pull'  ) {
+	public function get_items_to_sync( $direction = 'pull' ) {
 		$items = $this->get_meta( "_gc_{$direction}_items" );
 		return is_array( $items ) ? $items : array();
 	}
@@ -423,7 +424,7 @@ class Mapping_Post extends Base {
 	 *
 	 * @return int
 	 */
-	public function get_sync_percent( $direction = 'pull'  ) {
+	public function get_sync_percent( $direction = 'pull' ) {
 		$percent = 1;
 
 		$items = $this->get_items_to_sync( $direction );
@@ -435,7 +436,7 @@ class Mapping_Post extends Base {
 			} else {
 
 				$pending_count = count( $items['pending'] );
-				$done_count = ! empty( $items['complete'] ) ? count( $items['complete'] ) : 0;
+				$done_count    = ! empty( $items['complete'] ) ? count( $items['complete'] ) : 0;
 
 				$percent = $done_count / ( $pending_count + $done_count );
 			}
