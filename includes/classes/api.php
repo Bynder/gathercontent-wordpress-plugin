@@ -164,7 +164,6 @@ class API extends Base {
 	 * @return mixed          Results of request.
 	 */
 	public function get_item( $item_id, $args = array() ) {
-
 		return $this->get( 'items/' . $item_id, $args );
 	}
 
@@ -208,6 +207,45 @@ class API extends Base {
 		return $tmpfname;
 	}
 
+	/**
+	 * GC V2 API request to get the results from the "/projects/{project_id}/files/{file_id}" endpoint.
+	 *
+	 * @since  3.0.0
+	 *
+	 * @link https://docs.gathercontent.com/reference/listfiles
+	 *
+	 * @param  int $project_id Project ID .
+	 * @return mixed          Results of request.
+	 */
+	public function get_project_files($project_id) {
+		return $this->get( 'projects/'.$project_id.'/files', array(
+			'headers' => array(
+				'Accept' => 'application/vnd.gathercontent.v2+json'
+			)
+		));
+	}
+
+	/**
+	 * GC V2 API request to get the results from the "/projects/{project_id}/files/{file_id}" endpoint.
+	 *
+	 * @since  3.0.0
+	 *
+	 * @link https://docs.gathercontent.com/reference/getfile
+	 *
+	 * @param  int $project_id Project ID , int $file_id File ID.
+	 * @return mixed          Results of request.
+	 */
+	public function get_item_file($project_id, $file_id ) {
+		return $this->get( 'projects/'.$project_id.'/files/'.$file_id, array(
+			'headers' => array(
+				'Accept' => 'application/vnd.gathercontent.v2+json'
+			)
+		));
+	}
+
+
+	
+	
 	/**
 	 * GC API request to get the results from the "/templates?project_id=<PROJECT_ID>" endpoint.
 	 *
@@ -507,10 +545,10 @@ class API extends Base {
 		$trans_key = 'gctr-' . md5( serialize( compact( 'endpoint', 'args', 'method' ) ) );
 		$response  = get_transient( $trans_key );
 
-		if ( $this->only_cached ) {
-			$this->only_cached = false;
-			return $response;
-		}
+		// if ( $this->only_cached ) {
+		// 	$this->only_cached = false;
+		// 	return $response;
+		// }
 
 		if ( ! $response || $this->disable_cache || $this->reset_request_cache ) {
 

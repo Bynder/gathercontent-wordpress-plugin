@@ -233,8 +233,7 @@ class Handlers extends Plugin_Base {
 	 * @return void
 	 */
 	public function gc_fetch_js_post_cb() {
-		echo 'here';
-		exit;
+		
 		if ( $post_id = $this->_get_val( 'id' ) ) {
 			wp_send_json(
 				\GatherContent\Importer\prepare_post_for_js(
