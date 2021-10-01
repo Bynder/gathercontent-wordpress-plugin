@@ -209,7 +209,6 @@ class Mapping_Wizard extends Base {
 
 		$this->register_notices();
 
-		$this->pull_alt_text_by_project( $_GET['project'] );
 		$this->view( 'admin-page', $args );
 	}
 
@@ -514,6 +513,7 @@ class Mapping_Wizard extends Base {
 		$features = array_flip( $account->features );
 
 		if ( isset( $features['editor:new'] ) ) {
+
 			$template = $this->api()->get_template(
 				absint( $this->_get_val( 'template' ) ),
 				array(
@@ -901,35 +901,6 @@ class Mapping_Wizard extends Base {
 		wp_safe_redirect( esc_url_raw( add_query_arg( $args ) ) );
 		exit;
 	}
-	protected function pull_alt_text_by_project( $project_id ) {
-		
-		$imagePostArray=array();
-		$args = array(
-		    'post_type' => 'attachment',
-		    'numberposts' => -1,
-		    'post_status' => null,
-		    'post_parent' => null, // any parent
-		    ); 
-		$attachments = get_posts($args);
-		if ($attachments) {
-		    foreach ($attachments as $post) {
-		    	 $imgSrc=wp_get_attachment_image_src( $post->ID, 'full', 'false' )[0];
-		    	 $link_array = explode('/',$imgSrc);
 
-    			  $imageName = end($link_array);
-    			  $imagePostArray[$post->ID]=$imageName;
-		    }
-		}
-		
-			
-			$project_files=General::get_instance()->api->uncached()->get_project_files($project_id);
-			foreach($project_files as $file){
-				$file_name=str_replace(' ','-',$file->filename);
-				$attachment_post_id = array_search ($file_name, $imagePostArray);
-				update_post_meta($attachment_post_id, '_wp_attachment_image_alt', $file->alt_text); // attempting to update the image attachment image alt textalt_text
-
-			}	
-		
-	}
 
 }

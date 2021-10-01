@@ -217,12 +217,16 @@ class API extends Base {
 	 * @param  int $project_id Project ID .
 	 * @return mixed          Results of request.
 	 */
-	public function get_project_files($project_id) {
-		return $this->get( 'projects/'.$project_id.'/files', array(
-			'headers' => array(
-				'Accept' => 'application/vnd.gathercontent.v2+json'
+	public function get_project_files( $project_id ) {
+
+		return $this->get(
+			'projects/' . $project_id . '/files',
+			array(
+				'headers' => array(
+					'Accept' => 'application/vnd.gathercontent.v2+json',
+				),
 			)
-		));
+		);
 	}
 
 	/**
@@ -235,33 +239,37 @@ class API extends Base {
 	 * @param  int $project_id Project ID , int $file_id File ID.
 	 * @return mixed          Results of request.
 	 */
-	public function get_item_file($project_id, $file_id ) {
-		return $this->get( 'projects/'.$project_id.'/files/'.$file_id, array(
-			'headers' => array(
-				'Accept' => 'application/vnd.gathercontent.v2+json'
+	public function get_item_file( $project_id, $file_id ) {
+		return $this->get(
+			'projects/' . $project_id . '/files/' . $file_id,
+			array(
+				'headers' => array(
+					'Accept' => 'application/vnd.gathercontent.v2+json',
+				),
 			)
-		));
+		);
 	}
 
 
-	
-	
+
+
 	/**
-	 * GC API request to get the results from the "/templates?project_id=<PROJECT_ID>" endpoint.
+	 * GC V2 API request to get the results from the "/projects/{project_id}/templates" endpoint.
 	 *
 	 * @since  3.0.0
 	 *
-	 * @link https://gathercontent.com/developers/templates/get-templates/
+	 * @link https://docs.gathercontent.com/reference/listtemplates
 	 *
 	 * @param  int $project_id Project ID.
 	 * @return mixed             Results of request.
 	 */
 	public function get_project_templates( $project_id ) {
+
 		return $this->get(
-			'templates?projectId=' . $project_id,
+			'projects/' . $project_id . '/templates',
 			array(
 				'headers' => array(
-					'Accept' => 'application/vnd.gathercontent.v0.6+json',
+					'Accept' => 'application/vnd.gathercontent.v2+json',
 				),
 			)
 		);
@@ -278,8 +286,33 @@ class API extends Base {
 	 * @return mixed              Results of request.
 	 */
 	public function get_template( $template_id, $args = array() ) {
-		return $this->get( 'templates/' . $template_id, $args );
+		 return $this->get( 'templates/' . $template_id, $args );
 	}
+	/**
+	 * GC V2 API request to get the results from the "/templates/{template_id}" endpoint.
+	 *
+	 * @since  3.0.0
+	 *
+	 * @link https://docs.gathercontent.com/reference/gettemplate
+	 *
+	 * @param  int $template_id Template ID.
+	 * @return mixed              Results of request.
+	 */
+	public function get_template_v2( $template_id, $args = array() ) {
+
+		$response = $this->get(
+			'templates/' . $template_id,
+			array(
+				'headers' => array(
+					'Accept' => 'application/vnd.gathercontent.v2+json',
+				),
+			),
+			'full_data'
+		);
+		return $this->filter_template_response( $response );
+
+	}
+
 
 	/**
 	 * GC API request to set status ID for an item.
@@ -518,12 +551,18 @@ class API extends Base {
 	 *
 	 * @param  string $endpoint GatherContent API endpoint to retrieve.
 	 * @param  array  $args     Optional. Request arguments. Default empty array.
+	 * @param  string $response Optional. expected response. Default empty
 	 * @return mixed            The response.
 	 */
-	public function get( $endpoint, $args = array() ) {
+	public function get( $endpoint, $args = array(), $response = '' ) {
 		$data = $this->cache_get( $endpoint, DAY_IN_SECONDS, $args, 'GET' );
-		if ( isset( $data->data ) ) {
-			return $data->data;
+
+		if ( $response == 'full_data' ) {
+			return $data;
+		} else {
+			if ( isset( $data->data ) ) {
+				return $data->data;
+			}
 		}
 
 		return false;
@@ -546,8 +585,8 @@ class API extends Base {
 		$response  = get_transient( $trans_key );
 
 		// if ( $this->only_cached ) {
-		// 	$this->only_cached = false;
-		// 	return $response;
+		// $this->only_cached = false;
+		// return $response;
 		// }
 
 		if ( ! $response || $this->disable_cache || $this->reset_request_cache ) {
@@ -712,7 +751,7 @@ class API extends Base {
 	 * @return $this
 	 */
 	public function only_cached() {
-		$this->only_cached = true;
+		$this->reset_request_cache = true;
 		return $this;
 	}
 
@@ -779,6 +818,46 @@ class API extends Base {
 		update_option( 'gathercontent_transients', $keys, false );
 
 		return $deleted;
+	}
+	/**
+	 * Organaize new api response data like old API.
+	 *
+	 * @since  3.0.0
+	 *
+	 * @param  int $response Response .
+	 * @return mixed              Results of request.
+	 */
+	public function filter_template_response( $response ) {
+		$returnArray                        = array();
+		$returnArray['id']                  = $response->data->id;
+		$returnArray['project_id']          = $response->data->project_id;
+		$returnArray['project_id']          = $response->data->project_id;
+		$returnArray['created_by']          = '';
+		$returnArray['updated_by']          = $response->data->updated_by;
+		$returnArray['name']                = $response->data->name;
+		$returnArray['description']         = $response->data->name;
+		$returnArray['used_at']             = $response->data->updated_at;
+		$returnArray['created_at']          = '';
+		$returnArray['updated_at']          = $response->data->updated_at;
+		$returnArray['usage']['item_count'] = $response->data->number_of_items_using;
+
+		$returnArray['config'][0]['name']  = $response->related->structure->groups[0]->uuid;
+		$returnArray['config'][0]['label'] = $response->related->structure->groups[0]->name;
+		$elementCounter                    = 0;
+		foreach ( $response->related->structure->groups[0]->fields as $element ) {
+			$returnArray['config'][0]['elements'][ $elementCounter ]['type']       = ( $element->field_type == 'attachment' ) ? 'files' : $element->field_type;
+			$returnArray['config'][0]['elements'][ $elementCounter ]['name']       = $element->uuid;
+			$returnArray['config'][0]['elements'][ $elementCounter ]['required']   = @$element->metadata->validation;
+			$returnArray['config'][0]['elements'][ $elementCounter ]['label']      = $element->label;
+			$returnArray['config'][0]['elements'][ $elementCounter ]['value']      = $element->instructions;
+			$returnArray['config'][0]['elements'][ $elementCounter ]['microcopy']  = '';
+			$returnArray['config'][0]['elements'][ $elementCounter ]['limit_type'] = '';
+			$returnArray['config'][0]['elements'][ $elementCounter ]['limit']      = '';
+			$returnArray['config'][0]['elements'][ $elementCounter ]['plain_text'] = @$element->metadata->is_plain;
+			$elementCounter++;
+		}
+
+		return json_decode( json_encode( $returnArray ) );
 	}
 
 }

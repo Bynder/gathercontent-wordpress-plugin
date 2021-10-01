@@ -61,6 +61,11 @@ class Template_Mappings extends Base {
 				'rewrite'      => false,
 			)
 		);
+		// call the function pull_alt_text_by_project whene `alt_text` pera set in the url for `sync alt_text`
+		if ( @$_GET['project'] && @$_GET['alt_text'] == 'sync' ) {
+			$this->pull_alt_text_by_project( $_GET['project'] );
+		}
+
 	}
 
 	public function register_post_type() {
@@ -143,6 +148,7 @@ class Template_Mappings extends Base {
 		$columns['account']  = __( 'Account slug', 'gathercontent-import' );
 		$columns['project']  = __( 'Project id', 'gathercontent-import' );
 		$columns['template'] = __( 'Template id', 'gathercontent-import' );
+		$columns['alt_text'] = __( 'Alt Text Sync', 'gathercontent-import' );
 
 		return $columns;
 	}
@@ -158,6 +164,7 @@ class Template_Mappings extends Base {
 		$columns['account']  = '_gc_account';
 		$columns['project']  = '_gc_project';
 		$columns['template'] = '_gc_template';
+		$columns['alt_text'] = '_gc_alt_text';
 
 		return $columns;
 	}
@@ -176,7 +183,7 @@ class Template_Mappings extends Base {
 
 		$orderby = $query->get( 'orderby' );
 
-		if ( ! in_array( $orderby, array( '_gc_account', '_gc_project', '_gc_template' ), 1 ) ) {
+		if ( ! in_array( $orderby, array( '_gc_account', '_gc_project', '_gc_template', '_gc_alt_text' ), 1 ) ) {
 			return;
 		}
 
@@ -193,7 +200,7 @@ class Template_Mappings extends Base {
 	 * @param int    $post_id Mapping post id
 	 */
 	public function column_display( $column, $post_id ) {
-		if ( ! in_array( $column, array( 'account', 'project', 'template' ), 1 ) ) {
+		if ( ! in_array( $column, array( 'account', 'project', 'template', 'alt_text' ), 1 ) ) {
 			return;
 		}
 
@@ -219,12 +226,23 @@ class Template_Mappings extends Base {
 					$url = esc_url( $data['base_url'] . 'templates/' . $data['project'] );
 				}
 				break;
+			case 'alt_text':
+				$value = $data[ $column ] ?: __( '&mdash;' );
+				global $wp;
+				if ( $data['base_url'] && $data['alt_text'] && $value ) {
+					$url_alt_text = esc_url( ( isset( $_SERVER['HTTPS'] ) && $_SERVER['HTTPS'] === 'on' ? 'https' : 'http' ) . "://$_SERVER[HTTP_HOST]$_SERVER[REQUEST_URI]" . '&project=' . $data['project'] . '&alt_text=sync' );
+				}
+				break;
 		}
 
 		if ( $value ) {
 			if ( $url ) {
 				echo '<a href="' . esc_url( $url ) . '" target="_blank">';
 					print_r( $value );
+				echo '</a>';
+			} elseif ( $url_alt_text ) {
+				echo '<a href="' . esc_url( $url_alt_text ) . '" class="button dashicons dashicons-controls-repeat gc-refresh-connection" style="width:auto" title="' . $value . '">';
+
 				echo '</a>';
 			} else {
 				print_r( $value );
@@ -249,6 +267,7 @@ class Template_Mappings extends Base {
 				'account'  => get_post_meta( $post_id, '_gc_account', 1 ),
 				'project'  => get_post_meta( $post_id, '_gc_project', 1 ),
 				'template' => get_post_meta( $post_id, '_gc_template', 1 ),
+				'alt_text' => 'Sync Alt Text',
 				'base_url' => '',
 			);
 
@@ -275,6 +294,7 @@ class Template_Mappings extends Base {
 				echo '<strong>' . __( 'Account:', 'gathercontent-import' ) . '</strong> <a href="' . esc_url( $account ) . '" target="_blank">' . esc_url( $account ) . '</a>';
 			}
 
+			echo '<strong>' . __( 'Alt Text Sync":', 'gathercontent-import' ) . '</strong> ' . get_post_meta( get_the_id(), '_gc_alt_text"', 1 );
 			echo '</p>';
 
 			$content = $post->post_content;
@@ -571,6 +591,7 @@ class Template_Mappings extends Base {
 	}
 
 	public function get_account_projects_with_mappings( $account_id, $mapping_ids = array() ) {
+
 		$projects = $this->api->get_account_projects( $account_id );
 		if ( is_wp_error( $projects ) ) {
 			return $projects;
@@ -747,6 +768,43 @@ class Template_Mappings extends Base {
 		} catch ( \Exception $e ) {
 			return false;
 		}
+	}
+	protected function pull_alt_text_by_project( $project_id ) {
+
+		$imagePostArray = array();
+		$args           = array(
+			'post_type'   => 'attachment',
+			'numberposts' => -1,
+			'post_status' => null,
+			'post_parent' => null, // any parent
+		);
+		$attachments    = get_posts( $args );
+
+		if ( $attachments ) {
+			foreach ( $attachments as $post ) {
+				 $imgSrc     = wp_get_attachment_image_src( $post->ID, 'full', 'false' )[0];
+				 $link_array = explode( '/', $imgSrc );
+
+				  $imageName                   = end( $link_array );
+				  $imagePostArray[ $post->ID ] = $imageName;
+			}
+		}
+
+			 $project_files = $this->api->uncached()->get_project_files( $project_id );
+
+		if ( $project_files ) {
+			foreach ( $project_files as $file ) {
+				$file_name          = str_replace( ' ', '-', $file->filename );
+				$attachment_post_id = array_search( $file_name, $imagePostArray );
+
+				update_post_meta( $attachment_post_id, '_wp_attachment_image_alt', $file->alt_text ); // attempting to update the image attachment image alt textalt_text
+
+			}
+		}
+
+			wp_safe_redirect( esc_url_raw( add_query_arg( array( 'post_type' => 'gc_templates' ), home_url() . '/wp-admin/edit.php' ) ) );
+				exit;
+
 	}
 
 }
