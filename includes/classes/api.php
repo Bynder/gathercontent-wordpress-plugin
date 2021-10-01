@@ -139,32 +139,64 @@ class API extends Base {
 	}
 
 	/**
-	 * GC API request to get the results from the "/items?project_id=<PROJECT_ID>" endpoint.
+	 * GC V2 API request to get the results from the "/projects/{project_id}/items" endpoint.
 	 *
 	 * @since  3.0.0
 	 *
-	 * @link https://gathercontent.com/developers/items/get-items/
+	 * @link https://docs.gathercontent.com/reference/listitems
 	 *
 	 * @param  int $project_id Project ID.
 	 * @return mixed             Results of request.
 	 */
 	public function get_project_items( $project_id ) {
+		$response = $this->get(
+			'projects/' . $project_id . '/items',
+			array(
+				'headers' => array(
+					'Accept' => 'application/vnd.gathercontent.v2+json',
+				),
+			)
+		);
+		return $this->filter_project_items_response( $response );
 
-		return $this->get( 'items?project_id=' . $project_id );
 	}
 
 	/**
-	 * GC API request to get the results from the "/items/<ITEM_ID>" endpoint.
+	 * GC V2 API request to get the results from the "/items/{item_id}" endpoint.
 	 *
 	 * @since  3.0.0
 	 *
-	 * @link https://gathercontent.com/developers/items/get-items-by-id/
+	 * @link https://docs.gathercontent.com/reference/getitem
 	 *
 	 * @param  int $item_id Item ID.
 	 * @return mixed          Results of request.
 	 */
-	public function get_item( $item_id, $args = array() ) {
-		return $this->get( 'items/' . $item_id, $args );
+	public function get_item( $item_id ) {
+		$response = $this->get(
+			'items/' . $item_id . '?include=structure',
+			array(
+				'headers' => array(
+					'Accept' => 'application/vnd.gathercontent.v2+json',
+				),
+			),
+			'full_data'
+		);
+		return $this->filter_item_response( $response );
+
+	}
+
+	/**
+	 * GC API request to get the results from the "/projects/{project_id}/statuses/:status_id" endpoint.
+	 *
+	 * @since  3.0.0
+	 *
+	 * @link https://docs.gathercontent.com/v0.5/reference/get-project-statuses-by-id
+	 *
+	 * @param  int $project_id Project ID, int $status_id Status ID.
+	 * @return mixed             Results of request.
+	 */
+	public function get_project_status_information( $project_id, $status_id ) {
+		return $this->get( 'projects/' . $project_id . '/statuses/' . $status_id );
 	}
 
 	/**
@@ -364,6 +396,7 @@ class API extends Base {
 	 * @return bool           If request was successful.
 	 */
 	public function save_item( $item_id, $config ) {
+
 		$response = $this->post(
 			'items/' . absint( $item_id ) . '/save',
 			array(
@@ -831,7 +864,6 @@ class API extends Base {
 		$returnArray                        = array();
 		$returnArray['id']                  = $response->data->id;
 		$returnArray['project_id']          = $response->data->project_id;
-		$returnArray['project_id']          = $response->data->project_id;
 		$returnArray['created_by']          = '';
 		$returnArray['updated_by']          = $response->data->updated_by;
 		$returnArray['name']                = $response->data->name;
@@ -845,6 +877,77 @@ class API extends Base {
 		$returnArray['config'][0]['label'] = $response->related->structure->groups[0]->name;
 		$elementCounter                    = 0;
 		foreach ( $response->related->structure->groups[0]->fields as $element ) {
+			$returnArray['config'][0]['elements'][ $elementCounter ]['type']       = ( $element->field_type == 'attachment' ) ? 'files' : $element->field_type;
+			$returnArray['config'][0]['elements'][ $elementCounter ]['name']       = $element->uuid;
+			$returnArray['config'][0]['elements'][ $elementCounter ]['required']   = @$element->metadata->validation;
+			$returnArray['config'][0]['elements'][ $elementCounter ]['label']      = $element->label;
+			$returnArray['config'][0]['elements'][ $elementCounter ]['value']      = $element->instructions;
+			$returnArray['config'][0]['elements'][ $elementCounter ]['microcopy']  = '';
+			$returnArray['config'][0]['elements'][ $elementCounter ]['limit_type'] = '';
+			$returnArray['config'][0]['elements'][ $elementCounter ]['limit']      = '';
+			$returnArray['config'][0]['elements'][ $elementCounter ]['plain_text'] = @$element->metadata->is_plain;
+			$elementCounter++;
+		}
+
+		return json_decode( json_encode( $returnArray ) );
+	}
+
+	/**
+	 * Organaize new items api response data like old API.
+	 *
+	 * @since  3.0.0
+	 *
+	 * @param  int $response Response .
+	 * @return mixed              Results of request.
+	 */
+	public function filter_project_items_response( $response ) {
+		$returnArray = array();
+		foreach ( $response as $item ) {
+			$item_status                 = $this->get_project_status_information( $item->project_id, $item->status_id );
+			$item_status_array['status'] = (array) $item_status;
+			$response_array              = (array) $item;
+			$final_array                 = array_merge( $response_array, $item_status_array );
+			$returnArray[]               = $final_array;
+
+		}
+		return json_decode( json_encode( $returnArray ) );
+	}
+	/**
+	 * Organaize new item api response data like old API.
+	 *
+	 * @since  3.0.0
+	 *
+	 * @param  int $response Response .
+	 * @return mixed              Results of request.
+	 */
+	public function filter_item_response( $response ) {
+
+		$returnArray                       = array();
+		$returnArray['id']                 = $response->data->id;
+		$returnArray['project_id']         = $response->data->project_id;
+		$returnArray['parent_id']          = '';
+		$returnArray['template_id']        = $response->data->template_id;
+		$returnArray['custom_state_id']    = '';
+		$returnArray['position']           = $response->data->position;
+		$returnArray['name']               = $response->data->name;
+		$returnArray['notes']              = '';
+		$returnArray['type']               = 'item';
+		$returnArray['overdue']            = '';
+		$returnArray['archived_by']        = $response->data->archived_by;
+		$returnArray['archived_at']        = $response->data->archived_at;
+		$returnArray['due_dates']          = $response->data->next_due_at;
+		$returnArray['created_at']['date'] = $response->data->created_at;
+		$returnArray['updated_at']['date'] = $response->data->updated_at;
+		$returnArray['folder_uuid']        = $response->data->folder_uuid;
+
+		$item_status = $this->get_project_status_information( $response->data->project_id, $response->data->status_id );
+
+		$returnArray['status']['data'] = (array) $item_status;
+
+		$returnArray['config'][0]['name']  = $response->data->structure->groups[0]->uuid;
+		$returnArray['config'][0]['label'] = $response->data->structure->groups[0]->name;
+		$elementCounter                    = 0;
+		foreach ( $response->data->structure->groups[0]->fields as $element ) {
 			$returnArray['config'][0]['elements'][ $elementCounter ]['type']       = ( $element->field_type == 'attachment' ) ? 'files' : $element->field_type;
 			$returnArray['config'][0]['elements'][ $elementCounter ]['name']       = $element->uuid;
 			$returnArray['config'][0]['elements'][ $elementCounter ]['required']   = @$element->metadata->validation;

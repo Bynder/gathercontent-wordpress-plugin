@@ -31,7 +31,8 @@ class Items_Sync extends Base {
 		parent::__construct( $args );
 		$this->mappings = $args['mappings'];
 		$this->items    = array_values( array_map( array( $this, 'prepare_for_js' ), $args['items'] ) );
-		$this->url      = $args['url'];
+
+		$this->url = $args['url'];
 
 		$this->mapping = Mapping_Post::get( $this->mapping_id );
 

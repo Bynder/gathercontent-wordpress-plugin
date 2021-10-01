@@ -144,6 +144,7 @@ class Bulk extends Post_Base {
 	 * @return void
 	 */
 	public function column_display( $column_name, $post_id ) {
+
 		if ( 'gathercontent' !== $column_name ) {
 			return;
 		}

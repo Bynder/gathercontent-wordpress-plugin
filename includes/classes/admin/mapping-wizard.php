@@ -527,7 +527,7 @@ class Mapping_Wizard extends Base {
 
 		}
 
-		$template = $this->api()->get_template( absint( $this->_get_val( 'template' ) ) );
+		$template = $this->api()->get_template_v2( absint( $this->_get_val( 'template' ) ) );
 
 		$template_id = isset( $template->id ) ? $template->id : null;
 		$project     = $this->api()->get_project( absint( $this->_get_val( 'project' ) ) );

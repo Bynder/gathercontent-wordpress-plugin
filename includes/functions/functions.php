@@ -283,11 +283,15 @@ function prepare_js_data( $args, $item = null, $type = 'post' ) {
 		if ( isset( $item->name ) ) {
 			$args['itemName'] = $item->name;
 		}
-
-		$args['status'] = isset( $item->status->data )
+		if ( @$item->status->data ) :
+			$args['status'] = isset( $item->status->data )
 			? $item->status->data
 			: (object) array();
-
+		elseif ( @$item->status ) :
+			$args['status'] = isset( $item->status )
+			? $item->status
+			: (object) array();
+		endif;
 		$args['typeName'] = isset( $item->type )
 			? Utils::gc_field_type_name( $item->type )
 			: '';
