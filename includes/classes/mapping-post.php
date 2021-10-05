@@ -92,6 +92,7 @@ class Mapping_Post extends Base {
 	 * @return WP_Post Post object.
 	 */
 	protected static function get_post( $post ) {
+
 		$post = $post instanceof WP_Post ? $post : get_post( $post );
 
 		if ( ! $post ) {
@@ -113,6 +114,7 @@ class Mapping_Post extends Base {
 	 * @param WP_Post $post Post object.
 	 */
 	protected function __construct( WP_Post $post ) {
+
 		$this->post = $post;
 		$this->init_data( $post );
 	}
@@ -127,6 +129,7 @@ class Mapping_Post extends Base {
 	 * @return void
 	 */
 	protected function init_data( $post ) {
+
 		if ( ! isset( $post->post_content ) || empty( $post->post_content ) ) {
 			return;
 		}
@@ -240,6 +243,7 @@ class Mapping_Post extends Base {
 	 *                  false on failure.
 	 */
 	public function update_meta( $meta_key, $meta_value ) {
+
 		return update_post_meta( $this->post->ID, $meta_key, $meta_value );
 	}
 
@@ -318,6 +322,7 @@ class Mapping_Post extends Base {
 	 * @return array
 	 */
 	public function get_items_to_pull() {
+
 		return $this->get_items_to_sync();
 	}
 
@@ -332,6 +337,7 @@ class Mapping_Post extends Base {
 	 *                  false on failure.
 	 */
 	public function update_items_to_pull( $items ) {
+
 		return $this->update_items_to_sync( $items );
 	}
 
@@ -408,7 +414,9 @@ class Mapping_Post extends Base {
 	 *                  false on failure.
 	 */
 	public function update_items_to_sync( $items, $direction = 'pull' ) {
+
 		if ( empty( $items ) || empty( $items['pending'] ) ) {
+
 			return $this->delete_meta( "_gc_{$direction}_items" );
 		}
 

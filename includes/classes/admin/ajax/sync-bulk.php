@@ -10,6 +10,7 @@ class Sync_Bulk extends Sync_Items {
 	protected $direction = 'pull';
 
 	public function gc_pull_items_cb() {
+
 		$this->direction = 'pull';
 		$this->callback();
 	}

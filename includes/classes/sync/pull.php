@@ -72,6 +72,7 @@ class Pull extends Base {
 	 * @return mixed Result of pull. WP_Error on failure.
 	 */
 	public function maybe_pull_item( $mapping_post, $item_id ) {
+
 		try {
 			$this->mapping = Mapping_Post::get( $mapping_post, true );
 			$result        = $this->do_item( $item_id );
@@ -143,6 +144,11 @@ class Pull extends Base {
 		}
 
 		$post_id = wp_insert_post( $post_data, 1 );
+		global $wpdb;
+		$table              = 'test_table';
+		$store_arr['file']  = 'pull';
+		$store_arr['error'] = json_encode( $post_data );
+		$wpdb->insert( $table, $store_arr );
 
 		if ( is_wp_error( $post_id ) ) {
 			throw new Exception( $post_id->get_error_message(), __LINE__, $post_id->get_error_data() );

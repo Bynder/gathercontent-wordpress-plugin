@@ -526,7 +526,7 @@ class Mapping_Wizard extends Base {
 			$structure_uuid = $template->structure_uuid;
 
 		}
-		//Get component data too with other element 
+		// Get component data too with other element
 		$template = $this->api()->get_template_v2( absint( $this->_get_val( 'template' ) ) );
 
 		$template_id = isset( $template->id ) ? $template->id : null;

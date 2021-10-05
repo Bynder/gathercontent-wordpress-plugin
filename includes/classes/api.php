@@ -916,15 +916,19 @@ class API extends Base {
 	 * @return mixed              Results of request.
 	 */
 	public function filter_project_items_response( $response ) {
-		$returnArray = array();
-		foreach ( $response as $item ) {
-			$item_status                 = $this->get_project_status_information( $item->project_id, $item->status_id );
-			$item_status_array['status'] = (array) $item_status;
-			$response_array              = (array) $item;
-			$final_array                 = array_merge( $response_array, $item_status_array );
-			$returnArray[]               = $final_array;
 
+		$returnArray = array();
+		if ( $response ) {
+			foreach ( $response as $item ) {
+				$item_status                 = $this->get_project_status_information( $item->project_id, $item->status_id );
+				$item_status_array['status'] = (array) $item_status;
+				$response_array              = (array) $item;
+				$final_array                 = array_merge( $response_array, $item_status_array );
+				$returnArray[]               = $final_array;
+
+			}
 		}
+
 		return json_decode( json_encode( $returnArray ) );
 	}
 	/**
@@ -936,43 +940,45 @@ class API extends Base {
 	 * @return mixed              Results of request.
 	 */
 	public function filter_item_response( $response ) {
+		$returnArray = array();
+		if ( @$response->data ) {
 
-		$returnArray                       = array();
-		$returnArray['id']                 = $response->data->id;
-		$returnArray['project_id']         = $response->data->project_id;
-		$returnArray['parent_id']          = '';
-		$returnArray['template_id']        = $response->data->template_id;
-		$returnArray['custom_state_id']    = '';
-		$returnArray['position']           = $response->data->position;
-		$returnArray['name']               = $response->data->name;
-		$returnArray['notes']              = '';
-		$returnArray['type']               = 'item';
-		$returnArray['overdue']            = '';
-		$returnArray['archived_by']        = $response->data->archived_by;
-		$returnArray['archived_at']        = $response->data->archived_at;
-		$returnArray['due_dates']          = $response->data->next_due_at;
-		$returnArray['created_at']['date'] = $response->data->created_at;
-		$returnArray['updated_at']['date'] = $response->data->updated_at;
-		$returnArray['folder_uuid']        = $response->data->folder_uuid;
+			$returnArray['id']                 = $response->data->id;
+			$returnArray['project_id']         = $response->data->project_id;
+			$returnArray['parent_id']          = '';
+			$returnArray['template_id']        = $response->data->template_id;
+			$returnArray['custom_state_id']    = '';
+			$returnArray['position']           = $response->data->position;
+			$returnArray['name']               = $response->data->name;
+			$returnArray['notes']              = '';
+			$returnArray['type']               = 'item';
+			$returnArray['overdue']            = '';
+			$returnArray['archived_by']        = $response->data->archived_by;
+			$returnArray['archived_at']        = $response->data->archived_at;
+			$returnArray['due_dates']          = $response->data->next_due_at;
+			$returnArray['created_at']['date'] = $response->data->created_at;
+			$returnArray['updated_at']['date'] = $response->data->updated_at;
+			$returnArray['folder_uuid']        = $response->data->folder_uuid;
 
-		$item_status = $this->get_project_status_information( $response->data->project_id, $response->data->status_id );
+			$item_status = $this->get_project_status_information( $response->data->project_id, $response->data->status_id );
 
-		$returnArray['status']['data'] = (array) $item_status;
+			$returnArray['status']['data'] = (array) $item_status;
 
-		$returnArray['config'][0]['name']  = $response->data->structure->groups[0]->uuid;
-		$returnArray['config'][0]['label'] = $response->data->structure->groups[0]->name;
-		$elementCounter                    = 0;
-		foreach ( $response->data->structure->groups[0]->fields as $element ) {
-			$returnArray['config'][0]['elements'][ $elementCounter ]['type']       = ( $element->field_type == 'attachment' ) ? 'files' : $element->field_type;
-			$returnArray['config'][0]['elements'][ $elementCounter ]['name']       = $element->uuid;
-			$returnArray['config'][0]['elements'][ $elementCounter ]['required']   = @$element->metadata->validation;
-			$returnArray['config'][0]['elements'][ $elementCounter ]['label']      = $element->label;
-			$returnArray['config'][0]['elements'][ $elementCounter ]['value']      = $element->instructions;
-			$returnArray['config'][0]['elements'][ $elementCounter ]['microcopy']  = '';
-			$returnArray['config'][0]['elements'][ $elementCounter ]['limit_type'] = '';
-			$returnArray['config'][0]['elements'][ $elementCounter ]['limit']      = '';
-			$returnArray['config'][0]['elements'][ $elementCounter ]['plain_text'] = @$element->metadata->is_plain;
-			$elementCounter++;
+			$returnArray['config'][0]['name']  = $response->data->structure->groups[0]->uuid;
+			$returnArray['config'][0]['label'] = $response->data->structure->groups[0]->name;
+			$elementCounter                    = 0;
+			foreach ( $response->data->structure->groups[0]->fields as $element ) {
+				$returnArray['config'][0]['elements'][ $elementCounter ]['type']       = ( $element->field_type == 'attachment' ) ? 'files' : $element->field_type;
+				$returnArray['config'][0]['elements'][ $elementCounter ]['name']       = $element->uuid;
+				$returnArray['config'][0]['elements'][ $elementCounter ]['required']   = @$element->metadata->validation;
+				$returnArray['config'][0]['elements'][ $elementCounter ]['label']      = $element->label;
+				$returnArray['config'][0]['elements'][ $elementCounter ]['value']      = $element->instructions;
+				$returnArray['config'][0]['elements'][ $elementCounter ]['microcopy']  = '';
+				$returnArray['config'][0]['elements'][ $elementCounter ]['limit_type'] = '';
+				$returnArray['config'][0]['elements'][ $elementCounter ]['limit']      = '';
+				$returnArray['config'][0]['elements'][ $elementCounter ]['plain_text'] = @$element->metadata->is_plain;
+				$elementCounter++;
+			}
 		}
 
 		return json_decode( json_encode( $returnArray ) );
