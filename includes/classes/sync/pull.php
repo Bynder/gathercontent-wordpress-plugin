@@ -144,11 +144,6 @@ class Pull extends Base {
 		}
 
 		$post_id = wp_insert_post( $post_data, 1 );
-		global $wpdb;
-		$table              = 'test_table';
-		$store_arr['file']  = 'pull';
-		$store_arr['error'] = json_encode( $post_data );
-		$wpdb->insert( $table, $store_arr );
 
 		if ( is_wp_error( $post_id ) ) {
 			throw new Exception( $post_id->get_error_message(), __LINE__, $post_id->get_error_data() );
@@ -363,6 +358,7 @@ class Pull extends Base {
 	 * @return array Modified post data array on success.
 	 */
 	protected function loop_item_elements_and_map( $post_data ) {
+
 		if ( ! isset( $this->item->config ) || empty( $this->item->config ) ) {
 			return $post_data;
 		}
@@ -375,7 +371,10 @@ class Pull extends Base {
 			}
 
 			foreach ( $tab->elements as $this->element ) {
+
 				$destination = $this->mapping->data( $this->element->name );
+				global $wpdb;
+
 				if ( $destination && isset( $destination['type'], $destination['value'] ) ) {
 					$columns[ $destination['value'] ] = true;
 					$post_data                        = $this->set_post_values( $destination, $post_data );
@@ -405,10 +404,12 @@ class Pull extends Base {
 	 * @return array $post_data   The modified WP Post data array.
 	 */
 	protected function set_post_values( $destination, $post_data ) {
+
 		$this->set_element_value();
 
 		try {
 			switch ( $destination['type'] ) {
+
 				case 'wp-type-post':
 					$post_data = $this->set_post_field_value( $destination['value'], $post_data );
 					break;
@@ -445,6 +446,7 @@ class Pull extends Base {
 	 * @return array $post_data   The modified WP Post data array.
 	 */
 	protected function set_post_field_value( $post_column, $post_data ) {
+
 		if ( is_array( $this->element->value ) ) {
 			$this->element->value = implode( ', ', $this->element->value );
 		}
@@ -514,6 +516,7 @@ class Pull extends Base {
 	 * @return array  $post_data   The modified WP Post data array.
 	 */
 	protected function set_media_field_value( $destination, $post_data ) {
+
 		static $field_number = 0;
 		$media_items         = $this->sanitize_element_media();
 

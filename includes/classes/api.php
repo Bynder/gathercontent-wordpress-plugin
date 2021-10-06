@@ -959,6 +959,7 @@ class API extends Base {
 			$returnArray['created_at']['date'] = $response->data->created_at;
 			$returnArray['updated_at']['date'] = $response->data->updated_at;
 			$returnArray['folder_uuid']        = $response->data->folder_uuid;
+			$contentArray                      = (array) $response->data->content;
 
 			$item_status = $this->get_project_status_information( $response->data->project_id, $response->data->status_id );
 
@@ -972,7 +973,7 @@ class API extends Base {
 				$returnArray['config'][0]['elements'][ $elementCounter ]['name']       = $element->uuid;
 				$returnArray['config'][0]['elements'][ $elementCounter ]['required']   = @$element->metadata->validation;
 				$returnArray['config'][0]['elements'][ $elementCounter ]['label']      = $element->label;
-				$returnArray['config'][0]['elements'][ $elementCounter ]['value']      = $element->instructions;
+				$returnArray['config'][0]['elements'][ $elementCounter ]['value']      = $contentArray[ $element->uuid ];
 				$returnArray['config'][0]['elements'][ $elementCounter ]['microcopy']  = '';
 				$returnArray['config'][0]['elements'][ $elementCounter ]['limit_type'] = '';
 				$returnArray['config'][0]['elements'][ $elementCounter ]['limit']      = '';
