@@ -373,7 +373,6 @@ class Pull extends Base {
 			foreach ( $tab->elements as $this->element ) {
 
 				$destination = $this->mapping->data( $this->element->name );
-				global $wpdb;
 
 				if ( $destination && isset( $destination['type'], $destination['value'] ) ) {
 					$columns[ $destination['value'] ] = true;
