@@ -172,6 +172,7 @@ class API extends Base {
 	 * @return mixed          Results of request.
 	 */
 	public function get_item( $item_id ) {
+
 		$response = $this->get(
 			'items/' . $item_id . '?include=structure',
 			array(
@@ -341,6 +342,7 @@ class API extends Base {
 			),
 			'full_data'
 		);
+
 		return $this->filter_template_response( $response );
 
 	}
@@ -410,12 +412,15 @@ class API extends Base {
 	}
 
 	/**
-	 * GC API request to update an items content.
+	 * GC V2 API request to update an items content.
 	 *
-	 * /items/<ITEM_ID>/update-content
+	 * /items/<ITEM_ID>/content
 	 *
 	 * @since 3.0.0
 	 *
+	 * @link https://docs.gathercontent.com/reference/updateitemcontent
+	 * 
+	 * 
 	 * @param  int   $item_id GatherContent Item Id.
 	 * @param  array $content  Data to save.
 	 * @return bool           If request was successful.
@@ -425,13 +430,13 @@ class API extends Base {
 		$args = array(
 			'body'    => wp_json_encode( compact( 'content' ) ),
 			'headers' => array(
-				'Accept'       => 'application/vnd.gathercontent.v0.6+json',
+				'Accept'       => 'application/vnd.gathercontent.v2+json',
 				'Content-Type' => 'application/json',
 			),
 		);
 
 		$response = $this->post(
-			'items/' . absint( $item_id ) . '/update-content',
+			'items/' . absint( $item_id ) . '/content',
 			$args
 		);
 
@@ -879,32 +884,67 @@ class API extends Base {
 		$returnArray['config'][0]['label'] = $response->related->structure->groups[0]->name;
 		$elementCounter                    = 0;
 		foreach ( $response->related->structure->groups[0]->fields as $element ) {
-				// check :: if element type is component then , use sub array
-			if ( $element->field_type == 'component' ) {
+			if ( @$element->metadata->repeatable->isRepeatable ) {
 
-				foreach ( $element->component->fields as $c_element ) {
+				for ( $i = $elementCounter; $i < $element->metadata->repeatable->limit + $elementCounter; $i++ ) {
 
-					$returnArray['config'][0]['elements'][ $elementCounter ]['type']       = ( $c_element->field_type == 'attachment' ) ? 'files' : $c_element->field_type;
-					$returnArray['config'][0]['elements'][ $elementCounter ]['name']       = $c_element->uuid;
-					$returnArray['config'][0]['elements'][ $elementCounter ]['required']   = @$c_element->metadata->validation;
-					$returnArray['config'][0]['elements'][ $elementCounter ]['label']      = $c_element->label;
-					$returnArray['config'][0]['elements'][ $elementCounter ]['value']      = $c_element->instructions;
+						// check :: if element type is component then , use sub array
+					if ( $element->field_type == 'component' ) {
+
+						foreach ( $element->component->fields as $c_element ) {
+
+							$returnArray['config'][0]['elements'][ $i ]['type']       = ( $c_element->field_type == 'attachment' ) ? 'files' : $c_element->field_type;
+							$returnArray['config'][0]['elements'][ $i ]['name']       = $c_element->uuid . '-' . $i;
+							$returnArray['config'][0]['elements'][ $i ]['required']   = @$c_element->metadata->validation;
+							$returnArray['config'][0]['elements'][ $i ]['label']      = $c_element->label . '-' . $i;
+							$returnArray['config'][0]['elements'][ $i ]['value']      = $c_element->instructions;
+							$returnArray['config'][0]['elements'][ $i ]['microcopy']  = '';
+							$returnArray['config'][0]['elements'][ $i ]['limit_type'] = '';
+							$returnArray['config'][0]['elements'][ $i ]['limit']      = '';
+							$returnArray['config'][0]['elements'][ $i ]['plain_text'] = @$c_element->metadata->is_plain;
+							$elementCounter++;
+						}
+					} else {
+						$returnArray['config'][0]['elements'][ $i ]['type']       = ( $element->field_type == 'attachment' ) ? 'files' : $element->field_type;
+						$returnArray['config'][0]['elements'][ $i ]['name']       = $element->uuid . '-' . $i;
+						$returnArray['config'][0]['elements'][ $i ]['required']   = @$element->metadata->validation;
+						$returnArray['config'][0]['elements'][ $i ]['label']      = $element->label . '-' . $i;
+						$returnArray['config'][0]['elements'][ $i ]['value']      = $element->instructions;
+						$returnArray['config'][0]['elements'][ $i ]['microcopy']  = '';
+						$returnArray['config'][0]['elements'][ $i ]['limit_type'] = '';
+						$returnArray['config'][0]['elements'][ $i ]['limit']      = '';
+						$returnArray['config'][0]['elements'][ $i ]['plain_text'] = @$element->metadata->is_plain;
+					}
+				}
+			} else {
+
+					// check :: if element type is component then , use sub array
+				if ( $element->field_type == 'component' ) {
+
+					foreach ( $element->component->fields as $c_element ) {
+
+						$returnArray['config'][0]['elements'][ $elementCounter ]['type']       = ( $c_element->field_type == 'attachment' ) ? 'files' : $c_element->field_type;
+						$returnArray['config'][0]['elements'][ $elementCounter ]['name']       = $c_element->uuid;
+						$returnArray['config'][0]['elements'][ $elementCounter ]['required']   = @$c_element->metadata->validation;
+						$returnArray['config'][0]['elements'][ $elementCounter ]['label']      = $c_element->label;
+						$returnArray['config'][0]['elements'][ $elementCounter ]['value']      = $c_element->instructions;
+						$returnArray['config'][0]['elements'][ $elementCounter ]['microcopy']  = '';
+						$returnArray['config'][0]['elements'][ $elementCounter ]['limit_type'] = '';
+						$returnArray['config'][0]['elements'][ $elementCounter ]['limit']      = '';
+						$returnArray['config'][0]['elements'][ $elementCounter ]['plain_text'] = @$c_element->metadata->is_plain;
+						$elementCounter++;
+					}
+				} else {
+					$returnArray['config'][0]['elements'][ $elementCounter ]['type']       = ( $element->field_type == 'attachment' ) ? 'files' : $element->field_type;
+					$returnArray['config'][0]['elements'][ $elementCounter ]['name']       = $element->uuid;
+					$returnArray['config'][0]['elements'][ $elementCounter ]['required']   = @$element->metadata->validation;
+					$returnArray['config'][0]['elements'][ $elementCounter ]['label']      = $element->label;
+					$returnArray['config'][0]['elements'][ $elementCounter ]['value']      = $element->instructions;
 					$returnArray['config'][0]['elements'][ $elementCounter ]['microcopy']  = '';
 					$returnArray['config'][0]['elements'][ $elementCounter ]['limit_type'] = '';
 					$returnArray['config'][0]['elements'][ $elementCounter ]['limit']      = '';
-					$returnArray['config'][0]['elements'][ $elementCounter ]['plain_text'] = @$c_element->metadata->is_plain;
-					$elementCounter++;
+					$returnArray['config'][0]['elements'][ $elementCounter ]['plain_text'] = @$element->metadata->is_plain;
 				}
-			} else {
-				$returnArray['config'][0]['elements'][ $elementCounter ]['type']       = ( $element->field_type == 'attachment' ) ? 'files' : $element->field_type;
-				$returnArray['config'][0]['elements'][ $elementCounter ]['name']       = $element->uuid;
-				$returnArray['config'][0]['elements'][ $elementCounter ]['required']   = @$element->metadata->validation;
-				$returnArray['config'][0]['elements'][ $elementCounter ]['label']      = $element->label;
-				$returnArray['config'][0]['elements'][ $elementCounter ]['value']      = $element->instructions;
-				$returnArray['config'][0]['elements'][ $elementCounter ]['microcopy']  = '';
-				$returnArray['config'][0]['elements'][ $elementCounter ]['limit_type'] = '';
-				$returnArray['config'][0]['elements'][ $elementCounter ]['limit']      = '';
-				$returnArray['config'][0]['elements'][ $elementCounter ]['plain_text'] = @$element->metadata->is_plain;
 			}
 
 			$elementCounter++;
@@ -946,7 +986,7 @@ class API extends Base {
 	 * @return mixed              Results of request.
 	 */
 	public function filter_item_response( $response ) {
-		// print_r($response);exit;
+
 		$returnArray = array();
 		if ( @$response->data ) {
 
@@ -977,34 +1017,70 @@ class API extends Base {
 			$elementCounter                    = 0;
 			foreach ( $response->data->structure->groups[0]->fields as $element ) {
 
-				if ( $element->field_type == 'component' ) {
-					   $component_uuid = $element->uuid;
+				if ( @$element->metadata->repeatable->isRepeatable ) {
 
-					foreach ( $element->component->fields as $c_element ) {
+					for ( $i = $elementCounter; $i < $element->metadata->repeatable->limit + $elementCounter; $i++ ) {
+						if ( $element->field_type == 'component' ) {
+							$component_uuid = $element->uuid;
 
-						$c_contentArray = (array) @$contentArray[ $component_uuid ];
+							foreach ( $element->component->fields as $c_element ) {
 
-						$returnArray['config'][0]['elements'][ $elementCounter ]['type']       = ( $c_element->field_type == 'attachment' ) ? 'files' : $c_element->field_type;
-						$returnArray['config'][0]['elements'][ $elementCounter ]['name']       = $c_element->uuid;
-						$returnArray['config'][0]['elements'][ $elementCounter ]['required']   = @$c_element->metadata->validation;
-						$returnArray['config'][0]['elements'][ $elementCounter ]['label']      = $c_element->label;
-						$returnArray['config'][0]['elements'][ $elementCounter ]['value']      = @$c_contentArray[ $c_element->uuid ];
+								$c_contentArray = (array) @$contentArray[ $component_uuid ];
+
+								$returnArray['config'][0]['elements'][ $i ]['type']       = ( $c_element->field_type == 'attachment' ) ? 'files' : $c_element->field_type;
+								$returnArray['config'][0]['elements'][ $i ]['name']       = $c_element->uuid . '-' . $i;
+								$returnArray['config'][0]['elements'][ $i ]['required']   = @$c_element->metadata->validation;
+								$returnArray['config'][0]['elements'][ $i ]['label']      = $c_element->label . '-' . $i;
+								$returnArray['config'][0]['elements'][ $i ]['value']      = @$c_contentArray[ $c_element->uuid ][ $i - 1 ];
+								$returnArray['config'][0]['elements'][ $i ]['microcopy']  = '';
+								$returnArray['config'][0]['elements'][ $i ]['limit_type'] = '';
+								$returnArray['config'][0]['elements'][ $i ]['limit']      = '';
+								$returnArray['config'][0]['elements'][ $i ]['plain_text'] = @$c_element->metadata->is_plain;
+								$elementCounter++;
+							}
+						} else {
+
+							$returnArray['config'][0]['elements'][ $i ]['type']       = ( $element->field_type == 'attachment' ) ? 'files' : $element->field_type;
+							$returnArray['config'][0]['elements'][ $i ]['name']       = $element->uuid . '-' . $i;
+							$returnArray['config'][0]['elements'][ $i ]['required']   = @$element->metadata->validation;
+							$returnArray['config'][0]['elements'][ $i ]['label']      = $element->label . '-' . $i;
+							$returnArray['config'][0]['elements'][ $i ]['value']      = @$contentArray[ $element->uuid ][ $i - 1 ];
+							$returnArray['config'][0]['elements'][ $i ]['microcopy']  = '';
+							$returnArray['config'][0]['elements'][ $i ]['limit_type'] = '';
+							$returnArray['config'][0]['elements'][ $i ]['limit']      = '';
+							$returnArray['config'][0]['elements'][ $i ]['plain_text'] = @$element->metadata->is_plain;
+						}
+					}
+				} else {
+					if ( $element->field_type == 'component' ) {
+						   $component_uuid = $element->uuid;
+
+						foreach ( $element->component->fields as $c_element ) {
+
+							$c_contentArray = (array) @$contentArray[ $component_uuid ];
+
+							$returnArray['config'][0]['elements'][ $elementCounter ]['type']       = ( $c_element->field_type == 'attachment' ) ? 'files' : $c_element->field_type;
+							$returnArray['config'][0]['elements'][ $elementCounter ]['name']       = $c_element->uuid;
+							$returnArray['config'][0]['elements'][ $elementCounter ]['required']   = @$c_element->metadata->validation;
+							$returnArray['config'][0]['elements'][ $elementCounter ]['label']      = $c_element->label;
+							$returnArray['config'][0]['elements'][ $elementCounter ]['value']      = @$c_contentArray[ $c_element->uuid ];
+							$returnArray['config'][0]['elements'][ $elementCounter ]['microcopy']  = '';
+							$returnArray['config'][0]['elements'][ $elementCounter ]['limit_type'] = '';
+							$returnArray['config'][0]['elements'][ $elementCounter ]['limit']      = '';
+							$returnArray['config'][0]['elements'][ $elementCounter ]['plain_text'] = @$c_element->metadata->is_plain;
+							$elementCounter++;
+						}
+					} else {
+						$returnArray['config'][0]['elements'][ $elementCounter ]['type']       = ( $element->field_type == 'attachment' ) ? 'files' : $element->field_type;
+						$returnArray['config'][0]['elements'][ $elementCounter ]['name']       = $element->uuid;
+						$returnArray['config'][0]['elements'][ $elementCounter ]['required']   = @$element->metadata->validation;
+						$returnArray['config'][0]['elements'][ $elementCounter ]['label']      = $element->label;
+						$returnArray['config'][0]['elements'][ $elementCounter ]['value']      = $contentArray[ $element->uuid ];
 						$returnArray['config'][0]['elements'][ $elementCounter ]['microcopy']  = '';
 						$returnArray['config'][0]['elements'][ $elementCounter ]['limit_type'] = '';
 						$returnArray['config'][0]['elements'][ $elementCounter ]['limit']      = '';
-						$returnArray['config'][0]['elements'][ $elementCounter ]['plain_text'] = @$c_element->metadata->is_plain;
-						$elementCounter++;
+						$returnArray['config'][0]['elements'][ $elementCounter ]['plain_text'] = @$element->metadata->is_plain;
 					}
-				} else {
-					$returnArray['config'][0]['elements'][ $elementCounter ]['type']       = ( $element->field_type == 'attachment' ) ? 'files' : $element->field_type;
-					$returnArray['config'][0]['elements'][ $elementCounter ]['name']       = $element->uuid;
-					$returnArray['config'][0]['elements'][ $elementCounter ]['required']   = @$element->metadata->validation;
-					$returnArray['config'][0]['elements'][ $elementCounter ]['label']      = $element->label;
-					$returnArray['config'][0]['elements'][ $elementCounter ]['value']      = $contentArray[ $element->uuid ];
-					$returnArray['config'][0]['elements'][ $elementCounter ]['microcopy']  = '';
-					$returnArray['config'][0]['elements'][ $elementCounter ]['limit_type'] = '';
-					$returnArray['config'][0]['elements'][ $elementCounter ]['limit']      = '';
-					$returnArray['config'][0]['elements'][ $elementCounter ]['plain_text'] = @$element->metadata->is_plain;
 				}
 
 				$elementCounter++;
