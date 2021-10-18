@@ -113,6 +113,7 @@ class Push extends Base {
 	 * @return mixed Result of push.
 	 */
 	protected function do_item( $id ) {
+
 		$this->post = $this->get_post( $id );
 
 		$this->check_mapping_data( $this->mapping );
@@ -196,6 +197,7 @@ class Push extends Base {
 	 * @return mixed Result of push.
 	 */
 	public function maybe_do_item_update( $update ) {
+
 		// Get our initial config reference.
 		$config = json_decode( $this->config );
 
@@ -219,6 +221,7 @@ class Push extends Base {
 				);
 			}
 		} else {
+
 			$content = $this->get_structured_array( $config );
 
 			if ( $this->item_id ) {
