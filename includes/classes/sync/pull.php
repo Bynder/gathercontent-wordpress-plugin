@@ -35,9 +35,6 @@ class Pull extends Base {
 	public function __construct( API $api ) {
 		parent::__construct( $api, new Async_Pull_Action() );
 
-		
-
-
 	}
 
 	/**
@@ -100,14 +97,9 @@ class Pull extends Base {
 	 */
 	protected function do_item( $id ) {
 
-		
-
-
 		$this->check_mapping_data( $this->mapping );
 
 		$this->set_item( $id );
-
-
 
 		$post_data   = array();
 		$attachments = $tax_terms = false;
@@ -142,8 +134,6 @@ class Pull extends Base {
 		}
 
 		$post_data = $this->map_gc_data_to_wp_data( $post_data );
-
-	
 
 		if ( ! empty( $post_data['attachments'] ) ) {
 			$attachments = $post_data['attachments'];
@@ -282,8 +272,6 @@ class Pull extends Base {
 		}
 
 		$files = $this->api->uncached()->get_item_files( $this->item->id );
-		
-		
 
 		$this->item->files = array();
 		if ( is_array( $files ) ) {
@@ -297,8 +285,6 @@ class Pull extends Base {
 		}
 
 		$post_data = $this->loop_item_elements_and_map( $post_data );
-
-
 
 		// Put the backup data back.
 		foreach ( $backup as $key => $value ) {
@@ -374,7 +360,6 @@ class Pull extends Base {
 	 * @return array Modified post data array on success.
 	 */
 	protected function loop_item_elements_and_map( $post_data ) {
-		
 
 		if ( ! isset( $this->item->config ) || empty( $this->item->config ) ) {
 			return $post_data;
@@ -386,8 +371,6 @@ class Pull extends Base {
 			if ( ! isset( $tab->elements ) || ! $tab->elements ) {
 				continue;
 			}
-
-			
 
 			foreach ( $tab->elements as $this->element ) {
 
@@ -422,8 +405,6 @@ class Pull extends Base {
 	 * @return array $post_data   The modified WP Post data array.
 	 */
 	protected function set_post_values( $destination, $post_data ) {
-		
-		
 
 		$this->set_element_value();
 
@@ -537,12 +518,8 @@ class Pull extends Base {
 	 */
 	protected function set_media_field_value( $destination, $post_data ) {
 
-		
-
 		static $field_number = 0;
 		$media_items         = $this->sanitize_element_media();
-
-
 
 		if (
 			in_array( $destination, array( 'gallery', 'content_image', 'excerpt_image' ), true )
@@ -565,8 +542,6 @@ class Pull extends Base {
 			'destination' => $destination,
 			'media'       => $media_items,
 		);
-
-
 
 		return $post_data;
 	}
@@ -708,11 +683,7 @@ class Pull extends Base {
 	 */
 	protected function sanitize_element_media() {
 
-		
-
-
 		return apply_filters( 'gc_sanitize_media_field', $this->element->value, $this->element, $this->item );
-
 
 	}
 
@@ -729,9 +700,6 @@ class Pull extends Base {
 	 * @return array              Array of replacement key/values for strtr.
 	 */
 	protected function sideload_attachments( $attachments, $post_data ) {
-
-		
-
 
 		$post_id         = $post_data['ID'];
 		$featured_img_id = false;
@@ -978,9 +946,7 @@ class Pull extends Base {
 
 		$file_array = $this->tmp_file( $file_url, $file_name );
 
-		
-
-		$file       = wp_handle_sideload( $file_array, array( 'test_form' => false ), $time );
+		$file = wp_handle_sideload( $file_array, array( 'test_form' => false ), $time );
 
 		if ( isset( $file['error'] ) ) {
 			return new WP_Error( 'upload_error', $file['error'] );

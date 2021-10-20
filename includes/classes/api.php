@@ -955,7 +955,6 @@ class API extends Base {
 						$returnArray['config'][0]['elements'][ $i ]['limit']      = '';
 						$returnArray['config'][0]['elements'][ $i ]['plain_text'] = @$element->metadata->is_plain;
 					}
-
 				}
 				$elementCounter++;
 			} else {
@@ -1060,7 +1059,7 @@ class API extends Base {
 			foreach ( $response->data->structure->groups[0]->fields as $element ) {
 
 				if ( @$element->metadata->repeatable->isRepeatable ) {
-					$limitCounter=0;
+					$limitCounter = 0;
 					for ( $i = $elementCounter; $i < $element->metadata->repeatable->limit + $elementCounter; $i++ ) {
 						if ( $element->field_type == 'component' ) {
 							$component_uuid = $element->uuid;
@@ -1073,20 +1072,20 @@ class API extends Base {
 								$returnArray['config'][0]['elements'][ $i ]['name']       = $c_element->uuid . '-' . $i;
 								$returnArray['config'][0]['elements'][ $i ]['required']   = @$c_element->metadata->validation;
 								$returnArray['config'][0]['elements'][ $i ]['label']      = $c_element->label . '-' . $i;
-								$returnArray['config'][0]['elements'][ $i ]['value']      = ( $element->field_type == 'attachment' ) ? '' : @$c_contentArray[ $c_element->uuid ][ $limitCounter  ];
+								$returnArray['config'][0]['elements'][ $i ]['value']      = ( $element->field_type == 'attachment' ) ? '' : @$c_contentArray[ $c_element->uuid ][ $limitCounter ];
 								$returnArray['config'][0]['elements'][ $i ]['microcopy']  = '';
 								$returnArray['config'][0]['elements'][ $i ]['limit_type'] = '';
 								$returnArray['config'][0]['elements'][ $i ]['limit']      = '';
 								$returnArray['config'][0]['elements'][ $i ]['plain_text'] = @$c_element->metadata->is_plain;
-								
+
 							}
 						} else {
-							
+
 							$returnArray['config'][0]['elements'][ $i ]['type']       = ( $element->field_type == 'attachment' ) ? 'files' : $element->field_type;
 							$returnArray['config'][0]['elements'][ $i ]['name']       = $element->uuid . '-' . $i;
 							$returnArray['config'][0]['elements'][ $i ]['required']   = @$element->metadata->validation;
 							$returnArray['config'][0]['elements'][ $i ]['label']      = $element->label . '-' . $i;
-							$returnArray['config'][0]['elements'][ $i ]['value']      =( $element->field_type == 'attachment' ) ? '' :  @$contentArray[ $element->uuid ][ $limitCounter ];
+							$returnArray['config'][0]['elements'][ $i ]['value']      = ( $element->field_type == 'attachment' ) ? '' : @$contentArray[ $element->uuid ][ $limitCounter ];
 							$returnArray['config'][0]['elements'][ $i ]['microcopy']  = '';
 							$returnArray['config'][0]['elements'][ $i ]['limit_type'] = '';
 							$returnArray['config'][0]['elements'][ $i ]['limit']      = '';
@@ -1098,7 +1097,7 @@ class API extends Base {
 				} else {
 					if ( $element->field_type == 'component' ) {
 						   $component_uuid = $element->uuid;
-						   $componentCount=count($element->component->fields);
+						   $componentCount = count( $element->component->fields );
 						foreach ( $element->component->fields as $c_element ) {
 
 							$c_contentArray = (array) @$contentArray[ $component_uuid ];
@@ -1113,12 +1112,10 @@ class API extends Base {
 							$returnArray['config'][0]['elements'][ $elementCounter ]['limit']      = '';
 							$returnArray['config'][0]['elements'][ $elementCounter ]['plain_text'] = @$c_element->metadata->is_plain;
 
-							if($componentCount!=1){
+							if ( $componentCount != 1 ) {
 								$componentCount--;
 								$elementCounter++;
 							}
-							
-							
 						}
 					} else {
 						$returnArray['config'][0]['elements'][ $elementCounter ]['type']       = ( $element->field_type == 'attachment' ) ? 'files' : $element->field_type;
@@ -1136,7 +1133,7 @@ class API extends Base {
 				$elementCounter++;
 			}
 		}
-		//print_r($returnArray);exit;
+		// print_r($returnArray);exit;
 		return json_decode( json_encode( $returnArray ) );
 	}
 

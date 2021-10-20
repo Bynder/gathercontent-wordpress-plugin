@@ -114,8 +114,6 @@ class Push extends Base {
 	 */
 	protected function do_item( $id ) {
 
-		
-
 		$this->post = $this->get_post( $id );
 
 		$this->check_mapping_data( $this->mapping );
@@ -226,8 +224,6 @@ class Push extends Base {
 
 			$content = $this->get_structured_array( $config );
 			$content = $this->restructure_content( $content );
-			
-			
 
 			if ( $this->item_id ) {
 				$result = $this->api->update_item( $this->item_id, $content );
@@ -354,7 +350,7 @@ class Push extends Base {
 			$this->item_config = $this->restructure_items_config( $this->item_config );
 		}
 
-		//$this->remove_unknowns();
+		// $this->remove_unknowns();
 
 		return $this->item_config;
 	}
@@ -700,7 +696,7 @@ class Push extends Base {
 	 *
 	 * @return array             return restructure items config array.
 	 */
-	
+
 	function restructure_items_config( $items_config ) {
 		$elements = $items_config[0]->elements;
 
