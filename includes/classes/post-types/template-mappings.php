@@ -27,6 +27,7 @@ class Template_Mappings extends Base {
 	 * @param $api API object
 	 */
 	public function __construct( $parent_menu_slug, API $api ) {
+		
 		$this->api         = $api;
 		$this->listing_url = admin_url( 'edit.php?post_type=' . self::SLUG );
 		new Async_Save_Hook( self::SLUG );
@@ -62,7 +63,7 @@ class Template_Mappings extends Base {
 			)
 		);
 		// call the function pull_alt_text_by_project whene `alt_text` pera set in the url for `sync alt_text`
-		if ( @$_GET['project'] && @$_GET['alt_text'] == 'sync' ) {
+		if ( @$_GET['project'] && (@$_GET['alt_text'] == 'pull' || @$_GET['alt_text'] == 'push') ) {
 			$this->pull_alt_text_by_project( $_GET['project'] );
 		}
 
@@ -230,7 +231,8 @@ class Template_Mappings extends Base {
 				$value = $data[ $column ] ?: __( '&mdash;' );
 				global $wp;
 				if ( $data['base_url'] && $data['alt_text'] && $value ) {
-					$url_alt_text = esc_url( ( isset( $_SERVER['HTTPS'] ) && $_SERVER['HTTPS'] === 'on' ? 'https' : 'http' ) . "://$_SERVER[HTTP_HOST]$_SERVER[REQUEST_URI]" . '&project=' . $data['project'] . '&alt_text=sync' );
+					$url_alt_text_pull = esc_url( ( isset( $_SERVER['HTTPS'] ) && $_SERVER['HTTPS'] === 'on' ? 'https' : 'http' ) . "://$_SERVER[HTTP_HOST]$_SERVER[REQUEST_URI]" . '&project=' . $data['project'] . '&alt_text=pull' );
+					$url_alt_text_push = esc_url( ( isset( $_SERVER['HTTPS'] ) && $_SERVER['HTTPS'] === 'on' ? 'https' : 'http' ) . "://$_SERVER[HTTP_HOST]$_SERVER[REQUEST_URI]" . '&project=' . $data['project'] . '&alt_text=push' );
 				}
 				break;
 		}
@@ -240,10 +242,14 @@ class Template_Mappings extends Base {
 				echo '<a href="' . esc_url( $url ) . '" target="_blank">';
 					print_r( $value );
 				echo '</a>';
-			} elseif ( $url_alt_text ) {
-				echo '<a href="' . esc_url( $url_alt_text ) . '" class="button dashicons dashicons-controls-repeat gc-refresh-connection" style="width:auto" title="' . $value . '">';
+			} elseif ( $url_alt_text_pull &&  $url_alt_text_push) {
+				echo '<a href="' . esc_url( $url_alt_text_pull ) . '" class="button dashicons dashicons-arrow-down-alt gc-refresh-connection" style="width:auto ;margin-right:5px" title="Pull Alt Text">';
 
 				echo '</a>';
+				echo '<a href="' . esc_url( $url_alt_text_push ) . '" class="button dashicons dashicons-arrow-up-alt gc-refresh-connection" style="width:auto" title="Push Alt Text">';
+
+				echo '</a>';
+
 			} else {
 				print_r( $value );
 			}
@@ -770,7 +776,7 @@ class Template_Mappings extends Base {
 		}
 	}
 	protected function pull_alt_text_by_project( $project_id ) {
-
+    
 		$imagePostArray = array();
 		$args           = array(
 			'post_type'   => 'attachment',
@@ -791,8 +797,8 @@ class Template_Mappings extends Base {
 		}
 
 			 $project_files = $this->api->uncached()->get_project_files( $project_id );
-
-		if ( $project_files ) {
+		if(@$_GET['alt_text']=='pull'){
+			if ( $project_files ) {
 			foreach ( $project_files as $file ) {
 				$file_name          = str_replace( ' ', '-', $file->filename );
 				$attachment_post_id = array_search( $file_name, $imagePostArray );
@@ -800,7 +806,23 @@ class Template_Mappings extends Base {
 				update_post_meta( $attachment_post_id, '_wp_attachment_image_alt', $file->alt_text ); // attempting to update the image attachment image alt textalt_text
 
 			}
+		 }
 		}
+		if(@$_GET['alt_text']=='push'){
+			if ( $project_files ) {
+			foreach ( $project_files as $file ) {
+				$file_name          = str_replace( ' ', '-', $file->filename );
+				$attachment_post_id = array_search( $file_name, $imagePostArray );
+				
+				$alt_text=get_post_meta($attachment_post_id, '_wp_attachment_image_alt');
+				if(@$alt_text[0] && $alt_text[0]!=""){
+					$this->api->uncached()->update_alt_text( $project_id, $file->id,$alt_text[0]);// attempting to push the file alt textalt_text to GC
+				}
+				
+			}
+		 }
+		}
+		
 
 			wp_safe_redirect( esc_url_raw( add_query_arg( array( 'post_type' => 'gc_templates' ), home_url() . '/wp-admin/edit.php' ) ) );
 				exit;
