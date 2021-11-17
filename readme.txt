@@ -6,6 +6,7 @@ Requires at least: 3.8
 Tested up to:      5.8.1
 Stable tag:        3.1.14
 License:           GPL-2.0+
+Requires PHP:	   7.0
 License URI:       https://opensource.org/licenses/GPL-2.0
 
 Quickly transfer structured content to and from your GatherContent projects and your WordPress site.
