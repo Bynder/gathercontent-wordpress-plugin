@@ -321,7 +321,8 @@ class Template_Mapper extends Base {
 		foreach ( $this->template->config as $tab ) {
 
 			$rows = array();
-			foreach ( $tab->elements as $element ) {
+			$elements = $tab->elements ?? [];
+			foreach ( $elements as $element ) {
 				if ( 'section' === $element->type ) {
 					continue;
 				}
