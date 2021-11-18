@@ -13,6 +13,8 @@ class Template_Mapper extends Base {
 	protected $option_name = '';
 	protected $statuses    = array();
 
+	const EXCLUDED_FIELDS = ['section', 'guidelines'];
+
 	/**
 	 * Field_Types\Types
 	 *
@@ -67,7 +69,7 @@ class Template_Mapper extends Base {
 		}
 
 		$project_id  = esc_attr( $this->project->id );
-		$template_id = esc_attr( $this->template->id );
+		$template_id = esc_attr( $this->template->data->id );
 
 		$this->view(
 			'input',
@@ -85,7 +87,7 @@ class Template_Mapper extends Base {
 				'type'  => 'hidden',
 				'id'    => 'gc-template-title',
 				'name'  => $this->option_name . '[title]',
-				'value' => esc_attr( isset( $this->template->name ) ? $this->template->name : __( 'Mapped Template', 'gathercontent-import' ) ),
+				'value' => esc_attr( isset( $this->template->data->name ) ? $this->template->data->name : __( 'Mapped Template', 'gathercontent-import' ) ),
 			)
 		);
 
@@ -318,40 +320,42 @@ class Template_Mapper extends Base {
 
 		$post_type = $this->get_value( 'post_type', 'esc_attr' );
 
-		foreach ( $this->template->config as $tab ) {
+		$tab_groups = $this->template->related->structure->groups ?? [];
+
+		foreach ($tab_groups as $tab ) {
 
 			$rows = array();
-			$elements = $tab->elements ?? [];
-			foreach ( $elements as $element ) {
-				if ( 'section' === $element->type ) {
+			$fields = $tab->fields ?? [];
+			foreach ( $fields as $field ) {
+
+				if ( in_array($field->field_type, self::EXCLUDED_FIELDS) ) {
 					continue;
 				}
 
-				if ( $this->get_value( $element->name ) ) {
-					$val                  = $this->get_value( $element->name );
-					$element->field_type  = isset( $val['type'] ) ? $val['type'] : '';
-					$element->field_value = isset( $val['value'] ) ? $val['value'] : '';
-				}
+				$field->typeName = '';
 
-				$element->typeName = '';
+				if ( isset( $field->field_type ) ) {
 
-				if ( isset( $element->type ) ) {
-					if ( 'text' === $element->type ) {
-						$element->type = isset( $element->plain_text ) && $element->plain_text
-							? 'text_plain'
-							: 'text_rich';
+					if ( 'text' === $field->field_type ) {
+						$field->type = $field->metadata->is_plain ? 'text_plain' : 'text_rich';
 					}
 
-					$element->typeName = Utils::gc_field_type_name( $element->type );
+					$field->typeName = Utils::gc_field_type_name( $field->field_type );
 				}
 
-				$element->post_type = $post_type;
-				$rows[]             = $element;
+				if ( $this->get_value( $field->uuid ) ) {
+					$val                = $this->get_value( $field->uuid );
+					$field->field_type  = isset( $val['type'] ) ? $val['type'] : '';
+					$field->field_value = isset( $val['value'] ) ? $val['value'] : '';
+				}
+
+				$field->post_type = $post_type;
+				$rows[]           = $field;
 			}
 
 			$tab_array = array(
-				'id'     => $tab->name,
-				'label'  => $tab->label,
+				'id'     => $tab->uuid,
+				'label'  => $tab->name,
 				'hidden' => ! empty( $tabs ),
 				'rows'   => $rows,
 			);

@@ -4,7 +4,7 @@ Donate link:       http://www.gathercontent.com
 Tags               structured content, gather content, gathercontent, import, migrate, export, mapping, production, writing, collaboration, platform, connect, link, gather, client, word, production
 Requires at least: 3.8
 Tested up to:      5.8.1
-Stable tag:        3.1.14
+Stable tag:        4.0.0
 License:           GPL-2.0+
 Requires PHP:	   7.0
 License URI:       https://opensource.org/licenses/GPL-2.0
