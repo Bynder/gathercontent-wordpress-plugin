@@ -550,6 +550,14 @@ module.exports = function (app, $, gc) {
 			this.defaultTab.set('initial', this.initial);
 			this.render();
 
+			if (gc._tabs && gc._tabs.length > 0) {
+				var firstTabId = gc._tabs[0].id;
+				if (firstTabId) {
+					this.setTab(firstTabId);
+					this.$('.nav-tab[href="#' + firstTabId + '"]').trigger('click');
+				}
+			}
+
 			if (gc._pointers.select_tab_how_to) {
 				this.pointer('.gc-nav-tab-wrapper-bb', 'select_tab_how_to');
 				this.pointer('#gc-status-mappings', 'map_status_how_to');
