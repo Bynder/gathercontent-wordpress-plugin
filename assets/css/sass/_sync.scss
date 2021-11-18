@@ -81,3 +81,13 @@
 		line-height: 1.5em;
 	}
 }
+
+.gc-status-warning {
+	color: orange;
+	font-size: 10px;
+	display: none;
+}
+
+.gc-status-warning.not-current {
+	display: block;
+}
