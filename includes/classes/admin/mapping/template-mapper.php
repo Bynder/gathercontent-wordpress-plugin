@@ -335,12 +335,21 @@ class Template_Mapper extends Base {
 				// to handle components with multiple fields inside
 				$fields_data    = $field->component->fields ?? [$field];
 				$component_name = $field->field_type === self::COMPONENT_FIELD ? $field->label : '';
+				$metadata 		= $field->metadata;
+
+				$is_repeatable  = (is_object($metadata) && isset($metadata->repeatable)) ? $metadata->repeatable->isRepeatable : false;
 
 				foreach ($fields_data as $field_data) {
 
-					$formatted_field = $this->format_fields($field_data, $post_type, $component_name);
+					$formatted_field = $this->format_fields(
+						$field_data,
+						$post_type,
+						$component_name,
+						$is_repeatable
+					);
 
 					if ($formatted_field) {
+						error_log(print_r($formatted_field, true));
 						$rows[] = $formatted_field;
 					}
 				}
@@ -381,12 +390,13 @@ class Template_Mapper extends Base {
 	 * @since 4.0.0
 	 *
 	 * @param mixed $field
-	 * @param string $post_type
+	 * @param string|null $post_type
 	 * @param string $component_name
+	 * @param bool $is_repeatable
 	 *
 	 * @return null|mixed formatted field object.
 	 */
-	private function format_fields($field, $post_type, $component_name = '') {
+	private function format_fields($field, $post_type, string $component_name = '', bool $is_repeatable = false) {
 
 		$field_type = $field->field_type ?? '';
 
@@ -409,14 +419,15 @@ class Template_Mapper extends Base {
 
 		$field->typeName = Utils::gc_field_type_name($field_type);
 
-		if ($this->get_value($field->uuid)) {
-			$val                = $this->get_value($field->uuid);
+		if ($val = $this->get_value($field->uuid)) {
 			$field->field_type  = isset($val['type']) ? $val['type'] : '';
 			$field->field_value = isset($val['value']) ? $val['value'] : '';
 		}
 
-		$field->post_type = $post_type;
-		$field->subtitle  = $component_name ? "($component_name)" : "";
+		$field->is_repeatable = $is_repeatable;
+		$field->post_type 	  = $post_type;
+		$field->name 	      = $field->uuid;
+		$field->subtitle      = $component_name ? "($component_name)" : "";
 
 		return $field;
 	}
