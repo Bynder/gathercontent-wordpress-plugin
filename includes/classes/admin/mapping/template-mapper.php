@@ -385,7 +385,7 @@ class Template_Mapper extends Base {
 	}
 
 	/**
-	 * Format fields object based on field type
+	 * Format field object based on the field type
 	 *
 	 * @since 4.0.0
 	 *
@@ -424,10 +424,10 @@ class Template_Mapper extends Base {
 			$field->field_value = isset($val['value']) ? $val['value'] : '';
 		}
 
-		$field->is_repeatable = $is_repeatable;
-		$field->post_type 	  = $post_type;
-		$field->name 	      = $field->uuid;
-		$field->subtitle      = $component_name ? "($component_name)" : "";
+		$field->is_repeatable 	= $is_repeatable;
+		$field->post_type		= $post_type;
+		$field->name 	      	= $field->uuid;
+		$field->subtitle      	= $component_name ? "($component_name)" : "";
 
 		return $field;
 	}
