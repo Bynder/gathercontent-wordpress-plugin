@@ -14,6 +14,7 @@ class Template_Mapper extends Base {
 	protected $statuses    = array();
 
 	const EXCLUDED_FIELDS = ['section', 'guidelines'];
+	const COMPONENT_FIELD = 'component';
 
 	/**
 	 * Field_Types\Types
@@ -322,35 +323,27 @@ class Template_Mapper extends Base {
 
 		$tab_groups = $this->template->related->structure->groups ?? [];
 
-		foreach ($tab_groups as $tab ) {
+		// to handle multiple tabs
+		foreach ( $tab_groups as $tab ) {
 
 			$rows = array();
-			$fields = $tab->fields ?? [];
+			$fields = $tab->fields ?? array();
+
+			// to handle fields in a tab
 			foreach ( $fields as $field ) {
 
-				if ( in_array($field->field_type, self::EXCLUDED_FIELDS) ) {
-					continue;
-				}
+				// to handle components with multiple fields inside
+				$fields_data    = $field->component->fields ?? [$field];
+				$component_name = $field->field_type === self::COMPONENT_FIELD ? $field->label : '';
 
-				$field->typeName = '';
+				foreach ($fields_data as $field_data) {
 
-				if ( isset( $field->field_type ) ) {
+					$formatted_field = $this->format_fields($field_data, $post_type, $component_name);
 
-					if ( 'text' === $field->field_type ) {
-						$field->type = $field->metadata->is_plain ? 'text_plain' : 'text_rich';
+					if ($formatted_field) {
+						$rows[] = $formatted_field;
 					}
-
-					$field->typeName = Utils::gc_field_type_name( $field->field_type );
 				}
-
-				if ( $this->get_value( $field->uuid ) ) {
-					$val                = $this->get_value( $field->uuid );
-					$field->field_type  = isset( $val['type'] ) ? $val['type'] : '';
-					$field->field_value = isset( $val['value'] ) ? $val['value'] : '';
-				}
-
-				$field->post_type = $post_type;
-				$rows[]           = $field;
 			}
 
 			$tab_array = array(
@@ -380,6 +373,52 @@ class Template_Mapper extends Base {
 		$tabs[] = $default_tab;
 
 		return $tabs;
+	}
+
+	/**
+	 * Format fields object based on field type
+	 *
+	 * @since 4.0.0
+	 *
+	 * @param mixed $field
+	 * @param string $post_type
+	 * @param string $component_name
+	 *
+	 * @return null|mixed formatted field object.
+	 */
+	private function format_fields($field, $post_type, $component_name = '') {
+
+		$field_type = $field->field_type ?? '';
+
+		// exclude guidelines and section fields
+		if ( in_array($field_type, self::EXCLUDED_FIELDS) ) {
+			return null;
+		}
+
+		$field->typeName = '';
+
+		if ('text' === $field_type) {
+
+			$is_plain = $field->metadata->is_plain;
+			$field->type = $is_plain ? 'text_plain' : 'text_rich';
+			$field->plain_text = (bool) $is_plain;
+
+		} else {
+			$field->type = $field_type === 'attachment' ? 'files' : $field_type;
+		}
+
+		$field->typeName = Utils::gc_field_type_name($field_type);
+
+		if ($this->get_value($field->uuid)) {
+			$val                = $this->get_value($field->uuid);
+			$field->field_type  = isset($val['type']) ? $val['type'] : '';
+			$field->field_value = isset($val['value']) ? $val['value'] : '';
+		}
+
+		$field->post_type = $post_type;
+		$field->subtitle  = $component_name ? "($component_name)" : "";
+
+		return $field;
 	}
 
 	public function get_gc_statuses() {

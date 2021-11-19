@@ -600,8 +600,6 @@ class Mapping_Wizard extends Base {
 				)
 			);
 
-			error_log(print_r($this->template_mapper, true));
-
 			$callback = $project_id && $template_id
 				? array( $this->template_mapper, 'ui' )
 				: '__return_empty_string';

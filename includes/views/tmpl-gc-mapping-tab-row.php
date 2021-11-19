@@ -1,6 +1,6 @@
 <td>
 	<# if ( ( data.limit && data.limit_type ) || data.microcopy || data.typeName ) { #>
-	<a title="<?php _ex( 'Click to show additional details', 'About the GatherContent object', 'gathercontent-import' ); ?>" href="#" class="gc-reveal-items dashicons-before dashicons-arrow-<# if ( data.expanded ) { #>down<# } else { #>right<# } #>"><strong>{{ data.label }}</strong></a>
+	<a title="<?php _ex( 'Click to show additional details', 'About the GatherContent object', 'gathercontent-import' ); ?>" href="#" class="gc-reveal-items dashicons-before dashicons-arrow-<# if ( data.expanded ) { #>down<# } else { #>right<# } #>"><strong>{{ data.label }} <small><i>{{ data.subtitle }}</i></small></strong></a>
 	<ul class="gc-reveal-items-list <# if ( ! data.expanded ) { #>hidden<# } #>">
 		<# if ( data.typeName ) { #>
 		<li><strong><?php _e( 'Type:', 'gathercontent-import' ); ?></strong> {{ data.typeName }}</li>
