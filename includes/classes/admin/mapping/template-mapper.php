@@ -349,7 +349,6 @@ class Template_Mapper extends Base {
 					);
 
 					if ($formatted_field) {
-						error_log(print_r($formatted_field, true));
 						$rows[] = $formatted_field;
 					}
 				}

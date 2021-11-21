@@ -457,10 +457,6 @@ class Mapping_Wizard extends Base {
 					$options[ $template_id ]['disabled'] = 'disabled';
 
 				}
-				/*
-				elseif ( $items = $this->get_project_items_list( $project_id, $template_id ) ) {
-					$options[ $template_id ]['desc'] = $items;
-				}*/
 
 				if ( ! $value ) {
 					$value = $template_id;
@@ -512,29 +508,18 @@ class Mapping_Wizard extends Base {
 		$account  = $this->api()->get_account( absint( $account_id ) );
 		$features = array_flip( $account->features );
 
-		if ( isset( $features['editor:new'] ) ) {
-
-			$template = $this->api()->get_template(
-				absint( $this->_get_val( 'template' ) ),
-				array(
-					'headers' => array(
-						'Accept' => 'application/vnd.gathercontent.v2+json',
-					),
-				)
-			);
-
-			$structure_uuid = $template->data->structure_uuid;
-
-		}
-
 		$template = $this->api()->get_template(
 			absint( $this->_get_val( 'template' ) ),
 			array(
 				'headers' => array(
 					'Accept' => 'application/vnd.gathercontent.v2+json',
 				),
-			),
+			)
 		);
+
+		if ( isset( $features['editor:new'] ) ) {
+			$structure_uuid = $template->data->structure_uuid;
+		}
 
 		$template_id = isset( $template->data->id ) ? $template->data->id : null;
 		$project     = $this->api()->get_project( absint( $this->_get_val( 'project' ) ) );
@@ -762,6 +747,7 @@ class Mapping_Wizard extends Base {
 	}
 
 	public function get_project_items_list( $project_id, $template_id, $class = 'gc-radio-desc' ) {
+
 		$items = $this->filter_items_by_template( $project_id, $template_id );
 
 		$list = '';
@@ -780,23 +766,23 @@ class Mapping_Wizard extends Base {
 		return $list;
 	}
 
+	/**
+	 * Filter all the items in a project by template_id.
+	 *
+	 * @since  3.0.0
+	 *
+	 * @param  int $project_id
+	 * @param  int $template_id
+	 *
+	 * @return mixed result of request
+	 */
 	public function filter_items_by_template( $project_id, $template_id ) {
-		$items = $this->get_project_items( $project_id );
 
-		$tmpl_items = is_array( $items )
-			? wp_list_filter( $items, array( 'template_id' => $template_id ) )
-			: array();
-
-		return $tmpl_items;
-	}
-
-	public function get_project_items( $project_id ) {
 		if ( isset( $this->project_items[ $project_id ] ) ) {
 			return $this->project_items[ $project_id ];
 		}
 
-		$this->project_items[ $project_id ] = $this->api()->get_project_items( $project_id );
-
+		$this->project_items[ $project_id ] = $this->api()->get_project_items( $project_id, $template_id );
 		return $this->project_items[ $project_id ];
 	}
 
