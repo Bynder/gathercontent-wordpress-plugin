@@ -603,7 +603,7 @@ class Mapping_Wizard extends Base {
 					'template'       => $template,
 					'url'            => $this->platform_url(),
 					'mappings'       => $this->mappings,
-					'items'          => $this->filter_items_by_template( $project_id, $template_id ),
+					'items'          => $this->get_project_items_by_template( $project_id, $template_id ),
 				)
 			);
 
@@ -746,26 +746,6 @@ class Mapping_Wizard extends Base {
 		return $project_name;
 	}
 
-	public function get_project_items_list( $project_id, $template_id, $class = 'gc-radio-desc' ) {
-
-		$items = $this->filter_items_by_template( $project_id, $template_id );
-
-		$list = '';
-		if ( ! empty( $items ) ) {
-			$list = $this->view(
-				'gc-items-list',
-				array(
-					'class'         => $class,
-					'item_base_url' => $this->platform_url( 'item/' ),
-					'items'         => array_slice( $items, 0, 5 ),
-				),
-				false
-			);
-		}
-
-		return $list;
-	}
-
 	/**
 	 * Filter all the items in a project by template_id.
 	 *
@@ -776,7 +756,7 @@ class Mapping_Wizard extends Base {
 	 *
 	 * @return mixed result of request
 	 */
-	public function filter_items_by_template( $project_id, $template_id ) {
+	public function get_project_items_by_template( $project_id, $template_id ) {
 
 		if ( isset( $this->project_items[ $project_id ] ) ) {
 			return $this->project_items[ $project_id ];

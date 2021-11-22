@@ -30,20 +30,20 @@
  */
 
 // Useful global constants
-define( 'GATHERCONTENT_VERSION', '3.1.14' );
-define( 'GATHERCONTENT_ENQUEUE_VERSION', '3.1.13' );
+define( 'GATHERCONTENT_VERSION', '3.2' );
+define( 'GATHERCONTENT_ENQUEUE_VERSION', '3.2' );
 define( 'GATHERCONTENT_SLUG', 'gathercontent-import' );
 define( 'GATHERCONTENT_PLUGIN', __FILE__ );
 define( 'GATHERCONTENT_URL', plugin_dir_url( __FILE__ ) );
 define( 'GATHERCONTENT_PATH', dirname( __FILE__ ) . '/' );
 define( 'GATHERCONTENT_INC', GATHERCONTENT_PATH . 'includes/' );
 
-if ( version_compare( phpversion(), '5.3', '<' ) ) {
+if ( version_compare( phpversion(), '7.0', '<' ) ) {
 
 	// Womp womp.. PHP needs to be updated!
 	add_action( 'all_admin_notices', 'gathercontent_importer_php_version_too_low_notice' );
 
-} elseif ( version_compare( $GLOBALS['wp_version'], '4.4', '<' ) ) {
+} elseif ( version_compare( $GLOBALS['wp_version'], '5.8.2', '<' ) ) {
 
 	// Sad Trombone.. WordPress needs to be updated!
 	add_action( 'all_admin_notices', 'gathercontent_importer_wp_version_too_low_notice' );
