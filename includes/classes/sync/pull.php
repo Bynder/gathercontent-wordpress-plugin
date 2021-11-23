@@ -17,8 +17,8 @@ use WP_Error;
  *
  * @since 3.0.0
  */
-class Pull extends Base
-{
+class Pull extends Base {
+
 
 	/**
 	 * Sync direction.
@@ -34,9 +34,8 @@ class Pull extends Base
 	 *
 	 * @param API $api API object.
 	 */
-	public function __construct(API $api)
-	{
-		parent::__construct($api, new Async_Pull_Action());
+	public function __construct( API $api ) {
+		parent::__construct( $api, new Async_Pull_Action() );
 	}
 
 	/**
@@ -46,9 +45,8 @@ class Pull extends Base
 	 *
 	 * @return void
 	 */
-	public static function init_plugins_loaded_hooks()
-	{
-		add_action('gc_associate_hierarchy', array(__CLASS__, 'associate_hierarchy'));
+	public static function init_plugins_loaded_hooks() {
+		add_action( 'gc_associate_hierarchy', array( __CLASS__, 'associate_hierarchy' ) );
 	}
 
 	/**
@@ -58,12 +56,11 @@ class Pull extends Base
 	 *
 	 * @return void
 	 */
-	public function init_hooks()
-	{
+	public function init_hooks() {
 		parent::init_hooks();
-		add_action('wp_async_gc_pull_items', array($this, 'sync_items'));
-		add_action('wp_async_nopriv_gc_pull_items', array($this, 'sync_items'));
-		add_action('gc_pull_complete', array(__CLASS__, 'associate_hierarchy'));
+		add_action( 'wp_async_gc_pull_items', array( $this, 'sync_items' ) );
+		add_action( 'wp_async_nopriv_gc_pull_items', array( $this, 'sync_items' ) );
+		add_action( 'gc_pull_complete', array( __CLASS__, 'associate_hierarchy' ) );
 	}
 
 	/**
@@ -76,14 +73,13 @@ class Pull extends Base
 	 *
 	 * @return mixed Result of pull. WP_Error on failure.
 	 */
-	public function maybe_pull_item($mapping_post, $item_id)
-	{
+	public function maybe_pull_item( $mapping_post, $item_id ) {
 
 		try {
-			$this->mapping = Mapping_Post::get($mapping_post, true);
-			$result        = $this->do_item($item_id);
-		} catch (\Exception $e) {
-			$result = new WP_Error('gc_pull_item_fail_' . $e->getCode(), $e->getMessage(), $e->get_data());
+			$this->mapping = Mapping_Post::get( $mapping_post, true );
+			$result        = $this->do_item( $item_id );
+		} catch ( \Exception $e ) {
+			$result = new WP_Error( 'gc_pull_item_fail_' . $e->getCode(), $e->getMessage(), $e->get_data() );
 		}
 
 		return $result;
@@ -100,31 +96,30 @@ class Pull extends Base
 	 *
 	 * @return mixed Result of pull.
 	 */
-	protected function do_item($id)
-	{
+	protected function do_item( $id ) {
 
-		$this->check_mapping_data($this->mapping);
+		$this->check_mapping_data( $this->mapping );
 
-		$this->set_item($id);
+		$this->set_item( $id );
 
 		$post_data   = array();
 		$attachments = $tax_terms = false;
 
-		if ($existing = \GatherContent\Importer\get_post_by_item_id($id)) {
+		if ( $existing = \GatherContent\Importer\get_post_by_item_id( $id ) ) {
 			// Check if item is up-to-date and if pull is necessary.
-			$meta       = \GatherContent\Importer\get_post_item_meta($existing->ID);
-			$updated_at = isset($meta['updated_at']) ? $meta['updated_at'] : 0;
+			$meta       = \GatherContent\Importer\get_post_item_meta( $existing->ID );
+			$updated_at = isset( $meta['updated_at'] ) ? $meta['updated_at'] : 0;
 
 			if (
 				// Check if we have updated_at values to compare.
-				isset($this->item->updated_at) && !empty($updated_at)
+				isset( $this->item->updated_at ) && ! empty( $updated_at )
 				// And if we do, compare them to see if GC item is newer.
-				&& ($is_up_to_date = strtotime($this->item->updated_at) <= strtotime($updated_at))
+				&& ( $is_up_to_date = strtotime( $this->item->updated_at ) <= strtotime( $updated_at ) )
 				// If it's not newer, then don't update (unless asked to via filter).
-				&& $is_up_to_date && apply_filters('gc_only_update_if_newer', true)
+				&& $is_up_to_date && apply_filters( 'gc_only_update_if_newer', true )
 			) {
 				throw new Exception(
-					sprintf(__('WordPress has most recent changes for %1$s (Item ID: %2$d):', 'gathercontent-import'), $this->item->name, $this->item->id),
+					sprintf( __( 'WordPress has most recent changes for %1$s (Item ID: %2$d):', 'gathercontent-import' ), $this->item->name, $this->item->id ),
 					__LINE__,
 					array(
 						'post' => $existing->ID,
@@ -138,29 +133,29 @@ class Pull extends Base
 			$post_data['ID'] = 0;
 		}
 
-		$post_data = $this->map_gc_data_to_wp_data($post_data);
+		$post_data = $this->map_gc_data_to_wp_data( $post_data );
 
-		if (!empty($post_data['attachments'])) {
+		if ( ! empty( $post_data['attachments'] ) ) {
 			$attachments = $post_data['attachments'];
-			unset($post_data['attachments']);
+			unset( $post_data['attachments'] );
 		}
 
-		if (!empty($post_data['tax_input'])) {
+		if ( ! empty( $post_data['tax_input'] ) ) {
 			$tax_terms = $post_data['tax_input'];
-			unset($post_data['tax_input']);
+			unset( $post_data['tax_input'] );
 		}
 
-		$post_id = wp_insert_post($post_data, 1);
+		$post_id = wp_insert_post( $post_data, 1 );
 
-		if (is_wp_error($post_id)) {
-			throw new Exception($post_id->get_error_message(), __LINE__, $post_id->get_error_data());
+		if ( is_wp_error( $post_id ) ) {
+			throw new Exception( $post_id->get_error_message(), __LINE__, $post_id->get_error_data() );
 		}
 
 		$post_data['ID'] = $post_id;
 
 		// Store item ID reference to post-meta.
-		\GatherContent\Importer\update_post_item_id($post_id, $id);
-		\GatherContent\Importer\update_post_mapping_id($post_id, $this->mapping->ID);
+		\GatherContent\Importer\update_post_item_id( $post_id, $id );
+		\GatherContent\Importer\update_post_mapping_id( $post_id, $this->mapping->ID );
 		\GatherContent\Importer\update_post_item_meta(
 			$post_id,
 			array(
@@ -169,47 +164,47 @@ class Pull extends Base
 			)
 		);
 
-		if (!empty($tax_terms)) {
-			foreach ($tax_terms as $taxonomy => $terms) {
-				$taxonomy_obj = get_taxonomy($taxonomy);
-				if (!$taxonomy_obj) {
+		if ( ! empty( $tax_terms ) ) {
+			foreach ( $tax_terms as $taxonomy => $terms ) {
+				$taxonomy_obj = get_taxonomy( $taxonomy );
+				if ( ! $taxonomy_obj ) {
 					/* translators: %s: taxonomy name */
-					_doing_it_wrong(__FUNCTION__, sprintf(__('Invalid taxonomy: %s.'), $taxonomy), '4.4.0');
+					_doing_it_wrong( __FUNCTION__, sprintf( __( 'Invalid taxonomy: %s.' ), $taxonomy ), '4.4.0' );
 					continue;
 				}
 
 				// array = hierarchical, string = non-hierarchical.
-				if (is_array($terms)) {
-					$terms = array_filter($terms);
+				if ( is_array( $terms ) ) {
+					$terms = array_filter( $terms );
 				}
 
 				// Set post terms without the cap-check.
-				wp_set_post_terms($post_id, $terms, $taxonomy);
+				wp_set_post_terms( $post_id, $terms, $taxonomy );
 			}
 		}
 
 		$updated_post_data = array();
 
-		if ($attachments) {
-			$attachments  = apply_filters('gc_media_objects', $attachments, $post_data);
-			$replacements = $this->sideload_attachments($attachments, $post_data);
+		if ( $attachments ) {
+			$attachments  = apply_filters( 'gc_media_objects', $attachments, $post_data );
+			$replacements = $this->sideload_attachments( $attachments, $post_data );
 
-			if (!empty($replacements)) {
+			if ( ! empty( $replacements ) ) {
 				// Do replacements.
-				if (!empty($replacements['post_content'])) {
-					$updated_post_data['post_content'] = strtr($post_data['post_content'], $replacements['post_content']);
+				if ( ! empty( $replacements['post_content'] ) ) {
+					$updated_post_data['post_content'] = strtr( $post_data['post_content'], $replacements['post_content'] );
 				}
 
-				if (!empty($replacements['post_excerpt'])) {
-					$updated_post_data['post_excerpt'] = strtr($post_data['post_excerpt'], $replacements['post_excerpt']);
+				if ( ! empty( $replacements['post_excerpt'] ) ) {
+					$updated_post_data['post_excerpt'] = strtr( $post_data['post_excerpt'], $replacements['post_excerpt'] );
 				}
 
-				if (!empty($replacements['meta_input'])) {
+				if ( ! empty( $replacements['meta_input'] ) ) {
 					$updated_post_data['meta_input'] = array_map(
-						function ($meta) {
-							return is_array($meta) && count($meta) > 1
+						function ( $meta ) {
+							return is_array( $meta ) && count( $meta ) > 1
 								? $meta
-								: array_shift($meta);
+								: array_shift( $meta );
 						},
 						$replacements['meta_input']
 					);
@@ -236,14 +231,14 @@ class Pull extends Base
 			}
 		}*/
 
-		if (!empty($updated_post_data)) {
+		if ( ! empty( $updated_post_data ) ) {
 			// And update post (but don't create a revision for it).
-			self::post_update_no_revision(array_merge($post_data, $updated_post_data));
+			self::post_update_no_revision( array_merge( $post_data, $updated_post_data ) );
 		}
 
-		if ($status = $this->mapping->get_item_new_status($this->item)) {
+		if ( $status = $this->mapping->get_item_new_status( $this->item ) ) {
 			// Update the GC item status.
-			$this->api->set_item_status($id, $status);
+			$this->api->set_item_status( $id, $status );
 		}
 
 		return $post_id;
@@ -258,56 +253,55 @@ class Pull extends Base
 	 *
 	 * @return array Item config array on success.
 	 */
-	protected function map_gc_data_to_wp_data($post_data = array())
-	{
+	protected function map_gc_data_to_wp_data( $post_data = array() ) {
 
-		$this->check_mapping_data($this->mapping);
+		$this->check_mapping_data( $this->mapping );
 
-		foreach (array('post_author', 'post_status', 'post_type') as $key) {
-			$post_data[$key] = $this->mapping->data($key);
+		foreach ( array( 'post_author', 'post_status', 'post_type' ) as $key ) {
+			$post_data[ $key ] = $this->mapping->data( $key );
 		}
 
-		$status = $this->mapping->get_wp_status_for_item($this->item);
-		if ($status && 'nochange' !== $status) {
+		$status = $this->mapping->get_wp_status_for_item( $this->item );
+		if ( $status && 'nochange' !== $status ) {
 			$post_data['post_status'] = $status;
 		}
 
 		$backup = array();
-		foreach ($this->append_types as $key) {
-			$backup[$key]    = isset($post_data[$key]) ? $post_data[$key] : '';
-			$post_data[$key] = 'gcinitial';
+		foreach ( $this->append_types as $key ) {
+			$backup[ $key ]    = isset( $post_data[ $key ] ) ? $post_data[ $key ] : '';
+			$post_data[ $key ] = 'gcinitial';
 		}
 
 		// $files = $this->api->uncached()->get_item_files($this->item->id);
 
 		// $this->item->files = array();
 		// if (is_array($files)) {
-		// 	foreach ($files as $file) {
-		// 		$this->item->files[$file->field][] = $file;
-		// 	}
+		// foreach ($files as $file) {
+		// $this->item->files[$file->field][] = $file;
+		// }
 		// }
 
-		if ($this->should_map_hierarchy($post_data['post_type']) && isset($this->item->position)) {
-			$post_data['menu_order'] = absint($this->item->position);
+		if ( $this->should_map_hierarchy( $post_data['post_type'] ) && isset( $this->item->position ) ) {
+			$post_data['menu_order'] = absint( $this->item->position );
 		}
 
-		$post_data = $this->loop_item_elements_and_map($post_data);
+		$post_data = $this->loop_item_elements_and_map( $post_data );
 
 		// Put the backup data back.
-		foreach ($backup as $key => $value) {
-			if ('gcinitial' === $post_data[$key]) {
-				$post_data[$key] = $value;
+		foreach ( $backup as $key => $value ) {
+			if ( 'gcinitial' === $post_data[ $key ] ) {
+				$post_data[ $key ] = $value;
 			}
 		}
 
-		if ($this->should_update_title_with_item_name($post_data)) {
-			$post_data['post_title'] = sanitize_text_field($this->item->name);
+		if ( $this->should_update_title_with_item_name( $post_data ) ) {
+			$post_data['post_title'] = sanitize_text_field( $this->item->name );
 		}
 
-		if (!empty($post_data['ID'])) {
-			$post_data = apply_filters('gc_update_wp_post_data', $post_data, $this);
+		if ( ! empty( $post_data['ID'] ) ) {
+			$post_data = apply_filters( 'gc_update_wp_post_data', $post_data, $this );
 		} else {
-			$post_data = apply_filters('gc_new_wp_post_data', $post_data, $this);
+			$post_data = apply_filters( 'gc_new_wp_post_data', $post_data, $this );
 		}
 
 		return $post_data;
@@ -322,12 +316,11 @@ class Pull extends Base
 	 *
 	 * @return boolean
 	 */
-	public function should_update_title_with_item_name($post_data)
-	{
-		$should      = !empty($this->item->name);
-		$empty_title = empty($post_data['post_title']);
-		if (!$empty_title) {
-			$should = !$this->has_post_title_mapping();
+	public function should_update_title_with_item_name( $post_data ) {
+		$should      = ! empty( $this->item->name );
+		$empty_title = empty( $post_data['post_title'] );
+		if ( ! $empty_title ) {
+			$should = ! $this->has_post_title_mapping();
 		}
 
 		return $should;
@@ -340,26 +333,26 @@ class Pull extends Base
 	 *
 	 * @return boolean
 	 */
-	public function has_post_title_mapping()
-	{
+	public function has_post_title_mapping() {
 		try {
 			array_filter(
 				$this->mapping->data(),
-				function ($mapped) {
+				function ( $mapped ) {
 					if (
-						isset($mapped['type'], $mapped['value'])
+						isset( $mapped['type'], $mapped['value'] )
 						&& 'wp-type-post' === $mapped['type']
 						&& 'post_title' === $mapped['value']
 					) {
-						throw new \Exception('found');
+						throw new \Exception( 'found' );
 					}
 				}
 			);
-		} catch (\Exception $e) {
+		} catch ( \Exception $e ) {
 			return true;
 		}
 		return false;
 	}
+
 
 	/**
 	 * Loops the GC item content elements and maps the WP post data.
@@ -370,8 +363,7 @@ class Pull extends Base
 	 *
 	 * @return array Modified post data array on success.
 	 */
-	protected function loop_item_elements_and_map($post_data)
-	{
+	protected function loop_item_elements_and_map( $post_data ) {
 
 		$structure_groups = $this->item->structure->groups;
 
@@ -379,7 +371,7 @@ class Pull extends Base
 			return $post_data;
 		}
 
-		$columns = [];
+		$columns = array();
 
 		// to handle multiple tabs
 		foreach ( $structure_groups as $tab ) {
@@ -391,28 +383,27 @@ class Pull extends Base
 			foreach ( $tab->fields as $field ) {
 
 				// to handle components with multiple fields inside
-				$fields_data    = $field->component->fields ?? [$field];
+				$fields_data    = $field->component->fields ?? array( $field );
 				$component_uuid = 'component' === $field->field_type ? $field->uuid : '';
 
-				foreach ($fields_data as $field_data) {
-					$this->element	=  (object) $this->format_element_data( $field_data, $component_uuid );
-					$destination 	= $this->mapping->data( $this->element->name );
+				foreach ( $fields_data as $field_data ) {
+					$this->element = (object) $this->format_element_data( $field_data, $component_uuid );
+					$destination   = $this->mapping->data( $this->element->name );
 
 					if ( $destination && isset( $destination['type'], $destination['value'] ) ) {
 						$columns[ $destination['value'] ] = true;
-						$post_data = $this->set_post_values( $destination, $post_data );
+						$post_data                        = $this->set_post_values( $destination, $post_data );
 					}
 				}
 			}
 		}
 
-
-		if (isset($columns['post_date']) && !isset($columns['post_date_gmt'])) {
-			$post_data['post_date_gmt'] = get_gmt_from_date($post_data['post_date']);
+		if ( isset( $columns['post_date'] ) && ! isset( $columns['post_date_gmt'] ) ) {
+			$post_data['post_date_gmt'] = get_gmt_from_date( $post_data['post_date'] );
 		}
 
-		if (isset($columns['post_modified']) && !isset($columns['post_modified_gmt'])) {
-			$post_data['post_modified_gmt'] = get_gmt_from_date($post_data['post_modified']);
+		if ( isset( $columns['post_modified'] ) && ! isset( $columns['post_modified_gmt'] ) ) {
+			$post_data['post_modified_gmt'] = get_gmt_from_date( $post_data['post_modified'] );
 		}
 
 		return $post_data;
@@ -428,28 +419,27 @@ class Pull extends Base
 	 *
 	 * @return array $post_data   The modified WP Post data array.
 	 */
-	protected function set_post_values($destination, $post_data)
-	{
+	protected function set_post_values( $destination, $post_data ) {
 
 		$this->set_element_value();
 
 		try {
-			switch ($destination['type']) {
+			switch ( $destination['type'] ) {
 
 				case 'wp-type-post':
-					$post_data = $this->set_post_field_value($destination['value'], $post_data);
+					$post_data = $this->set_post_field_value( $destination['value'], $post_data );
 					break;
 
 				case 'wp-type-taxonomy':
-					$post_data = $this->set_taxonomy_field_value($destination['value'], $post_data);
+					$post_data = $this->set_taxonomy_field_value( $destination['value'], $post_data );
 					break;
 
 				case 'wp-type-meta':
-					$post_data = $this->set_meta_field_value($destination['value'], $post_data);
+					$post_data = $this->set_meta_field_value( $destination['value'], $post_data );
 					break;
 
 				case 'wp-type-media':
-					$post_data = $this->set_media_field_value($destination['value'], $post_data);
+					$post_data = $this->set_media_field_value( $destination['value'], $post_data );
 					break;
 			}
 			// @codingStandardsIgnoreStart
@@ -471,16 +461,15 @@ class Pull extends Base
 	 *
 	 * @return array $post_data   The modified WP Post data array.
 	 */
-	protected function set_post_field_value($post_column, $post_data)
-	{
+	protected function set_post_field_value( $post_column, $post_data ) {
 
-		if (is_array($this->element->value)) {
-			$this->element->value = implode(', ', $this->element->value);
+		if ( is_array( $this->element->value ) ) {
+			$this->element->value = implode( ', ', $this->element->value );
 		}
 
-		$value = $this->sanitize_post_field($post_column, $this->element->value, $post_data);
+		$value = $this->sanitize_post_field( $post_column, $this->element->value, $post_data );
 
-		return $this->maybe_append($post_column, $value, $post_data);
+		return $this->maybe_append( $post_column, $value, $post_data );
 	}
 
 	/**
@@ -493,15 +482,14 @@ class Pull extends Base
 	 *
 	 * @return array $post_data  The modified WP Post data array.
 	 */
-	protected function set_taxonomy_field_value($taxonomy, $post_data)
-	{
-		$terms = $this->get_element_terms($taxonomy);
-		$terms = array_filter($terms);
-		if (!empty($terms)) {
-			if ('category' === $taxonomy) {
+	protected function set_taxonomy_field_value( $taxonomy, $post_data ) {
+		$terms = $this->get_element_terms( $taxonomy );
+		$terms = array_filter( $terms );
+		if ( ! empty( $terms ) ) {
+			if ( 'category' === $taxonomy ) {
 				$post_data['post_category'] = $terms;
 			} else {
-				$post_data['tax_input'][$taxonomy] = $terms;
+				$post_data['tax_input'][ $taxonomy ] = $terms;
 			}
 		}
 
@@ -518,17 +506,16 @@ class Pull extends Base
 	 *
 	 * @return array  $post_data The modified WP Post data array.
 	 */
-	protected function set_meta_field_value($meta_key, $post_data)
-	{
+	protected function set_meta_field_value( $meta_key, $post_data ) {
 		$value = $this->sanitize_element_meta();
-		if (!isset($post_data['meta_input'])) {
+		if ( ! isset( $post_data['meta_input'] ) ) {
 			$post_data['meta_input'] = array();
 		}
 
-		$post_data['meta_input'] = $this->maybe_append($meta_key, $value, $post_data['meta_input']);
+		$post_data['meta_input'] = $this->maybe_append( $meta_key, $value, $post_data['meta_input'] );
 
-		if ('files' === $this->element->type) {
-			$post_data = $this->set_media_field_value($meta_key, $post_data);
+		if ( 'files' === $this->element->type ) {
+			$post_data = $this->set_media_field_value( $meta_key, $post_data );
 		}
 
 		return $post_data;
@@ -544,26 +531,25 @@ class Pull extends Base
 	 *
 	 * @return array  $post_data   The modified WP Post data array.
 	 */
-	protected function set_media_field_value($destination, $post_data)
-	{
+	protected function set_media_field_value( $destination, $post_data ) {
 
 		static $field_number = 0;
 		$media_items         = $this->sanitize_element_media();
 
 		if (
-			in_array($destination, array('gallery', 'content_image', 'excerpt_image'), true)
-			&& is_array($media_items)
+			in_array( $destination, array( 'gallery', 'content_image', 'excerpt_image' ), true )
+			&& is_array( $media_items )
 		) {
 			$field_number++;
 			$position = 0;
-			foreach ($media_items as $index => $media) {
-				$media_items[$index]->position     = ++$position;
-				$media_items[$index]->field_number = $field_number;
+			foreach ( $media_items as $index => $media ) {
+				$media_items[ $index ]->position     = ++$position;
+				$media_items[ $index ]->field_number = $field_number;
 
 				$token = '#_gc_media_id_' . $media->id . '#';
 				$field = 'excerpt_image' === $destination ? 'post_excerpt' : 'post_content';
 
-				$post_data = $this->maybe_append($field, $token, $post_data);
+				$post_data = $this->maybe_append( $field, $token, $post_data );
 			}
 		}
 
@@ -586,16 +572,15 @@ class Pull extends Base
 	 *
 	 * @return array         The modified array.
 	 */
-	protected function maybe_append($field, $value, $array)
-	{
-		if ($this->type_can_append($field)) {
-			$array[$field] = isset($array[$field]) ? $array[$field] : '';
-			if ('gcinitial' === $array[$field]) {
-				$array[$field] = '';
+	protected function maybe_append( $field, $value, $array ) {
+		if ( $this->type_can_append( $field ) ) {
+			$array[ $field ] = isset( $array[ $field ] ) ? $array[ $field ] : '';
+			if ( 'gcinitial' === $array[ $field ] ) {
+				$array[ $field ] = '';
 			}
-			$array[$field] .= $value;
+			$array[ $field ] .= $value;
 		} else {
-			$array[$field] = $value;
+			$array[ $field ] = $value;
 		}
 
 		return $array;
@@ -615,38 +600,37 @@ class Pull extends Base
 	 *
 	 * @return mixed             The sanitized post field value.
 	 */
-	protected function sanitize_post_field($field, $value, $post_data)
-	{
-		if (!$value) {
+	protected function sanitize_post_field( $field, $value, $post_data ) {
+		if ( ! $value ) {
 			return $value;
 		}
 
-		switch ($field) {
+		switch ( $field ) {
 			case 'ID':
-				throw new Exception(__('Cannot override post IDs', 'gathercontent-import'), __LINE__);
+				throw new Exception( __( 'Cannot override post IDs', 'gathercontent-import' ), __LINE__ );
 
 			case 'post_date':
 			case 'post_date_gmt':
 			case 'post_modified':
 			case 'post_modified_gmt':
-				if (!is_string($value) && !is_numeric($value)) {
-					throw new Exception(sprintf(__('%s field requires a numeric timestamp, or date string.', 'gathercontent-import'), $field), __LINE__);
+				if ( ! is_string( $value ) && ! is_numeric( $value ) ) {
+					throw new Exception( sprintf( __( '%s field requires a numeric timestamp, or date string.', 'gathercontent-import' ), $field ), __LINE__ );
 				}
 
-				$value = is_numeric($value) ? $value : strtotime($value);
+				$value = is_numeric( $value ) ? $value : strtotime( $value );
 
-				return false !== strpos($field, '_gmt')
-					? gmdate('Y-m-d H:i:s', $value)
-					: date('Y-m-d H:i:s', $value);
+				return false !== strpos( $field, '_gmt' )
+					? gmdate( 'Y-m-d H:i:s', $value )
+					: date( 'Y-m-d H:i:s', $value );
 			case 'post_format':
-				if (isset($post_data['post_type']) && !post_type_supports($post_data['post_type'], 'post-formats')) {
-					throw new Exception(sprintf(__('The %s post-type does not support post-formats.', 'gathercontent-import'), $post_data['post_type']), __LINE__);
+				if ( isset( $post_data['post_type'] ) && ! post_type_supports( $post_data['post_type'], 'post-formats' ) ) {
+					throw new Exception( sprintf( __( 'The %s post-type does not support post-formats.', 'gathercontent-import' ), $post_data['post_type'] ), __LINE__ );
 				}
 			case 'post_title':
-				$value = strip_tags($value, '<strong><em><del><ins><code>');
+				$value = strip_tags( $value, '<strong><em><del><ins><code>' );
 		}
 
-		return sanitize_post_field($field, $value, $post_data['ID'], 'db');
+		return sanitize_post_field( $field, $value, $post_data['ID'], 'db' );
 	}
 
 	/**
@@ -658,34 +642,33 @@ class Pull extends Base
 	 *
 	 * @return mixed            The terms.
 	 */
-	protected function get_element_terms($taxonomy)
-	{
-		if ('text' === $this->element->type) {
-			$terms = array_map('trim', explode(',', sanitize_text_field($this->element->value)));
+	protected function get_element_terms( $taxonomy ) {
+		if ( 'text' === $this->element->type ) {
+			$terms = array_map( 'trim', explode( ',', sanitize_text_field( $this->element->value ) ) );
 		} else {
 			$terms = (array) $this->element->value;
 		}
 
-		if (!empty($terms) && is_taxonomy_hierarchical($taxonomy)) {
-			foreach ($terms as $key => $term) {
+		if ( ! empty( $terms ) && is_taxonomy_hierarchical( $taxonomy ) ) {
+			foreach ( $terms as $key => $term ) {
 				// @codingStandardsIgnoreStart
 				if (!$term_info = term_exists($term, $taxonomy)) {
 					// @codingStandardsIgnoreEnd
 					// Skip if a non-existent term ID is passed.
-					if (is_int($term)) {
-						unset($terms[$key]);
+					if ( is_int( $term ) ) {
+						unset( $terms[ $key ] );
 						continue;
 					}
-					$term_info = wp_insert_term($term, $taxonomy);
+					$term_info = wp_insert_term( $term, $taxonomy );
 				}
 
-				if (!is_wp_error($term_info)) {
-					$terms[$key] = $term_info['term_id'];
+				if ( ! is_wp_error( $term_info ) ) {
+					$terms[ $key ] = $term_info['term_id'];
 				}
 			}
 		}
 
-		return apply_filters('gc_get_element_terms', $terms, $this->element, $this->item);
+		return apply_filters( 'gc_get_element_terms', $terms, $this->element, $this->item );
 	}
 
 	/**
@@ -696,9 +679,8 @@ class Pull extends Base
 	 *
 	 * @return mixed Value for meta.
 	 */
-	protected function sanitize_element_meta()
-	{
-		return apply_filters('gc_sanitize_meta_field', $this->element->value, $this->element, $this->item);
+	protected function sanitize_element_meta() {
+		return apply_filters( 'gc_sanitize_meta_field', $this->element->value, $this->element, $this->item );
 	}
 
 	/*
@@ -713,10 +695,8 @@ class Pull extends Base
 	 *
 	 * @return mixed Value for media.
 	 */
-	protected function sanitize_element_media()
-	{
-
-		return apply_filters('gc_sanitize_media_field', $this->element->value, $this->element, $this->item);
+	protected function sanitize_element_media() {
+		return apply_filters( 'gc_sanitize_media_field', $this->element->value, $this->element, $this->item );
 	}
 
 	/**
@@ -731,78 +711,77 @@ class Pull extends Base
 	 *
 	 * @return array              Array of replacement key/values for strtr.
 	 */
-	protected function sideload_attachments($attachments, $post_data)
-	{
+	protected function sideload_attachments( $attachments, $post_data ) {
 
 		$post_id         = $post_data['ID'];
 		$featured_img_id = false;
 
 		$replacements = $gallery_ids = array();
 
-		foreach ($attachments as $attachment) {
-			if (!is_array($attachment['media'])) {
+		foreach ( $attachments as $attachment ) {
+			if ( ! is_array( $attachment['media'] ) ) {
 				continue;
 			}
 
-			foreach ($attachment['media'] as $media) {
-				$attach_id = $this->maybe_sideload_file($media, $post_id);
+			foreach ( $attachment['media'] as $media ) {
+				$attach_id = $this->maybe_sideload_file( $media, $post_id );
 
-				if (!$attach_id || is_wp_error($attach_id)) {
+				if ( ! $attach_id || is_wp_error( $attach_id ) ) {
 					// @todo How to handle failures?
 					continue;
 				}
 
 				$token = '#_gc_media_id_' . $media->id . '#';
 
-				if (self::attachment_is_image($attach_id)) {
-					if ('featured_image' === $attachment['destination']) {
+				if ( self::attachment_is_image( $attach_id ) ) {
+					if ( 'featured_image' === $attachment['destination'] ) {
 						$featured_img_id = $attach_id;
-					} elseif (in_array($attachment['destination'], array('content_image', 'excerpt_image'), true)) {
+					} elseif ( in_array( $attachment['destination'], array( 'content_image', 'excerpt_image' ), true ) ) {
 						$field = 'excerpt_image' === $attachment['destination'] ? 'post_excerpt' : 'post_content';
 
 						$atts  = array(
 							'data-gcid' => $media->id,
 							'class'     => "gathercontent-image attachment-full size-full wp-image-$attach_id",
 						);
-						$image = wp_get_attachment_image($attach_id, 'full', false, $atts);
+						$image = wp_get_attachment_image( $attach_id, 'full', false, $atts );
 
 						// If we've found a GC "shortcode"...
-						if ($media_replace = $this->get_media_shortcode_attributes($post_data[$field], (array) $media)) {
+						if ( $media_replace = $this->get_media_shortcode_attributes( $post_data[ $field ], (array) $media ) ) {
 
-							foreach ($media_replace as $replace_val => $atts) {
+							foreach ( $media_replace as $replace_val => $atts ) {
 
-								$maybe_image = !empty($atts)
+								$maybe_image = ! empty( $atts )
 									// Attempt to get requested image/link.
-									? $this->get_requested_media($atts, $media->id, $attach_id)
+									? $this->get_requested_media( $atts, $media->id, $attach_id )
 									: false;
 
 								$img = $maybe_image ? $maybe_image : $image;
 
 								// Replace the GC "shortcode" with the image/link.
-								$img                                    = apply_filters('gc_content_image', $img, $media, $attach_id, $post_data, $atts);
-								$replacements[$field][$replace_val] = $img;
+								$img                                    = apply_filters( 'gc_content_image', $img, $media, $attach_id, $post_data, $atts );
+								$replacements[ $field ][ $replace_val ] = $img;
 							}
 
 							// The token should be removed from the content.
-							$replacements[$field][$token] = '';
+							$replacements[ $field ][ $token ] = '';
 						} else {
 
 							// Replace the token with the image.
-							$image                            = apply_filters('gc_content_image', $image, $media, $attach_id, $post_data, $atts);
-							$replacements[$field][$token] = $image;
+							$image                            = apply_filters( 'gc_content_image', $image, $media, $attach_id, $post_data, $atts );
+							$replacements[ $field ][ $token ] = $image;
 						}
-					} elseif ('gallery' === $attachment['destination']) {
+					} elseif ( 'gallery' === $attachment['destination'] ) {
 
 						$gallery_ids[] = $attach_id;
 						$gallery_token = $token;
 
 						// The token should be removed from the content.
-						$replacements['post_content'][$token] = '';
+						$replacements['post_content'][ $token ] = '';
 					} else {
-						$replacements['meta_input'][$attachment['destination']][] = $attach_id;
+						$replacements['meta_input'][ $attachment['destination'] ][] = $attach_id;
 					}
 				} else { // NOT is_image
-					if (in_array($attachment['destination'], array('content_image', 'excerpt_image'), true)) {
+					if ( in_array( $attachment['destination'], array( 'content_image', 'excerpt_image' ), true ) ) {
 						$field = 'excerpt_image' === $attachment['destination'] ? 'post_excerpt' : 'post_content';
 
 						$atts = array(
@@ -810,33 +789,33 @@ class Pull extends Base
 							'class'     => "gathercontent-file wp-file-$attach_id",
 						);
 
-						$link = '<a href="' . esc_url(wp_get_attachment_url($attach_id)) . '" data-gcid="' . $atts['data-gcid'] . '" class="' . $atts['class'] . '">' . get_the_title($attach_id) . '</a>';
+						$link = '<a href="' . esc_url( wp_get_attachment_url( $attach_id ) ) . '" data-gcid="' . $atts['data-gcid'] . '" class="' . $atts['class'] . '">' . get_the_title( $attach_id ) . '</a>';
 
 						// If we've found a GC "shortcode"...
-						if ($media_replace = $this->get_media_shortcode_attributes($post_data[$field], (array) $media)) {
+						if ( $media_replace = $this->get_media_shortcode_attributes( $post_data[ $field ], (array) $media ) ) {
 
-							foreach ($media_replace as $replace_val => $atts) {
+							foreach ( $media_replace as $replace_val => $atts ) {
 								// Replace the GC "shortcode" with the file/link.
-								$link                                   = apply_filters('gc_content_file', $link, $media, $attach_id, $post_data, $atts);
-								$replacements[$field][$replace_val] = $link;
+								$link                                   = apply_filters( 'gc_content_file', $link, $media, $attach_id, $post_data, $atts );
+								$replacements[ $field ][ $replace_val ] = $link;
 							}
 
 							// The token should be removed from the content.
-							$replacements[$field][$token] = '';
+							$replacements[ $field ][ $token ] = '';
 						} else {
 
 							// Replace the token with the image.
-							$link                             = apply_filters('gc_content_file', $link, $media, $attach_id, $post_data, $atts);
-							$replacements[$field][$token] = $link;
+							$link                             = apply_filters( 'gc_content_file', $link, $media, $attach_id, $post_data, $atts );
+							$replacements[ $field ][ $token ] = $link;
 						}
 					} else {
-						$replacements['meta_input'][$attachment['destination']][] = $attach_id;
+						$replacements['meta_input'][ $attachment['destination'] ][] = $attach_id;
 					}
 				}
 
 				// Store media item ID reference to attachment post-meta.
-				\GatherContent\Importer\update_post_item_id($attach_id, $media->id);
-				\GatherContent\Importer\update_post_mapping_id($attach_id, $this->mapping->ID);
+				\GatherContent\Importer\update_post_item_id( $attach_id, $media->id );
+				\GatherContent\Importer\update_post_mapping_id( $attach_id, $this->mapping->ID );
 
 				// Store other media item meta to attachment post-meta.
 				\GatherContent\Importer\update_post_item_meta(
@@ -849,26 +828,26 @@ class Pull extends Base
 						'url'        => $media->url,
 						'filename'   => $media->filename,
 						'size'       => $media->size,
-						'created_at' => isset($media->created_at) ? $media->created_at : $media->created_at,
-						'updated_at' => isset($media->updated_at) ? $media->updated_at : $media->updated_at,
+						'created_at' => isset( $media->created_at ) ? $media->created_at : $media->created_at,
+						'updated_at' => isset( $media->updated_at ) ? $media->updated_at : $media->updated_at,
 					)
 				);
 			}
 		}
 
-		if ($featured_img_id) {
-			set_post_thumbnail($post_id, $featured_img_id);
+		if ( $featured_img_id ) {
+			set_post_thumbnail( $post_id, $featured_img_id );
 		}
 
-		if (!empty($gallery_ids)) {
+		if ( ! empty( $gallery_ids ) ) {
 
-			$shortcode = '[gallery link="file" size="full" ids="' . implode(',', $gallery_ids) . '"]';
-			$shortcode = apply_filters('gc_content_gallery_shortcode', $shortcode, $gallery_ids, $post_data);
+			$shortcode = '[gallery link="file" size="full" ids="' . implode( ',', $gallery_ids ) . '"]';
+			$shortcode = apply_filters( 'gc_content_gallery_shortcode', $shortcode, $gallery_ids, $post_data );
 
-			$replacements['post_content'][$gallery_token] = $shortcode;
+			$replacements['post_content'][ $gallery_token ] = $shortcode;
 		}
 
-		return apply_filters('gc_media_replacements', $replacements, $attachments, $post_data);
+		return apply_filters( 'gc_media_replacements', $replacements, $attachments, $post_data );
 	}
 
 	/**
@@ -883,29 +862,28 @@ class Pull extends Base
 	 *
 	 * @return int             The sideloaded attachment ID.
 	 */
-	protected function maybe_sideload_file($media, $post_id)
-	{
-		$attachment = \GatherContent\Importer\get_post_by_item_id($media->id, array('post_status' => 'inherit'));
+	protected function maybe_sideload_file( $media, $post_id ) {
+		$attachment = \GatherContent\Importer\get_post_by_item_id( $media->id, array( 'post_status' => 'inherit' ) );
 
-		if (!$attachment) {
-			return $this->sideload_file($media->id, $media->filename, $post_id);
+		if ( ! $attachment ) {
+			return $this->sideload_file( $media->id, $media->filename, $post_id );
 		}
 
 		$attach_id = $attachment->ID;
 
-		if ($meta = \GatherContent\Importer\get_post_item_meta($attach_id)) {
+		if ( $meta = \GatherContent\Importer\get_post_item_meta( $attach_id ) ) {
 
 			$meta        = (object) $meta;
-			$new_updated = strtotime(isset($media->updated_at) ? $media->updated_at : $media->updated_at);
-			$old_updated = strtotime($meta->updated_at);
+			$new_updated = strtotime( isset( $media->updated_at ) ? $media->updated_at : $media->updated_at );
+			$old_updated = strtotime( $meta->updated_at );
 
 			// Check if updated time-stamp is newer than previous updated timestamp.
-			if ($new_updated > $old_updated) {
+			if ( $new_updated > $old_updated ) {
 
-				$replace_data = apply_filters('gc_replace_attachment_data_on_update', false, $attachment);
+				$replace_data = apply_filters( 'gc_replace_attachment_data_on_update', false, $attachment );
 
 				// @todo How to handle failures?
-				$attach_id = $this->sideload_and_update_attachment($media->id, $media->filename, $attachment, $replace_data);
+				$attach_id = $this->sideload_and_update_attachment( $media->id, $media->filename, $attachment, $replace_data );
 			}
 		}
 
@@ -920,31 +898,30 @@ class Pull extends Base
 	 * @param int    $post_id   The post ID the media is to be associated with.
 	 * @return string|WP_Error  Populated HTML img tag on success, WP_Error object otherwise.
 	 */
-	protected function sideload_file($file_url, $file_name, $post_id)
-	{
-		if (!empty($file_url)) {
-			$file_array = $this->tmp_file($file_url, $file_name);
+	protected function sideload_file( $file_url, $file_name, $post_id ) {
+		if ( ! empty( $file_url ) ) {
+			$file_array = $this->tmp_file( $file_url, $file_name );
 
-			if (is_wp_error($file_array)) {
+			if ( is_wp_error( $file_array ) ) {
 				return $file_array;
 			}
 
 			// Do the validation and storage stuff.
-			$id = media_handle_sideload($file_array, $post_id);
+			$id = media_handle_sideload( $file_array, $post_id );
 
 			// If error storing permanently, unlink.
-			if (is_wp_error($id)) {
+			if ( is_wp_error( $id ) ) {
 				// @codingStandardsIgnoreStart
 				@unlink($file_array['tmp_name']);
 				// @codingStandardsIgnoreEnd
 				return $id;
 			}
 
-			$src = wp_get_attachment_url($id);
+			$src = wp_get_attachment_url( $id );
 		}
 
 		// Finally, check to make sure the file has been saved, then return the ID.
-		return !empty($src) ? $id : new WP_Error('image_sideload_failed');
+		return ! empty( $src ) ? $id : new WP_Error( 'image_sideload_failed' );
 	}
 
 	/**
@@ -960,10 +937,9 @@ class Pull extends Base
 	 *
 	 * @return int                  The sideloaded attachment ID.
 	 */
-	protected function sideload_and_update_attachment($file_url, $file_name, $attachment, $replace_data = false)
-	{
-		if (!isset($attachment->ID) || empty($file_url)) {
-			return new WP_Error('sideload_and_update_attachment_error');
+	protected function sideload_and_update_attachment( $file_url, $file_name, $attachment, $replace_data = false ) {
+		if ( ! isset( $attachment->ID ) || empty( $file_url ) ) {
+			return new WP_Error( 'sideload_and_update_attachment_error' );
 		}
 
 		// @codingStandardsIgnoreStart
@@ -971,16 +947,16 @@ class Pull extends Base
 		@set_time_limit(900);
 		// @codingStandardsIgnoreEnd
 
-		$time = substr($attachment->post_date, 0, 4) > 0
+		$time = substr( $attachment->post_date, 0, 4 ) > 0
 			? $attachment->post_date
-			: current_time('mysql');
+			: current_time( 'mysql' );
 
-		$file_array = $this->tmp_file($file_url, $file_name);
+		$file_array = $this->tmp_file( $file_url, $file_name );
 
-		$file = wp_handle_sideload($file_array, array('test_form' => false), $time);
+		$file = wp_handle_sideload( $file_array, array( 'test_form' => false ), $time );
 
-		if (isset($file['error'])) {
-			return new WP_Error('upload_error', $file['error']);
+		if ( isset( $file['error'] ) ) {
+			return new WP_Error( 'upload_error', $file['error'] );
 		}
 
 		$args                   = (array) $attachment;
@@ -988,18 +964,18 @@ class Pull extends Base
 
 		$_file = $file['file'];
 
-		if ($replace_data) {
-			$title   = preg_replace('/\.[^.]+$/', '', basename($_file));
+		if ( $replace_data ) {
+			$title   = preg_replace( '/\.[^.]+$/', '', basename( $_file ) );
 			$content = '';
 
 			// Use image exif/iptc data for title and caption defaults if possible.
 			// @codingStandardsIgnoreStart
 			if ($image_meta = @wp_read_image_metadata($_file)) {
 				// @codingStandardsIgnoreEnd
-				if (trim($image_meta['title']) && !is_numeric(sanitize_title($image_meta['title']))) {
+				if ( trim( $image_meta['title'] ) && ! is_numeric( sanitize_title( $image_meta['title'] ) ) ) {
 					$title = $image_meta['title'];
 				}
-				if (trim($image_meta['caption'])) {
+				if ( trim( $image_meta['caption'] ) ) {
 					$content = $image_meta['caption'];
 				}
 			}
@@ -1009,15 +985,15 @@ class Pull extends Base
 		}
 
 		// Save the attachment metadata.
-		$id = wp_insert_attachment($args, $_file, $attachment->post_parent);
+		$id = wp_insert_attachment( $args, $_file, $attachment->post_parent );
 
-		if (is_wp_error($id)) {
+		if ( is_wp_error( $id ) ) {
 			// If error storing permanently, unlink.
 			// @codingStandardsIgnoreStart
 			@unlink($file_array['tmp_name']);
 			// @codingStandardsIgnoreEnd
 		} else {
-			wp_update_attachment_metadata($id, wp_generate_attachment_metadata($id, $_file));
+			wp_update_attachment_metadata( $id, wp_generate_attachment_metadata( $id, $_file ) );
 		}
 
 		return $id;
@@ -1033,8 +1009,7 @@ class Pull extends Base
 	 *
 	 * @return array              The temporary file array.
 	 */
-	protected function tmp_file($file_id, $file_name)
-	{
+	protected function tmp_file( $file_id, $file_name ) {
 		require_once ABSPATH . '/wp-admin/includes/file.php';
 		require_once ABSPATH . '/wp-admin/includes/media.php';
 		require_once ABSPATH . '/wp-admin/includes/image.php';
@@ -1042,16 +1017,16 @@ class Pull extends Base
 		$file_array = array();
 
 		// Download file to temp location.
-		$file_array['tmp_name'] = $this->api->get_file($file_id);
+		$file_array['tmp_name'] = $this->api->get_file( $file_id );
 
 		// If error storing temporarily, return the error.
-		if (is_wp_error($file_array['tmp_name'])) {
+		if ( is_wp_error( $file_array['tmp_name'] ) ) {
 			return $file_array['tmp_name'];
 		}
 
-		preg_match('/[^\?]+\.(jpe?g|jpe|gif|png)\b/i', $file_name, $matches);
+		preg_match( '/[^\?]+\.(jpe?g|jpe|gif|png)\b/i', $file_name, $matches );
 
-		$file_array['name'] = $matches ? basename($matches[0]) : basename($file_name);
+		$file_array['name'] = $matches ? basename( $matches[0] ) : basename( $file_name );
 
 		return $file_array;
 	}
@@ -1065,9 +1040,8 @@ class Pull extends Base
 	 *
 	 * @return bool
 	 */
-	public static function attachment_is_image($attach_id)
-	{
-		return preg_match('~(jpe?g|jpe|gif|png|svg)\b~', get_post_mime_type($attach_id));
+	public static function attachment_is_image( $attach_id ) {
+		return preg_match( '~(jpe?g|jpe|gif|png|svg)\b~', get_post_mime_type( $attach_id ) );
 	}
 
 	/**
@@ -1079,12 +1053,11 @@ class Pull extends Base
 	 *
 	 * @return int|WP_Error The value 0 or WP_Error on failure. The post ID on success.
 	 */
-	protected static function post_update_no_revision($post_data)
-	{
+	protected static function post_update_no_revision( $post_data ) {
 		// Update post (but don't create a revision for it).
-		remove_action('post_updated', 'wp_save_post_revision');
-		$post_id = wp_update_post($post_data);
-		add_action('post_updated', 'wp_save_post_revision');
+		remove_action( 'post_updated', 'wp_save_post_revision' );
+		$post_id = wp_update_post( $post_data );
+		add_action( 'post_updated', 'wp_save_post_revision' );
 
 		return $post_id;
 	}
@@ -1100,9 +1073,8 @@ class Pull extends Base
 	 *
 	 * @return bool              Whether post type supports hierarchy.
 	 */
-	public function should_map_hierarchy($post_type)
-	{
-		return apply_filters('gc_map_hierarchy', is_post_type_hierarchical($post_type), $post_type, $this);
+	public function should_map_hierarchy( $post_type ) {
+		return apply_filters( 'gc_map_hierarchy', is_post_type_hierarchical( $post_type ), $post_type, $this );
 	}
 
 	/**
@@ -1114,34 +1086,33 @@ class Pull extends Base
 	 *
 	 * @return void
 	 */
-	public function schedule_hierarchy_update($post_id)
-	{
+	public function schedule_hierarchy_update( $post_id ) {
 
 		$option = "gc_associate_hierarchy_{$this->mapping->ID}";
 
 		// Check we have existing pending hierchies to set.
-		$pending = get_option("gc_associate_hierarchy_{$this->mapping->ID}", array());
-		if (empty($pending) || !is_array($pending)) {
-			$pending = array($post_id => $this->item->parent_id);
+		$pending = get_option( "gc_associate_hierarchy_{$this->mapping->ID}", array() );
+		if ( empty( $pending ) || ! is_array( $pending ) ) {
+			$pending = array( $post_id => $this->item->parent_id );
 		} else {
-			$pending[$post_id] = $this->item->parent_id;
+			$pending[ $post_id ] = $this->item->parent_id;
 		}
 
 		// Update list of pending hierarchies for this mapping.
-		update_option("gc_associate_hierarchy_{$this->mapping->ID}", $pending, false);
+		update_option( "gc_associate_hierarchy_{$this->mapping->ID}", $pending, false );
 
-		$args = array($this->mapping->ID);
+		$args = array( $this->mapping->ID );
 
 		// We'll want to restart our 'timer'.
-		if (wp_next_scheduled('gc_associate_hierarchy', $args)) {
-			wp_clear_scheduled_hook('gc_associate_hierarchy', $args);
+		if ( wp_next_scheduled( 'gc_associate_hierarchy', $args ) ) {
+			wp_clear_scheduled_hook( 'gc_associate_hierarchy', $args );
 		}
 
 		/*
 		 * Schedule an event to associate hierarchy for these posts.
 		 * Will likely never be hit, as the gc_pull_complete event will take precedence.
 		 */
-		wp_schedule_single_event(time() + 60, 'gc_associate_hierarchy', $args);
+		wp_schedule_single_event( time() + 60, 'gc_associate_hierarchy', $args );
 	}
 
 	/**
@@ -1154,23 +1125,22 @@ class Pull extends Base
 	 *
 	 * @return void
 	 */
-	public static function associate_hierarchy($mapping)
-	{
-		$mapping = Mapping_Post::get($mapping, true);
-		if (!$mapping) {
+	public static function associate_hierarchy( $mapping ) {
+		$mapping = Mapping_Post::get( $mapping, true );
+		if ( ! $mapping ) {
 			return;
 		}
 
 		$mapping_id = $mapping->ID;
 
 		$opt_name = "gc_associate_hierarchy_{$mapping_id}";
-		$pending  = get_option($opt_name, array());
+		$pending  = get_option( $opt_name, array() );
 
-		if (!empty($pending) && is_array($pending)) {
-			foreach ($pending as $post_id => $parent_item_id) {
-				$post = get_post(absint($post_id));
+		if ( ! empty( $pending ) && is_array( $pending ) ) {
+			foreach ( $pending as $post_id => $parent_item_id ) {
+				$post = get_post( absint( $post_id ) );
 
-				if (!$post) {
+				if ( ! $post ) {
 					continue;
 				}
 
@@ -1181,7 +1151,7 @@ class Pull extends Base
 					)
 				);
 
-				if (!$parent_post || !isset($parent_post->ID)) {
+				if ( ! $parent_post || ! isset( $parent_post->ID ) ) {
 					continue;
 				}
 
@@ -1189,17 +1159,17 @@ class Pull extends Base
 				$post_id = self::post_update_no_revision(
 					array(
 						'ID'          => $post->ID,
-						'post_parent' => absint($parent_post->ID),
+						'post_parent' => absint( $parent_post->ID ),
 					)
 				);
 			}
 		}
 
 		// We'll want to clear any scheduled events, since we completed them.
-		if (wp_next_scheduled('gc_associate_hierarchy', array($mapping_id))) {
-			wp_clear_scheduled_hook('gc_associate_hierarchy', array($mapping_id));
+		if ( wp_next_scheduled( 'gc_associate_hierarchy', array( $mapping_id ) ) ) {
+			wp_clear_scheduled_hook( 'gc_associate_hierarchy', array( $mapping_id ) );
 		}
 
-		return delete_option($opt_name);
+		return delete_option( $opt_name );
 	}
 }
