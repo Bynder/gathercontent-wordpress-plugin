@@ -131,11 +131,13 @@ class API extends Base {
 	 *
 	 * @link https://gathercontent.com/developers/projects/get-projects-statuses/
 	 *
-	 * @param  int $project_id Project ID.
+	 * @param  int    $project_id Project ID.
+	 * @param  string $response   Response result type.
+	 *
 	 * @return mixed             Results of request.
 	 */
-	public function get_project_statuses( $project_id ) {
-		return $this->get( 'projects/' . $project_id . '/statuses' );
+	public function get_project_statuses( $project_id, $response = '' ) {
+		return $this->get( 'projects/' . $project_id . '/statuses', array(), $response);
 	}
 
 	/**
@@ -196,8 +198,38 @@ class API extends Base {
 			'full_data'
 		);
 
-		return $this->filter_item_response( $response );
+		// append status to the item as it was removed in the V2 APIs and needed everywhere
+		if( $response->data ) {
+			$response->data->status 	 = (object) $this->add_status_to_item( $response );
+			$response->data->status_name = $response->data->status->data->name ?: '';
+		}
 
+		return $response;
+	}
+
+	/**
+	 * Add project status to single item.
+	 *
+	 * @since  3.2.0
+	 *
+	 * @param  mixed $item array of item result.
+	 * @return mixed $status_data.
+	 */
+	public function add_status_to_item( $item ) {
+
+		if(! $item->data->project_id ) {
+			return array();
+		}
+
+		// get cached version of all the project statuses
+		$all_statuses    = $this->get_project_statuses( $item->data->project_id );
+		$matched_status  = is_array( $all_statuses )
+			? wp_list_filter( $all_statuses, array( 'id' => $item->data->status_id ) )
+			: array();
+
+		$data			 = count( $matched_status ) > 0 ? $matched_status[0] : array();
+
+		return compact('data');
 	}
 
 	/**
