@@ -156,21 +156,21 @@ class API extends Base {
 	 */
 	public function get_project_items( $project_id, $template_id ) {
 
-		$query_params = http_build_query(
-			array(
-				'template_id' => $template_id,
-				'include'	  => 'status_name',
-				'per_page'	  => 500
-			)
+		$query_params = array(
+			'template_id' => $template_id,
+			'include'	  => 'status_name',
+			'per_page'	  => 500
 		);
 
 		$response = $this->get(
-			'projects/' . $project_id . '/items?' . $query_params,
+			'projects/' . $project_id . '/items',
 			array(
 				'headers' => array(
 					'Accept' => 'application/vnd.gathercontent.v2+json',
 				),
-			)
+			),
+			'',
+			$query_params
 		);
 
 		return $response;
@@ -200,8 +200,8 @@ class API extends Base {
 
 		// append status to the item as it was removed in the V2 APIs and needed everywhere
 		if( $response->data ) {
-			$response->data->status 	 = (object) $this->add_status_to_item( $response );
-			$response->data->status_name = $response->data->status->data->name ?: '';
+			$response->data->status->data 	 = (object) $this->add_status_to_item( $response );
+			$response->data->status_name 	 = $response->data->status->data->name ?: '';
 		}
 
 		return $response;
@@ -221,15 +221,17 @@ class API extends Base {
 			return array();
 		}
 
-		// get cached version of all the project statuses
-		$all_statuses    = $this->get_project_statuses( $item->data->project_id );
-		$matched_status  = is_array( $all_statuses )
+		// get cached version of all the project statuses by making sure that the cache is enabled for this request
+		$this->disable_cache		= false;
+		$this->reset_request_cache 	= false;
+		$all_statuses    			= $this->get_project_statuses( $item->data->project_id );
+
+		$matched_status  			= is_array( $all_statuses )
 			? wp_list_filter( $all_statuses, array( 'id' => $item->data->status_id ) )
 			: array();
+		$status_data			 	= count( $matched_status ) > 0 ? $matched_status[0] : array();
 
-		$data			 = count( $matched_status ) > 0 ? $matched_status[0] : array();
-
-		return compact('data');
+		return $status_data;
 	}
 
 	/**
@@ -637,13 +639,16 @@ class API extends Base {
 	 *
 	 * @see    API::cache_get() For additional information
 	 *
-	 * @param  string $endpoint GatherContent API endpoint to retrieve.
-	 * @param  array  $args     Optional. Request arguments. Default empty array.
-	 * @param  string $response Optional. expected response. Default empty
-	 * @return mixed            The response.
+	 * @param  string $endpoint 	  GatherContent API endpoint to retrieve.
+	 * @param  array  $args     	  Optional. Request arguments. Default empty array.
+	 * @param  string $response 	  Optional. expected response. Default empty
+	 * @param  array  $query_params   Optional. Request query parameters to append to the URL. Default empty array.
+	 *
+	 * @return mixed  The response.
 	 */
-	public function get( $endpoint, $args = array(), $response = '' ) {
-		$data = $this->cache_get( $endpoint, DAY_IN_SECONDS, $args, 'GET' );
+	public function get( $endpoint, $args = array(), $response = '', $query_params = array() ){
+
+		$data = $this->cache_get( $endpoint, DAY_IN_SECONDS, $args, 'GET', $query_params );
 
 		if ( $response == 'full_data' ) {
 			return $data;
@@ -663,30 +668,26 @@ class API extends Base {
 	 *
 	 * @see    API::request() For additional information
 	 *
-	 * @param  string $endpoint   GatherContent API endpoint to retrieve.
-	 * @param  string $expiration The expiration time. Defaults to an hour.
-	 * @param  array  $args       Optional. Request arguments. Default empty array.
-	 * @return array              The response.
+	 * @param  string $endpoint   	 GatherContent API endpoint to retrieve.
+	 * @param  string $expiration 	 The expiration time. Defaults to an hour.
+	 * @param  array  $args       	 Optional. Request arguments. Default empty array.
+	 * @param  array  $query_params  Optional. Request query parameters to append to the URL. Default empty array.
+	 *
+	 * @return array              	 The response.
 	 */
-	public function cache_get( $endpoint, $expiration = HOUR_IN_SECONDS, $args = array(), $method = 'get' ) {
-		$trans_key = 'gctr-' . md5( serialize( compact( 'endpoint', 'args', 'method' ) ) );
-		$response  = get_transient( $trans_key );
+	public function cache_get( $endpoint, $expiration = HOUR_IN_SECONDS, $args = array(), $method = 'get', $query_params = array() ) {
 
-		// if ( $this->only_cached ) {
-		// $this->only_cached = false;
-		// return $response;
-		// }
+		$trans_key = 'gctr-' . md5( serialize( compact( 'endpoint', 'args', 'method', 'query_params' ) ) );
+		$response  = get_transient( $trans_key );
 
 		if ( ! $response || $this->disable_cache || $this->reset_request_cache ) {
 
-			$response = $this->request( $endpoint, $args, 'GET' );
+			$response = $this->request( $endpoint, $args, 'GET', $query_params );
 
 			if ( is_wp_error( $response ) ) {
 				return $response;
 			}
 
-			// delete_transient( $trans_key );
-			// delete_option( 'gathercontent_transients' );
 			set_transient( $trans_key, $response, $expiration );
 
 			$keys                = get_option( 'gathercontent_transients' );
@@ -712,13 +713,16 @@ class API extends Base {
 	 *
 	 * @see    WP_Http::request() For additional information on default arguments.
 	 *
-	 * @param  string $endpoint GatherContent API endpoint to retrieve.
-	 * @param  array  $args     Optional. Request arguments. Default empty array.
-	 * @param  array  $method   Optional. Request method, defaults to 'GET'.
+	 * @param  string $endpoint 		GatherContent API endpoint to retrieve.
+	 * @param  array  $args     		Optional. Request arguments. Default empty array.
+	 * @param  array  $method   		Optional. Request method, defaults to 'GET'.
+	 * @param  array  $query_params     Optional. Request query parameters to append to the URL. Default empty array.
 	 * @return array            The response.
 	 */
-	public function request( $endpoint, $args = array(), $method = 'GET' ) {
-		$uri = $this->base_url . $endpoint;
+	public function request( $endpoint, $args = array(), $method = 'GET', $query_params = array() ) {
+
+		$uri = add_query_arg( $query_params, $this->base_url . $endpoint );
+
 		try {
 			$args = $this->request_args( $args );
 		} catch ( \Exception $e ) {
