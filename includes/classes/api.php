@@ -184,7 +184,7 @@ class API extends Base {
 	 * @link https://docs.gathercontent.com/reference/getitem
 	 *
 	 * @param  int $item_id Item ID.
-	 * @return mixed          Results of request.
+	 * @return mixed        Results of request.
 	 */
 	public function get_item( $item_id ) {
 
@@ -200,7 +200,7 @@ class API extends Base {
 
 		// append status to the item as it was removed in the V2 APIs and needed everywhere
 		if( $response->data ) {
-			$response->data->status->data 	 = (object) $this->add_status_to_item( $response );
+			$response->data->status->data 	 = (object) $this->add_status_to_item( $response->data );
 			$response->data->status_name 	 = $response->data->status->data->name ?: '';
 		}
 
@@ -212,22 +212,22 @@ class API extends Base {
 	 *
 	 * @since  3.2.0
 	 *
-	 * @param  mixed $item array of item result.
+	 * @param  mixed $item item result object.
 	 * @return mixed $status_data.
 	 */
 	public function add_status_to_item( $item ) {
 
-		if(! $item->data->project_id ) {
+		if(! $item->project_id ) {
 			return array();
 		}
 
 		// get cached version of all the project statuses by making sure that the cache is enabled for this request
 		$this->disable_cache		= false;
 		$this->reset_request_cache 	= false;
-		$all_statuses    			= $this->get_project_statuses( $item->data->project_id );
+		$all_statuses    			= $this->get_project_statuses( $item->project_id );
 
 		$matched_status  			= is_array( $all_statuses )
-			? wp_list_filter( $all_statuses, array( 'id' => $item->data->status_id ) )
+			? wp_list_filter( $all_statuses, array( 'id' => $item->status_id ) )
 			: array();
 		$status_data			 	= count( $matched_status ) > 0 ? $matched_status[0] : array();
 
