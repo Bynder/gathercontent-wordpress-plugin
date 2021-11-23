@@ -264,7 +264,7 @@ class Bulk extends Post_Base {
 			|| ! ( $item_id = absint( \GatherContent\Importer\get_post_item_id( $post_id ) ) )
 			|| ! ( $mapping_id = absint( \GatherContent\Importer\get_post_mapping_id( $post_id ) ) )
 			|| ! ( $item = $this->api->get_item( $item_id ) )
-			|| ( isset( $item->status->data->id ) && absint( $status_id ) === absint( $item->status->data->id ) )
+			|| ( isset( $item->status_id ) && absint( $status_id ) === absint( $item->status_id ) )
 		) {
 			return;
 		}

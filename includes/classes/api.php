@@ -141,30 +141,43 @@ class API extends Base {
 	/**
 	 * GC V2 API request to get the results from the "/projects/{project_id}/items" endpoint.
 	 *
-	 * @since  3.0.0
+	 * Pass template_id to filter it with template_id as well
+	 *
+	 * @since  3.2.0
 	 *
 	 * @link https://docs.gathercontent.com/reference/listitems
 	 *
 	 * @param  int $project_id Project ID.
+	 * @param  int $template_id Template ID.
+	 *
 	 * @return mixed             Results of request.
 	 */
-	public function get_project_items( $project_id ) {
+	public function get_project_items( $project_id, $template_id ) {
+
+		$query_params = http_build_query(
+			array(
+				'template_id' => $template_id,
+				'include'	  => 'status_name',
+				'per_page'	  => 500
+			)
+		);
+
 		$response = $this->get(
-			'projects/' . $project_id . '/items',
+			'projects/' . $project_id . '/items?' . $query_params,
 			array(
 				'headers' => array(
 					'Accept' => 'application/vnd.gathercontent.v2+json',
 				),
 			)
 		);
-		return $this->filter_project_items_response( $response );
 
+		return $response;
 	}
 
 	/**
-	 * GC V2 API request to get the results from the "/items/{item_id}" endpoint.
+	 * GC API request to get the results from the "/items/{item_id}" endpoint.
 	 *
-	 * @since  3.0.0
+	 * @since  3.2.0
 	 *
 	 * @link https://docs.gathercontent.com/reference/getitem
 	 *
@@ -188,9 +201,9 @@ class API extends Base {
 	}
 
 	/**
-	 * GC API request to get the results from the "/projects/{project_id}/statuses/:status_id" endpoint.
+	 * GC V2 API request to get the results from the "/projects/{project_id}/statuses/:status_id" endpoint.
 	 *
-	 * @since  3.0.0
+	 * @since  3.2.0
 	 *
 	 * @link https://docs.gathercontent.com/v0.5/reference/get-project-statuses-by-id
 	 *
@@ -283,9 +296,6 @@ class API extends Base {
 			)
 		);
 	}
-
-
-
 
 	/**
 	 * GC V2 API request to get the results from the "/projects/{project_id}/templates" endpoint.
@@ -870,34 +880,6 @@ class API extends Base {
 
 		return $deleted;
 	}
-
-
-
-	/**
-	 * Organaize new items api response data like old API.
-	 *
-	 * @since  3.0.0
-	 *
-	 * @param  int $response Response .
-	 * @return mixed              Results of request.
-	 */
-	public function filter_project_items_response( $response ) {
-
-		$returnArray = array();
-		if ( $response ) {
-			foreach ( $response as $item ) {
-				$item_status                 = $this->get_project_status_information( $item->project_id, $item->status_id );
-				$item_status_array['status'] = (array) $item_status;
-				$response_array              = (array) $item;
-				$final_array                 = array_merge( $response_array, $item_status_array );
-				$returnArray[]               = $final_array;
-
-			}
-		}
-
-		return json_decode( json_encode( $returnArray ) );
-	}
-
 
 	/**
 	 * Organaize new item api response data like old API.
