@@ -6,7 +6,6 @@
  */
 
 namespace GatherContent\Importer;
-
 use WP_Query;
 
 /**
@@ -65,13 +64,10 @@ function get_post_by_item_id( $item_id, $args = array() ) {
 		remove_filter( 'posts_where', array( $wpml_query_filter, 'posts_where_filter' ), 10, 2 );
 	}
 
-	$query = new WP_Query(
-		wp_parse_args(
-			$args,
-			array(
-				'post_type'      => \GatherContent\Importer\available_mapping_post_types(),
-				'posts_per_page' => 1,
-				'no_found_rows'  => true,
+	$query = new WP_Query( wp_parse_args( $args, array(
+		'post_type'      => \GatherContent\Importer\available_mapping_post_types(),
+		'posts_per_page' => 1,
+		'no_found_rows'  => true,
 		// @codingStandardsIgnoreStart
 		'meta_query'     => array(
 			array(
@@ -80,9 +76,7 @@ function get_post_by_item_id( $item_id, $args = array() ) {
 			),
 		),
 		// @codingStandardsIgnoreEnd
-			)
-		)
-	);
+	) ) );
 
 	return $query->have_posts() && $query->post ? $query->post : false;
 }
@@ -182,7 +176,7 @@ function update_post_mapping_id( $post_id, $mapping_post_id ) {
 function prepare_item_for_js( $item, $mapping_id = 0 ) {
 	$post = \GatherContent\Importer\get_post_by_item_id( $item->id );
 
-	$js_item            = (array) $item;
+	$js_item = (array) $item;
 	$js_item['mapping'] = $mapping_id;
 
 	if ( $post ) {
@@ -254,27 +248,24 @@ function prepare_post_for_js( $post, $uncached = false ) {
  * @return array        Array of modified args.
  */
 function prepare_js_data( $args, $item = null, $type = 'post' ) {
-	$args = wp_parse_args(
-		$args,
-		array(
-			'item'        => 0,
-			'itemName'    => __( 'N/A', 'gathercontent-importer' ),
-			'mapping'     => 0,
-			'post_id'     => 0,
-			'mappingLink' => '',
-			'mappingName' => __( '&mdash;', 'gathercontent-importer' ),
-			'status'      => (object) array(),
-			'itemName'    => __( 'N/A', 'gathercontent-importer' ),
-			'updated_at'  => __( '&mdash;', 'gathercontent-importer' ),
-			'editLink'    => '',
-			'post_title'  => __( '&mdash;', 'gathercontent-importer' ),
-			'ptLabel'     => __( 'Post', 'gathercontent-importer' ),
-		)
-	);
+	$args = wp_parse_args( $args, array(
+		'item'        => 0,
+		'itemName'    => __( 'N/A', 'gathercontent-importer' ),
+		'mapping'     => 0,
+		'post_id'     => 0,
+		'mappingLink' => '',
+		'mappingName' => __( '&mdash;', 'gathercontent-importer' ),
+		'status'      => (object) array(),
+		'itemName'    => __( 'N/A', 'gathercontent-importer' ),
+		'updated_at'  => __( '&mdash;', 'gathercontent-importer' ),
+		'editLink'    => '',
+		'post_title'  => __( '&mdash;', 'gathercontent-importer' ),
+		'ptLabel'     => __( 'Post', 'gathercontent-importer' ),
+	) );
 
 	if ( $mapping = Mapping_Post::get( $args['mapping'] ) ) {
 		$args['mappingLink'] = get_edit_post_link( $mapping->ID );
-		$account             = $mapping->get_account_slug();
+		$account = $mapping->get_account_slug();
 		$args['mappingName'] = $mapping->post_title . ( $account ? " ($account)" : '' );
 	}
 
@@ -283,21 +274,17 @@ function prepare_js_data( $args, $item = null, $type = 'post' ) {
 		if ( isset( $item->name ) ) {
 			$args['itemName'] = $item->name;
 		}
-		if ( @$item->status->data ) :
-			$args['status'] = isset( $item->status->data )
+
+		$args['status'] = isset( $item->status->data )
 			? $item->status->data
 			: (object) array();
-		elseif ( @$item->status ) :
-			$args['status'] = isset( $item->status )
-			? $item->status
-			: (object) array();
-		endif;
+
 		$args['typeName'] = isset( $item->type )
 			? Utils::gc_field_type_name( $item->type )
 			: '';
 
-		if ( isset( $item->updated_at->date ) ) {
-			$args['updated_at'] = Utils::relative_date( $item->updated_at->date );
+		if ( isset( $item->updated_at ) ) {
+			$args['updated_at'] = Utils::relative_date( $item->updated_at );
 		}
 	}
 
@@ -317,7 +304,7 @@ function prepare_js_data( $args, $item = null, $type = 'post' ) {
  *
  * @since  3.0.0
  *
- * @param  mixed $post WP_Post
+ * @param  mixed  $post WP_Post
  *
  * @return string       Singular post-type label.
  */
@@ -350,14 +337,10 @@ function post_is_current( $post_id, $item ) {
 
 	if ( ! empty( $meta['updated_at'] ) ) {
 
-		if ( isset( $item->updated_at->date ) ) {
-
-			if ( is_object( $meta['updated_at'] ) ) {
-				$meta['updated_at'] = $meta['updated_at']->date;
-			}
+		if ( isset( $item->updated_at ) ) {
 
 			// Allowance of 10 milliseconds because of some possible race conditions.
-			$is_current = Utils::date_current_with( $meta['updated_at'], $item->updated_at->date, 10 );
+			$is_current = Utils::date_current_with( $meta['updated_at'], $item->updated_at, 10 );
 		} else {
 			// If we couldn't find an item date, then we'll say, yes, we're current.
 			$is_current = true;
@@ -377,12 +360,7 @@ function post_is_current( $post_id, $item ) {
 function refresh_connection_link() {
 	$args = array(
 		'redirect_url' => false,
-		'flush_url'    => add_query_arg(
-			array(
-				'flush_cache' => 1,
-				'redirect'    => 1,
-			)
-		),
+		'flush_url' => add_query_arg( array( 'flush_cache' => 1, 'redirect' => 1 ) ),
 	);
 	// @codingStandardsIgnoreStart
 	if ( isset( $_GET['flush_cache'], $_GET['redirect'] ) ) {
@@ -439,7 +417,7 @@ function available_mapping_post_types() {
  * @return string|bool The Auth username if enabled, or false.
  */
 function auth_enabled() {
-	if ( ! empty( $_SERVER['REMOTE_USER'] ) ) {
+	if ( !empty( $_SERVER['REMOTE_USER'] ) ) {
 		return $_SERVER['REMOTE_USER'];
 	}
 
@@ -448,7 +426,7 @@ function auth_enabled() {
 		'PHP_AUTH_PW',
 		'HTTP_AUTHORIZATION',
 	) as $var ) {
-		if ( ! empty( $_SERVER[ $var ] ) ) {
+		if ( !empty( $_SERVER[ $var ] ) ) {
 			return true;
 		}
 	}

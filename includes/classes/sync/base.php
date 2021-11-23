@@ -317,6 +317,10 @@ abstract class Base extends Plugin_Base {
 	protected function get_value_for_element( $element ) {
 		$val = false;
 
+		if( true === $element->repeatable ) {
+			return $element->value;
+		}
+
 		switch ( $element->type ) {
 			case 'text':
 				$val = $element->value;
@@ -397,9 +401,9 @@ abstract class Base extends Plugin_Base {
 				}
 				break;
 
-			case 'files':
-				if ( is_array( $this->item->files ) && isset( $this->item->files[ $element->name ] ) ) {
-					$val = $this->item->files[ $element->name ];
+			case 'attachment':
+				if ( is_array( $this->item->value ) ) {
+					$val = $this->item->value;
 				}
 				break;
 
@@ -422,6 +426,34 @@ abstract class Base extends Plugin_Base {
 	 */
 	protected function set_element_value() {
 		$this->element->value = $this->get_element_value();
+	}
+
+	/**
+	 * Format the element's values to the required data format.
+	 *
+	 * @since  3.2.0
+	 *
+	 * @param mixed 	  $field object
+	 * @param string|null $component_uuid optional component uuid only if the field is component
+	 * @return array
+	 */
+	protected function format_element_data($field, $component_uuid = ''): array {
+
+		$metadata 		= $field->metadata;
+		$field_name		= $field->uuid;
+		$is_repeatable  = (is_object($metadata) && isset($metadata->repeatable)) ? $metadata->repeatable->isRepeatable : false;
+		$is_plain		= 'text' === $field->field_type && is_object($metadata) ? $metadata->is_plain : false;
+		$content	    = $component_uuid ? ($this->item->content->$component_uuid ?? null) : $this->item->content;
+		$field_value	= $content ? ($content->$field_name ?? null) : null;
+
+		return array(
+			'name'			=> $field_name,
+			'type'			=> $field->field_type,
+			'label' 		=> $field->label,
+			'plain_text'	=> (bool) $is_plain,
+			'value'			=> $field_value && $is_repeatable ? wp_json_encode($field_value) : $field_value,
+			'repeatable'	=> (bool) $is_repeatable
+		);
 	}
 
 	/**
