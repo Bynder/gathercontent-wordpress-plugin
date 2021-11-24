@@ -26,5 +26,8 @@
     "dealerdirect/phpcodesniffer-composer-installer": "*",
     "phpcompatibility/php-compatibility": "*",
     "wp-coding-standards/wpcs": "*"
+  },
+  "scripts": {
+    "phpcbf": "./vendor/bin/phpcbf --standard=WordPress"
   }
 }

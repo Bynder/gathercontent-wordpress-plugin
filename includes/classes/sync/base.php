@@ -317,7 +317,7 @@ abstract class Base extends Plugin_Base {
 	protected function get_value_for_element( $element ) {
 		$val = false;
 
-		if( true === $element->repeatable ) {
+		if ( true === $element->repeatable ) {
 			return $element->value;
 		}
 
@@ -402,19 +402,33 @@ abstract class Base extends Plugin_Base {
 				break;
 
 			case 'attachment':
-				if ( is_array( $this->item->value ) ) {
-					$val = $this->item->value;
+				$element_values = is_array( $element->value ) ? $element->value : array();
+				$file_values    = array();
+				error_log( print_r( $element->value, true ) );
+				error_log( print_r( $this->item->files, true ) );
+
+				foreach ( $element_values as $value ) {
+					$file = array_values( wp_list_filter( $this->item->files, array( 'file_id' => $value->file_id ) ) );
+					error_log( print_r( $file, true ) );
+					error_log( $value->file_id );
+
+					if ( count( $file ) > 0 ) {
+						$file_values[] = $file[0];
+					}
 				}
+
+				error_log( print_r( $file_values, true ) );
+				$val = $file_values;
 				break;
 
 			default:
 				if ( isset( $element->value ) ) {
-					$val = sanitize_text_field( $option->label );
+					$val = sanitize_text_field( $element->label );
 				}
 				break;
 		}
 
-		return $val;
+			return $val;
 	}
 
 	/**
@@ -433,26 +447,26 @@ abstract class Base extends Plugin_Base {
 	 *
 	 * @since  3.2.0
 	 *
-	 * @param mixed 	  $field object
-	 * @param string|null $component_uuid optional component uuid only if the field is component
+	 * @param mixed       $field object.
+	 * @param string|null $component_uuid optional component uuid only if the field is component.
 	 * @return array
 	 */
-	protected function format_element_data($field, $component_uuid = ''): array {
+	protected function format_element_data( $field, $component_uuid = '' ): array {
 
-		$metadata 		= $field->metadata;
-		$field_name		= $field->uuid;
-		$is_repeatable  = (is_object($metadata) && isset($metadata->repeatable)) ? $metadata->repeatable->isRepeatable : false;
-		$is_plain		= 'text' === $field->field_type && is_object($metadata) ? $metadata->is_plain : false;
-		$content	    = $component_uuid ? ($this->item->content->$component_uuid ?? null) : $this->item->content;
-		$field_value	= $content ? ($content->$field_name ?? null) : null;
+		$metadata      = $field->metadata;
+		$field_name    = $field->uuid;
+		$is_repeatable = ( is_object( $metadata ) && isset( $metadata->repeatable ) ) ? $metadata->repeatable->isRepeatable : false;
+		$is_plain      = 'text' === $field->field_type && is_object( $metadata ) ? $metadata->is_plain : false;
+		$content       = $component_uuid ? ( $this->item->content->$component_uuid ?? null ) : $this->item->content;
+		$field_value   = $content ? ( $content->$field_name ?? null ) : null;
 
 		return array(
-			'name'			=> $field_name,
-			'type'			=> $field->field_type,
-			'label' 		=> $field->label,
-			'plain_text'	=> (bool) $is_plain,
-			'value'			=> $field_value && $is_repeatable ? wp_json_encode($field_value) : $field_value,
-			'repeatable'	=> (bool) $is_repeatable
+			'name'       => $field_name,
+			'type'       => $field->field_type,
+			'label'      => $field->label,
+			'plain_text' => (bool) $is_plain,
+			'value'      => $field_value && $is_repeatable ? wp_json_encode( $field_value ) : $field_value,
+			'repeatable' => (bool) $is_repeatable,
 		);
 	}
 

@@ -58,7 +58,7 @@ function enqueue_script( $handle, $filename, $deps = array(), $ver = GATHERCONTE
  * @return mixed          WP_Post if an associated post is found.
  */
 function get_post_by_item_id( $item_id, $args = array() ) {
-	 global $wpml_query_filter;
+	global $wpml_query_filter;
 	if ( is_object( $wpml_query_filter ) ) {
 		// We do not want wpml messing with our queries here.
 		remove_filter( 'posts_join', array( $wpml_query_filter, 'posts_join_filter' ), 10, 2 );

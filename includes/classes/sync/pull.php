@@ -212,25 +212,6 @@ class Pull extends Base {
 			}
 		}
 
-		/*
-		// Check if we need to set hierarchies.
-		if ( $this->should_map_hierarchy( $post_data['post_type'] ) && isset( $this->item->parent_id ) && $this->item->parent_id ) {
-
-			// Check if an associated WordPress item exists for the parent item id.
-			$parent_post = \GatherContent\Importer\get_post_by_item_id( absint( $this->item->parent_id ), array(
-				'post_type' => $post_data['post_type'],
-			) );
-
-			// If so, we'll go ahead and update the post_parent value.
-			if ( $parent_post && isset( $parent_post->ID ) ) {
-				$updated_post_data['post_parent'] = absint( $parent_post->ID );
-			}
-			// Otherwise, let's save this to the array of IDs needed to be checked later (let the import finish).
-			else {
-				$this->schedule_hierarchy_update( $post_id );
-			}
-		}*/
-
 		if ( ! empty( $updated_post_data ) ) {
 			// And update post (but don't create a revision for it).
 			self::post_update_no_revision( array_merge( $post_data, $updated_post_data ) );
@@ -272,14 +253,9 @@ class Pull extends Base {
 			$post_data[ $key ] = 'gcinitial';
 		}
 
-		// $files = $this->api->uncached()->get_item_files($this->item->id);
+		$files = $this->api->uncached()->get_item_files( $this->item->id );
 
-		// $this->item->files = array();
-		// if (is_array($files)) {
-		// foreach ($files as $file) {
-		// $this->item->files[$file->field][] = $file;
-		// }
-		// }
+		$this->item->files = is_array( $files ) ? $files : array();
 
 		if ( $this->should_map_hierarchy( $post_data['post_type'] ) && isset( $this->item->position ) ) {
 			$post_data['menu_order'] = absint( $this->item->position );
@@ -514,7 +490,7 @@ class Pull extends Base {
 
 		$post_data['meta_input'] = $this->maybe_append( $meta_key, $value, $post_data['meta_input'] );
 
-		if ( 'files' === $this->element->type ) {
+		if ( 'attachment' === $this->element->type ) {
 			$post_data = $this->set_media_field_value( $meta_key, $post_data );
 		}
 
