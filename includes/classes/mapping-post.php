@@ -174,7 +174,7 @@ class Mapping_Post extends Base {
 			$destination['type'] = $type[0];
 		}
 
-		if ( $sub_arg ) {
+		if ( $sub_arg && ! is_object( $sub_arg ) ) {
 			return is_array( $destination ) && isset( $destination[ $sub_arg ] ) ? $destination[ $sub_arg ] : false;
 		}
 
@@ -211,7 +211,7 @@ class Mapping_Post extends Base {
 	 * @return mixed        New item status or false.
 	 */
 	public function get_item_new_status( $item ) {
-		$status_id = isset( $item->custom_state_id ) ? $item->custom_state_id : $item;
+		$status_id = isset( $item->status_id ) ? $item->status_id : $item;
 		if ( $gc_status = $this->data( 'gc_status', $status_id ) ) {
 			if ( ! empty( $gc_status['after'] ) ) {
 				return absint( $gc_status['after'] );

@@ -131,11 +131,13 @@ class API extends Base {
 	 *
 	 * @link https://gathercontent.com/developers/projects/get-projects-statuses/
 	 *
-	 * @param  int $project_id Project ID.
+	 * @param  int    $project_id Project ID.
+	 * @param  string $response   Response result type.
+	 *
 	 * @return mixed             Results of request.
 	 */
-	public function get_project_statuses( $project_id ) {
-		return $this->get( 'projects/' . $project_id . '/statuses' );
+	public function get_project_statuses( $project_id, $response = '' ) {
+		return $this->get( 'projects/' . $project_id . '/statuses', array(), $response );
 	}
 
 	/**
@@ -154,21 +156,21 @@ class API extends Base {
 	 */
 	public function get_project_items( $project_id, $template_id ) {
 
-		$query_params = http_build_query(
-			array(
-				'template_id' => $template_id,
-				'include'	  => 'status_name',
-				'per_page'	  => 500
-			)
+		$query_params = array(
+			'template_id' => $template_id,
+			'include'     => 'status_name',
+			'per_page'    => 500,
 		);
 
 		$response = $this->get(
-			'projects/' . $project_id . '/items?' . $query_params,
+			'projects/' . $project_id . '/items',
 			array(
 				'headers' => array(
 					'Accept' => 'application/vnd.gathercontent.v2+json',
 				),
-			)
+			),
+			'',
+			$query_params
 		);
 
 		return $response;
@@ -181,10 +183,12 @@ class API extends Base {
 	 *
 	 * @link https://docs.gathercontent.com/reference/getitem
 	 *
-	 * @param  int $item_id Item ID.
-	 * @return mixed          Results of request.
+	 * @param  int  $item_id Item ID.
+	 * @param  bool $exclude_status set this to true to avoid appending status data
+	 *
+	 * @return mixed        Results of request.
 	 */
-	public function get_item( $item_id ) {
+	public function get_item( $item_id, $exclude_status = false ) {
 
 		$response = $this->get(
 			'items/' . $item_id . '?include=structure',
@@ -193,11 +197,42 @@ class API extends Base {
 					'Accept' => 'application/vnd.gathercontent.v2+json',
 				),
 			),
-			'full_data'
 		);
 
-		return $this->filter_item_response( $response );
+		// append status to the item as it was removed in the V2 APIs and needed everywhere
+		if ( ! $exclude_status && $response ) {
+			$response->status      = (object) $this->add_status_to_item( $response );
+			$response->status_name = $response->status->data->name ?: '';
+		}
 
+		return $response;
+	}
+
+	/**
+	 * Add project status to single item.
+	 *
+	 * @since  3.2.0
+	 *
+	 * @param  mixed $item item result object.
+	 * @return mixed $status_data.
+	 */
+	public function add_status_to_item( $item ) {
+
+		if ( ! $item->project_id ) {
+			return array();
+		}
+
+		// get cached version of all the project statuses by making sure that the cache is enabled for this request
+		$this->disable_cache       = false;
+		$this->reset_request_cache = false;
+		$all_statuses              = $this->get_project_statuses( $item->project_id );
+
+		$matched_status = is_array( $all_statuses )
+			? array_values( wp_list_filter( $all_statuses, array( 'id' => $item->status_id ) ) )
+			: array();
+		$data           = count( $matched_status ) > 0 ? $matched_status[0] : array();
+
+		return compact( 'data' );
 	}
 
 	/**
@@ -330,7 +365,7 @@ class API extends Base {
 	 * @return mixed              Results of request.
 	 */
 	public function get_template( $template_id, $args = array() ) {
-		$response = $this->get('templates/' . $template_id, $args, 'full_data');
+		$response = $this->get( 'templates/' . $template_id, $args, 'full_data' );
 		return $response;
 	}
 
@@ -605,13 +640,16 @@ class API extends Base {
 	 *
 	 * @see    API::cache_get() For additional information
 	 *
-	 * @param  string $endpoint GatherContent API endpoint to retrieve.
-	 * @param  array  $args     Optional. Request arguments. Default empty array.
-	 * @param  string $response Optional. expected response. Default empty
-	 * @return mixed            The response.
+	 * @param  string $endpoint       GatherContent API endpoint to retrieve.
+	 * @param  array  $args           Optional. Request arguments. Default empty array.
+	 * @param  string $response       Optional. expected response. Default empty
+	 * @param  array  $query_params   Optional. Request query parameters to append to the URL. Default empty array.
+	 *
+	 * @return mixed  The response.
 	 */
-	public function get( $endpoint, $args = array(), $response = '' ) {
-		$data = $this->cache_get( $endpoint, DAY_IN_SECONDS, $args, 'GET' );
+	public function get( $endpoint, $args = array(), $response = '', $query_params = array() ) {
+
+		$data = $this->cache_get( $endpoint, DAY_IN_SECONDS, $args, 'GET', $query_params );
 
 		if ( $response == 'full_data' ) {
 			return $data;
@@ -631,30 +669,26 @@ class API extends Base {
 	 *
 	 * @see    API::request() For additional information
 	 *
-	 * @param  string $endpoint   GatherContent API endpoint to retrieve.
-	 * @param  string $expiration The expiration time. Defaults to an hour.
-	 * @param  array  $args       Optional. Request arguments. Default empty array.
-	 * @return array              The response.
+	 * @param  string $endpoint      GatherContent API endpoint to retrieve.
+	 * @param  string $expiration    The expiration time. Defaults to an hour.
+	 * @param  array  $args          Optional. Request arguments. Default empty array.
+	 * @param  array  $query_params  Optional. Request query parameters to append to the URL. Default empty array.
+	 *
+	 * @return array                 The response.
 	 */
-	public function cache_get( $endpoint, $expiration = HOUR_IN_SECONDS, $args = array(), $method = 'get' ) {
-		$trans_key = 'gctr-' . md5( serialize( compact( 'endpoint', 'args', 'method' ) ) );
-		$response  = get_transient( $trans_key );
+	public function cache_get( $endpoint, $expiration = HOUR_IN_SECONDS, $args = array(), $method = 'get', $query_params = array() ) {
 
-		// if ( $this->only_cached ) {
-		// $this->only_cached = false;
-		// return $response;
-		// }
+		$trans_key = 'gctr-' . md5( serialize( compact( 'endpoint', 'args', 'method', 'query_params' ) ) );
+		$response  = get_transient( $trans_key );
 
 		if ( ! $response || $this->disable_cache || $this->reset_request_cache ) {
 
-			$response = $this->request( $endpoint, $args, 'GET' );
+			$response = $this->request( $endpoint, $args, 'GET', $query_params );
 
 			if ( is_wp_error( $response ) ) {
 				return $response;
 			}
 
-			// delete_transient( $trans_key );
-			// delete_option( 'gathercontent_transients' );
 			set_transient( $trans_key, $response, $expiration );
 
 			$keys                = get_option( 'gathercontent_transients' );
@@ -680,13 +714,16 @@ class API extends Base {
 	 *
 	 * @see    WP_Http::request() For additional information on default arguments.
 	 *
-	 * @param  string $endpoint GatherContent API endpoint to retrieve.
-	 * @param  array  $args     Optional. Request arguments. Default empty array.
-	 * @param  array  $method   Optional. Request method, defaults to 'GET'.
+	 * @param  string $endpoint         GatherContent API endpoint to retrieve.
+	 * @param  array  $args             Optional. Request arguments. Default empty array.
+	 * @param  array  $method           Optional. Request method, defaults to 'GET'.
+	 * @param  array  $query_params     Optional. Request query parameters to append to the URL. Default empty array.
 	 * @return array            The response.
 	 */
-	public function request( $endpoint, $args = array(), $method = 'GET' ) {
-		$uri = $this->base_url . $endpoint;
+	public function request( $endpoint, $args = array(), $method = 'GET', $query_params = array() ) {
+
+		$uri = add_query_arg( $query_params, $this->base_url . $endpoint );
+
 		try {
 			$args = $this->request_args( $args );
 		} catch ( \Exception $e ) {
@@ -820,7 +857,7 @@ class API extends Base {
 	 * Sets the reset_request_cache flag and returns object, for chaining methods,
 	 * and flushing/bypassing cache for next request.
 	 *
-	 * e.g. `$this->uncached()->get( 'me' )`
+	 * E.g. `$this->uncached()->get( 'me' )`
 	 *
 	 * @since  3.0.0
 	 *
@@ -879,125 +916,6 @@ class API extends Base {
 		update_option( 'gathercontent_transients', $keys, false );
 
 		return $deleted;
-	}
-
-	/**
-	 * Organaize new item api response data like old API.
-	 *
-	 * @since  3.0.0
-	 *
-	 * @param  int $response Response .
-	 * @return mixed              Results of request.
-	 */
-	public function filter_item_response( $response ) {
-
-		$returnArray = array();
-		if ( @$response->data ) {
-
-			$returnArray['id']                 = $response->data->id;
-			$returnArray['project_id']         = $response->data->project_id;
-			$returnArray['parent_id']          = '';
-			$returnArray['template_id']        = $response->data->template_id;
-			$returnArray['custom_state_id']    = '';
-			$returnArray['position']           = $response->data->position;
-			$returnArray['name']               = $response->data->name;
-			$returnArray['notes']              = '';
-			$returnArray['type']               = 'item';
-			$returnArray['overdue']            = '';
-			$returnArray['archived_by']        = $response->data->archived_by;
-			$returnArray['archived_at']        = $response->data->archived_at;
-			$returnArray['due_dates']          = $response->data->next_due_at;
-			$returnArray['created_at']['date'] = $response->data->created_at;
-			$returnArray['updated_at']['date'] = $response->data->updated_at;
-			$returnArray['folder_uuid']        = $response->data->folder_uuid;
-			$contentArray                      = (array) $response->data->content;
-
-			$item_status = $this->get_project_status_information( $response->data->project_id, $response->data->status_id );
-
-			$returnArray['status']['data'] = (array) $item_status;
-
-			$returnArray['config'][0]['name']  = $response->data->structure->groups[0]->uuid;
-			$returnArray['config'][0]['label'] = $response->data->structure->groups[0]->name;
-			$elementCounter                    = 0;
-			foreach ( $response->data->structure->groups[0]->fields as $element ) {
-
-				if ( @$element->metadata->repeatable->isRepeatable ) {
-					$limitCounter = 0;
-					for ( $i = $elementCounter; $i < $element->metadata->repeatable->limit + $elementCounter; $i++ ) {
-						if ( $element->field_type == 'component' ) {
-							$component_uuid = $element->uuid;
-
-							foreach ( $element->component->fields as $c_element ) {
-
-								$c_contentArray = (array) @$contentArray[ $component_uuid ];
-
-								$returnArray['config'][0]['elements'][ $i ]['type']       = ( $c_element->field_type == 'attachment' ) ? 'files' : $c_element->field_type;
-								$returnArray['config'][0]['elements'][ $i ]['name']       = $c_element->uuid . '-' . $i;
-								$returnArray['config'][0]['elements'][ $i ]['required']   = @$c_element->metadata->validation;
-								$returnArray['config'][0]['elements'][ $i ]['label']      = $c_element->label . '-' . $i;
-								$returnArray['config'][0]['elements'][ $i ]['value']      = ( $element->field_type == 'attachment' ) ? '' : @$c_contentArray[ $c_element->uuid ][ $limitCounter ];
-								$returnArray['config'][0]['elements'][ $i ]['microcopy']  = '';
-								$returnArray['config'][0]['elements'][ $i ]['limit_type'] = '';
-								$returnArray['config'][0]['elements'][ $i ]['limit']      = '';
-								$returnArray['config'][0]['elements'][ $i ]['plain_text'] = @$c_element->metadata->is_plain;
-
-							}
-						} else {
-
-							$returnArray['config'][0]['elements'][ $i ]['type']       = ( $element->field_type == 'attachment' ) ? 'files' : $element->field_type;
-							$returnArray['config'][0]['elements'][ $i ]['name']       = $element->uuid . '-' . $i;
-							$returnArray['config'][0]['elements'][ $i ]['required']   = @$element->metadata->validation;
-							$returnArray['config'][0]['elements'][ $i ]['label']      = $element->label . '-' . $i;
-							$returnArray['config'][0]['elements'][ $i ]['value']      = ( $element->field_type == 'attachment' ) ? '' : @$contentArray[ $element->uuid ][ $limitCounter ];
-							$returnArray['config'][0]['elements'][ $i ]['microcopy']  = '';
-							$returnArray['config'][0]['elements'][ $i ]['limit_type'] = '';
-							$returnArray['config'][0]['elements'][ $i ]['limit']      = '';
-							$returnArray['config'][0]['elements'][ $i ]['plain_text'] = @$element->metadata->is_plain;
-						}
-						$limitCounter++;
-					}
-					$elementCounter++;
-				} else {
-					if ( $element->field_type == 'component' ) {
-						   $component_uuid = $element->uuid;
-						   $componentCount = count( $element->component->fields );
-						foreach ( $element->component->fields as $c_element ) {
-
-							$c_contentArray = (array) @$contentArray[ $component_uuid ];
-
-							$returnArray['config'][0]['elements'][ $elementCounter ]['type']       = ( $c_element->field_type == 'attachment' ) ? 'files' : $c_element->field_type;
-							$returnArray['config'][0]['elements'][ $elementCounter ]['name']       = $c_element->uuid;
-							$returnArray['config'][0]['elements'][ $elementCounter ]['required']   = @$c_element->metadata->validation;
-							$returnArray['config'][0]['elements'][ $elementCounter ]['label']      = $c_element->label;
-							$returnArray['config'][0]['elements'][ $elementCounter ]['value']      = ( $element->field_type == 'attachment' ) ? '' : @$c_contentArray[ $c_element->uuid ];
-							$returnArray['config'][0]['elements'][ $elementCounter ]['microcopy']  = '';
-							$returnArray['config'][0]['elements'][ $elementCounter ]['limit_type'] = '';
-							$returnArray['config'][0]['elements'][ $elementCounter ]['limit']      = '';
-							$returnArray['config'][0]['elements'][ $elementCounter ]['plain_text'] = @$c_element->metadata->is_plain;
-
-							if ( $componentCount != 1 ) {
-								$componentCount--;
-								$elementCounter++;
-							}
-						}
-					} else {
-						$returnArray['config'][0]['elements'][ $elementCounter ]['type']       = ( $element->field_type == 'attachment' ) ? 'files' : $element->field_type;
-						$returnArray['config'][0]['elements'][ $elementCounter ]['name']       = $element->uuid;
-						$returnArray['config'][0]['elements'][ $elementCounter ]['required']   = @$element->metadata->validation;
-						$returnArray['config'][0]['elements'][ $elementCounter ]['label']      = $element->label;
-						$returnArray['config'][0]['elements'][ $elementCounter ]['value']      = ( $element->field_type == 'attachment' ) ? '' : ($contentArray[ $element->uuid ] ?? null);
-						$returnArray['config'][0]['elements'][ $elementCounter ]['microcopy']  = '';
-						$returnArray['config'][0]['elements'][ $elementCounter ]['limit_type'] = '';
-						$returnArray['config'][0]['elements'][ $elementCounter ]['limit']      = '';
-						$returnArray['config'][0]['elements'][ $elementCounter ]['plain_text'] = @$element->metadata->is_plain;
-					}
-				}
-
-				$elementCounter++;
-			}
-		}
-		// print_r($returnArray);exit;
-		return json_decode( json_encode( $returnArray ) );
 	}
 
 }

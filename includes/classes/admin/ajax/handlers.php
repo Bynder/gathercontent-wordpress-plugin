@@ -153,7 +153,7 @@ class Handlers extends Plugin_Base {
 				'status'     => $status,
 				'itemName'   => isset( $item->name ) ? $item->name : __( 'N/A', 'gathercontent-importer' ),
 				'updated_at' => isset( $item->updated_at )
-					? Utils::relative_date( $item->updated_at->date )
+					? Utils::relative_date( $item->updated_at )
 					: __( '&mdash;', 'gathercontent-importer' ),
 				'current'    => \GatherContent\Importer\post_is_current( $post['id'], $item ),
 			);

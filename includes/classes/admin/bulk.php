@@ -263,7 +263,7 @@ class Bulk extends Post_Base {
 			|| ! ( $status_id = $this->_post_val( 'gc_status' ) )
 			|| ! ( $item_id = absint( \GatherContent\Importer\get_post_item_id( $post_id ) ) )
 			|| ! ( $mapping_id = absint( \GatherContent\Importer\get_post_mapping_id( $post_id ) ) )
-			|| ! ( $item = $this->api->get_item( $item_id ) )
+			|| ! ( $item = $this->api->get_item( $item_id, true ) )
 			|| ( isset( $item->status_id ) && absint( $status_id ) === absint( $item->status_id ) )
 		) {
 			return;

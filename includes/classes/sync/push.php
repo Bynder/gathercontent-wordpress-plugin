@@ -250,8 +250,8 @@ class Push extends Base {
 			\GatherContent\Importer\update_post_item_meta(
 				$this->post->ID,
 				array(
-					'created_at' => $this->item->created_at->date,
-					'updated_at' => $this->item->updated_at->date,
+					'created_at' => $this->item->created_at,
+					'updated_at' => $this->item->updated_at,
 				)
 			);
 		}

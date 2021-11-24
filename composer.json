@@ -22,6 +22,12 @@
     "antecedent/patchwork": "2.1.*",
     "phpunit/phpunit": "^9.4",
     "brianium/paratest": "dev-master",
-    "10up/wp_mock": "0.4.2"
+    "10up/wp_mock": "0.4.2",
+    "dealerdirect/phpcodesniffer-composer-installer": "*",
+    "phpcompatibility/php-compatibility": "*",
+    "wp-coding-standards/wpcs": "*"
+  },
+  "scripts": {
+    "phpcbf": "./vendor/bin/phpcbf --standard=WordPress"
   }
 }
