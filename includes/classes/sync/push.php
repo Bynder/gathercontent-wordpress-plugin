@@ -346,7 +346,6 @@ class Push extends Base {
 			if ( empty( $this->item_config[ $index ]->elements ) ) {
 				unset( $this->item_config[ $index ] );
 			}
-
 		}
 
 		$this->remove_unknowns();

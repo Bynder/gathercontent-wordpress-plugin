@@ -560,10 +560,10 @@ class API extends Base {
 	 *
 	 * @see    API::cache_get() For additional information
 	 *
-	 * @param  string $endpoint       	GatherContent API endpoint to retrieve.
-	 * @param  array  $args           	Optional. Request arguments. Default empty array.
+	 * @param  string $endpoint         GatherContent API endpoint to retrieve.
+	 * @param  array  $args             Optional. Request arguments. Default empty array.
 	 * @param  string $response_type    Optional. expected response. Default empty
-	 * @param  array  $query_params   	Optional. Request query parameters to append to the URL. Default empty array.
+	 * @param  array  $query_params     Optional. Request query parameters to append to the URL. Default empty array.
 	 *
 	 * @return mixed  The response.
 	 */
@@ -573,7 +573,7 @@ class API extends Base {
 
 		if ( $response_type == 'full_data' ) {
 			return $data;
-		} elseif(isset( $data->data ) ) {
+		} elseif ( isset( $data->data ) ) {
 			return $data->data;
 		}
 
