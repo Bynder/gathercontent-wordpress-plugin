@@ -290,49 +290,6 @@ class API extends Base {
 	}
 
 	/**
-	 * GC V2 API request to get the results from the "/projects/{project_id}/files/{file_id}" endpoint.
-	 *
-	 * @since  3.0.0
-	 *
-	 * @link https://docs.gathercontent.com/reference/listfiles
-	 *
-	 * @param  int $project_id Project ID .
-	 * @return mixed          Results of request.
-	 */
-	public function get_project_files( $project_id ) {
-
-		return $this->get(
-			'projects/' . $project_id . '/files',
-			array(
-				'headers' => array(
-					'Accept' => 'application/vnd.gathercontent.v2+json',
-				),
-			)
-		);
-	}
-
-	/**
-	 * GC V2 API request to get the results from the "/projects/{project_id}/files/{file_id}" endpoint.
-	 *
-	 * @since  3.0.0
-	 *
-	 * @link https://docs.gathercontent.com/reference/getfile
-	 *
-	 * @param  int $project_id Project ID , int $file_id File ID.
-	 * @return mixed          Results of request.
-	 */
-	public function get_item_file( $project_id, $file_id ) {
-		return $this->get(
-			'projects/' . $project_id . '/files/' . $file_id,
-			array(
-				'headers' => array(
-					'Accept' => 'application/vnd.gathercontent.v2+json',
-				),
-			)
-		);
-	}
-
-	/**
 	 * GC V2 API request to get the results from the "/projects/{project_id}/templates" endpoint.
 	 *
 	 * @since  3.0.0
@@ -582,27 +539,6 @@ class API extends Base {
 	}
 
 	/**
-	 * GC V2 API request to update alt text of an file from the "projects/{project_id}/files/{file_id}" endpoint.
-	 *
-	 * @since  3.0.0
-	 *
-	 * @param  int $component_uuid Component UUid.
-	 * @return mixed              Results of request.
-	 */
-	public function update_alt_text( $project_id, $file_id, $alt_text ) {
-
-		$args = array(
-			'body'    => compact( 'alt_text' ),
-			'headers' => array(
-				'Accept'       => 'application/vnd.gathercontent.v0.6+json',
-				'content-type' => 'application/x-www-form-urlencoded',
-			),
-		);
-
-		return $this->put( 'projects/' . $project_id . '/files/' . $file_id, $args );
-	}
-
-	/**
 	 * POST request helper, which assumes a data parameter in response.
 	 *
 	 * @since  3.0.0
@@ -618,45 +554,27 @@ class API extends Base {
 	}
 
 	/**
-	 * PUT request helper, which assumes a data parameter in response.
-	 *
-	 * @since  3.0.0
-	 *
-	 * @see    API::cache_get() For additional information
-	 *
-	 * @param  string $endpoint GatherContent API endpoint to retrieve.
-	 * @param  array  $args     Optional. Request arguments. Default empty array.
-	 * @return mixed            The response.
-	 */
-	public function put( $endpoint, $args = array() ) {
-		return $this->request( $endpoint, $args, 'PUT' );
-	}
-
-
-	/**
 	 * GET request helper which assumes caching, and assumes a data parameter in response.
 	 *
 	 * @since  3.0.0
 	 *
 	 * @see    API::cache_get() For additional information
 	 *
-	 * @param  string $endpoint       GatherContent API endpoint to retrieve.
-	 * @param  array  $args           Optional. Request arguments. Default empty array.
-	 * @param  string $response       Optional. expected response. Default empty
-	 * @param  array  $query_params   Optional. Request query parameters to append to the URL. Default empty array.
+	 * @param  string $endpoint         GatherContent API endpoint to retrieve.
+	 * @param  array  $args             Optional. Request arguments. Default empty array.
+	 * @param  string $response_type    Optional. expected response. Default empty
+	 * @param  array  $query_params     Optional. Request query parameters to append to the URL. Default empty array.
 	 *
 	 * @return mixed  The response.
 	 */
-	public function get( $endpoint, $args = array(), $response = '', $query_params = array() ) {
+	public function get( $endpoint, $args = array(), $response_type = '', $query_params = array() ) {
 
 		$data = $this->cache_get( $endpoint, DAY_IN_SECONDS, $args, 'GET', $query_params );
 
-		if ( $response == 'full_data' ) {
+		if ( $response_type == 'full_data' ) {
 			return $data;
-		} else {
-			if ( isset( $data->data ) ) {
-				return $data->data;
-			}
+		} elseif ( isset( $data->data ) ) {
+			return $data->data;
 		}
 
 		return false;
@@ -680,6 +598,11 @@ class API extends Base {
 
 		$trans_key = 'gctr-' . md5( serialize( compact( 'endpoint', 'args', 'method', 'query_params' ) ) );
 		$response  = get_transient( $trans_key );
+
+		if ( $this->only_cached ) {
+			$this->only_cached = false;
+			return $response;
+		}
 
 		if ( ! $response || $this->disable_cache || $this->reset_request_cache ) {
 
@@ -747,12 +670,7 @@ class API extends Base {
 			}
 		}
 
-		if ( $method == 'PUT' ) {
-			$args['method'] = 'PUT';
-			$response       = wp_remote_request( $uri, $args );
-		} else {
-			$response = $this->http->{strtolower( $method )}( $uri, $args );
-		}
+		$response = $this->http->{strtolower( $method )}( $uri, $args );
 
 		if ( is_wp_error( $response ) ) {
 			return $response;
