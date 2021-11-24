@@ -5,7 +5,6 @@ use GatherContent\Importer\Utils;
 use GatherContent\Importer\Settings\Setting;
 use GatherContent\Importer\Settings\Form_Section;
 use GatherContent\Importer\Post_Types\Template_Mappings;
-use GatherContent\Importer\General;
 
 /**
  * Class for the template mappings creation wizard.

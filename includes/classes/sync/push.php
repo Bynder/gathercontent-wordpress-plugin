@@ -223,7 +223,6 @@ class Push extends Base {
 		} else {
 
 			$content = $this->get_structured_array( $config );
-			$content = $this->restructure_content( $content );
 
 			if ( $this->item_id ) {
 				$result = $this->api->update_item( $this->item_id, $content );
@@ -347,10 +346,10 @@ class Push extends Base {
 			if ( empty( $this->item_config[ $index ]->elements ) ) {
 				unset( $this->item_config[ $index ] );
 			}
-			$this->item_config = $this->restructure_items_config( $this->item_config );
+
 		}
 
-		// $this->remove_unknowns();
+		$this->remove_unknowns();
 
 		return $this->item_config;
 	}
@@ -654,81 +653,6 @@ class Push extends Base {
 		// We don't necessarily want strict comparison here.
 		return $pre_options != $post_options;
 		// @codingStandardsIgnoreEnd
-	}
-	/**
-	 * Restructure the item content array for repeatable field and component support,
-	 *
-	 * @since  3.0.0
-	 *
-	 * @param  $content .
-	 *
-	 * @return array             return restructure content array.
-	 */
-	function restructure_content( $content ) {
-
-		$restructureArray = array();
-		$repeatingFields  = array();
-		foreach ( $content as $key => $value ) {
-			$realUuidArray = explode( '-', $key );
-
-			if ( is_numeric( end( $realUuidArray ) ) ) {
-
-				array_pop( $realUuidArray );
-
-				$key = implode( '-', $realUuidArray );
-				if ( $value != '' ) {
-					$repeatingFields[ $key ][] = $value;
-				}
-			} else {
-				$restructureArray[ $key ] = $value;
-			}
-		}
-
-		return $content = (object) array_merge( $restructureArray, $repeatingFields );
-	}
-
-	/**
-	 * Restructure the item items config array for repeatable field and component support,
-	 *
-	 * @since  3.0.0
-	 *
-	 * @param  $items_config .
-	 *
-	 * @return array             return restructure items config array.
-	 */
-
-	function restructure_items_config( $items_config ) {
-		$elements = $items_config[0]->elements;
-
-		$restructureArray = array();
-		$repeatingFields  = array();
-
-		foreach ( $elements as $item ) {
-			$nameArray  = explode( '-', $item->name );
-			$labelArray = explode( '-', $item->label );
-			if ( is_numeric( end( $nameArray ) ) ) {
-				array_pop( $nameArray );
-				array_pop( $labelArray );
-				$item->name  = implode( '-', $nameArray );
-				$item->label = implode( '-', $labelArray );
-				if ( $item->value != '' ) {
-					$repeatingFields[ $item->name ][] = $item->value;
-				}
-			}
-		}
-
-				/** Answer Code begins here */
-		$elements = array_intersect_key( $elements, array_unique( array_column( $elements, 'name' ) ) );
-
-		/** Answer Code ends here */
-		foreach ( $elements as $item ) {
-			if ( @$repeatingFields[ $item->name ] ) {
-				$item->value = $repeatingFields[ $item->name ];
-			}
-		}
-		$items_config[0]->elements = $elements;
-
-		return $content = json_decode( json_encode( $items_config ) );
 	}
 
 }
