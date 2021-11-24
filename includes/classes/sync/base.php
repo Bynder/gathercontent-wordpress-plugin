@@ -404,20 +404,15 @@ abstract class Base extends Plugin_Base {
 			case 'attachment':
 				$element_values = is_array( $element->value ) ? $element->value : array();
 				$file_values    = array();
-				error_log( print_r( $element->value, true ) );
-				error_log( print_r( $this->item->files, true ) );
 
 				foreach ( $element_values as $value ) {
 					$file = array_values( wp_list_filter( $this->item->files, array( 'file_id' => $value->file_id ) ) );
-					error_log( print_r( $file, true ) );
-					error_log( $value->file_id );
 
 					if ( count( $file ) > 0 ) {
 						$file_values[] = $file[0];
 					}
 				}
 
-				error_log( print_r( $file_values, true ) );
 				$val = $file_values;
 				break;
 
@@ -467,7 +462,42 @@ abstract class Base extends Plugin_Base {
 			'plain_text' => (bool) $is_plain,
 			'value'      => $field_value && $is_repeatable ? wp_json_encode( $field_value ) : $field_value,
 			'repeatable' => (bool) $is_repeatable,
+			'options'    => $this->format_options_data( $metadata, $field_value ),
 		);
+	}
+
+	/**
+	 * Format the element's options
+	 *
+	 * @since  3.2.0
+	 *
+	 * @param mixed $metadata object.
+	 * @param mixed $field_value object.
+	 *
+	 * @return array
+	 */
+	protected function format_options_data( $metadata, $field_value ): array {
+
+		if ( ! is_object( $metadata ) ) {
+			return array();
+		}
+
+		$options      = array();
+		$options_meta = isset( $metadata->choice_fields ) ? $metadata->choice_fields->options : array();
+
+		foreach ( $options_meta as $option ) {
+			$matched_option = wp_list_filter( $field_value, array( 'id' => $option->optionId ) );
+
+			if ( count( $matched_option ) > 0 ) {
+				$options[] = (object) array(
+					'name'     => $option->optionId,
+					'label'    => $option->label,
+					'selected' => true,
+				);
+			}
+		}
+
+		return $options;
 	}
 
 	/**
