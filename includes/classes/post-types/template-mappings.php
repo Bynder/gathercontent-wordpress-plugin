@@ -145,7 +145,6 @@ class Template_Mappings extends Base {
 		$columns['account']  = __( 'Account slug', 'gathercontent-import' );
 		$columns['project']  = __( 'Project id', 'gathercontent-import' );
 		$columns['template'] = __( 'Template id', 'gathercontent-import' );
-		$columns['alt_text'] = __( 'Alt Text Sync', 'gathercontent-import' );
 
 		return $columns;
 	}
@@ -253,7 +252,6 @@ class Template_Mappings extends Base {
 				'account'  => get_post_meta( $post_id, '_gc_account', 1 ),
 				'project'  => get_post_meta( $post_id, '_gc_project', 1 ),
 				'template' => get_post_meta( $post_id, '_gc_template', 1 ),
-				'alt_text' => 'Sync Alt Text',
 				'base_url' => '',
 			);
 
@@ -280,7 +278,6 @@ class Template_Mappings extends Base {
 				echo '<strong>' . __( 'Account:', 'gathercontent-import' ) . '</strong> <a href="' . esc_url( $account ) . '" target="_blank">' . esc_url( $account ) . '</a>';
 			}
 
-			echo '<strong>' . __( 'Alt Text Sync":', 'gathercontent-import' ) . '</strong> ' . get_post_meta( get_the_id(), '_gc_alt_text"', 1 );
 			echo '</p>';
 
 			$content = $post->post_content;
