@@ -139,52 +139,6 @@ class Push extends Base {
 		return $this->maybe_do_item_update( $config_update );
 	}
 
-	private function get_structured_array( $config ) {
-		$structured_content = array();
-
-		foreach ( $config as $tab ) {
-			foreach ( $tab->elements as $element ) {
-				switch ( $element->type ) {
-					case 'text':
-						$structured_content[ $element->name ] = $element->value;
-						break;
-					case 'choice_radio':
-						$selected_radios = array();
-						foreach ( $element->options as $option ) {
-							if ( $option->selected ) {
-								$radio = array(
-									'id' => $option->name,
-								);
-
-								if ( $option->value ) {
-									$radio['value'] = $option->value;
-								}
-								$selected_radios[] = $radio;
-							}
-						}
-
-						$structured_content[ $element->name ] = $selected_radios;
-						break;
-					case 'choice_checkbox':
-						$selected_checkboxes = array();
-						foreach ( $element->options as $option ) {
-							if ( $option->selected ) {
-								$selected_checkboxes[] = array(
-									'id' => $option->name,
-								);
-
-							}
-						}
-
-						$structured_content[ $element->name ] = $selected_checkboxes;
-						break;
-				}
-			}
-		}
-
-		return $structured_content;
-	}
-
 	/**
 	 * Pushes WP post to GC.
 	 *
@@ -201,40 +155,24 @@ class Push extends Base {
 		// Get our initial config reference.
 		$config = json_decode( $this->config );
 
-		// And update it with the new values.
-		foreach ( $update as $index => $tab ) {
-			foreach ( $tab->elements as $element_index => $element ) {
-				$config[ $index ]->elements[ $element_index ] = $element;
-			}
+		// And update the content with the new values.
+		foreach ( $update as $updated_element ) {
+			$element_id                   = $updated_element->name;
+			$config->content->$element_id = $updated_element->value;
 		}
 
-		if ( ! $this->mapping->data( 'structure_uuid' ) ) {
-
-			if ( $this->item_id ) {
-				$result = $this->api->save_item( $this->item_id, $config );
-			} else {
-				$result = $this->api->create_item(
-					$this->mapping->get_project(),
-					$this->mapping->get_template(),
-					$this->post->post_title,
-					$config
-				);
-			}
+		if ( $this->item_id ) {
+			$result = $this->api->update_item( $this->item_id, $config );
 		} else {
-
-			$content = $this->get_structured_array( $config );
-
-			if ( $this->item_id ) {
-				$result = $this->api->update_item( $this->item_id, $content );
-			} else {
-				$result = $this->api->create_structured_item(
-					$this->mapping->get_project(),
-					$this->mapping->get_template(),
-					$this->post->post_title,
-					$content
-				);
-			}
+			$result = $this->api->create_item(
+				$this->mapping->get_project(),
+				$this->mapping->get_template(),
+				$this->post->post_title,
+				$config
+			);
 		}
+
+		// todo: figure out the structure_uuid scenario which I removed from the old code, because there's no way that scenario can regenerated (@ shehrozsheikh@zao [2021-25-11])
 
 		if ( $result && ! is_wp_error( $result ) ) {
 			if ( ! $this->item_id ) {
@@ -278,9 +216,11 @@ class Push extends Base {
 			$item = parent::set_item( $item_id );
 		}
 
-		$this->item_config = $item->config;
+		$this->item_config = $item;
+		$this->item        = $item;
 
-		$this->config = wp_json_encode( $item->config );
+		// storing it to compare the changed data later
+		$this->config = wp_json_encode( $item );
 
 	}
 
@@ -304,47 +244,59 @@ class Push extends Base {
 	 * @return array Modified item config array on success.
 	 */
 	public function loop_item_elements_and_map() {
+
 		if ( empty( $this->item_config ) ) {
 			return false;
 		}
 
-		foreach ( $this->item_config as $index => $tab ) {
-			if ( ! isset( $tab->elements ) || ! $tab->elements ) {
+		$structure_groups  = isset( $this->item_config->related ) ? $this->item_config->related->structure : $this->item_config->structure->groups;
+		$this->item_config = array();
+
+		if ( ! isset( $structure_groups ) || empty( $structure_groups ) ) {
+			return false;
+		}
+
+		// to handle multiple tabs
+		foreach ( $structure_groups as $index => $tab ) {
+			if ( ! isset( $tab->fields ) || ! $tab->fields ) {
 				continue;
 			}
 
-			foreach ( $tab->elements as $element_index => $this->element ) {
-				if ( ! empty( $this->element->value ) ) {
-					$this->element->value = self::remove_zero_width( $this->element->value );
-				}
+			// to handle fields in a tab
+			foreach ( $tab->fields as $element_index => $field ) {
 
-				$source      = $this->mapping->data( $this->element->name );
-				$source_type = isset( $source['type'] ) ? $source['type'] : '';
-				$source_key  = isset( $source['value'] ) ? $source['value'] : '';
+				// to handle components with multiple fields inside
+				$fields_data    = $field->component->fields ?? array( $field );
+				$component_uuid = 'component' === $field->field_type ? $field->uuid : '';
 
-				if ( $source_type ) {
-					if ( ! isset( $this->done[ $source_type ] ) ) {
-						$this->done[ $source_type ] = array();
+				foreach ( $fields_data as $field_data ) {
+
+					$this->element = (object) $this->format_element_data( $field_data, $component_uuid );
+
+					$source      = $this->mapping->data( $this->element->name );
+					$source_type = isset( $source['type'] ) ? $source['type'] : '';
+					$source_key  = isset( $source['value'] ) ? $source['value'] : '';
+
+					if ( $source_type ) {
+						if ( ! isset( $this->done[ $source_type ] ) ) {
+							$this->done[ $source_type ] = array();
+						}
+
+						if ( ! isset( $this->done[ $source_type ][ $source_key ] ) ) {
+							$this->done[ $source_type ][ $source_key ] = array();
+						}
+
+						$this->done[ $source_type ][ $source_key ][ $index . ':' . $element_index ] = (array) $this->element;
 					}
 
-					if ( ! isset( $this->done[ $source_type ][ $source_key ] ) ) {
-						$this->done[ $source_type ][ $source_key ] = array();
+					if (
+						$source
+						&& isset( $source['type'], $source['value'] )
+						&& $this->set_values_from_wp( $source_type, $source_key )
+					) {
+						$this->item_config[] = $this->element;
 					}
-
-					$this->done[ $source_type ][ $source_key ][ $index . ':' . $element_index ] = (array) $this->element;
 				}
-
-				if (
-					! $source
-					|| ! isset( $source['type'], $source['value'] )
-					|| ! $this->set_values_from_wp( $source_type, $source_key )
-				) {
-					unset( $this->item_config[ $index ]->elements[ $element_index ] );
-				}
-			}
-
-			if ( empty( $this->item_config[ $index ]->elements ) ) {
-				unset( $this->item_config[ $index ] );
 			}
 		}
 
@@ -443,8 +395,9 @@ class Push extends Base {
 	protected function set_post_field_value( $post_column ) {
 		$updated  = false;
 		$el_value = $this->element->value;
-		$value    = ! empty( $this->post->{$post_column} ) ? self::remove_zero_width( $this->post->{$post_column} ) : false;
-		$value    = apply_filters( "gc_get_{$post_column}", $value, $this );
+
+		$value = ! empty( $this->post->{$post_column} ) ? self::remove_zero_width( $this->post->{$post_column} ) : false;
+		$value = apply_filters( "gc_get_{$post_column}", $value, $this );
 
 		// Make element value match the WP versions formatting, to see if they are equal.
 		switch ( $post_column ) {
