@@ -408,8 +408,9 @@ abstract class Base extends Plugin_Base {
 				foreach ( $element_values as $value ) {
 					$file = array_values( wp_list_filter( $this->item->files, array( 'file_id' => $value->file_id ) ) );
 
-					if ( count( $file ) > 0 ) {
-						$file_values[] = $file[0];
+					if ( count( $file ) > 0 && isset( $file[0] ) && is_object( $file[0] ) ) {
+						$file[0]->alt_text = $value->alt_text;
+						$file_values[]     = $file[0];
 					}
 				}
 

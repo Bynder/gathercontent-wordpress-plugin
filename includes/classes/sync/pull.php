@@ -842,7 +842,7 @@ class Pull extends Base {
 		$attachment = \GatherContent\Importer\get_post_by_item_id( $media->id, array( 'post_status' => 'inherit' ) );
 
 		if ( ! $attachment ) {
-			return $this->sideload_file( $media->id, $media->filename, $post_id );
+			return $this->sideload_file( $media->filename, $media->download_url, $post_id, $media->alt_text );
 		}
 
 		$attach_id = $attachment->ID;
@@ -859,7 +859,7 @@ class Pull extends Base {
 				$replace_data = apply_filters( 'gc_replace_attachment_data_on_update', false, $attachment );
 
 				// @todo How to handle failures?
-				$attach_id = $this->sideload_and_update_attachment( $media->id, $media->filename, $attachment, $replace_data );
+				$attach_id = $this->sideload_and_update_attachment( $media->id, $media->filename, $media->download_url, $attachment, $replace_data, $media->alt_text );
 			}
 		}
 
@@ -869,14 +869,15 @@ class Pull extends Base {
 	/**
 	 * Downloads an image from the specified URL and attaches it to a post.
 	 *
-	 * @param string $file_url  The URL of the image to download.
-	 * @param string $file_name The Name of the image file.
-	 * @param int    $post_id   The post ID the media is to be associated with.
+	 * @param string      $file_name The Name of the image file.
+	 * @param string      $download_url The download URL of the image.
+	 * @param int         $post_id   The post ID the media is to be associated with.
+	 * @param string|null $alt_text Optional alt text to add to the image.
 	 * @return string|WP_Error  Populated HTML img tag on success, WP_Error object otherwise.
 	 */
-	protected function sideload_file( $file_url, $file_name, $post_id ) {
-		if ( ! empty( $file_url ) ) {
-			$file_array = $this->tmp_file( $file_url, $file_name );
+	protected function sideload_file( $file_name, $download_url, $post_id, $alt_text = '' ) {
+		if ( ! empty( $download_url ) ) {
+			$file_array = $this->tmp_file( $file_name, $download_url );
 
 			if ( is_wp_error( $file_array ) ) {
 				return $file_array;
@@ -893,6 +894,7 @@ class Pull extends Base {
 				return $id;
 			}
 
+			update_post_meta( $id, '_wp_attachment_image_alt', $alt_text );
 			$src = wp_get_attachment_url( $id );
 		}
 
@@ -905,16 +907,17 @@ class Pull extends Base {
 	 *
 	 * @since  3.0.0
 	 *
-	 * @param  string $file_url     The file URL.
-	 * @param  string $file_name    The file name.
-	 * @param  object $attachment   The attachment post object.
-	 * @param  bool   $replace_data Whether to replace attachement title/content.
-	 *                              Default false.
+	 * @param  string      $file_name    The file name.
+	 * @param  string      $download_url    The download url.
+	 * @param  object      $attachment   The attachment post object.
+	 * @param  bool        $replace_data Whether to replace attachement title/content.
+	 *                                   Default false.
+	 * @param string|null $alt_text Optional alt text to add to the image.
 	 *
 	 * @return int                  The sideloaded attachment ID.
 	 */
-	protected function sideload_and_update_attachment( $file_url, $file_name, $attachment, $replace_data = false ) {
-		if ( ! isset( $attachment->ID ) || empty( $file_url ) ) {
+	protected function sideload_and_update_attachment( $file_name, $download_url, $attachment, $replace_data = false, $alt_text = '' ) {
+		if ( ! isset( $attachment->ID ) || empty( $download_url ) ) {
 			return new WP_Error( 'sideload_and_update_attachment_error' );
 		}
 
@@ -927,7 +930,7 @@ class Pull extends Base {
 			? $attachment->post_date
 			: current_time( 'mysql' );
 
-		$file_array = $this->tmp_file( $file_url, $file_name );
+		$file_array = $this->tmp_file( $file_name, $download_url );
 
 		$file = wp_handle_sideload( $file_array, array( 'test_form' => false ), $time );
 
@@ -969,6 +972,7 @@ class Pull extends Base {
 			@unlink($file_array['tmp_name']);
 			// @codingStandardsIgnoreEnd
 		} else {
+			update_post_meta( $id, '_wp_attachment_image_alt', $alt_text );
 			wp_update_attachment_metadata( $id, wp_generate_attachment_metadata( $id, $_file ) );
 		}
 
@@ -980,20 +984,21 @@ class Pull extends Base {
 	 *
 	 * @since  3.0.0
 	 *
-	 * @param  string $file_id  The file to download.
 	 * @param  string $file_name The name of the file being downloaded.
+	 * @param  string $download_url The download URL of the file.
 	 *
 	 * @return array              The temporary file array.
 	 */
-	protected function tmp_file( $file_id, $file_name ) {
-		require_once ABSPATH . '/wp-admin/includes/file.php';
-		require_once ABSPATH . '/wp-admin/includes/media.php';
-		require_once ABSPATH . '/wp-admin/includes/image.php';
+	protected function tmp_file( $file_name, $download_url ) {
+
+		if ( ! function_exists( 'download_url' ) ) {
+			require_once ABSPATH . 'wp-admin/includes/file.php';
+		}
 
 		$file_array = array();
 
 		// Download file to temp location.
-		$file_array['tmp_name'] = $this->api->get_file( $file_id );
+		$file_array['tmp_name'] = download_url( $download_url );
 
 		// If error storing temporarily, return the error.
 		if ( is_wp_error( $file_array['tmp_name'] ) ) {

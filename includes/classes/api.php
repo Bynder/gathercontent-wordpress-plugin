@@ -264,32 +264,6 @@ class API extends Base {
 	}
 
 	/**
-	 * GC API request to get download a file from "/files/<FILE_ID>/download" endpoint.
-	 *
-	 * @since  3.0.0
-	 *
-	 * @link https://docs.gathercontent.com/reference#get-filesfile_iddownload
-	 *
-	 * @param  int $file_id File ID.
-	 * @return mixed          Results of request.
-	 */
-	public function get_file( $file_id ) {
-		$tmpfname = wp_tempnam();
-		if ( ! $tmpfname ) {
-			return new WP_Error( 'http_no_file', __( 'Could not create Temporary file.' ) );
-		}
-
-		$response = $this->get(
-			'files/' . $file_id . '/download',
-			array(
-				'stream'   => true,
-				'filename' => $tmpfname,
-			)
-		);
-		return $tmpfname;
-	}
-
-	/**
 	 * GC V2 API request to get the results from the "/projects/{project_id}/templates" endpoint.
 	 *
 	 * @since  3.0.0
