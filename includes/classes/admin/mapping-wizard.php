@@ -516,7 +516,7 @@ class Mapping_Wizard extends Base {
 			)
 		);
 
-		if ( isset( $features['editor:new'] ) ) {
+		if ( isset( $features['editor:new'] ) && isset($template->data)) {
 			$structure_uuid = $template->data->structure_uuid;
 		}
 
