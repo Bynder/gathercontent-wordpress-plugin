@@ -134,7 +134,7 @@ class Single extends Post_Base {
 			),
 			'tmpl-gc-metabox-statuses' => array(),
 			'tmpl-gc-mapping-metabox'  => array(
-				'message' => sprintf( esc_html__( 'This %s does not have an associated item or Template Mapping.', 'gathercontent-importer' ), $this->post_type_label ),
+				'message' => sprintf( esc_html__( 'This %s does not have an associated item or Template Mapping. (Please make sure that you have added a mapping in GatherContent > New Mapping)', 'gathercontent-importer' ), $this->post_type_label ),
 			),
 			'tmpl-gc-status-select2'   => array(),
 			'tmpl-gc-select2-item'     => array(),

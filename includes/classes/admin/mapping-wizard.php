@@ -507,16 +507,9 @@ class Mapping_Wizard extends Base {
 		$account  = $this->api()->get_account( absint( $account_id ) );
 		$features = array_flip( $account->features );
 
-		$template = $this->api()->get_template(
-			absint( $this->_get_val( 'template' ) ),
-			array(
-				'headers' => array(
-					'Accept' => 'application/vnd.gathercontent.v2+json',
-				),
-			)
-		);
+		$template = $this->api()->get_template( absint( $this->_get_val( 'template' ) ) );
 
-		if ( isset( $features['editor:new'] ) && isset($template->data)) {
+		if ( isset( $features['editor:new'] ) && isset( $template->data ) ) {
 			$structure_uuid = $template->data->structure_uuid;
 		}
 

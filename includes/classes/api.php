@@ -295,8 +295,16 @@ class API extends Base {
 	 * @param  int $template_id Template ID.
 	 * @return mixed              Results of request.
 	 */
-	public function get_template( $template_id, $args = array() ) {
-		$response = $this->get( 'templates/' . $template_id, $args, 'full_data' );
+	public function get_template( $template_id ) {
+		$response = $this->get(
+			'templates/' . $template_id,
+			array(
+				'headers' => array(
+					'Accept' => 'application/vnd.gathercontent.v2+json',
+				),
+			),
+			'full_data'
+		);
 		return $response;
 	}
 
@@ -337,33 +345,6 @@ class API extends Base {
 	}
 
 	/**
-	 * GC API request to save an item.
-	 *
-	 * /items/<ITEM_ID>/save
-	 *
-	 * @since 3.0.0
-	 *
-	 * @link https://gathercontent.com/developers/items/post-items-by-id/
-	 *
-	 * @param  int   $item_id GatherContent Item Id.
-	 * @param  array $config  Data to save.
-	 * @return bool           If request was successful.
-	 */
-	public function save_item( $item_id, $config ) {
-
-		$response = $this->post(
-			'items/' . absint( $item_id ) . '/save',
-			array(
-				'body' => array(
-					'config' => base64_encode( wp_json_encode( $config ) ),
-				),
-			)
-		);
-
-		return is_wp_error( $response ) ? $response : 202 === $response['response']['code'];
-	}
-
-	/**
 	 * GC V2 API request to update an items content.
 	 *
 	 * /items/<ITEM_ID>/content
@@ -379,7 +360,7 @@ class API extends Base {
 	public function update_item( $item_id, $content ) {
 
 		$args = array(
-			'body'    => wp_json_encode( compact( 'content' ) ),
+			'body'    => wp_json_encode( $content ),
 			'headers' => array(
 				'Accept'       => 'application/vnd.gathercontent.v2+json',
 				'Content-Type' => 'application/json',
