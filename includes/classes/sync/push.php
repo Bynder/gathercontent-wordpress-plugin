@@ -158,23 +158,22 @@ class Push extends Base {
 
 		// And update the content with the new values.
 		foreach ( $update as $updated_element ) {
-			$element_id                   = $updated_element->name;
+			$element_id = $updated_element->name;
 
 			// handle repeatable elements because we stored them in JSON format earlier and GC requires it in array format
-			if( $updated_element->repeatable ) {
+			if ( $updated_element->repeatable ) {
 
-				$repeatable_value = ! empty ($updated_element->value) ? @json_decode( $updated_element->value, true ) : $updated_element->value;
+				$repeatable_value = ! empty( $updated_element->value ) ? @json_decode( $updated_element->value, true ) : $updated_element->value;
 
-				if (is_array($repeatable_value)) {
+				if ( is_array( $repeatable_value ) ) {
 					$updated_element->value = $repeatable_value;
 				} else {
 					$updated_element->value = array();
 				}
-
 			}
 
 			// handle new item because we don't have content object for it
-			if( ! isset( $config->content )) {
+			if ( ! isset( $config->content ) ) {
 				$config->content = (object) array();
 			}
 
@@ -223,7 +222,7 @@ class Push extends Base {
 	 * @since 3.0.0
 	 *
 	 * @param integer $item_id Item id.
-	 * @param  bool $exclude_status set this to true to avoid appending status data
+	 * @param  bool    $exclude_status set this to true to avoid appending status data
 	 *
 	 * @throws Exception On failure.
 	 *
@@ -271,7 +270,7 @@ class Push extends Base {
 			return false;
 		}
 
-		$structure_groups  = isset( $this->item_config->related ) ? $this->item_config->related->structure->groups : $this->item_config->structure->groups;
+		$structure_groups = isset( $this->item_config->related ) ? $this->item_config->related->structure->groups : $this->item_config->structure->groups;
 
 		$this->item_config = array();
 

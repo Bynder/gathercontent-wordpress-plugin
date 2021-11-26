@@ -240,14 +240,14 @@ abstract class Base extends Plugin_Base {
 	 *
 	 * @since 3.0.0
 	 *
-	 * @param int $item_id Item id.
+	 * @param int  $item_id Item id.
 	 * @param  bool $exclude_status set this to true to avoid appending status data
 	 *
 	 * @throws Exception On failure.
 	 *
 	 * @return object Item object.
 	 */
-	protected function set_item( $item_id, $exclude_status = false) {
+	protected function set_item( $item_id, $exclude_status = false ) {
 		$this->item = $this->api->uncached()->get_item( $item_id, $exclude_status );
 
 		if ( ! isset( $this->item->id ) ) {
@@ -463,7 +463,15 @@ abstract class Base extends Plugin_Base {
 			'type'       => $field->field_type,
 			'label'      => $field->label,
 			'plain_text' => (bool) $is_plain,
-			'value'      => ! empty( $field_value ) && $is_repeatable ? wp_json_encode( array_values( array_filter($field_value, function($val) { return trim($val) !== ''; }) )) : $field_value,
+			'value'      => ! empty( $field_value ) && $is_repeatable ? wp_json_encode(
+				array_values(
+					array_filter(
+						$field_value,
+						function( $val ) {
+							return trim( $val ) !== ''; }
+					)
+				)
+			) : $field_value,
 			'repeatable' => (bool) $is_repeatable,
 			'options'    => $this->format_selected_options_data( $metadata, $field_value ),
 		);
