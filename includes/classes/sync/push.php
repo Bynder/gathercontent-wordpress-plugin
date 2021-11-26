@@ -118,19 +118,20 @@ class Push extends Base {
 
 		$this->check_mapping_data( $this->mapping );
 
-		$this->set_item( \GatherContent\Importer\get_post_item_id( $this->post->ID ) );
+		$this->set_item( \GatherContent\Importer\get_post_item_id( $this->post->ID ), true );
 
 		$config_update = $this->map_wp_data_to_gc_data();
 
 		// No updated data, so bail.
 		if ( empty( $config_update ) ) {
+
 			throw new Exception(
 				sprintf( __( 'No update data found for that post ID: %d', 'gathercontent-import' ), $this->post->ID ),
 				__LINE__,
 				array(
 					'post_id'    => $this->post->ID,
 					'mapping_id' => $this->mapping->ID,
-					'item_id'    => $this->item->id,
+					'item_id'    => $this->item->id ?? 0,
 				)
 			);
 		}
@@ -158,6 +159,26 @@ class Push extends Base {
 		// And update the content with the new values.
 		foreach ( $update as $updated_element ) {
 			$element_id                   = $updated_element->name;
+
+			// handle repeatable elements because we stored them in JSON format earlier and GC requires it in array format
+			if( $updated_element->repeatable ) {
+
+				$repeatable_value = ! empty ($updated_element->value) ? @json_decode( $updated_element->value, true ) : $updated_element->value;
+
+				if (is_array($repeatable_value)) {
+					$updated_element->value = $repeatable_value;
+				} else {
+					$updated_element->value = array();
+				}
+
+			}
+
+			// handle new item because we don't have content object for it
+			if( ! isset( $config->content )) {
+				$config->content = (object) array();
+			}
+
+			// finally push it to the content array if the data was changed
 			$config->content->$element_id = $updated_element->value;
 		}
 
@@ -168,7 +189,7 @@ class Push extends Base {
 				$this->mapping->get_project(),
 				$this->mapping->get_template(),
 				$this->post->post_title,
-				$config
+				$config->content
 			);
 		}
 
@@ -181,7 +202,7 @@ class Push extends Base {
 			}
 
 			// If item update was successful, re-fetch it from the API...
-			$this->item = $this->api->uncached()->get_item( $this->item_id );
+			$this->item = $this->api->uncached()->get_item( $this->item_id, true );
 
 			// and update the meta.
 			\GatherContent\Importer\update_post_item_meta(
@@ -202,18 +223,19 @@ class Push extends Base {
 	 * @since 3.0.0
 	 *
 	 * @param integer $item_id Item id.
+	 * @param  bool $exclude_status set this to true to avoid appending status data
 	 *
 	 * @throws Exception On failure.
 	 *
 	 * @return $item
 	 */
-	protected function set_item( $item_id ) {
+	protected function set_item( $item_id, $exclude_status = false ) {
 		$this->item_id = $item_id;
 
 		if ( ! $item_id ) {
 			$item = $this->api->get_template( $this->mapping->get_template() );
 		} else {
-			$item = parent::set_item( $item_id );
+			$item = parent::set_item( $item_id, $exclude_status );
 		}
 
 		$this->item_config = $item;
@@ -249,7 +271,8 @@ class Push extends Base {
 			return false;
 		}
 
-		$structure_groups  = isset( $this->item_config->related ) ? $this->item_config->related->structure : $this->item_config->structure->groups;
+		$structure_groups  = isset( $this->item_config->related ) ? $this->item_config->related->structure->groups : $this->item_config->structure->groups;
+
 		$this->item_config = array();
 
 		if ( ! isset( $structure_groups ) || empty( $structure_groups ) ) {

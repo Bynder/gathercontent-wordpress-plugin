@@ -241,13 +241,14 @@ abstract class Base extends Plugin_Base {
 	 * @since 3.0.0
 	 *
 	 * @param int $item_id Item id.
+	 * @param  bool $exclude_status set this to true to avoid appending status data
 	 *
 	 * @throws Exception On failure.
 	 *
 	 * @return object Item object.
 	 */
-	protected function set_item( $item_id ) {
-		$this->item = $this->api->uncached()->get_item( $item_id );
+	protected function set_item( $item_id, $exclude_status = false) {
+		$this->item = $this->api->uncached()->get_item( $item_id, $exclude_status );
 
 		if ( ! isset( $this->item->id ) ) {
 			// @todo maybe check if error was temporary.
@@ -399,6 +400,7 @@ abstract class Base extends Plugin_Base {
 						$val[] = sanitize_text_field( $option->label );
 					}
 				}
+				$val = ! empty( $val ) ? wp_json_encode( $val ) : $val;
 				break;
 
 			case 'attachment':
@@ -453,7 +455,7 @@ abstract class Base extends Plugin_Base {
 		$field_name    = $field->uuid;
 		$is_repeatable = ( is_object( $metadata ) && isset( $metadata->repeatable ) ) ? $metadata->repeatable->isRepeatable : false;
 		$is_plain      = 'text' === $field->field_type && is_object( $metadata ) ? $metadata->is_plain : false;
-		$content       = $component_uuid ? ( $this->item->content->$component_uuid ?? null ) : $this->item->content;
+		$content       = isset( $this->item->content ) ? ( $component_uuid ? ( $this->item->content->$component_uuid ?? null ) : $this->item->content ) : null;
 		$field_value   = $content ? ( $content->$field_name ?? null ) : null;
 
 		return array(
@@ -461,14 +463,15 @@ abstract class Base extends Plugin_Base {
 			'type'       => $field->field_type,
 			'label'      => $field->label,
 			'plain_text' => (bool) $is_plain,
-			'value'      => $field_value && $is_repeatable ? wp_json_encode( $field_value ) : $field_value,
+			'value'      => ! empty( $field_value ) && $is_repeatable ? wp_json_encode( array_values( array_filter($field_value, function($val) { return trim($val) !== ''; }) )) : $field_value,
 			'repeatable' => (bool) $is_repeatable,
-			'options'    => $this->format_options_data( $metadata, $field_value ),
+			'options'    => $this->format_selected_options_data( $metadata, $field_value ),
 		);
 	}
 
 	/**
-	 * Format the element's options
+	 * Format the element's options.
+	 * This method only returns the selected options
 	 *
 	 * @since  3.2.0
 	 *
@@ -477,7 +480,7 @@ abstract class Base extends Plugin_Base {
 	 *
 	 * @return array
 	 */
-	protected function format_options_data( $metadata, $field_value ): array {
+	protected function format_selected_options_data( $metadata, $field_value ): array {
 
 		if ( ! is_object( $metadata ) ) {
 			return array();
