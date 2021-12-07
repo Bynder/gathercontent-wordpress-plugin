@@ -253,10 +253,6 @@ class Pull extends Base {
 			$post_data[ $key ] = 'gcinitial';
 		}
 
-		$files = $this->api->uncached()->get_item_files( $this->item->id );
-
-		$this->item->files = is_array( $files ) ? $files : array();
-
 		if ( $this->should_map_hierarchy( $post_data['post_type'] ) && isset( $this->item->position ) ) {
 			$post_data['menu_order'] = absint( $this->item->position );
 		}
@@ -797,15 +793,13 @@ class Pull extends Base {
 				\GatherContent\Importer\update_post_item_meta(
 					$attach_id,
 					array(
-						'user_id'    => $media->user_id,
-						'item_id'    => $media->item_id,
-						'field'      => $media->field,
-						'type'       => $media->type,
-						'url'        => $media->url,
-						'filename'   => $media->filename,
-						'size'       => $media->size,
-						'created_at' => isset( $media->created_at ) ? $media->created_at : $media->created_at,
-						'updated_at' => isset( $media->updated_at ) ? $media->updated_at : $media->updated_at,
+						'item_id'    	=> $this->item->id,
+						'download_url'  => $media->download_url,
+						'url'        	=> $media->url,
+						'filename'   	=> $media->filename,
+						'size'       	=> $media->size,
+						'created_at' 	=> isset( $media->created_at ) ? $media->created_at : $media->created_at,
+						'updated_at'	=> isset( $media->updated_at ) ? $media->updated_at : $media->updated_at,
 					)
 				);
 			}

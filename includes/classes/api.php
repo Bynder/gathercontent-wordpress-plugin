@@ -250,17 +250,31 @@ class API extends Base {
 	}
 
 	/**
-	 * GC API request to get the results from the "/items/<ITEM_ID>/files" endpoint.
+	 * GC V2 API request to get the files from the "/projects/{project_id}/files" endpoint.
 	 *
-	 * @since  3.0.0
+	 * @since  3.2.0
 	 *
-	 * @link https://gathercontent.com/developers/items/get-items-files/
+	 * @link https://docs.gathercontent.com/reference/listfiles
 	 *
-	 * @param  int $item_id Item ID.
+	 * @param  array $project_id required project_id to fetch the files.
+	 * @param  array $file_ids optional array to filter files with the project id.
+	 *
 	 * @return mixed          Results of request.
 	 */
-	public function get_item_files( $item_id ) {
-		return $this->get( 'items/' . $item_id . '/files' );
+	public function get_item_files( $project_id, $file_ids = [] ) {
+
+		if ( ! $project_id ) {
+			return array();
+		}
+
+		return $this->get(
+			'projects/' . $project_id . '/files' . ( ! empty($file_ids) ? '?file_id=' . implode(',', $file_ids) : ''),
+			array(
+				'headers' => array(
+					'Accept' => 'application/vnd.gathercontent.v2+json',
+				),
+			)
+		);
 	}
 
 	/**

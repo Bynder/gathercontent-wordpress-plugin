@@ -404,19 +404,14 @@ abstract class Base extends Plugin_Base {
 				break;
 
 			case 'attachment':
-				$element_values = is_array( $element->value ) ? $element->value : array();
-				$file_values    = array();
+				$val = array();
+				$element_value = is_array( $element->value ) ? $element->value : array();
+				$file_ids = $element_value ? array_map(function ($v) { return $v->file_id; }, $element_value) : array();
 
-				foreach ( $element_values as $value ) {
-					$file = array_values( wp_list_filter( $this->item->files, array( 'file_id' => $value->file_id ) ) );
-
-					if ( count( $file ) > 0 && isset( $file[0] ) && is_object( $file[0] ) ) {
-						$file[0]->alt_text = $value->alt_text;
-						$file_values[]     = $file[0];
-					}
+				if( $file_ids ) {
+					$files = $this->api->uncached()->get_item_files( $this->item->project_id, $file_ids );
+					$val = $files;
 				}
-
-				$val = $file_values;
 				break;
 
 			default:
