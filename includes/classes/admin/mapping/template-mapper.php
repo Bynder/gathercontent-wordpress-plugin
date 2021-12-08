@@ -334,7 +334,8 @@ class Template_Mapper extends Base {
 
 				// to handle components with multiple fields inside
 				$fields_data    = $field->component->fields ?? [$field];
-				$component_name = $field->field_type === self::COMPONENT_FIELD ? $field->label : '';
+				$component_id 	= self::COMPONENT_FIELD === $field->field_type ? $field->uuid : '';
+				$component_name = self::COMPONENT_FIELD === $field->field_type ? $field->label : '';
 				$metadata 		= $field->metadata;
 
 				$is_repeatable  = (is_object($metadata) && isset($metadata->repeatable)) ? $metadata->repeatable->isRepeatable : false;
@@ -345,7 +346,8 @@ class Template_Mapper extends Base {
 						$field_data,
 						$post_type,
 						$component_name,
-						$is_repeatable
+						$is_repeatable,
+						$component_id
 					);
 
 					if ($formatted_field) {
@@ -392,12 +394,15 @@ class Template_Mapper extends Base {
 	 * @param string|null $post_type
 	 * @param string $component_name
 	 * @param bool $is_repeatable
+	 * @param string|int $component_id optional
 	 *
 	 * @return null|mixed formatted field object.
 	 */
-	private function format_fields($field, $post_type, string $component_name = '', bool $is_repeatable = false) {
+	private function format_fields($field, $post_type, string $component_name = '', bool $is_repeatable = false, string $component_id = '') {
 
 		$field_type = $field->field_type ?? '';
+
+		$field->uuid .=  ( $component_id ?  '_component_' . $component_id : '' );
 
 		// exclude guidelines and section fields
 		if ( in_array($field_type, self::EXCLUDED_FIELDS) ) {
@@ -425,7 +430,7 @@ class Template_Mapper extends Base {
 
 		$field->is_repeatable 	= $is_repeatable;
 		$field->post_type		= $post_type;
-		$field->name 	      	= $field->uuid;
+		$field->name  			= $field->uuid;
 		$field->subtitle      	= $component_name ? "($component_name)" : "";
 
 		return $field;

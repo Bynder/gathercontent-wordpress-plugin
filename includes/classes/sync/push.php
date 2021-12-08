@@ -178,11 +178,21 @@ class Push extends Base {
 			}
 
 			// finally push it to the content array if the data was changed
-			$config->content->$element_id = $updated_element->value;
+			if ( $component_uuid = $updated_element->component_uuid ) {
+
+				if( ! isset( $config->content->$component_uuid )) {
+					$config->content->$component_uuid = (object) array();
+				}
+
+				$config->content->$component_uuid->$element_id = $updated_element->value;
+
+			} else {
+				$config->content->$element_id = $updated_element->value;
+			}
 		}
 
 		if ( $this->item_id ) {
-			$result = $this->api->update_item( $this->item_id, $config );
+			$result = $this->api->uncached()->update_item( $this->item_id, $config );
 		} else {
 			$result = $this->api->create_item(
 				$this->mapping->get_project(),
@@ -293,9 +303,13 @@ class Push extends Base {
 
 				foreach ( $fields_data as $field_data ) {
 
-					$this->element = (object) $this->format_element_data( $field_data, $component_uuid );
+					$this->element = (object) $this->format_element_data( $field_data, $component_uuid, false );
 
-					$source      = $this->mapping->data( $this->element->name );
+					if( $component_uuid ) {
+						$this->element->component_uuid = $component_uuid;
+					}
+
+					$source      = $this->mapping->data( $this->element->name . ( $component_uuid ?  '_component_' . $component_uuid : '' ) );
 					$source_type = isset( $source['type'] ) ? $source['type'] : '';
 					$source_key  = isset( $source['value'] ) ? $source['value'] : '';
 

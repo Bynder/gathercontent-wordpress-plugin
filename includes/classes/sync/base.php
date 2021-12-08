@@ -442,9 +442,10 @@ abstract class Base extends Plugin_Base {
 	 *
 	 * @param mixed       $field object.
 	 * @param string|null $component_uuid optional component uuid only if the field is component.
+	 * @param bool $append_component_id optional to append the component's id in the field, default is true
 	 * @return array
 	 */
-	protected function format_element_data( $field, $component_uuid = '' ): array {
+	protected function format_element_data( $field, $component_uuid = '', $append_component_id = true ): array {
 
 		$metadata      = $field->metadata;
 		$field_name    = $field->uuid;
@@ -454,18 +455,18 @@ abstract class Base extends Plugin_Base {
 		$field_value   = $content ? ( $content->$field_name ?? null ) : null;
 
 		return array(
-			'name'       => $field_name,
+			'name'       => $field_name . ( $append_component_id && $component_uuid ?  '_component_' . $component_uuid : '' ),
 			'type'       => $field->field_type,
 			'label'      => $field->label,
 			'plain_text' => (bool) $is_plain,
 			'value'      => ! empty( $field_value ) && $is_repeatable ? wp_json_encode(
-				array_values(
+				(is_array($field_value) ? array_values(
 					array_filter(
 						$field_value,
 						function( $val ) {
 							return trim( $val ) !== ''; }
 					)
-				)
+				) : $field_value)
 			) : $field_value,
 			'repeatable' => (bool) $is_repeatable,
 			'options'    => $this->format_selected_options_data( $metadata, $field_value ),
