@@ -797,11 +797,14 @@ class Pull extends Base {
 						'download_url'  => $media->download_url,
 						'url'        	=> $media->url,
 						'filename'   	=> $media->filename,
+						'file_id'   	=> $media->id,
 						'size'       	=> $media->size,
+						'alt_text'      => $media->alt_text,
 						'created_at' 	=> isset( $media->created_at ) ? $media->created_at : $media->created_at,
 						'updated_at'	=> isset( $media->updated_at ) ? $media->updated_at : $media->updated_at,
 					)
 				);
+				update_post_meta( $attach_id, '_wp_attachment_image_alt', $media->alt_text );
 			}
 		}
 

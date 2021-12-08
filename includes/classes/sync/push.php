@@ -393,16 +393,72 @@ class Push extends Base {
 				$updated = $this->set_meta_field_value( $source_key );
 				break;
 
-			/*
-			 * @todo determine if GC can accept file updates.
-			 * case 'wp-type-media':
-			 * 	$updated = $this->get_media_field_value( $source_key );
-			 * 	break;
-			 */
+			case 'wp-type-media':
+				$this->set_featured_image_alt( $source_key );
+				break;
+
 		}
 
 		return $updated;
 	}
+
+
+	/**
+	 * Updates the featured image alt_text if changed
+	 *
+	 * @since 3.2.0
+	 *
+	 * @param string $source_key source key.
+	 *
+	 * @return void
+	 */
+	protected function set_featured_image_alt( $source_key ) {
+
+		if( 'featured_image' !== $source_key ) {
+			return;
+		}
+
+		$attach_id = get_post_thumbnail_id( $this->post->ID );
+
+		if(! $attach_id ) {
+			return;
+		}
+
+		if ( $meta = \GatherContent\Importer\get_post_item_meta( $attach_id ) ) {
+
+			$old_alt_text 		= $meta['alt_text'] ?? '';
+			$updated_alt_text   = get_post_meta($attach_id, '_wp_attachment_image_alt', true);
+
+			if( $old_alt_text !== $updated_alt_text && isset( $meta['file_id'] ) ) {
+
+				$meta['alt_text'] = $updated_alt_text ?? '';
+
+				if( empty( $meta['alt_text'] ) ) {
+					return;
+				}
+
+				$result = $this->api->update_file_meta(
+					$this->mapping->get_project(),
+					$meta['file_id'],
+					array (
+						'alt_text'	=> $meta['alt_text']
+					)
+				);
+
+				if( ! $result ){
+					return;
+				}
+
+				// update the new alt_text in the attachment meta
+				\GatherContent\Importer\update_post_item_meta(
+					$attach_id,
+					$meta
+				);
+
+			}
+		}
+	}
+
 
 	/**
 	 * Sets the item config element value for WP post fields,
