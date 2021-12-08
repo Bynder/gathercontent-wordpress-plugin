@@ -261,14 +261,14 @@ class API extends Base {
 	 *
 	 * @return mixed          Results of request.
 	 */
-	public function get_item_files( $project_id, $file_ids = [] ) {
+	public function get_item_files( $project_id, $file_ids = array() ) {
 
 		if ( ! $project_id ) {
 			return array();
 		}
 
 		return $this->get(
-			'projects/' . $project_id . '/files' . ( ! empty($file_ids) ? '?file_id=' . implode(',', $file_ids) : ''),
+			'projects/' . $project_id . '/files' . ( ! empty( $file_ids ) ? '?file_id=' . implode( ',', $file_ids ) : '' ),
 			array(
 				'headers' => array(
 					'Accept' => 'application/vnd.gathercontent.v2+json',
@@ -690,8 +690,8 @@ class API extends Base {
 			}
 		}
 
-		if( 'PUT' === $method ){
-			$response = $this->http->request ( $uri, $args );
+		if ( 'PUT' === $method ) {
+			$response = $this->http->request( $uri, $args );
 		} else {
 			$response = $this->http->{strtolower( $method )}( $uri, $args );
 		}

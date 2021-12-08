@@ -180,7 +180,7 @@ class Push extends Base {
 			// finally push it to the content array if the data was changed
 			if ( $component_uuid = $updated_element->component_uuid ) {
 
-				if( ! isset( $config->content->$component_uuid )) {
+				if ( ! isset( $config->content->$component_uuid ) ) {
 					$config->content->$component_uuid = (object) array();
 				}
 
@@ -305,11 +305,11 @@ class Push extends Base {
 
 					$this->element = (object) $this->format_element_data( $field_data, $component_uuid, false );
 
-					if( $component_uuid ) {
+					if ( $component_uuid ) {
 						$this->element->component_uuid = $component_uuid;
 					}
 
-					$source      = $this->mapping->data( $this->element->name . ( $component_uuid ?  '_component_' . $component_uuid : '' ) );
+					$source      = $this->mapping->data( $this->element->name . ( $component_uuid ? '_component_' . $component_uuid : '' ) );
 					$source_type = isset( $source['type'] ) ? $source['type'] : '';
 					$source_key  = isset( $source['value'] ) ? $source['value'] : '';
 
@@ -428,38 +428,38 @@ class Push extends Base {
 	 */
 	protected function set_featured_image_alt( $source_key ) {
 
-		if( 'featured_image' !== $source_key ) {
+		if ( 'featured_image' !== $source_key ) {
 			return;
 		}
 
 		$attach_id = get_post_thumbnail_id( $this->post->ID );
 
-		if(! $attach_id ) {
+		if ( ! $attach_id ) {
 			return;
 		}
 
 		if ( $meta = \GatherContent\Importer\get_post_item_meta( $attach_id ) ) {
 
-			$old_alt_text 		= $meta['alt_text'] ?? '';
-			$updated_alt_text   = get_post_meta($attach_id, '_wp_attachment_image_alt', true);
+			$old_alt_text     = $meta['alt_text'] ?? '';
+			$updated_alt_text = get_post_meta( $attach_id, '_wp_attachment_image_alt', true );
 
-			if( $old_alt_text !== $updated_alt_text && isset( $meta['file_id'] ) ) {
+			if ( $old_alt_text !== $updated_alt_text && isset( $meta['file_id'] ) ) {
 
 				$meta['alt_text'] = $updated_alt_text ?? '';
 
-				if( empty( $meta['alt_text'] ) ) {
+				if ( empty( $meta['alt_text'] ) ) {
 					return;
 				}
 
 				$result = $this->api->update_file_meta(
 					$this->mapping->get_project(),
 					$meta['file_id'],
-					array (
-						'alt_text'	=> $meta['alt_text']
+					array(
+						'alt_text' => $meta['alt_text'],
 					)
 				);
 
-				if( ! $result ){
+				if ( ! $result ) {
 					return;
 				}
 

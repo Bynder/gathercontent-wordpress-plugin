@@ -13,7 +13,7 @@ class Template_Mapper extends Base {
 	protected $option_name = '';
 	protected $statuses    = array();
 
-	const EXCLUDED_FIELDS = ['section', 'guidelines'];
+	const EXCLUDED_FIELDS = array( 'section', 'guidelines' );
 	const COMPONENT_FIELD = 'component';
 
 	/**
@@ -321,26 +321,26 @@ class Template_Mapper extends Base {
 
 		$post_type = $this->get_value( 'post_type', 'esc_attr' );
 
-		$tab_groups = $this->template->related->structure->groups ?? [];
+		$tab_groups = $this->template->related->structure->groups ?? array();
 
 		// to handle multiple tabs
 		foreach ( $tab_groups as $tab ) {
 
-			$rows = array();
+			$rows   = array();
 			$fields = $tab->fields ?? array();
 
 			// to handle fields in a tab
 			foreach ( $fields as $field ) {
 
 				// to handle components with multiple fields inside
-				$fields_data    = $field->component->fields ?? [$field];
-				$component_id 	= self::COMPONENT_FIELD === $field->field_type ? $field->uuid : '';
+				$fields_data    = $field->component->fields ?? array( $field );
+				$component_id   = self::COMPONENT_FIELD === $field->field_type ? $field->uuid : '';
 				$component_name = self::COMPONENT_FIELD === $field->field_type ? $field->label : '';
-				$metadata 		= $field->metadata;
+				$metadata       = $field->metadata;
 
-				$is_repeatable  = (is_object($metadata) && isset($metadata->repeatable)) ? $metadata->repeatable->isRepeatable : false;
+				$is_repeatable = ( is_object( $metadata ) && isset( $metadata->repeatable ) ) ? $metadata->repeatable->isRepeatable : false;
 
-				foreach ($fields_data as $field_data) {
+				foreach ( $fields_data as $field_data ) {
 
 					$formatted_field = $this->format_fields(
 						$field_data,
@@ -350,7 +350,7 @@ class Template_Mapper extends Base {
 						$component_id
 					);
 
-					if ($formatted_field) {
+					if ( $formatted_field ) {
 						$rows[] = $formatted_field;
 					}
 				}
@@ -390,48 +390,48 @@ class Template_Mapper extends Base {
 	 *
 	 * @since 4.0.0
 	 *
-	 * @param mixed $field
+	 * @param mixed       $field
 	 * @param string|null $post_type
-	 * @param string $component_name
-	 * @param bool $is_repeatable
-	 * @param string|int $component_id optional
+	 * @param string      $component_name
+	 * @param bool        $is_repeatable
+	 * @param string|int  $component_id optional
 	 *
 	 * @return null|mixed formatted field object.
 	 */
-	private function format_fields($field, $post_type, string $component_name = '', bool $is_repeatable = false, string $component_id = '') {
+	private function format_fields( $field, $post_type, string $component_name = '', bool $is_repeatable = false, string $component_id = '' ) {
 
 		$field_type = $field->field_type ?? '';
 
-		$field->uuid .=  ( $component_id ?  '_component_' . $component_id : '' );
+		$field->uuid .= ( $component_id ? '_component_' . $component_id : '' );
 
 		// exclude guidelines and section fields
-		if ( in_array($field_type, self::EXCLUDED_FIELDS) ) {
+		if ( in_array( $field_type, self::EXCLUDED_FIELDS ) ) {
 			return null;
 		}
 
 		$field->typeName = '';
 
-		if ('text' === $field_type) {
+		if ( 'text' === $field_type ) {
 
-			$is_plain = $field->metadata->is_plain;
-			$field->type = $is_plain ? 'text_plain' : 'text_rich';
+			$is_plain          = $field->metadata->is_plain;
+			$field->type       = $is_plain ? 'text_plain' : 'text_rich';
 			$field->plain_text = (bool) $is_plain;
 
 		} else {
 			$field->type = $field_type === 'attachment' ? 'files' : $field_type;
 		}
 
-		$field->typeName = Utils::gc_field_type_name($field_type);
+		$field->typeName = Utils::gc_field_type_name( $field_type );
 
-		if ($val = $this->get_value($field->uuid)) {
-			$field->field_type  = isset($val['type']) ? $val['type'] : '';
-			$field->field_value = isset($val['value']) ? $val['value'] : '';
+		if ( $val = $this->get_value( $field->uuid ) ) {
+			$field->field_type  = isset( $val['type'] ) ? $val['type'] : '';
+			$field->field_value = isset( $val['value'] ) ? $val['value'] : '';
 		}
 
-		$field->is_repeatable 	= $is_repeatable;
-		$field->post_type		= $post_type;
-		$field->name  			= $field->uuid;
-		$field->subtitle      	= $component_name ? "($component_name)" : "";
+		$field->is_repeatable = $is_repeatable;
+		$field->post_type     = $post_type;
+		$field->name          = $field->uuid;
+		$field->subtitle      = $component_name ? "($component_name)" : '';
 
 		return $field;
 	}
