@@ -203,7 +203,7 @@ class Pull extends Base {
 					$updated_post_data['meta_input'] = array_map(
 						function ( $meta ) {
 							return is_array( $meta ) && count( $meta ) > 1
-								? $meta
+								? wp_json_encode($meta)
 								: array_shift( $meta );
 						},
 						$replacements['meta_input']
@@ -358,8 +358,14 @@ class Pull extends Base {
 				$fields_data    = $field->component->fields ?? array( $field );
 				$component_uuid = 'component' === $field->field_type ? $field->uuid : '';
 
+				$is_component_repeatable = false;
+				if($component_uuid) {
+					$metadata      = $field->metadata;
+					$is_component_repeatable = ( is_object( $metadata ) && isset( $metadata->repeatable ) ) ? $metadata->repeatable->isRepeatable : false;
+				}
+
 				foreach ( $fields_data as $field_data ) {
-					$this->element = (object) $this->format_element_data( $field_data, $component_uuid );
+					$this->element = (object) $this->format_element_data( $field_data, $component_uuid, true, $is_component_repeatable);
 					$destination   = $this->mapping->data( $this->element->name );
 
 					if ( $destination && isset( $destination['type'], $destination['value'] ) ) {
