@@ -250,17 +250,66 @@ class API extends Base {
 	}
 
 	/**
-	 * GC API request to get the results from the "/items/<ITEM_ID>/files" endpoint.
+	 * GC V2 API request to get the files from the "/projects/{project_id}/files" endpoint.
 	 *
-	 * @since  3.0.0
+	 * @since  3.2.0
 	 *
-	 * @link https://gathercontent.com/developers/items/get-items-files/
+	 * @link https://docs.gathercontent.com/reference/listfiles
 	 *
-	 * @param  int $item_id Item ID.
+	 * @param  string $project_id required project_id to fetch the files.
+	 * @param  array  $file_ids optional array to filter files with the project id.
+	 *
 	 * @return mixed          Results of request.
 	 */
-	public function get_item_files( $item_id ) {
-		return $this->get( 'items/' . $item_id . '/files' );
+	public function get_item_files( $project_id, $file_ids = array() ) {
+
+		if ( ! $project_id ) {
+			return array();
+		}
+
+		return $this->get(
+			'projects/' . $project_id . '/files' . ( ! empty( $file_ids ) ? '?file_id=' . implode( ',', $file_ids ) : '' ),
+			array(
+				'headers' => array(
+					'Accept' => 'application/vnd.gathercontent.v2+json',
+				),
+			)
+		);
+	}
+
+	/**
+	 * GC V2 API request to get the files from the "/projects/{project_id}/files" endpoint.
+	 *
+	 * @since  3.2.0
+	 *
+	 * @link https://docs.gathercontent.com/reference/listfiles
+	 *
+	 * @param  string $project_id required project_id to fetch the files.
+	 * @param  string $file_id to update meta data.
+	 * @param  array  $meta_data to update
+	 *
+	 * @return int|false status code
+	 */
+	public function update_file_meta( $project_id, $file_id, $meta_data ) {
+
+		if ( ! $project_id ) {
+			return false;
+		}
+
+		$args = array(
+			'body'    => wp_json_encode( $meta_data ),
+			'headers' => array(
+				'Accept'       => 'application/vnd.gathercontent.v0.6+json',
+				'Content-Type' => 'application/json',
+			),
+		);
+
+		$response = $this->put(
+			'projects/' . absint( $project_id ) . '/files/' . $file_id,
+			$args
+		);
+
+		return is_wp_error( $response ) ? false : 200 === $response['response']['code'];
 	}
 
 	/**
@@ -509,6 +558,22 @@ class API extends Base {
 	}
 
 	/**
+	 * PUT request helper, which assumes a data parameter in response.
+	 *
+	 * @since  3.2.0
+	 *
+	 * @see    API::cache_get() For additional information
+	 *
+	 * @param  string $endpoint GatherContent API endpoint to retrieve.
+	 * @param  array  $args     Optional. Request arguments. Default empty array.
+	 * @return mixed            The response.
+	 */
+	public function put( $endpoint, $args = array() ) {
+		$final_args = array_merge( array( 'method' => 'PUT' ), $args );
+		return $this->request( $endpoint, $final_args, 'PUT' );
+	}
+
+	/**
 	 * GET request helper which assumes caching, and assumes a data parameter in response.
 	 *
 	 * @since  3.0.0
@@ -625,7 +690,11 @@ class API extends Base {
 			}
 		}
 
-		$response = $this->http->{strtolower( $method )}( $uri, $args );
+		if ( 'PUT' === $method ) {
+			$response = $this->http->request( $uri, $args );
+		} else {
+			$response = $this->http->{strtolower( $method )}( $uri, $args );
+		}
 
 		if ( is_wp_error( $response ) ) {
 			return $response;

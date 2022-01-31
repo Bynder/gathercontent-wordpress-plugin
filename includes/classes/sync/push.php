@@ -178,11 +178,33 @@ class Push extends Base {
 			}
 
 			// finally push it to the content array if the data was changed
-			$config->content->$element_id = $updated_element->value;
+			if ( $component_uuid = $updated_element->component_uuid ) {
+
+				if ( ! isset( $config->content->$component_uuid ) ) {
+					$config->content->$component_uuid = (object) array();
+				}
+
+				if(is_array($config->content->$component_uuid) && is_array(json_decode($updated_element->value))){
+					// it's a repeatable component so handle differently
+					$decoded_value = json_decode($updated_element->value);
+					$i = 0;
+					foreach($decoded_value as $value) {
+						if(isset($config->content->$component_uuid[$i])){
+							$config->content->$component_uuid[$i]->$element_id = $value;
+						}
+						$i++;
+					}
+				} else {
+					$config->content->$component_uuid->$element_id = $updated_element->value;
+				}
+
+			} else {
+				$config->content->$element_id = $updated_element->value;
+			}
 		}
 
 		if ( $this->item_id ) {
-			$result = $this->api->update_item( $this->item_id, $config );
+			$result = $this->api->uncached()->update_item( $this->item_id, $config );
 		} else {
 			$result = $this->api->create_item(
 				$this->mapping->get_project(),
@@ -291,11 +313,21 @@ class Push extends Base {
 				$fields_data    = $field->component->fields ?? array( $field );
 				$component_uuid = 'component' === $field->field_type ? $field->uuid : '';
 
+				$is_component_repeatable = false;
+				if($component_uuid) {
+					$metadata      = $field->metadata;
+					$is_component_repeatable = ( is_object( $metadata ) && isset( $metadata->repeatable ) ) ? $metadata->repeatable->isRepeatable : false;
+				}
+
 				foreach ( $fields_data as $field_data ) {
 
-					$this->element = (object) $this->format_element_data( $field_data, $component_uuid );
+					$this->element = (object) $this->format_element_data( $field_data, $component_uuid, false, $is_component_repeatable );
 
-					$source      = $this->mapping->data( $this->element->name );
+					if ( $component_uuid ) {
+						$this->element->component_uuid = $component_uuid;
+					}
+
+					$source      = $this->mapping->data( $this->element->name . ( $component_uuid ? '_component_' . $component_uuid : '' ) );
 					$source_type = isset( $source['type'] ) ? $source['type'] : '';
 					$source_key  = isset( $source['value'] ) ? $source['value'] : '';
 
@@ -393,16 +425,72 @@ class Push extends Base {
 				$updated = $this->set_meta_field_value( $source_key );
 				break;
 
-			/*
-			 * @todo determine if GC can accept file updates.
-			 * case 'wp-type-media':
-			 * 	$updated = $this->get_media_field_value( $source_key );
-			 * 	break;
-			 */
+			case 'wp-type-media':
+				$this->set_featured_image_alt( $source_key );
+				break;
+
 		}
 
 		return $updated;
 	}
+
+
+	/**
+	 * Updates the featured image alt_text if changed
+	 *
+	 * @since 3.2.0
+	 *
+	 * @param string $source_key source key.
+	 *
+	 * @return void
+	 */
+	protected function set_featured_image_alt( $source_key ) {
+
+		if ( 'featured_image' !== $source_key ) {
+			return;
+		}
+
+		$attach_id = get_post_thumbnail_id( $this->post->ID );
+
+		if ( ! $attach_id ) {
+			return;
+		}
+
+		if ( $meta = \GatherContent\Importer\get_post_item_meta( $attach_id ) ) {
+
+			$old_alt_text     = $meta['alt_text'] ?? '';
+			$updated_alt_text = get_post_meta( $attach_id, '_wp_attachment_image_alt', true );
+
+			if ( $old_alt_text !== $updated_alt_text && isset( $meta['file_id'] ) ) {
+
+				$meta['alt_text'] = $updated_alt_text ?? '';
+
+				if ( empty( $meta['alt_text'] ) ) {
+					return;
+				}
+
+				$result = $this->api->update_file_meta(
+					$this->mapping->get_project(),
+					$meta['file_id'],
+					array(
+						'alt_text' => $meta['alt_text'],
+					)
+				);
+
+				if ( ! $result ) {
+					return;
+				}
+
+				// update the new alt_text in the attachment meta
+				\GatherContent\Importer\update_post_item_meta(
+					$attach_id,
+					$meta
+				);
+
+			}
+		}
+	}
+
 
 	/**
 	 * Sets the item config element value for WP post fields,
@@ -429,7 +517,6 @@ class Push extends Base {
 			case 'post_content':
 			case 'post_excerpt':
 				$el_value = wp_kses_post( $this->get_element_value() );
-				$value    = $this->convert_media_to_shortcodes( $value );
 				if ( 'post_content' === $post_column ) {
 					$value = apply_filters( 'the_content', $value );
 				}

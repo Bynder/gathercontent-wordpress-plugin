@@ -203,7 +203,7 @@ class Pull extends Base {
 					$updated_post_data['meta_input'] = array_map(
 						function ( $meta ) {
 							return is_array( $meta ) && count( $meta ) > 1
-								? $meta
+								? wp_json_encode($meta)
 								: array_shift( $meta );
 						},
 						$replacements['meta_input']
@@ -252,10 +252,6 @@ class Pull extends Base {
 			$backup[ $key ]    = isset( $post_data[ $key ] ) ? $post_data[ $key ] : '';
 			$post_data[ $key ] = 'gcinitial';
 		}
-
-		$files = $this->api->uncached()->get_item_files( $this->item->id );
-
-		$this->item->files = is_array( $files ) ? $files : array();
 
 		if ( $this->should_map_hierarchy( $post_data['post_type'] ) && isset( $this->item->position ) ) {
 			$post_data['menu_order'] = absint( $this->item->position );
@@ -362,8 +358,14 @@ class Pull extends Base {
 				$fields_data    = $field->component->fields ?? array( $field );
 				$component_uuid = 'component' === $field->field_type ? $field->uuid : '';
 
+				$is_component_repeatable = false;
+				if($component_uuid) {
+					$metadata      = $field->metadata;
+					$is_component_repeatable = ( is_object( $metadata ) && isset( $metadata->repeatable ) ) ? $metadata->repeatable->isRepeatable : false;
+				}
+
 				foreach ( $fields_data as $field_data ) {
-					$this->element = (object) $this->format_element_data( $field_data, $component_uuid );
+					$this->element = (object) $this->format_element_data( $field_data, $component_uuid, true, $is_component_repeatable);
 					$destination   = $this->mapping->data( $this->element->name );
 
 					if ( $destination && isset( $destination['type'], $destination['value'] ) ) {
@@ -797,17 +799,18 @@ class Pull extends Base {
 				\GatherContent\Importer\update_post_item_meta(
 					$attach_id,
 					array(
-						'user_id'    => $media->user_id,
-						'item_id'    => $media->item_id,
-						'field'      => $media->field,
-						'type'       => $media->type,
-						'url'        => $media->url,
-						'filename'   => $media->filename,
-						'size'       => $media->size,
-						'created_at' => isset( $media->created_at ) ? $media->created_at : $media->created_at,
-						'updated_at' => isset( $media->updated_at ) ? $media->updated_at : $media->updated_at,
+						'item_id'      => $this->item->id,
+						'download_url' => $media->download_url,
+						'url'          => $media->url,
+						'filename'     => $media->filename,
+						'file_id'      => $media->id,
+						'size'         => $media->size,
+						'alt_text'     => $media->alt_text,
+						'created_at'   => isset( $media->created_at ) ? $media->created_at : $media->created_at,
+						'updated_at'   => isset( $media->updated_at ) ? $media->updated_at : $media->updated_at,
 					)
 				);
+				update_post_meta( $attach_id, '_wp_attachment_image_alt', $media->alt_text );
 			}
 		}
 
