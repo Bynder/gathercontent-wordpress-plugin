@@ -461,7 +461,7 @@ abstract class Base extends Plugin_Base {
 		$content       = isset( $this->item->content ) ? ( $component_uuid ? ( $this->item->content->$component_uuid ?? null ) : $this->item->content ) : null;
 		$field_value   = $content ? ( $content->$field_name ?? null ) : null;
 
-		if( ! $field_value && $append_component_id && $component_uuid && $is_component_repeatable ){
+		if( ! $field_value && $component_uuid && $is_component_repeatable ){
 			$content_to_push = [];
 			foreach($content as $data) {
 				if( isset ( $data->$field_name ) ){

@@ -184,7 +184,19 @@ class Push extends Base {
 					$config->content->$component_uuid = (object) array();
 				}
 
-				$config->content->$component_uuid->$element_id = $updated_element->value;
+				if(is_array($config->content->$component_uuid) && is_array(json_decode($updated_element->value))){
+					// it's a repeatable component so handle differently
+					$decoded_value = json_decode($updated_element->value);
+					$i = 0;
+					foreach($decoded_value as $value) {
+						if(isset($config->content->$component_uuid[$i])){
+							$config->content->$component_uuid[$i]->$element_id = $value;
+						}
+						$i++;
+					}
+				} else {
+					$config->content->$component_uuid->$element_id = $updated_element->value;
+				}
 
 			} else {
 				$config->content->$element_id = $updated_element->value;
@@ -301,9 +313,15 @@ class Push extends Base {
 				$fields_data    = $field->component->fields ?? array( $field );
 				$component_uuid = 'component' === $field->field_type ? $field->uuid : '';
 
+				$is_component_repeatable = false;
+				if($component_uuid) {
+					$metadata      = $field->metadata;
+					$is_component_repeatable = ( is_object( $metadata ) && isset( $metadata->repeatable ) ) ? $metadata->repeatable->isRepeatable : false;
+				}
+
 				foreach ( $fields_data as $field_data ) {
 
-					$this->element = (object) $this->format_element_data( $field_data, $component_uuid, false );
+					$this->element = (object) $this->format_element_data( $field_data, $component_uuid, false, $is_component_repeatable );
 
 					if ( $component_uuid ) {
 						$this->element->component_uuid = $component_uuid;
