@@ -517,7 +517,6 @@ class Push extends Base {
 			case 'post_content':
 			case 'post_excerpt':
 				$el_value = wp_kses_post( $this->get_element_value() );
-				$value    = $this->convert_media_to_shortcodes( $value );
 				if ( 'post_content' === $post_column ) {
 					$value = apply_filters( 'the_content', $value );
 				}
