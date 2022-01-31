@@ -27,6 +27,7 @@ class Template_Mappings extends Base {
 	 * @param $api API object
 	 */
 	public function __construct( $parent_menu_slug, API $api ) {
+
 		$this->api         = $api;
 		$this->listing_url = admin_url( 'edit.php?post_type=' . self::SLUG );
 		new Async_Save_Hook( self::SLUG );
@@ -61,6 +62,7 @@ class Template_Mappings extends Base {
 				'rewrite'      => false,
 			)
 		);
+
 	}
 
 	public function register_post_type() {
@@ -158,6 +160,7 @@ class Template_Mappings extends Base {
 		$columns['account']  = '_gc_account';
 		$columns['project']  = '_gc_project';
 		$columns['template'] = '_gc_template';
+		$columns['alt_text'] = '_gc_alt_text';
 
 		return $columns;
 	}
@@ -176,7 +179,7 @@ class Template_Mappings extends Base {
 
 		$orderby = $query->get( 'orderby' );
 
-		if ( ! in_array( $orderby, array( '_gc_account', '_gc_project', '_gc_template' ), 1 ) ) {
+		if ( ! in_array( $orderby, array( '_gc_account', '_gc_project', '_gc_template', '_gc_alt_text' ), 1 ) ) {
 			return;
 		}
 
@@ -193,7 +196,7 @@ class Template_Mappings extends Base {
 	 * @param int    $post_id Mapping post id
 	 */
 	public function column_display( $column, $post_id ) {
-		if ( ! in_array( $column, array( 'account', 'project', 'template' ), 1 ) ) {
+		if ( ! in_array( $column, array( 'account', 'project', 'template', 'alt_text' ), 1 ) ) {
 			return;
 		}
 
@@ -571,6 +574,7 @@ class Template_Mappings extends Base {
 	}
 
 	public function get_account_projects_with_mappings( $account_id, $mapping_ids = array() ) {
+
 		$projects = $this->api->get_account_projects( $account_id );
 		if ( is_wp_error( $projects ) ) {
 			return $projects;

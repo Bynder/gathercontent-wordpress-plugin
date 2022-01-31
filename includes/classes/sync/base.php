@@ -8,7 +8,6 @@
 namespace GatherContent\Importer\Sync;
 
 use GatherContent\Importer\Base as Plugin_Base;
-use GatherContent\Importer\Post_Types\Template_Mappings;
 use GatherContent\Importer\Exception as Base_Exception;
 use GatherContent\Importer\Mapping_Post;
 use GatherContent\Importer\API;
@@ -240,14 +239,15 @@ abstract class Base extends Plugin_Base {
 	 *
 	 * @since 3.0.0
 	 *
-	 * @param int $item_id Item id.
+	 * @param int  $item_id Item id.
+	 * @param  bool $exclude_status set this to true to avoid appending status data
 	 *
 	 * @throws Exception On failure.
 	 *
 	 * @return object Item object.
 	 */
-	protected function set_item( $item_id ) {
-		$this->item = $this->api->uncached()->get_item( $item_id );
+	protected function set_item( $item_id, $exclude_status = false ) {
+		$this->item = $this->api->uncached()->get_item( $item_id, $exclude_status );
 
 		if ( ! isset( $this->item->id ) ) {
 			// @todo maybe check if error was temporary.
@@ -316,6 +316,10 @@ abstract class Base extends Plugin_Base {
 	 */
 	protected function get_value_for_element( $element ) {
 		$val = false;
+
+		if ( true === $element->repeatable ) {
+			return $element->value;
+		}
 
 		switch ( $element->type ) {
 			case 'text':
@@ -395,22 +399,33 @@ abstract class Base extends Plugin_Base {
 						$val[] = sanitize_text_field( $option->label );
 					}
 				}
+				$val = ! empty( $val ) ? wp_json_encode( $val ) : $val;
 				break;
 
-			case 'files':
-				if ( is_array( $this->item->files ) && isset( $this->item->files[ $element->name ] ) ) {
-					$val = $this->item->files[ $element->name ];
+			case 'attachment':
+				$val           = array();
+				$element_value = is_array( $element->value ) ? $element->value : array();
+				$file_ids      = $element_value ? array_map(
+					function ( $v ) {
+						return $v->file_id;
+					},
+					$element_value
+				) : array();
+
+				if ( $file_ids ) {
+					$files = $this->api->uncached()->get_item_files( $this->item->project_id, $file_ids );
+					$val   = $files;
 				}
 				break;
 
 			default:
 				if ( isset( $element->value ) ) {
-					$val = sanitize_text_field( $option->label );
+					$val = sanitize_text_field( $element->label );
 				}
 				break;
 		}
 
-		return $val;
+			return $val;
 	}
 
 	/**
@@ -422,6 +437,135 @@ abstract class Base extends Plugin_Base {
 	 */
 	protected function set_element_value() {
 		$this->element->value = $this->get_element_value();
+	}
+
+	/**
+	 * Format the element's values to the required data format.
+	 *
+	 * @since  3.2.0
+	 *
+	 * @param mixed       $field object.
+	 * @param string|null $component_uuid optional component uuid only if the field is component.
+	 * @param bool        $append_component_id optional to append the component's id in the field, default is true
+	 * @param bool        $is_component_repeatable optional to tell that the field is a part of repeatable component
+	 *
+	 * @return array
+	 */
+	protected function format_element_data( $field, $component_uuid = '', $append_component_id = true, $is_component_repeatable = false ): array {
+
+
+		$metadata      = $field->metadata;
+		$field_name    = $field->uuid;
+		$is_repeatable = ( is_object( $metadata ) && isset( $metadata->repeatable ) ) ? $metadata->repeatable->isRepeatable : false;
+		$is_plain      = 'text' === $field->field_type && is_object( $metadata ) ? $metadata->is_plain : false;
+		$content       = isset( $this->item->content ) ? ( $component_uuid ? ( $this->item->content->$component_uuid ?? null ) : $this->item->content ) : null;
+		$field_value   = $content ? ( $content->$field_name ?? null ) : null;
+
+		if( ! $field_value && $component_uuid && $is_component_repeatable ){
+			$content_to_push = [];
+			foreach($content as $data) {
+				if( isset ( $data->$field_name ) ){
+					array_push($content_to_push, $data->$field_name );
+				}
+			}
+			$field_value = $content_to_push;
+		}
+
+		return array(
+			'name'       => $field_name . ( $append_component_id && $component_uuid ? '_component_' . $component_uuid : '' ),
+			'type'       => $field->field_type,
+			'label'      => $field->label,
+			'plain_text' => (bool) $is_plain,
+			'value'      => $this->format_field_value($field, $field_value, $is_component_repeatable, $is_repeatable),
+			'repeatable' => (bool) $is_repeatable,
+			'options'    => $this->format_selected_options_data( $metadata, $field_value ),
+		);
+	}
+
+	/**
+	 * Format the field's value.
+	 *
+	 * @since  3.2.0
+	 *
+	 * @param mixed $field object.
+	 * @param mixed $field_value object.
+	 * @param bool  $is_component_repeatable to tell that the field is a part of repeatable component
+	 * @param bool	$is_repeatable to tell that the field itself is a repeatable
+	 *
+	 * @return mixed
+	 */
+	protected function format_field_value( $field, $field_value, $is_component_repeatable, $is_repeatable) {
+
+		if( empty( $field_value ) ) {
+			return '';
+		}
+
+		// handle repeatables
+		if($is_component_repeatable || $is_repeatable) {
+
+			// handle attachment repeatables
+			if( 'attachment' === $field->field_type && $is_component_repeatable ){
+				$attachments = [];
+				foreach($field_value as $value){
+					foreach($value as $val){
+						array_push($attachments, $val);
+					}
+				}
+				return $attachments;
+			}
+
+			$field_value = wp_json_encode(
+				( is_array( $field_value ) ? array_values(
+					array_filter(
+						$field_value,
+						function( $val ) {
+							if(is_string($val)){
+								return trim( $val ) !== '';
+							} else {
+								return $val;
+							}
+						}
+					)
+			) : $field_value ));
+		}
+
+		return $field_value;
+	}
+
+
+	/**
+	 * Format the element's options.
+	 * This method only returns the selected options
+	 *
+	 * @since  3.2.0
+	 *
+	 * @param mixed $metadata object.
+	 * @param mixed $field_value object.
+	 *
+	 * @return array
+	 */
+	protected function format_selected_options_data( $metadata, $field_value ): array {
+
+		if ( ! is_object( $metadata ) ) {
+			return array();
+		}
+
+		$options      = array();
+		$options_meta = isset( $metadata->choice_fields ) ? $metadata->choice_fields->options : array();
+
+		foreach ( $options_meta as $option ) {
+			$matched_option = wp_list_filter( $field_value, array( 'id' => $option->optionId ) );
+
+			if ( count( $matched_option ) > 0 ) {
+				$options[] = (object) array(
+					'name'     => $option->optionId,
+					'label'    => $option->label,
+					'selected' => true,
+				);
+			}
+		}
+
+		return $options;
 	}
 
 	/**

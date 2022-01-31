@@ -131,116 +131,230 @@ class API extends Base {
 	 *
 	 * @link https://gathercontent.com/developers/projects/get-projects-statuses/
 	 *
-	 * @param  int $project_id Project ID.
+	 * @param  int    $project_id Project ID.
+	 * @param  string $response   Response result type.
+	 *
 	 * @return mixed             Results of request.
 	 */
-	public function get_project_statuses( $project_id ) {
-		return $this->get( 'projects/' . $project_id . '/statuses' );
+	public function get_project_statuses( $project_id, $response = '' ) {
+		return $this->get( 'projects/' . $project_id . '/statuses', array(), $response );
 	}
 
 	/**
-	 * GC API request to get the results from the "/items?project_id=<PROJECT_ID>" endpoint.
+	 * GC V2 API request to get the results from the "/projects/{project_id}/items" endpoint.
 	 *
-	 * @since  3.0.0
+	 * Pass template_id to filter it with template_id as well
 	 *
-	 * @link https://gathercontent.com/developers/items/get-items/
+	 * @since  3.2.0
+	 *
+	 * @link https://docs.gathercontent.com/reference/listitems
 	 *
 	 * @param  int $project_id Project ID.
+	 * @param  int $template_id Template ID.
+	 *
 	 * @return mixed             Results of request.
 	 */
-	public function get_project_items( $project_id ) {
+	public function get_project_items( $project_id, $template_id ) {
 
-		return $this->get( 'items?project_id=' . $project_id );
-	}
-
-	/**
-	 * GC API request to get the results from the "/items/<ITEM_ID>" endpoint.
-	 *
-	 * @since  3.0.0
-	 *
-	 * @link https://gathercontent.com/developers/items/get-items-by-id/
-	 *
-	 * @param  int $item_id Item ID.
-	 * @return mixed          Results of request.
-	 */
-	public function get_item( $item_id, $args = array() ) {
-
-		return $this->get( 'items/' . $item_id, $args );
-	}
-
-	/**
-	 * GC API request to get the results from the "/items/<ITEM_ID>/files" endpoint.
-	 *
-	 * @since  3.0.0
-	 *
-	 * @link https://gathercontent.com/developers/items/get-items-files/
-	 *
-	 * @param  int $item_id Item ID.
-	 * @return mixed          Results of request.
-	 */
-	public function get_item_files( $item_id ) {
-		return $this->get( 'items/' . $item_id . '/files' );
-	}
-
-	/**
-	 * GC API request to get download a file from "/files/<FILE_ID>/download" endpoint.
-	 *
-	 * @since  3.0.0
-	 *
-	 * @link https://docs.gathercontent.com/reference#get-filesfile_iddownload
-	 *
-	 * @param  int $file_id File ID.
-	 * @return mixed          Results of request.
-	 */
-	public function get_file( $file_id ) {
-		$tmpfname = wp_tempnam();
-		if ( ! $tmpfname ) {
-			return new WP_Error( 'http_no_file', __( 'Could not create Temporary file.' ) );
-		}
+		$query_params = array(
+			'template_id' => $template_id,
+			'include'     => 'status_name',
+			'per_page'    => 500,
+		);
 
 		$response = $this->get(
-			'files/' . $file_id . '/download',
+			'projects/' . $project_id . '/items',
 			array(
-				'stream'   => true,
-				'filename' => $tmpfname,
-			)
+				'headers' => array(
+					'Accept' => 'application/vnd.gathercontent.v2+json',
+				),
+			),
+			'',
+			$query_params
 		);
-		return $tmpfname;
+
+		return $response;
 	}
 
 	/**
-	 * GC API request to get the results from the "/templates?project_id=<PROJECT_ID>" endpoint.
+	 * GC API request to get the results from the "/items/{item_id}" endpoint.
 	 *
-	 * @since  3.0.0
+	 * @since  3.2.0
 	 *
-	 * @link https://gathercontent.com/developers/templates/get-templates/
+	 * @link https://docs.gathercontent.com/reference/getitem
 	 *
-	 * @param  int $project_id Project ID.
-	 * @return mixed             Results of request.
+	 * @param  int  $item_id Item ID.
+	 * @param  bool $exclude_status set this to true to avoid appending status data
+	 *
+	 * @return mixed        Results of request.
 	 */
-	public function get_project_templates( $project_id ) {
-		return $this->get(
-			'templates?projectId=' . $project_id,
+	public function get_item( $item_id, $exclude_status = false ) {
+
+		$response = $this->get(
+			'items/' . $item_id . '?include=structure',
 			array(
 				'headers' => array(
-					'Accept' => 'application/vnd.gathercontent.v0.6+json',
+					'Accept' => 'application/vnd.gathercontent.v2+json',
+				),
+			),
+		);
+
+		// append status to the item as it was removed in the V2 APIs and needed everywhere
+		if ( ! $exclude_status && $response ) {
+			$response->status      = (object) $this->add_status_to_item( $response );
+			$response->status_name = $response->status->data->name ?: '';
+		}
+
+		return $response;
+	}
+
+	/**
+	 * Add project status to single item.
+	 *
+	 * @since  3.2.0
+	 *
+	 * @param  mixed $item item result object.
+	 * @return mixed $status_data.
+	 */
+	public function add_status_to_item( $item ) {
+
+		if ( ! $item->project_id ) {
+			return array();
+		}
+
+		// get cached version of all the project statuses by making sure that the cache is enabled for this request
+		$this->disable_cache       = false;
+		$this->reset_request_cache = false;
+		$all_statuses              = $this->get_project_statuses( $item->project_id );
+
+		$matched_status = is_array( $all_statuses )
+			? array_values( wp_list_filter( $all_statuses, array( 'id' => $item->status_id ) ) )
+			: array();
+		$data           = count( $matched_status ) > 0 ? $matched_status[0] : array();
+
+		return compact( 'data' );
+	}
+
+	/**
+	 * GC V2 API request to get the results from the "/projects/{project_id}/statuses/:status_id" endpoint.
+	 *
+	 * @since  3.2.0
+	 *
+	 * @link https://docs.gathercontent.com/v0.5/reference/get-project-statuses-by-id
+	 *
+	 * @param  int $project_id Project ID, int $status_id Status ID.
+	 * @return mixed             Results of request.
+	 */
+	public function get_project_status_information( $project_id, $status_id ) {
+		return $this->get( 'projects/' . $project_id . '/statuses/' . $status_id );
+	}
+
+	/**
+	 * GC V2 API request to get the files from the "/projects/{project_id}/files" endpoint.
+	 *
+	 * @since  3.2.0
+	 *
+	 * @link https://docs.gathercontent.com/reference/listfiles
+	 *
+	 * @param  string $project_id required project_id to fetch the files.
+	 * @param  array  $file_ids optional array to filter files with the project id.
+	 *
+	 * @return mixed          Results of request.
+	 */
+	public function get_item_files( $project_id, $file_ids = array() ) {
+
+		if ( ! $project_id ) {
+			return array();
+		}
+
+		return $this->get(
+			'projects/' . $project_id . '/files' . ( ! empty( $file_ids ) ? '?file_id=' . implode( ',', $file_ids ) : '' ),
+			array(
+				'headers' => array(
+					'Accept' => 'application/vnd.gathercontent.v2+json',
 				),
 			)
 		);
 	}
 
 	/**
-	 * GC API request to get the results from the "/templates/<PROJECT_ID>" endpoint.
+	 * GC V2 API request to get the files from the "/projects/{project_id}/files" endpoint.
+	 *
+	 * @since  3.2.0
+	 *
+	 * @link https://docs.gathercontent.com/reference/listfiles
+	 *
+	 * @param  string $project_id required project_id to fetch the files.
+	 * @param  string $file_id to update meta data.
+	 * @param  array  $meta_data to update
+	 *
+	 * @return int|false status code
+	 */
+	public function update_file_meta( $project_id, $file_id, $meta_data ) {
+
+		if ( ! $project_id ) {
+			return false;
+		}
+
+		$args = array(
+			'body'    => wp_json_encode( $meta_data ),
+			'headers' => array(
+				'Accept'       => 'application/vnd.gathercontent.v0.6+json',
+				'Content-Type' => 'application/json',
+			),
+		);
+
+		$response = $this->put(
+			'projects/' . absint( $project_id ) . '/files/' . $file_id,
+			$args
+		);
+
+		return is_wp_error( $response ) ? false : 200 === $response['response']['code'];
+	}
+
+	/**
+	 * GC V2 API request to get the results from the "/projects/{project_id}/templates" endpoint.
 	 *
 	 * @since  3.0.0
 	 *
-	 * @link https://gathercontent.com/developers/templates/get-templates-by-id/
+	 * @link https://docs.gathercontent.com/reference/listtemplates
+	 *
+	 * @param  int $project_id Project ID.
+	 * @return mixed             Results of request.
+	 */
+	public function get_project_templates( $project_id ) {
+
+		return $this->get(
+			'projects/' . $project_id . '/templates',
+			array(
+				'headers' => array(
+					'Accept' => 'application/vnd.gathercontent.v2+json',
+				),
+			)
+		);
+	}
+
+	/**
+	 * GC API request to get the results from the "/templates/{template_id}" endpoint.
+	 *
+	 * @since  3.0.0
+	 *
+	 * @link https://docs.gathercontent.com/reference/gettemplate
 	 *
 	 * @param  int $template_id Template ID.
 	 * @return mixed              Results of request.
 	 */
-	public function get_template( $template_id, $args = array() ) {
-		return $this->get( 'templates/' . $template_id, $args );
+	public function get_template( $template_id ) {
+		$response = $this->get(
+			'templates/' . $template_id,
+			array(
+				'headers' => array(
+					'Accept' => 'application/vnd.gathercontent.v2+json',
+				),
+			),
+			'full_data'
+		);
+		return $response;
 	}
 
 	/**
@@ -280,53 +394,30 @@ class API extends Base {
 	}
 
 	/**
-	 * GC API request to save an item.
+	 * GC V2 API request to update an items content.
 	 *
-	 * /items/<ITEM_ID>/save
-	 *
-	 * @since 3.0.0
-	 *
-	 * @link https://gathercontent.com/developers/items/post-items-by-id/
-	 *
-	 * @param  int   $item_id GatherContent Item Id.
-	 * @param  array $config  Data to save.
-	 * @return bool           If request was successful.
-	 */
-	public function save_item( $item_id, $config ) {
-		$response = $this->post(
-			'items/' . absint( $item_id ) . '/save',
-			array(
-				'body' => array(
-					'config' => base64_encode( wp_json_encode( $config ) ),
-				),
-			)
-		);
-
-		return is_wp_error( $response ) ? $response : 202 === $response['response']['code'];
-	}
-
-	/**
-	 * GC API request to update an items content.
-	 *
-	 * /items/<ITEM_ID>/update-content
+	 * /items/<ITEM_ID>/content
 	 *
 	 * @since 3.0.0
+	 *
+	 * @link https://docs.gathercontent.com/reference/updateitemcontent
 	 *
 	 * @param  int   $item_id GatherContent Item Id.
 	 * @param  array $content  Data to save.
 	 * @return bool           If request was successful.
 	 */
 	public function update_item( $item_id, $content ) {
+
 		$args = array(
-			'body'    => wp_json_encode( compact( 'content' ) ),
+			'body'    => wp_json_encode( $content ),
 			'headers' => array(
-				'Accept'       => 'application/vnd.gathercontent.v0.6+json',
+				'Accept'       => 'application/vnd.gathercontent.v2+json',
 				'Content-Type' => 'application/json',
 			),
 		);
 
 		$response = $this->post(
-			'items/' . absint( $item_id ) . '/update-content',
+			'items/' . absint( $item_id ) . '/content',
 			$args
 		);
 
@@ -334,52 +425,49 @@ class API extends Base {
 	}
 
 	/**
-	 * GC API request to save an item.
+	 * GC V2 API request to save an item.
 	 *
-	 * /items
+	 * /projects/{project_id}/items
 	 *
-	 * @since 3.0.0
+	 * @link https://docs.gathercontent.com/reference/createitem
 	 *
-	 * @link https://gathercontent.com/developers/items/post-items/
-	 *
-	 * @param  int    $project_id  Project ID.
+	 * @param  int    $project_id Project ID.
 	 * @param  int    $template_id Template ID.
-	 * @param  string $name        Item name.
-	 * @param  array  $config      Data to save to Item.
+	 * @param  string $name Item name.
+	 * @param array  $content
+	 *
 	 * @return bool                If request was successful.
 	 */
-	public function create_item( $project_id, $template_id, $name, $config = array() ) {
+	public function create_item( $project_id, $template_id, $name, $content = array() ) {
+
 		$args = array(
-			'body' => compact( 'project_id', 'template_id', 'name' ),
+			'body'    => compact( 'template_id', 'name', 'content' ),
+			'headers' => array(
+				'Accept' => 'application/vnd.gathercontent.v2+json',
+			),
 		);
 
-		if ( ! empty( $config ) ) {
-			$args['body']['config'] = base64_encode( wp_json_encode( $config ) );
-		}
+		$response = $this->post( 'projects/' . $project_id . '/items', $args );
 
-		$response = $this->post( 'items', $args );
-		$item_id  = null;
+		$item_id = null;
 
 		if ( is_wp_error( $response ) ) {
 			return $response;
 		}
 
-		if (
-			202 === $response['response']['code']
-			&& ! empty( $response['headers']['location'] )
-			&& ( $location = $response['headers']['location'] )
-			&& ( false !== strpos( $location, 'http://api.gathercontent.com/items/' ) )
-		) {
-			$item_id = str_replace( 'http://api.gathercontent.com/items/', '', $location );
+		if ( 201 === $response['response']['code'] ) {
+			$item_id = json_decode( wp_remote_retrieve_body( $response ) )->data->id;
 		}
-
 		return $item_id;
+
 	}
 
 	/**
-	 * GC API request to save an item.
+	 * GC V2 API request to save an item.
 	 *
-	 * /items/create
+	 * /projects/{project_id}/items
+	 *
+	 * @link https://docs.gathercontent.com/reference/createitem
 	 *
 	 * @param  int    $project_id Project ID.
 	 * @param  int    $template_id Template ID.
@@ -391,13 +479,13 @@ class API extends Base {
 	public function create_structured_item( $project_id, $template_id, $name, $content = array() ) {
 
 		$args = array(
-			'body'    => compact( 'project_id', 'template_id', 'name', 'content' ),
+			'body'    => compact( 'template_id', 'name', 'content' ),
 			'headers' => array(
-				'Accept' => 'application/vnd.gathercontent.v0.6+json',
+				'Accept' => 'application/vnd.gathercontent.v2+json',
 			),
 		);
 
-		$response = $this->post( 'items/create', $args );
+		$response = $this->post( 'projects/' . $project_id . '/items', $args );
 
 		$item_id = null;
 
@@ -408,8 +496,8 @@ class API extends Base {
 		if ( 201 === $response['response']['code'] ) {
 			$item_id = json_decode( wp_remote_retrieve_body( $response ) )->data->id;
 		}
-
 		return $item_id;
+
 	}
 
 
@@ -454,8 +542,6 @@ class API extends Base {
 		);
 	}
 
-
-
 	/**
 	 * POST request helper, which assumes a data parameter in response.
 	 *
@@ -472,9 +558,9 @@ class API extends Base {
 	}
 
 	/**
-	 * GET request helper which assumes caching, and assumes a data parameter in response.
+	 * PUT request helper, which assumes a data parameter in response.
 	 *
-	 * @since  3.0.0
+	 * @since  3.2.0
 	 *
 	 * @see    API::cache_get() For additional information
 	 *
@@ -482,9 +568,32 @@ class API extends Base {
 	 * @param  array  $args     Optional. Request arguments. Default empty array.
 	 * @return mixed            The response.
 	 */
-	public function get( $endpoint, $args = array() ) {
-		$data = $this->cache_get( $endpoint, DAY_IN_SECONDS, $args, 'GET' );
-		if ( isset( $data->data ) ) {
+	public function put( $endpoint, $args = array() ) {
+		$final_args = array_merge( array( 'method' => 'PUT' ), $args );
+		return $this->request( $endpoint, $final_args, 'PUT' );
+	}
+
+	/**
+	 * GET request helper which assumes caching, and assumes a data parameter in response.
+	 *
+	 * @since  3.0.0
+	 *
+	 * @see    API::cache_get() For additional information
+	 *
+	 * @param  string $endpoint         GatherContent API endpoint to retrieve.
+	 * @param  array  $args             Optional. Request arguments. Default empty array.
+	 * @param  string $response_type    Optional. expected response. Default empty
+	 * @param  array  $query_params     Optional. Request query parameters to append to the URL. Default empty array.
+	 *
+	 * @return mixed  The response.
+	 */
+	public function get( $endpoint, $args = array(), $response_type = '', $query_params = array() ) {
+
+		$data = $this->cache_get( $endpoint, DAY_IN_SECONDS, $args, 'GET', $query_params );
+
+		if ( $response_type == 'full_data' ) {
+			return $data;
+		} elseif ( isset( $data->data ) ) {
 			return $data->data;
 		}
 
@@ -498,13 +607,16 @@ class API extends Base {
 	 *
 	 * @see    API::request() For additional information
 	 *
-	 * @param  string $endpoint   GatherContent API endpoint to retrieve.
-	 * @param  string $expiration The expiration time. Defaults to an hour.
-	 * @param  array  $args       Optional. Request arguments. Default empty array.
-	 * @return array              The response.
+	 * @param  string $endpoint      GatherContent API endpoint to retrieve.
+	 * @param  string $expiration    The expiration time. Defaults to an hour.
+	 * @param  array  $args          Optional. Request arguments. Default empty array.
+	 * @param  array  $query_params  Optional. Request query parameters to append to the URL. Default empty array.
+	 *
+	 * @return array                 The response.
 	 */
-	public function cache_get( $endpoint, $expiration = HOUR_IN_SECONDS, $args = array(), $method = 'get' ) {
-		$trans_key = 'gctr-' . md5( serialize( compact( 'endpoint', 'args', 'method' ) ) );
+	public function cache_get( $endpoint, $expiration = HOUR_IN_SECONDS, $args = array(), $method = 'get', $query_params = array() ) {
+
+		$trans_key = 'gctr-' . md5( serialize( compact( 'endpoint', 'args', 'method', 'query_params' ) ) );
 		$response  = get_transient( $trans_key );
 
 		if ( $this->only_cached ) {
@@ -514,14 +626,12 @@ class API extends Base {
 
 		if ( ! $response || $this->disable_cache || $this->reset_request_cache ) {
 
-			$response = $this->request( $endpoint, $args, 'GET' );
+			$response = $this->request( $endpoint, $args, 'GET', $query_params );
 
 			if ( is_wp_error( $response ) ) {
 				return $response;
 			}
 
-			// delete_transient( $trans_key );
-			// delete_option( 'gathercontent_transients' );
 			set_transient( $trans_key, $response, $expiration );
 
 			$keys                = get_option( 'gathercontent_transients' );
@@ -547,13 +657,16 @@ class API extends Base {
 	 *
 	 * @see    WP_Http::request() For additional information on default arguments.
 	 *
-	 * @param  string $endpoint GatherContent API endpoint to retrieve.
-	 * @param  array  $args     Optional. Request arguments. Default empty array.
-	 * @param  array  $method   Optional. Request method, defaults to 'GET'.
+	 * @param  string $endpoint         GatherContent API endpoint to retrieve.
+	 * @param  array  $args             Optional. Request arguments. Default empty array.
+	 * @param  array  $method           Optional. Request method, defaults to 'GET'.
+	 * @param  array  $query_params     Optional. Request query parameters to append to the URL. Default empty array.
 	 * @return array            The response.
 	 */
-	public function request( $endpoint, $args = array(), $method = 'GET' ) {
-		$uri = $this->base_url . $endpoint;
+	public function request( $endpoint, $args = array(), $method = 'GET', $query_params = array() ) {
+
+		$uri = add_query_arg( $query_params, $this->base_url . $endpoint );
+
 		try {
 			$args = $this->request_args( $args );
 		} catch ( \Exception $e ) {
@@ -577,7 +690,11 @@ class API extends Base {
 			}
 		}
 
-		$response = $this->http->{strtolower( $method )}( $uri, $args );
+		if ( 'PUT' === $method ) {
+			$response = $this->http->request( $uri, $args );
+		} else {
+			$response = $this->http->{strtolower( $method )}( $uri, $args );
+		}
 
 		if ( is_wp_error( $response ) ) {
 			return $response;
@@ -674,7 +791,7 @@ class API extends Base {
 	 * @return $this
 	 */
 	public function only_cached() {
-		$this->only_cached = true;
+		$this->reset_request_cache = true;
 		return $this;
 	}
 
@@ -682,7 +799,7 @@ class API extends Base {
 	 * Sets the reset_request_cache flag and returns object, for chaining methods,
 	 * and flushing/bypassing cache for next request.
 	 *
-	 * e.g. `$this->uncached()->get( 'me' )`
+	 * E.g. `$this->uncached()->get( 'me' )`
 	 *
 	 * @since  3.0.0
 	 *

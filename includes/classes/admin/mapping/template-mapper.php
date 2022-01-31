@@ -13,6 +13,9 @@ class Template_Mapper extends Base {
 	protected $option_name = '';
 	protected $statuses    = array();
 
+	const EXCLUDED_FIELDS = array( 'section', 'guidelines' );
+	const COMPONENT_FIELD = 'component';
+
 	/**
 	 * Field_Types\Types
 	 *
@@ -67,7 +70,7 @@ class Template_Mapper extends Base {
 		}
 
 		$project_id  = esc_attr( $this->project->id );
-		$template_id = esc_attr( $this->template->id );
+		$template_id = esc_attr( $this->template->data->id );
 
 		$this->view(
 			'input',
@@ -85,7 +88,7 @@ class Template_Mapper extends Base {
 				'type'  => 'hidden',
 				'id'    => 'gc-template-title',
 				'name'  => $this->option_name . '[title]',
-				'value' => esc_attr( isset( $this->template->name ) ? $this->template->name : __( 'Mapped Template', 'gathercontent-import' ) ),
+				'value' => esc_attr( isset( $this->template->data->name ) ? $this->template->data->name : __( 'Mapped Template', 'gathercontent-import' ) ),
 			)
 		);
 
@@ -318,39 +321,44 @@ class Template_Mapper extends Base {
 
 		$post_type = $this->get_value( 'post_type', 'esc_attr' );
 
-		foreach ( $this->template->config as $tab ) {
+		$tab_groups = $this->template->related->structure->groups ?? array();
 
-			$rows = array();
-			foreach ( $tab->elements as $element ) {
-				if ( 'section' === $element->type ) {
-					continue;
-				}
+		// to handle multiple tabs
+		foreach ( $tab_groups as $tab ) {
 
-				if ( $this->get_value( $element->name ) ) {
-					$val                  = $this->get_value( $element->name );
-					$element->field_type  = isset( $val['type'] ) ? $val['type'] : '';
-					$element->field_value = isset( $val['value'] ) ? $val['value'] : '';
-				}
+			$rows   = array();
+			$fields = $tab->fields ?? array();
 
-				$element->typeName = '';
+			// to handle fields in a tab
+			foreach ( $fields as $field ) {
 
-				if ( isset( $element->type ) ) {
-					if ( 'text' === $element->type ) {
-						$element->type = isset( $element->plain_text ) && $element->plain_text
-							? 'text_plain'
-							: 'text_rich';
+				// to handle components with multiple fields inside
+				$fields_data    = $field->component->fields ?? array( $field );
+				$component_id   = self::COMPONENT_FIELD === $field->field_type ? $field->uuid : '';
+				$component_name = self::COMPONENT_FIELD === $field->field_type ? $field->label : '';
+				$metadata       = $field->metadata;
+
+				$is_repeatable = ( is_object( $metadata ) && isset( $metadata->repeatable ) ) ? $metadata->repeatable->isRepeatable : false;
+
+				foreach ( $fields_data as $field_data ) {
+
+					$formatted_field = $this->format_fields(
+						$field_data,
+						$post_type,
+						$component_name,
+						$is_repeatable,
+						$component_id
+					);
+
+					if ( $formatted_field ) {
+						$rows[] = $formatted_field;
 					}
-
-					$element->typeName = Utils::gc_field_type_name( $element->type );
 				}
-
-				$element->post_type = $post_type;
-				$rows[]             = $element;
 			}
 
 			$tab_array = array(
-				'id'     => $tab->name,
-				'label'  => $tab->label,
+				'id'     => $tab->uuid,
+				'label'  => $tab->name,
 				'hidden' => ! empty( $tabs ),
 				'rows'   => $rows,
 			);
@@ -375,6 +383,57 @@ class Template_Mapper extends Base {
 		$tabs[] = $default_tab;
 
 		return $tabs;
+	}
+
+	/**
+	 * Format field object based on the field type
+	 *
+	 * @since 4.0.0
+	 *
+	 * @param mixed       $field
+	 * @param string|null $post_type
+	 * @param string      $component_name
+	 * @param bool        $is_repeatable
+	 * @param string|int  $component_id optional
+	 *
+	 * @return null|mixed formatted field object.
+	 */
+	private function format_fields( $field, $post_type, string $component_name = '', bool $is_repeatable = false, string $component_id = '' ) {
+
+		$field_type = $field->field_type ?? '';
+
+		$field->uuid .= ( $component_id ? '_component_' . $component_id : '' );
+
+		// exclude guidelines and section fields
+		if ( in_array( $field_type, self::EXCLUDED_FIELDS ) ) {
+			return null;
+		}
+
+		$field->typeName = '';
+
+		if ( 'text' === $field_type ) {
+
+			$is_plain          = $field->metadata->is_plain;
+			$field->type       = $is_plain ? 'text_plain' : 'text_rich';
+			$field->plain_text = (bool) $is_plain;
+
+		} else {
+			$field->type = $field_type === 'attachment' ? 'files' : $field_type;
+		}
+
+		$field->typeName = Utils::gc_field_type_name( $field_type );
+
+		if ( $val = $this->get_value( $field->uuid ) ) {
+			$field->field_type  = isset( $val['type'] ) ? $val['type'] : '';
+			$field->field_value = isset( $val['value'] ) ? $val['value'] : '';
+		}
+
+		$field->is_repeatable = $is_repeatable;
+		$field->post_type     = $post_type;
+		$field->name          = $field->uuid;
+		$field->subtitle      = $component_name ? "($component_name)" : '';
+
+		return $field;
 	}
 
 	public function get_gc_statuses() {

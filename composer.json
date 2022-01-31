@@ -1,27 +1,33 @@
 {
-	"name": "gathercontent-importer",
-	"description": "Imports items from GatherContent to your wordpress site",
-	"version": "3.0.0",
-	"type": "wordpress-plugin",
-	"keywords": [],
-	"homepage": "http://www.gathercontent.com",
-	"license": "GPL-2.0+",
-	"authors": [
-		{
-			"name": "GatherContent",
-			"email": "support@gathercontent.com",
-		"homepage": "http://www.gathercontent.com",
-			"role": "Developer"
-		}
-	],
-    "minimum-stability": "dev",
-	"require": {
-		"php": ">=5.6"
-	},
-    "require-dev": {
-	    "antecedent/patchwork": "1.2.*",
-        "phpunit/phpunit"     : "*@stable",
-	    "brianium/paratest"   : "dev-master",
-        "10up/wp_mock"        : "dev-master"
+  "name": "gathercontent/wp-importer",
+  "description": "Imports items from GatherContent to your wordpress site",
+  "version": "3.2.0",
+  "type": "wordpress-plugin",
+  "keywords": [],
+  "homepage": "http://www.gathercontent.com",
+  "license": "GPL-2.0+",
+  "authors": [
+    {
+      "name": "GatherContent",
+      "email": "support@gathercontent.com",
+      "homepage": "http://www.gathercontent.com",
+      "role": "Developer"
     }
+  ],
+  "minimum-stability": "dev",
+  "require": {
+    "php": ">=7.0"
+  },
+  "require-dev": {
+    "antecedent/patchwork": "2.1.*",
+    "phpunit/phpunit": "^9.4",
+    "brianium/paratest": "dev-master",
+    "10up/wp_mock": "0.4.2",
+    "dealerdirect/phpcodesniffer-composer-installer": "*",
+    "phpcompatibility/php-compatibility": "*",
+    "wp-coding-standards/wpcs": "*"
+  },
+  "scripts": {
+    "phpcbf": "./vendor/bin/phpcbf --standard=WordPress"
+  }
 }

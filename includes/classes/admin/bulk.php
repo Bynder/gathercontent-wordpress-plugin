@@ -144,6 +144,7 @@ class Bulk extends Post_Base {
 	 * @return void
 	 */
 	public function column_display( $column_name, $post_id ) {
+
 		if ( 'gathercontent' !== $column_name ) {
 			return;
 		}
@@ -262,8 +263,8 @@ class Bulk extends Post_Base {
 			|| ! ( $status_id = $this->_post_val( 'gc_status' ) )
 			|| ! ( $item_id = absint( \GatherContent\Importer\get_post_item_id( $post_id ) ) )
 			|| ! ( $mapping_id = absint( \GatherContent\Importer\get_post_mapping_id( $post_id ) ) )
-			|| ! ( $item = $this->api->get_item( $item_id ) )
-			|| ( isset( $item->status->data->id ) && absint( $status_id ) === absint( $item->status->data->id ) )
+			|| ! ( $item = $this->api->get_item( $item_id, true ) )
+			|| ( isset( $item->status_id ) && absint( $status_id ) === absint( $item->status_id ) )
 		) {
 			return;
 		}

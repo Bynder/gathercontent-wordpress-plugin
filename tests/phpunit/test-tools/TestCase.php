@@ -2,30 +2,40 @@
 
 namespace GatherContent\Importer;
 
-use PHPUnit_Framework_TestResult;
 use Text_Template;
 use WP_Mock;
+use PHPUnit\Util\Test;
 use WP_Mock\Tools\TestCase as BaseTestCase;
-
 class TestCase extends BaseTestCase {
-	public function run( PHPUnit_Framework_TestResult $result = null ) {
-		$this->setPreserveGlobalState( false );
-		return parent::run( $result );
-	}
 
 	protected $testFiles = array();
 
-	public function setUp() {
+	public function setUp(): void {
 		if ( ! empty( $this->testFiles ) ) {
 			foreach ( $this->testFiles as $file ) {
-				if ( file_exists( PROJECT . $file ) ) {
-					require_once( PROJECT . $file );
+				if ( file_exists(  dirname( __FILE__ ) . '/../../../includes/' . $file ) ) {
+					require_once(  dirname( __FILE__ ) . '/../../../includes/' . $file );
 				}
 			}
 		}
 
 		parent::setUp();
 	}
+
+	/**
+     * Backported from PHPUnit 9.4 TestCase class.
+     *
+     * WP_Mock's TestCase expects that method to be present on {@see setUpContentFiltering()}.
+     *
+     * @return array
+     */
+    public function getAnnotations() : array
+    {
+        return Test::parseTestMethodAnnotations(
+            static::class,
+            $this->getName(false)
+        );
+    }
 
 	public function assertActionsCalled() {
 		$actions_not_added = $expected_actions = 0;

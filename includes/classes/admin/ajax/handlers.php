@@ -153,7 +153,7 @@ class Handlers extends Plugin_Base {
 				'status'     => $status,
 				'itemName'   => isset( $item->name ) ? $item->name : __( 'N/A', 'gathercontent-importer' ),
 				'updated_at' => isset( $item->updated_at )
-					? Utils::relative_date( $item->updated_at->date )
+					? Utils::relative_date( $item->updated_at )
 					: __( '&mdash;', 'gathercontent-importer' ),
 				'current'    => \GatherContent\Importer\post_is_current( $post['id'], $item ),
 			);
@@ -233,8 +233,7 @@ class Handlers extends Plugin_Base {
 	 * @return void
 	 */
 	public function gc_fetch_js_post_cb() {
-		echo 'here';
-		exit;
+
 		if ( $post_id = $this->_get_val( 'id' ) ) {
 			wp_send_json(
 				\GatherContent\Importer\prepare_post_for_js(
