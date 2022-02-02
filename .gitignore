@@ -1,7 +1,6 @@
 node_modules
 release
 /vendor
-composer.lock
 phpunit.xml
 .idea
 # Created by https://www.gitignore.io/api/osx,node,grunt
@@ -65,6 +64,7 @@ build/Release
 
 # Dependency directories
 node_modules
+package-lock.json
 jspm_packages
 
 # Optional npm cache directory
@@ -82,3 +82,4 @@ dist/
 .tmp/
 
 phploy.ini
+.phpunit.result.cache
