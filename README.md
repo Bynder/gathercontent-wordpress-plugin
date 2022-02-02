@@ -47,6 +47,11 @@ Below the text box is a button that will allow you to simply save all of that in
 
 ## Changelog ##
 
+### 3.2.0 ###
+* Add ability to edit Alt Text on media
+* Update dependencies
+* Support Components and Repeatable fields
+
 ### 3.1.14 ###
 * Fix yoast integration
 
