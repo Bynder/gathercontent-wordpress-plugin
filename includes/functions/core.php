@@ -64,6 +64,8 @@ function setup() {
 
 	spl_autoload_register( $n( 'autoload' ), false );
 
+	include_once GATHERCONTENT_PATH . 'vendor/autoload.php';
+
 	if ( is_admin() ) {
 		// We only need to do our work in the admin.
 		add_action( 'init', $n( 'init' ) );

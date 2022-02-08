@@ -1,8 +1,6 @@
 <?php
 namespace GatherContent\Importer\Post_Types;
 
-require_once GATHERCONTENT_INC . 'vendor/wp-async-task/wp-async-task.php';
-
 class Async_Save_Hook extends \WP_Async_Task {
 	protected $action    = 'save_post';
 	protected $post_type = 'save_post';

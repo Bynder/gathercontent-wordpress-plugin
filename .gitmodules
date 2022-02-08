@@ -1,3 +1,0 @@
-[submodule "includes/vendor/wp-async-task"]
-	path = includes/vendor/wp-async-task
-	url = git@github.com:techcrunch/wp-async-task.git

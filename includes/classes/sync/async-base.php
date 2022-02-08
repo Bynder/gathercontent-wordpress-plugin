@@ -4,8 +4,6 @@ namespace GatherContent\Importer\Sync;
 use GatherContent\Importer\General;
 use GatherContent\Importer\Debug;
 
-require_once GATHERCONTENT_INC . 'vendor/wp-async-task/wp-async-task.php';
-
 abstract class Async_Base extends \WP_Async_Task {
 
 	/**
