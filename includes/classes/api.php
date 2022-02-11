@@ -196,7 +196,7 @@ class API extends Base {
 				'headers' => array(
 					'Accept' => 'application/vnd.gathercontent.v2+json',
 				),
-			),
+			)
 		);
 
 		// append status to the item as it was removed in the V2 APIs and needed everywhere
