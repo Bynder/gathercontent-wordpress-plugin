@@ -4,7 +4,7 @@ Donate link:       http://www.gathercontent.com
 Tags               structured content, gather content, gathercontent, import, migrate, export, mapping, production, writing, collaboration, platform, connect, link, gather, client, word, production
 Requires at least: 5.6.0
 Tested up to:      5.9.0
-Stable tag:        3.2.0
+Stable tag:        3.2.4
 License:           GPL-2.0+
 Requires PHP:	   7.0
 License URI:       https://opensource.org/licenses/GPL-2.0
@@ -64,6 +64,15 @@ Below the text box is a button that will allow you to simply save all of that in
 6. Or change the item's GatherContent status in quick-edit mode.
 
 == Changelog ==
+
+= 3.2.4 =
+* Updated readme.txt stable tag version and changelog
+
+= 3.2.3 =
+* Update change log and readme, forgotten during previous tag
+
+= 3.2.2 =
+* Fixed syntax error, causing issue during install
 
 = 3.2.1 =
 * Resolve build process dependency error.
