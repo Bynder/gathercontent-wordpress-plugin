@@ -1,4 +1,4 @@
-# GatherContent Plugin -- Version 3.2.4 #
+# GatherContent Plugin -- Version 3.2.5 #
 
 This plugin allows you to transfer content from your GatherContent projects into your WordPress site and vice-versa.
 
@@ -46,6 +46,9 @@ Below the text box is a button that will allow you to simply save all of that in
 
 
 ## Changelog ##
+
+### 3.2.5 ###
+* Fixed issue for PHP8 and Yoast SEO compatibility
 
 ### 3.2.4 ###
 * Updated readme.txt stable tag version and changelog
