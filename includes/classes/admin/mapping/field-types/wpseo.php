@@ -60,7 +60,7 @@ class WPSEO extends Base implements Type {
 	protected function get_seo_options() {
 		$this->initialize_wpseo();
 
-		$options = array();
+		$options = array('all_types' => []);
 
 		global $post;
 
