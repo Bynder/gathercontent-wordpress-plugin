@@ -38,57 +38,14 @@ abstract class Async_Base extends \WP_Async_Task {
 	 * failing. On their advice, we're moving the actual firing of the async
 	 * postback to the shutdown hook. Supposedly that will ensure that the
 	 * data at least has time to get into the object cache.
-	 *
-	 * @uses $_COOKIE        To send a cookie header for async postback
-	 * @uses apply_filters()
-	 * @uses admin_url()
-	 * @uses wp_remote_post()
 	 */
 	public function launch_on_shutdown() {
-		if ( empty( $this->_body_data ) ) {
+		if ( empty( $this->_body_data ) || ! isset($this->_body_data['mapping_id'])) {
 			return;
 		}
 
-		$admin          = General::get_instance()->admin;
-		$debug_requests = $admin->get_setting( 'log_importer_requests' );
-
-		$request_args = array(
-			'timeout'   => 0.01,
-			'blocking'  => false,
-			'sslverify' => apply_filters( 'https_local_ssl_verify', true ),
-			'body'      => $this->_body_data,
-			'headers'   => array(
-				// 'cookie' => self::get_cookies(),
-			),
-		);
-
-		if ( \GatherContent\Importer\auth_enabled() ) {
-			$username = $admin->get_setting( 'auth_username' );
-			$password = $admin->get_setting( 'auth_pw' );
-
-			// Attempt to add basic auth header.
-			$request_args['headers']['Authorization'] = 'Basic ' . base64_encode( $username . ':' . $password );
-		}
-
-		if ( $debug_requests ) {
-			unset( $request_args['timeout'] );
-			$request_args['blocking']  = true;
-			$request_args['sslverify'] = false;
-		}
-
-		$response = wp_remote_post( admin_url( 'admin-post.php' ), $request_args );
-
-		if ( $debug_requests ) {
-			Debug::debug_log( $request_args, 'async request args' );
-			Debug::debug_log(
-				array(
-					'code'    => wp_remote_retrieve_response_code( $response ),
-					'headers' => wp_remote_retrieve_headers( $response ),
-					'body'    => wp_remote_retrieve_body( $response ),
-				),
-				'async request response'
-			);
-		}
+		$mapping_post = get_post( $this->_body_data['mapping_id'] );
+		do_action($this->_body_data['action'], $mapping_post);
 	}
 
 	/**
