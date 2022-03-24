@@ -49,23 +49,6 @@ abstract class Async_Base extends \WP_Async_Task {
 	}
 
 	/**
-	 * Get the current request cookies.
-	 * Not currently used, but left for posterity.
-	 *
-	 * @since  3.1.4
-	 *
-	 * @return array
-	 */
-	public static function get_cookies() {
-		$cookies = array();
-		foreach ( $_COOKIE as $name => $value ) {
-			$cookies[] = "$name=" . urlencode( is_array( $value ) ? serialize( $value ) : $value );
-		}
-
-		return implode( '; ', $cookies );
-	}
-
-	/**
 	 * Verify the postback is valid, then fire any scheduled events.
 	 *
 	 * @uses $_POST['_nonce']
