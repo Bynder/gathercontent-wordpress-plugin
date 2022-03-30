@@ -191,7 +191,7 @@ class Mapping_Post extends Base {
 	 * @return mixed        WP post status or false.
 	 */
 	public function get_wp_status_for_item( $item ) {
-		$status_id = isset( $item->custom_state_id ) ? $item->custom_state_id : $item;
+		$status_id = isset( $item->status_id ) ? $item->status_id : $item;
 		if ( $gc_status = $this->data( 'gc_status', $status_id ) ) {
 			if ( ! empty( $gc_status['wp'] ) ) {
 				return sanitize_text_field( $gc_status['wp'] );
