@@ -1,4 +1,4 @@
-# GatherContent Plugin -- Version 3.2.7 #
+# GatherContent Plugin -- Version 3.2.8 #
 
 This plugin allows you to transfer content from your GatherContent projects into your WordPress site and vice-versa.
 
@@ -46,6 +46,9 @@ Below the text box is a button that will allow you to simply save all of that in
 
 
 ## Changelog ##
+
+### 3.2.8 ###
+* Pulling will no longer happen using wp_remote_post as it was causing issues with local environments and firewalls, where leaving the server and re-calling it via the host wasn't possible.
 
 ### 3.2.7 ###
 * Fixed issue where GatherContent to WordPress mapping was not taking effect
