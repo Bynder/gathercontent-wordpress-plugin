@@ -17,7 +17,8 @@
   "minimum-stability": "dev",
   "require": {
     "php": ">=7.0",
-    "techcrunch/wp-async-task": "dev-master"
+    "techcrunch/wp-async-task": "dev-master",
+    "ralouphie/mimey": "^1.0"
   },
   "require-dev": {
     "antecedent/patchwork": "2.1.*",
@@ -30,5 +31,10 @@
   },
   "scripts": {
     "phpcbf": "./vendor/bin/phpcbf --standard=WordPress"
+  },
+  "config": {
+    "allow-plugins": {
+      "dealerdirect/phpcodesniffer-composer-installer": false
+    }
   }
 }
