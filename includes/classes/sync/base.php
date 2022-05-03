@@ -403,19 +403,23 @@ abstract class Base extends Plugin_Base {
 				break;
 
 			case 'attachment':
-				$val           = array();
 				$element_value = is_array( $element->value ) ? $element->value : array();
-				$file_ids      = $element_value ? array_map(
+				$val = $element_value ? array_map(
 					function ( $v ) {
-						return $v->file_id;
+						return (object) array(
+							'id' => $v->file_id,
+							'project_id' => $this->item->project_id,
+							'url' => $v->url,
+							'optimised_image_url' => $v->optimised_image_url,
+							'download_url' => $v->download_url,
+							'filename' => $v->filename,
+							'size' => $v->size,
+							'mime_type' => $v->mime_type,
+							'alt_text' => $v->alt_text,
+						);
 					},
 					$element_value
 				) : array();
-
-				if ( $file_ids ) {
-					$files = $this->api->uncached()->get_item_files( $this->item->project_id, $file_ids );
-					$val   = $files;
-				}
 				break;
 
 			default:
