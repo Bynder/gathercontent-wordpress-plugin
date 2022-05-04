@@ -10,6 +10,7 @@ namespace GatherContent\Importer\Sync;
 
 use GatherContent\Importer\Mapping_Post;
 use GatherContent\Importer\API;
+use Mimey\MimeTypes;
 use WP_Error;
 
 /**
@@ -881,6 +882,12 @@ class Pull extends Base {
 	protected function sideload_file( $file_name, $download_url, $post_id, $alt_text = '' ) {
 		if ( ! empty( $download_url ) ) {
 			$file_array = $this->tmp_file( $file_name, $download_url );
+			$file_array['type'] = mime_content_type($file_array['tmp_name']);
+			$extension = '.' . (new MimeTypes())->getExtension($file_array['type']);
+			$hasExtension = substr($file_array['name'], 0 - strlen($extension)) === $extension;
+			if (!$hasExtension) {
+				$file_array['name'] = $file_array['name'] . $extension;
+			}
 
 			if ( is_wp_error( $file_array ) ) {
 				return $file_array;

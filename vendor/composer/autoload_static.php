@@ -6,6 +6,20 @@ namespace Composer\Autoload;
 
 class ComposerStaticInitb26fadc2a4161998e2090a74160adfaf
 {
+    public static $prefixLengthsPsr4 = array (
+        'M' => 
+        array (
+            'Mimey\\' => 6,
+        ),
+    );
+
+    public static $prefixDirsPsr4 = array (
+        'Mimey\\' => 
+        array (
+            0 => __DIR__ . '/..' . '/ralouphie/mimey/src',
+        ),
+    );
+
     public static $classMap = array (
         'Composer\\InstalledVersions' => __DIR__ . '/..' . '/composer/InstalledVersions.php',
         'WP_Async_Task' => __DIR__ . '/..' . '/techcrunch/wp-async-task/wp-async-task.php',
@@ -14,6 +28,8 @@ class ComposerStaticInitb26fadc2a4161998e2090a74160adfaf
     public static function getInitializer(ClassLoader $loader)
     {
         return \Closure::bind(function () use ($loader) {
+            $loader->prefixLengthsPsr4 = ComposerStaticInitb26fadc2a4161998e2090a74160adfaf::$prefixLengthsPsr4;
+            $loader->prefixDirsPsr4 = ComposerStaticInitb26fadc2a4161998e2090a74160adfaf::$prefixDirsPsr4;
             $loader->classMap = ComposerStaticInitb26fadc2a4161998e2090a74160adfaf::$classMap;
 
         }, null, ClassLoader::class);

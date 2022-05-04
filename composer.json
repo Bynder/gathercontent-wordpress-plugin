@@ -1,7 +1,7 @@
 {
   "name": "gathercontent/wp-importer",
   "description": "Imports items from GatherContent to your wordpress site",
-  "version": "3.2.6",
+  "version": "3.2.9",
   "type": "wordpress-plugin",
   "keywords": [],
   "homepage": "http://www.gathercontent.com",
@@ -17,7 +17,8 @@
   "minimum-stability": "dev",
   "require": {
     "php": ">=7.0",
-    "techcrunch/wp-async-task": "dev-master"
+    "techcrunch/wp-async-task": "dev-master",
+    "ralouphie/mimey": "^1.0"
   },
   "require-dev": {
     "antecedent/patchwork": "2.1.*",
@@ -30,5 +31,10 @@
   },
   "scripts": {
     "phpcbf": "./vendor/bin/phpcbf --standard=WordPress"
+  },
+  "config": {
+    "allow-plugins": {
+      "dealerdirect/phpcodesniffer-composer-installer": false
+    }
   }
 }
