@@ -1,7 +1,7 @@
 <?php return array(
     'root' => array(
-        'pretty_version' => '3.2.8',
-        'version' => '3.2.8.0',
+        'pretty_version' => '3.2.9',
+        'version' => '3.2.9.0',
         'type' => 'wordpress-plugin',
         'install_path' => __DIR__ . '/../../',
         'aliases' => array(),
@@ -11,8 +11,8 @@
     ),
     'versions' => array(
         'gathercontent/wp-importer' => array(
-            'pretty_version' => '3.2.8',
-            'version' => '3.2.8.0',
+            'pretty_version' => '3.2.9',
+            'version' => '3.2.9.0',
             'type' => 'wordpress-plugin',
             'install_path' => __DIR__ . '/../../',
             'aliases' => array(),

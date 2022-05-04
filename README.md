@@ -1,4 +1,4 @@
-# GatherContent Plugin -- Version 3.2.8 #
+# GatherContent Plugin -- Version 3.2.9 #
 
 This plugin allows you to transfer content from your GatherContent projects into your WordPress site and vice-versa.
 
@@ -46,6 +46,10 @@ Below the text box is a button that will allow you to simply save all of that in
 
 
 ## Changelog ##
+
+### 3.2.9 ###
+* Added support for Bynder images, which do not include an extension in their filenames by default.
+* Importing files from attachment fields in GatherContent, will now be done using the result of the content endpoint for the item, and will no longer call the files endpoint.
 
 ### 3.2.8 ###
 * Pulling will no longer happen using wp_remote_post as it was causing issues with local environments and firewalls, where leaving the server and re-calling it via the host wasn't possible.
