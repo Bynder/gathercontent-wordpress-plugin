@@ -149,12 +149,13 @@ class API extends Base {
 	 *
 	 * @link https://docs.gathercontent.com/reference/listitems
 	 *
-	 * @param  int $project_id Project ID.
-	 * @param  int $template_id Template ID.
+	 * @param  int  $project_id Project ID.
+	 * @param  int  $template_id Template ID.
+	 * @param  bool $include_status bool defaults to false.
 	 *
 	 * @return mixed             Results of request.
 	 */
-	public function get_project_items( $project_id, $template_id ) {
+	public function get_project_items( $project_id, $template_id, $include_status = false ) {
 
 		$query_params = array(
 			'template_id' => $template_id,
@@ -172,6 +173,12 @@ class API extends Base {
 			'',
 			$query_params
 		);
+
+		if ( $include_status ) {
+			foreach ($response as $i => $item) {
+				$response[ $i ]->status = (object) $this->add_status_to_item( $item );
+			}
+		}
 
 		return $response;
 	}

@@ -4,7 +4,7 @@ Donate link:       http://www.gathercontent.com
 Tags               structured content, gather content, gathercontent, import, migrate, export, mapping, production, writing, collaboration, platform, connect, link, gather, client, word, production
 Requires at least: 5.6.0
 Tested up to:      5.9.0
-Stable tag:        3.2.9
+Stable tag:        3.2.10
 License:           GPL-2.0+
 Requires PHP:	   7.0
 License URI:       https://opensource.org/licenses/GPL-2.0
@@ -64,6 +64,9 @@ Below the text box is a button that will allow you to simply save all of that in
 6. Or change the item's GatherContent status in quick-edit mode.
 
 == Changelog ==
+
+= 3.2.10 =
+* Fixed the missing status colors on the template mapping screen.
 
 = 3.2.9 =
 * Added support for Bynder images, which do not include an extension in their filenames by default.
