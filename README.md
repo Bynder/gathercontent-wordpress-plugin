@@ -47,6 +47,9 @@ Below the text box is a button that will allow you to simply save all of that in
 
 ## Changelog ##
 
+### 3.2.10 ###
+* Fixed the missing status colors on the template mapping screen.
+
 ### 3.2.9 ###
 * Added support for Bynder images, which do not include an extension in their filenames by default.
 * Importing files from attachment fields in GatherContent, will now be done using the result of the content endpoint for the item, and will no longer call the files endpoint.

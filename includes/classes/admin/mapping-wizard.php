@@ -754,7 +754,7 @@ class Mapping_Wizard extends Base {
 			return $this->project_items[ $project_id ];
 		}
 
-		$this->project_items[ $project_id ] = $this->api()->get_project_items( $project_id, $template_id );
+		$this->project_items[ $project_id ] = $this->api()->get_project_items( $project_id, $template_id, true );
 		return $this->project_items[ $project_id ];
 	}
 
