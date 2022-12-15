@@ -1,4 +1,4 @@
-# GatherContent Plugin -- Version 3.2.12 #
+# GatherContent Plugin -- Version 3.2.13 #
 
 This plugin allows you to transfer content from your GatherContent projects into your WordPress site and vice-versa.
 
@@ -46,6 +46,9 @@ Below the text box is a button that will allow you to simply save all of that in
 
 
 ## Changelog ##
+
+### 3.2.13 ###
+* Fixed issue where content and status updates were not pushing to GatherContent from the plugin
 
 ### 3.2.12 ###
 * Reformat readme.txt
