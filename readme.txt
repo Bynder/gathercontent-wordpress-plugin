@@ -65,6 +65,9 @@ Below the text box is a button that will allow you to simply save all of that in
 
 == Changelog ==
 
+= 3.2.14 =
+* Update to support multiple workflows
+
 = 3.2.13 =
 * Fixed issue where content and status updates were not pushing to GatherContent from the plugin
 
