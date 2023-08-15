@@ -1,7 +1,7 @@
 {
   "name": "gathercontent/wp-importer",
   "description": "Imports items from GatherContent to your wordpress site",
-  "version": "3.2.16",
+  "version": "3.2.17",
   "type": "wordpress-plugin",
   "keywords": [],
   "homepage": "http://www.gathercontent.com",
