@@ -62,7 +62,7 @@ function setup() {
 		return __NAMESPACE__ . "\\$function";
 	};
 
-	spl_autoload_register( $n( 'autoload' ), false );
+	spl_autoload_register($n( 'autoload' ));
 
 	include_once GATHERCONTENT_PATH . 'vendor/autoload.php';
 
