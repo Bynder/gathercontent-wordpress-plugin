@@ -165,9 +165,7 @@ class Pull extends Base {
 			)
 		);
 
-		
 		if ( ! empty( $tax_terms ) ) {
-
 			foreach ( $tax_terms as $taxonomy => $terms ) {
 				$taxonomy_obj = get_taxonomy( $taxonomy );
 				if ( ! $taxonomy_obj ) {
@@ -464,8 +462,8 @@ class Pull extends Base {
 	 * @return array $post_data  The modified WP Post data array.
 	 */
 	protected function set_taxonomy_field_value( $taxonomy, $post_data ) {
-		$terms = $this->get_element_terms( $taxonomy ); 
-		$terms = array_filter( $terms ); // todo : fix this?
+		$terms = $this->get_element_terms( $taxonomy );
+		$terms = array_filter( $terms );
 		if ( ! empty( $terms ) ) {
 			if ( 'category' === $taxonomy ) {
 				$post_data['post_category'] = $terms;
