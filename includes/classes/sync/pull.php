@@ -165,7 +165,9 @@ class Pull extends Base {
 			)
 		);
 
+		
 		if ( ! empty( $tax_terms ) ) {
+
 			foreach ( $tax_terms as $taxonomy => $terms ) {
 				$taxonomy_obj = get_taxonomy( $taxonomy );
 				if ( ! $taxonomy_obj ) {
@@ -462,8 +464,8 @@ class Pull extends Base {
 	 * @return array $post_data  The modified WP Post data array.
 	 */
 	protected function set_taxonomy_field_value( $taxonomy, $post_data ) {
-		$terms = $this->get_element_terms( $taxonomy );
-		$terms = array_filter( $terms );
+		$terms = $this->get_element_terms( $taxonomy ); 
+		$terms = array_filter( $terms ); // todo : fix this?
 		if ( ! empty( $terms ) ) {
 			if ( 'category' === $taxonomy ) {
 				$post_data['post_category'] = $terms;
@@ -624,10 +626,11 @@ class Pull extends Base {
 	protected function get_element_terms( $taxonomy ) {
 		if ( 'text' === $this->element->type ) {
 			$terms = array_map( 'trim', explode( ',', sanitize_text_field( $this->element->value ) ) );
+		} elseif ( 'choice_checkbox' === $this->element->type ) {
+			$terms = json_decode($this->element->value);
 		} else {
 			$terms = (array) $this->element->value;
 		}
-
 		if ( ! empty( $terms ) && is_taxonomy_hierarchical( $taxonomy ) ) {
 			foreach ( $terms as $key => $term ) {
 				// @codingStandardsIgnoreStart
