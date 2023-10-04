@@ -127,6 +127,10 @@ class WPSEO extends Base implements Type {
 		new \WPSEO_Metabox();
 		\WPSEO_Metabox::translate_meta_boxes();
 
+		if ( $options['opengraph'] === true || $options['twitter'] === true || $options['googleplus'] === true ) {
+			new \WPSEO_Social_Admin();
+			\WPSEO_Social_Admin::translate_meta_boxes();
+		}
 	}
 
 	public function remove_wpseo_keys( $blacklist ) {
