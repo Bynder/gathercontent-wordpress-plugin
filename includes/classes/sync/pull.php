@@ -624,10 +624,11 @@ class Pull extends Base {
 	protected function get_element_terms( $taxonomy ) {
 		if ( 'text' === $this->element->type ) {
 			$terms = array_map( 'trim', explode( ',', sanitize_text_field( $this->element->value ) ) );
+		} elseif ( 'choice_checkbox' === $this->element->type ) {
+			$terms = json_decode($this->element->value);
 		} else {
 			$terms = (array) $this->element->value;
 		}
-
 		if ( ! empty( $terms ) && is_taxonomy_hierarchical( $taxonomy ) ) {
 			foreach ( $terms as $key => $term ) {
 				// @codingStandardsIgnoreStart
