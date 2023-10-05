@@ -1,4 +1,4 @@
-# GatherContent Plugin -- Version 3.2.17 #
+# GatherContent Plugin -- Version 3.2.18 #
 
 This plugin allows you to transfer content from your GatherContent projects into your WordPress site and vice-versa.
 
@@ -46,6 +46,12 @@ Below the text box is a button that will allow you to simply save all of that in
 
 
 ## Changelog ##
+
+### 3.2.18 ###
+* Removed references to deprecated WPSEO_Social_Admin class
+* Fixed bug where Taxonomy terms from checkboxes were not importing correctly
+* Fixed bug where fields imported to the WordPress Title were incorrectly encoding special characters
+* Bumped select2 library from 4.0.13 to 4.0.3
 
 ### 3.2.17 ###
 * Updated `spl_autoload_register` to be PHP8 compatible
