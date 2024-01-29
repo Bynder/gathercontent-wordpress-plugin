@@ -1,4 +1,4 @@
-# GatherContent Plugin -- Version 3.2.19 #
+# GatherContent Plugin -- Version 3.2.20 #
 
 This plugin allows you to transfer content from your GatherContent projects into your WordPress site and vice-versa.
 
@@ -46,6 +46,9 @@ Below the text box is a button that will allow you to simply save all of that in
 
 
 ## Changelog ##
+
+### 3.2.20 ###
+* Resolved bug missing WPSEO_Social_admin class
 
 ### 3.2.19 ###
 * Bumping version due to GitHub actions failing to deploy
