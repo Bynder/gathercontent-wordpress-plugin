@@ -91,6 +91,9 @@ abstract class Base extends Plugin_Base {
 	 */
 	protected $append_types = array( 'post_content', 'post_title', 'post_excerpt' );
 
+	/** @var Log $log */
+	protected $logger;
+
 	/**
 	 * Creates an instance of this class.
 	 *
