@@ -42,7 +42,7 @@ abstract class Base extends Enqueue {
 	public $default_options = array();
 
 	/** @var string $logo */
-	public $logo;
+	protected $logo;
 
 	/**
 	 * Creates an instance of this class.
