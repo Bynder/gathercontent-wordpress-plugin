@@ -16,7 +16,7 @@
   ],
   "minimum-stability": "dev",
   "require": {
-    "php": ">=7.0",
+    "php": "~7.0 || ~8.0",
     "techcrunch/wp-async-task": "dev-master",
     "ralouphie/mimey": "^1.0"
   },
