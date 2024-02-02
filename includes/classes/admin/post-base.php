@@ -54,6 +54,9 @@ abstract class Post_Base extends UI_Base {
 	 */
 	protected $doing_ajax = false;
 
+	/** @var array $post_types */
+	protected $post_types = [];
+
 	/**
 	 * Creates an instance of this class.
 	 *
