@@ -384,6 +384,7 @@ abstract class Base extends Plugin_Base {
 
 			case 'choice_radio':
 				$val = '';
+				error_log('RADIO: ' . json_encode($element));
 				foreach ( $element->options as $idx => $option ) {
 					if ( $option->selected ) {
 						if ( isset( $option->value ) ) {
@@ -502,6 +503,8 @@ abstract class Base extends Plugin_Base {
 	 * @return mixed
 	 */
 	protected function format_field_value( $field, $field_value, $is_component_repeatable, $is_repeatable) {
+		error_log('value: ' . json_encode($field_value));
+
 
 		if( empty( $field_value ) ) {
 			return '';
@@ -563,13 +566,22 @@ abstract class Base extends Plugin_Base {
 		foreach ( $options_meta as $option ) {
 			$matched_option = wp_list_filter( $field_value, array( 'id' => $option->optionId ) );
 
-			if ( count( $matched_option ) > 0 ) {
-				$options[] = (object) array(
-					'name'     => $option->optionId,
-					'label'    => $option->label,
-					'selected' => true,
-				);
-			}
+			$options[] = (object) array(
+				'name'     => $option->optionId,
+				'label'    => $option->label,
+				'selected' => ! empty($matched_option),
+			);
+		}
+
+		if (isset($metadata->choice_fields->otherOption)) {
+			$option = $metadata->choice_fields->otherOption;
+			$matched_option = wp_list_filter( $field_value, array( 'id' => $option->optionId ) );
+
+			$options[] = (object) [
+				'name'     => $option->optionId,
+				'label'    => $field_value[0]->label,
+				'selected' => ! empty($matched_option),
+			];
 		}
 
 		return $options;

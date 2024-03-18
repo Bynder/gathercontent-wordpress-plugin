@@ -179,7 +179,7 @@ class Utils extends Base {
 					'text'            => __( 'Text', 'gathercontent-import' ),
 					'text_rich'       => __( 'Rich Text', 'gathercontent-import' ),
 					'text_plain'      => __( 'Plain Text', 'gathercontent-import' ),
-					'choice_radio'    => __( 'Muliple Choice', 'gathercontent-import' ),
+					'choice_radio'    => __( 'Radio', 'gathercontent-import' ),
 					'choice_checkbox' => __( 'Checkboxes', 'gathercontent-import' ),
 					'files'           => __( 'Attachment', 'gathercontent-import' ),
 				)
