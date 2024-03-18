@@ -276,6 +276,7 @@ class Push extends Base {
 	 */
 	protected function map_wp_data_to_gc_data() {
 		$config = $this->loop_item_elements_and_map();
+
 		return apply_filters( 'gc_update_gc_config_data', $config, $this );
 	}
 
@@ -679,7 +680,7 @@ class Push extends Base {
 	 * @return bool             Whether the options were updated or not.
 	 */
 	public function update_element_selected_options( $callback ) {
-		$pre_options = wp_json_encode( $this->element->options );
+		$pre_options = wp_json_encode( $this->element->value );
 
 		$last_key = false;
 		if ( isset( $this->element->other_option ) && $this->element->other_option ) {
@@ -687,6 +688,7 @@ class Push extends Base {
 			$last_key = end( $keys );
 		}
 
+		$values = [];
 		foreach ( $this->element->options as $key => $option ) {
 
 			// If it's the "Other" option, we need to use the option's value, not label.
@@ -695,7 +697,10 @@ class Push extends Base {
 				: $option->label;
 
 			if ( $callback( self::remove_zero_width( $label ) ) ) {
-				$this->element->options[ $key ]->selected = true;
+				$values[] = [
+					'id' => $option->name,
+					'label' => $option->label,
+				];
 			} else {
 				$this->element->options[ $key ]->selected = false;
 
@@ -707,7 +712,9 @@ class Push extends Base {
 			}
 		}
 
-		$post_options = wp_json_encode( $this->element->options );
+		$this->element->value = $values;
+
+		$post_options = wp_json_encode( $this->element->value );
 
 		// @codingStandardsIgnoreStart
 		// Check if the values have been updated.
