@@ -447,3 +447,44 @@ function auth_enabled() {
 
 	return false;
 }
+
+add_action( 'plugins_loaded', static function() {
+	add_filter( 'admin_notices', function () {
+		$matchingPlugin = array_values(array_filter(array_keys(get_plugins()), function ($plugin) {
+			return strpos($plugin, 'query-monitor') !== false;
+		}))[0] ?? false;
+
+		if ($matchingPlugin && is_plugin_active($matchingPlugin)) {
+			return;
+		}
+
+		?>
+		<div class="notice notice-error is-dismissible">
+<p><?php _e( 'The GatherContent Plugin is out of date, please install the Content Workflow plugin!', 'gathercontent-import' ); ?></p>
+			<p>
+			For a one click easy install, <a href="#" id="gc-install-content-workflow">click here</a>
+			</p>
+			<script>
+				jQuery(document).ready( function($){
+					$('#gc-install-content-workflow').on('click', function(e){
+						e.preventDefault();
+						$.ajax({
+							url: '<?php echo admin_url( 'admin-ajax.php' ) ?>',
+							type: 'POST',
+							data:{
+								_ajax_nonce: '<?php echo wp_create_nonce('gc-install-ajax-nonce')?>',
+								action: 'gc_install_content_workflow',
+							},
+							success: function( data ){
+								if (data.success) {
+									window.location.reload()
+								}
+							}
+						});
+					});
+				});
+			</script>
+</div>
+<?php
+	} );
+});
