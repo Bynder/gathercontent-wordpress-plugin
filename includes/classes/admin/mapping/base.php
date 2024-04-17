@@ -8,6 +8,7 @@
 namespace GatherContent\Importer\Admin\Mapping;
 
 use GatherContent\Importer\Base as Plugin_Base;
+use Symfony\Component\Console\Helper\Table;
 
 /**
  * Class for managing syncing template items.
@@ -198,6 +199,31 @@ abstract class Base extends Plugin_Base {
 		}
 
 		return $select_options;
+	}
+
+	/**
+	 * @return Array<string, string[]> - array of table names prefixed with wp_
+	 */
+	protected function database_types(){
+		global $wpdb;
+
+		$wpTables = $wpdb->get_col("SHOW TABLES LIKE '{$wpdb->prefix}%'");
+
+		$allColumns = [];
+		foreach($wpTables as $tableName){
+			if(!isset($allColumns[$tableName])){
+				$allColumns[$tableName] = [];
+			}
+
+			$tableCols = $wpdb->get_results("SHOW COLUMNS FROM $tableName");
+
+			foreach($tableCols as $tableCol){
+				$str = "$tableCol->Field ($tableCol->Type)";
+				$allColumns[$tableName][] = $str;
+			}
+		}
+
+		return $allColumns;
 	}
 
 	/**

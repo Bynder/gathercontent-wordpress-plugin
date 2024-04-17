@@ -24,6 +24,6 @@
 		<option <# if ( '' === data.field_type ) { #>selected="selected"<# } #> value=""><?php _e( 'Unused', 'gathercontent-import' ); ?></option>
 		<?php do_action( 'gathercontent_field_type_option_underscore_template', $this ); ?>
 	</select>
-
+<!-- //TODO this is the area where the drop downs are populated -->
 	<?php do_action( 'gathercontent_field_type_underscore_template', $this ); ?>
 </td>

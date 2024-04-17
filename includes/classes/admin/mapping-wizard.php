@@ -696,6 +696,8 @@ class Mapping_Wizard extends Base {
 	 * @return void
 	 */
 	protected function save_mapping_post_and_redirect( $project, $template, $options ) {
+			//TODO Gavin - I think this is where the save happens
+
 		if ( ! wp_verify_nonce( $options['create_mapping'], md5( $project . $template ) ) ) {
 
 			// Let check_admin_referer handle the fail.

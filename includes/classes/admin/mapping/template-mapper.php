@@ -1,6 +1,7 @@
 <?php
 namespace GatherContent\Importer\Admin\Mapping;
 
+use GatherContent\Importer\Admin\Mapping\Field_Types\Types;
 use GatherContent\Importer\Utils;
 
 /**
@@ -233,18 +234,29 @@ class Template_Mapper extends Base {
 	 * @return Field_Types\Types object
 	 */
 	protected function initiate_mapped_field_types() {
+		$databaseType = new Field_Types\Database( $this->database_types());
+
 		$core_field_types = array(
 			new Field_Types\Post( $this->post_options() ),
 			new Field_Types\Taxonomy( $this->post_types() ),
 			new Field_Types\Meta(),
 			new Field_Types\Media(),
+			$databaseType,
 		);
 
 		if ( defined( 'WPSEO_VERSION' ) ) {
 			$core_field_types[] = new Field_Types\WPSEO( $this->post_types() );
 		}
 
-		$type = new Field_Types\Types( $core_field_types );
+		$sub_field_types = [
+			$databaseType->type_id() => [
+				'foo',
+				'bar',
+				'fizz',
+			],
+		];
+
+		$type = new Field_Types\Types( $core_field_types, $sub_field_types );
 
 		return $type->register();
 	}

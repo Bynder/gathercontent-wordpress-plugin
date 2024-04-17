@@ -14,6 +14,8 @@ class Types extends Plugin_Base {
 	 */
 	protected $core_types = array();
 
+	protected $sub_types = [];
+
 	/**
 	 * Array of Type
 	 *
@@ -26,8 +28,9 @@ class Types extends Plugin_Base {
 	 *
 	 * @since 3.0.0
 	 */
-	public function __construct( array $core_types ) {
+	public function __construct( array $core_types, array $sub_types ) {
 		$this->core_types = $core_types;
+		$this->sub_types = $sub_types;
 	}
 
 	/**
@@ -42,6 +45,8 @@ class Types extends Plugin_Base {
 			}
 
 			$this->field_types[ $type->type_id() ] = $type;
+			//TODO Gavin this is where the dropdowns are populated
+			//TODO gavin but where are the _Extra_ drop downs from?
 			add_action( 'gathercontent_field_type_option_underscore_template', array( $type, 'option_underscore_template' ) );
 			add_action( 'gathercontent_field_type_underscore_template', array( $type, 'underscore_template' ) );
 		}

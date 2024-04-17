@@ -15,6 +15,8 @@
 		</fieldset>
 	<?php endforeach; ?>
 
+	<p>foobar</p>
+
 	<?php $this->output( 'after_tabs_wrapper' ); ?>
 
 </div>
