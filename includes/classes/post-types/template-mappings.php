@@ -384,6 +384,7 @@ class Template_Mappings extends Base {
 	}
 
 	public static function create_mapping( $mapping_args, $post_data = array(), $wp_error = false ) {
+
 		$mapping_args = wp_parse_args(
 			$mapping_args,
 			array(
@@ -405,6 +406,10 @@ class Template_Mappings extends Base {
 			);
 		}
 
+		//TODO we need to do the insert here!
+		// but then how do we ensure that it's updated when gathercontent sync
+		// is done?
+
 		$post_data = wp_parse_args(
 			$post_data,
 			array(
@@ -420,6 +425,8 @@ class Template_Mappings extends Base {
 				),
 			)
 		);
+
+		var_dump(['CREATE MAPPING', $post_data]);
 
 		return wp_insert_post( $post_data, $wp_error );
 	}
