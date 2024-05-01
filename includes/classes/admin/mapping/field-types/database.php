@@ -29,7 +29,9 @@ class Database extends Base implements Type {
 	 */
 	public function __construct( array $post_options ) {
 		$this->tableColumnData = $post_options;
-		$this->post_options = array_keys($this->tableColumnData);
+
+		$tableNames = array_keys($this->tableColumnData);
+		$this->post_options = array_combine($tableNames, $tableNames);
 		$this->option_label = __( 'Database', 'gathercontent-import' );
 	}
 
@@ -57,6 +59,8 @@ class Database extends Base implements Type {
 
 	public function underscore_template( View $view ) {
 
+		$subValueName = $view->get( 'option_base' ) . '[mapping][0beda65c-779b-1970-ae99-4ecb696c8b01][sub-value]';
+
 		//TODO Gavin this cannot be the done way of adding on-page js. Do it properly.
 		$mainSelectOnChangeJavascript = <<<EOT
 /** @type {HTMLSelectElement} selectElement */
@@ -67,7 +71,7 @@ const value = selectElement.value
 const text = selectElement.options[selectElement.selectedIndex].text
 
 // get the sub-selector and clear any selection
-const subSelectElement = document.querySelector('select[name=\'temp-test\']')
+const subSelectElement = document.querySelector('select[name=\'$subValueName\']')
 subSelectElement.value = ''
 
 // hide any option whose data-tablename is not this text
@@ -85,7 +89,7 @@ EOT;
 				<?php $this->underscore_empty_option( __( 'Do Not Import', 'gathercontent-import' ) ); ?>
 			</select>
 <!--		//TODO Gavin how do we pass the selection down on submit?-->
-			<select name="temp-test" >
+			<select name="<?= $subValueName ?>" >
 				<option value="">Select a column</option>
 				<?= implode('\r\n', $this->getAllTableColOptions()) ?>
 			</select>
