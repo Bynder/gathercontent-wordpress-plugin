@@ -218,7 +218,7 @@ abstract class Base extends Plugin_Base {
 			$tableCols = $wpdb->get_results("SHOW COLUMNS FROM $tableName");
 
 			foreach($tableCols as $tableCol){
-				$str = "$tableCol->Field ($tableCol->Type)";
+				$str = "$tableCol->Field";
 				$allColumns[$tableName][] = $str;
 			}
 		}
