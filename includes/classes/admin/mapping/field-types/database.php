@@ -35,23 +35,23 @@ class Database extends Base implements Type {
 		$this->option_label = __( 'Database', 'gathercontent-import' );
 	}
 
-	private function getAllTableColOptions()
+	private function getAllTableColOptions($currentTableName = null)
 	{
 		$allOpts = [];
 
 		foreach ($this->tableColumnData as $tableName => $columns) {
-			$allOpts = array_merge($allOpts, $this->getTableColOptions($tableName));
+			$allOpts = array_merge($allOpts, $this->getTableColOptions($tableName, $currentTableName === $tableName));
 		}
 
 		return $allOpts;
 	}
 
-	private function getTableColOptions(string $tableName)
+	private function getTableColOptions(string $tableName, bool $shouldShow)
 	{
 		$optionStrings = [];
 
 		foreach ($this->tableColumnData[$tableName] as $column) {
-			$optionStrings[] = "<option style='display: none' data-tablename='$tableName' value='{$column}'>{$column}</option>";
+			$optionStrings[] = "<option <# if ('" . $column . "' == data.field_subvalue) { #> selected='selected' <# } #> style='display: " . ($shouldShow ? 'block' : 'none') . " data-tablename='$tableName' value='{$column}'>{$column}</option>";
 		}
 
 		return $optionStrings;
@@ -59,7 +59,7 @@ class Database extends Base implements Type {
 
 	public function underscore_template( View $view ) {
 
-		$subValueName = $view->get( 'option_base' ) . '[mapping][0beda65c-779b-1970-ae99-4ecb696c8b01][sub-value]';
+		$subValueName = $view->get( 'option_base' ) . '[mapping][{{ data.name }}][sub-value]';
 
 		//TODO Gavin this cannot be the done way of adding on-page js. Do it properly.
 		$mainSelectOnChangeJavascript = <<<EOT
@@ -71,7 +71,7 @@ const value = selectElement.value
 const text = selectElement.options[selectElement.selectedIndex].text
 
 // get the sub-selector and clear any selection
-const subSelectElement = document.querySelector('select[name=\'$subValueName\']')
+const subSelectElement = this.parentElement.querySelector('.cw-column-selector')
 subSelectElement.value = ''
 
 // hide any option whose data-tablename is not this text
@@ -89,7 +89,7 @@ EOT;
 				<?php $this->underscore_empty_option( __( 'Do Not Import', 'gathercontent-import' ) ); ?>
 			</select>
 <!--		//TODO Gavin how do we pass the selection down on submit?-->
-			<select name="<?= $subValueName ?>" >
+			<select name="<?= $subValueName ?>" class="cw-column-selector">
 				<option value="">Select a column</option>
 				<?= implode('\r\n', $this->getAllTableColOptions()) ?>
 			</select>

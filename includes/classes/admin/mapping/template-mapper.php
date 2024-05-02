@@ -438,6 +438,7 @@ class Template_Mapper extends Base {
 		if ( $val = $this->get_value( $field->uuid ) ) {
 			$field->field_type  = isset( $val['type'] ) ? $val['type'] : '';
 			$field->field_value = isset( $val['value'] ) ? $val['value'] : '';
+			$field->field_subvalue = isset($val['sub-value']) ? $val['sub-value'] : '';
 		}
 
 		$field->is_repeatable = $is_repeatable;
