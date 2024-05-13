@@ -51,7 +51,7 @@ class Database extends Base implements Type {
 		$optionStrings = [];
 
 		foreach ($this->tableColumnData[$tableName] as $column) {
-			$optionStrings[] = "<option <# if ('" . $column . "' == data.field_subvalue) { #> selected='selected' <# } #> style='display: " . ($shouldShow ? 'block' : 'none') . " data-tablename='$tableName' value='{$column}'>{$column}</option>";
+			$optionStrings[] = "<option <# if ('" . $column . "' == data.field_subvalue) { #> selected='selected' <# } #> style='display: " . ($shouldShow ? 'block' : 'none') . "' data-tablename='$tableName' value='{$column}'>{$column}</option>";
 		}
 
 		return $optionStrings;
