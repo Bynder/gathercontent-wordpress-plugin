@@ -104,7 +104,7 @@ const value = selectElement.value
 // get the selected options text
 const text = selectElement.options[selectElement.selectedIndex].text
 
-// get the table selector and clear any selection
+// get the column selector sibling element
 const tableSelect = this.parentElement.querySelector('.cw-column-selector')
 tableSelect.value = ''
 
@@ -115,7 +115,7 @@ tableSelect.querySelectorAll('option').forEach(opt => {
 })
 
 // set this value as the first portion of the hidden element's value
-const hidden = document.getElementById('hidden-database-table-name')
+const hidden = this.parentElement.querySelector('.hidden-database-table-name')
 let hiddenVal = hidden.value
 if(!hiddenVal.includes('.')){
 	hiddenVal = '.'
@@ -134,7 +134,7 @@ const selectElement = this
 const value = selectElement.value
 
 // set this value as the second portion of the hidden element's value
-const hidden = document.getElementById('hidden-database-table-name')
+const hidden = this.parentElement.querySelector('.hidden-database-table-name')
 let hiddenVal = hidden.value
 if(!hiddenVal.includes('.')){
 	hiddenVal = '.'
@@ -155,31 +155,32 @@ EOT;
 
 		?>
 		<# if ( '<?php $this->e_type_id(); ?>' === data.field_type ) { #>
-			<select
-				onchange="<?= $tableSelectChangedJavascript ?>"
-				class="gc-select2 wp-type-value-select <?php $this->e_type_id(); ?>"
-				name=""
-			>
-				<?php $this->underscore_options( $this->post_options ); ?>
-				<?php $this->underscore_empty_option( __( 'Do Not Import', 'gathercontent-import' ) ); ?>
-			</select>
+			<div class="wp-type-database-dropdown-container">
+				<select
+					onchange="<?= $tableSelectChangedJavascript ?>"
+					class="gc-select2 wp-type-value-select <?php $this->e_type_id(); ?>"
+					name=""
+				>
+					<?php $this->underscore_options( $this->post_options ); ?>
+					<?php $this->underscore_empty_option( __( 'Do Not Import', 'gathercontent-import' ) ); ?>
+				</select>
 
-			<select
-				onchange="<?= $columnSelectChangedJavascript ?>"
-				name=""
-				class="cw-column-selector">
-				<option value="">Select a column</option>
-				<?= implode('\r\n', $this->getAllTableColOptions()) ?>
-			</select>
+				<select
+					onchange="<?= $columnSelectChangedJavascript ?>"
+					name=""
+					class="cw-column-selector">
+					<option value="">Select a column</option>
+					<?= implode('\r\n', $this->getAllTableColOptions()) ?>
+				</select>
 
-<!--		//TODO gavin - this is the actual input that is passed on form submit -->
-			<input
-				id="hidden-database-table-name"
-				type="hidden"
-				name="<?php $view->output( 'option_base' ); ?>[mapping][{{ data.name }}][value]"
+				<!--		//TODO gavin - this is the actual input that is passed on form submit -->
+				<input
+					class="hidden-database-table-name"
+					type="hidden"
+					name="<?php $view->output( 'option_base' ); ?>[mapping][{{ data.name }}][value]"
 				<# if ( data.field_value ) { #>value="{{ data.field_value }}"<# } #>
-			/>
-
+				/>
+			</div>
 		<# } #>
 		<?php
 	}
