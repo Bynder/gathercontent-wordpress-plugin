@@ -505,7 +505,6 @@ class Mapping_Wizard extends Base {
 		}
 
 		$account  = $this->api()->get_account( absint( $account_id ) );
-		var_dump(['account' => $account]);
 		$features = array_flip( $account->features );
 
 		$template = $this->api()->get_template( absint( $this->_get_val( 'template' ) ) );

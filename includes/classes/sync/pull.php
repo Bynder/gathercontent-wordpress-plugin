@@ -132,7 +132,7 @@ class Pull extends Base {
 		$table = $parts[0];
 		$column = $parts[1];
 
-		$results = $wpdb->get_results($wpdb->prepare("SHOW COLUMNS FROM %s;", $table));
+		$results = $wpdb->get_results($wpdb->prepare("SHOW COLUMNS FROM %1s;", $table));
 
 		foreach ($results as $row){
 			if($row->Field === $column){
@@ -171,6 +171,13 @@ class Pull extends Base {
 		}
 	}
 
+	private function gavDebug($msg, $context = [])
+	{
+		return;
+
+		echo $msg . (!empty($context) ? json_encode($context, JSON_PRETTY_PRINT) : '') . PHP_EOL;
+	}
+
 	/**
 	 * Pulls GC item to update a post after some sanitiy checks.
 	 *
@@ -183,9 +190,6 @@ class Pull extends Base {
 	 * @return mixed Result of pull.
 	 */
 	protected function do_item( $id ) {
-
-//		var_dump(__FILE__ . ":" . __FUNCTION__);
-
 		$this->check_mapping_data( $this->mapping );
 
 		/**
@@ -201,7 +205,7 @@ class Pull extends Base {
 			$meta       = \GatherContent\Importer\get_post_item_meta( $existing->ID );
 			$updated_at = isset( $meta['updated_at'] ) ? $meta['updated_at'] : 0;
 
-			echo('existing exists' . PHP_BINARY);
+			$this->gavDebug('existing exists');
 
 			if (
 				// Check if we have updated_at values to compare.
@@ -211,7 +215,12 @@ class Pull extends Base {
 				// If it's not newer, then don't update (unless asked to via filter).
 				&& $is_up_to_date && apply_filters( 'gc_only_update_if_newer', true )
 			) {
-				echo('throwing' . PHP_BINARY);
+
+				$this->gavDebug('throwing', [
+					'hasUpdatedAt' => isset( $this->item->updated_at ) && ! empty( $updated_at ),
+					'CWIsNewer' => ( strtotime( $this->item->updated_at ) <= strtotime( $updated_at ) ),
+					'itemUpdatedAt' => $this->item->updated_at
+				]);
 
 				throw new Exception(
 					sprintf( __( 'WordPress has most recent changes for %1$s (Item ID: %2$d):', 'gathercontent-import' ), $this->item->name, $this->item->id ),
@@ -228,9 +237,9 @@ class Pull extends Base {
 			$post_data['ID'] = 0;
 		}
 
-		echo('attempting map_gc_data_to_wp_data' . PHP_EOL);
+		$this->gavDebug('attempting map_gc_data_to_wp_data');
 		$post_data = $this->map_gc_data_to_wp_data( $post_data );
-		echo('excited map_gc_data_to_wp_data' . PHP_EOL);
+		$this->gavDebug('excited map_gc_data_to_wp_data');
 
 		if ( ! empty( $post_data['attachments'] ) ) {
 			$attachments = $post_data['attachments'];

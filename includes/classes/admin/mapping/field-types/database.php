@@ -157,8 +157,8 @@ EOT;
 		<# if ( '<?php $this->e_type_id(); ?>' === data.field_type ) { #>
 			<div class="wp-type-database-dropdown-container">
 				<select
-					onchange="<?= $tableSelectChangedJavascript ?>"
 					class="gc-select2 wp-type-value-select <?php $this->e_type_id(); ?>"
+					onchange="<?= $tableSelectChangedJavascript ?>"
 					name=""
 				>
 					<?php $this->underscore_options( $this->post_options ); ?>
@@ -166,9 +166,10 @@ EOT;
 				</select>
 
 				<select
+					class="cw-column-selector"
 					onchange="<?= $columnSelectChangedJavascript ?>"
 					name=""
-					class="cw-column-selector">
+				>
 					<option value="">Select a column</option>
 					<?= implode('\r\n', $this->getAllTableColOptions()) ?>
 				</select>
