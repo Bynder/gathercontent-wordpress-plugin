@@ -18,7 +18,8 @@
   "require": {
     "php": ">=7.0",
     "techcrunch/wp-async-task": "dev-master",
-    "ralouphie/mimey": "^1.0"
+    "ralouphie/mimey": "^1.0",
+    "ext-json": "*"
   },
   "require-dev": {
     "antecedent/patchwork": "2.1.*",

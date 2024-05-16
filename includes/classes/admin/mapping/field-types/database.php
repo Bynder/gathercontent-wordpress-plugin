@@ -18,7 +18,7 @@ class Database extends Base implements Type {
 	);
 
 	protected $type_id      = 'wp-type-database';
-	protected $post_options = array();
+	protected $post_options = [];
 
 	protected $tableColumnData = [];
 
@@ -35,68 +35,81 @@ class Database extends Base implements Type {
 		$this->option_label = __( 'Database', 'gathercontent-import' );
 	}
 
-	private function getAllTableColOptions($currentTableName = null)
+	private function getAllTableColOptions()
 	{
 		$allOpts = [];
 
 		foreach ($this->tableColumnData as $tableName => $columns) {
-			$allOpts = array_merge($allOpts, $this->getTableColOptions($tableName, $currentTableName === $tableName));
+			$allOpts = array_merge($allOpts, $this->getTableColOptions($tableName));
 		}
 
 		return $allOpts;
 	}
 
-	private function getTableColOptions(string $tableName, bool $shouldShow)
+	private function getTableColOptions(string $tableName)
 	{
 		$optionStrings = [];
 
 		foreach ($this->tableColumnData[$tableName] as $column) {
-			$optionStrings[] = "<option <# if ('" . $column . "' == data.field_subvalue) { #> selected='selected' <# } #> style='display: " . ($shouldShow ? 'block' : 'none') . "' data-tablename='$tableName' value='{$column}'>{$column}</option>";
+			/**
+			 * Returns the required underscore template string to be true when
+			 * this column and table are selected. We need to check for both as
+			 * multiple tables can use the same column name
+			 */
+			$isColumnAndTableTemplateJs = "data.field_value == '{$tableName}.{$column}'";
+
+			/**
+			 * template engine needs to know if this should be set selected
+			 */
+			$selectedJs = "
+				<# if ($isColumnAndTableTemplateJs) { #> selected='selected' <# } #>
+			";
+
+			/**
+			 * Template engine always set visible if this is the selected column
+			 */
+			$defaultVisibleJs = "
+				style='display: <# if ($isColumnAndTableTemplateJs) { #>block<# } else { #>none<# } #>'
+			";
+
+			$optionData = "data-tablename='$tableName' data-columnname='$column'";
+
+			$optionStrings[] = "<option $selectedJs $defaultVisibleJs $optionData value='{$column}'>{$column}</option>";
 		}
 
 		return $optionStrings;
 	}
 
-	public function underscore_template( View $view ) {
+	public function underscore_options( $array ) {
+		foreach ( $array as $value => $label ) {
+			$this->underscore_option( $value, $label );
+		}
+	}
 
-		$subValueName = $view->get( 'option_base' ) . '[mapping][{{ data.name }}][sub-value]';
+	public function underscore_option( $value, $label ) {
+		$fieldValueJs = "
+			<# if ( '" . $value . "' === data.field_value.split('.')[0] ) { #>selected='selected'<# } #>
+		";
 
-		/**
-		 * TODO Gavin: This cannot be the 'proper' WP way of doing dynamic select
-		 * options it his horrendous. Do it properly
-		 */
-		$tableSelectOnChangeJavascript = <<<EOT
-/** this runs when the table selector is changed */
-const selectElement = this
-const value = selectElement.value
+		echo '<option '.$fieldValueJs.' value="' . $value . '">' . $label . '</option>';
+	}
 
-// set this value as the second portion of the hidden element's value
-const hidden = document.getElementById('hidden-database-table-name')
-let hiddenVal = hidden.value
-if(!hiddenVal.includes('.')){
-	hiddenVal = '.'
-}
-const parts = hiddenVal.split('.')
-parts.splice(1, 1, value)
-hidden.value = parts.join('.')
-EOT;
-
-
-
-		$mainSelectOnChangeJavascript = <<<EOT
-/** @type {HTMLSelectElement} selectElement */
+	private function tableSelectChangedJavascript(): string
+	{
+		return <<<EOT
+/** this runs when the table select is changed */
 const selectElement = this
 const value = selectElement.value
 
 // get the selected options text
 const text = selectElement.options[selectElement.selectedIndex].text
 
-// get the sub-selector and clear any selection
-const subSelectElement = this.parentElement.querySelector('.cw-column-selector')
-subSelectElement.value = ''
+// get the table selector and clear any selection
+const tableSelect = this.parentElement.querySelector('.cw-column-selector')
+tableSelect.value = ''
 
 // hide any option whose data-tablename is not this text
-subSelectElement.querySelectorAll('option').forEach(opt => {
+tableSelect.querySelectorAll('option').forEach(opt => {
 	const optTableName = opt.getAttribute('data-tablename')
 	opt.style.display = optTableName === text ? 'block' : 'none'
 })
@@ -111,19 +124,48 @@ const parts = hiddenVal.split('.')
 parts.splice(0, 1, value)
 hidden.value = parts.join('.')
 EOT;
+	}
+
+	private function columSelectChangedJavascript(): string
+	{
+		return <<<EOT
+/** this runs when the column selector is changed */
+const selectElement = this
+const value = selectElement.value
+
+// set this value as the second portion of the hidden element's value
+const hidden = document.getElementById('hidden-database-table-name')
+let hiddenVal = hidden.value
+if(!hiddenVal.includes('.')){
+	hiddenVal = '.'
+}
+const parts = hiddenVal.split('.')
+parts.splice(1, 1, value)
+hidden.value = parts.join('.')
+EOT;
+	}
+
+	public function underscore_template( View $view ) {
+		/**
+		 * TODO gavin - surely this cannot be the correct way of dynamic js on
+		 * wordpress pages? Fix this when you suss out how it's meant to be done
+		 */
+		$tableSelectChangedJavascript = $this->tableSelectChangedJavascript();
+		$columnSelectChangedJavascript = $this->columSelectChangedJavascript();
 
 		?>
 		<# if ( '<?php $this->e_type_id(); ?>' === data.field_type ) { #>
 			<select
-				onchange="<?= $mainSelectOnChangeJavascript ?>"
+				onchange="<?= $tableSelectChangedJavascript ?>"
 				class="gc-select2 wp-type-value-select <?php $this->e_type_id(); ?>"
 				name=""
 			>
 				<?php $this->underscore_options( $this->post_options ); ?>
 				<?php $this->underscore_empty_option( __( 'Do Not Import', 'gathercontent-import' ) ); ?>
 			</select>
+
 			<select
-				onchange="<?= $tableSelectOnChangeJavascript ?>"
+				onchange="<?= $columnSelectChangedJavascript ?>"
 				name=""
 				class="cw-column-selector">
 				<option value="">Select a column</option>
@@ -131,12 +173,11 @@ EOT;
 			</select>
 
 <!--		//TODO gavin - this is the actual input that is passed on form submit -->
-<!--		//TODO gavin - how do we use this to pre-fill the drop-downs? -->
 			<input
 				id="hidden-database-table-name"
 				type="hidden"
 				name="<?php $view->output( 'option_base' ); ?>[mapping][{{ data.name }}][value]"
-				value=""
+				<# if ( data.field_value ) { #>value="{{ data.field_value }}"<# } #>
 			/>
 
 		<# } #>

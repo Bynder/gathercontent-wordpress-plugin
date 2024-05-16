@@ -385,6 +385,8 @@ class Template_Mappings extends Base {
 
 	public static function create_mapping( $mapping_args, $post_data = array(), $wp_error = false ) {
 
+		//TODO gavin - where to validate the inputs? this feels late
+
 		$mapping_args = wp_parse_args(
 			$mapping_args,
 			array(
@@ -426,7 +428,7 @@ class Template_Mappings extends Base {
 			)
 		);
 
-		var_dump(['CREATE MAPPING', $post_data]);
+//		var_dump(['CREATE MAPPING', $post_data]);
 
 		return wp_insert_post( $post_data, $wp_error );
 	}

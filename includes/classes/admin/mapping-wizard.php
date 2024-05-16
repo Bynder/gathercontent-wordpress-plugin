@@ -505,6 +505,7 @@ class Mapping_Wizard extends Base {
 		}
 
 		$account  = $this->api()->get_account( absint( $account_id ) );
+		var_dump(['account' => $account]);
 		$features = array_flip( $account->features );
 
 		$template = $this->api()->get_template( absint( $this->_get_val( 'template' ) ) );
@@ -771,6 +772,8 @@ class Mapping_Wizard extends Base {
 	 */
 	protected function create_or_update_mapping_post( $options ) {
 		$post_args = $mapping_args = array();
+
+		//TODO gavin - validate the database thing here?
 
 		$mapping_args = Utils::array_map_recursive( 'sanitize_text_field', $options );
 
