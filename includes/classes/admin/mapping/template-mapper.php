@@ -233,11 +233,14 @@ class Template_Mapper extends Base {
 	 * @return Field_Types\Types object
 	 */
 	protected function initiate_mapped_field_types() {
+		$databaseType = new Field_Types\Database( $this->database_types());
+
 		$core_field_types = array(
 			new Field_Types\Post( $this->post_options() ),
 			new Field_Types\Taxonomy( $this->post_types() ),
 			new Field_Types\Meta(),
 			new Field_Types\Media(),
+			$databaseType,
 		);
 
 		if ( defined( 'WPSEO_VERSION' ) ) {
