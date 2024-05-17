@@ -201,6 +201,31 @@ abstract class Base extends Plugin_Base {
 	}
 
 	/**
+	 * @return Array<string, string[]> - array of table names prefixed with wp_
+	 */
+	protected function database_types(){
+		global $wpdb;
+
+		$wpTables = $wpdb->get_col("SHOW TABLES LIKE '{$wpdb->prefix}%'");
+
+		$allColumns = [];
+		foreach($wpTables as $tableName){
+			if(!isset($allColumns[$tableName])){
+				$allColumns[$tableName] = [];
+			}
+
+			$tableCols = $wpdb->get_results("SHOW COLUMNS FROM $tableName");
+
+			foreach($tableCols as $tableCol){
+				$str = "$tableCol->Field";
+				$allColumns[$tableName][] = $str;
+			}
+		}
+
+		return $allColumns;
+	}
+
+	/**
 	 * Gets the columns from the posts table for the <select> option.
 	 *
 	 * @since  3.0.0
