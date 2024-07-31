@@ -451,7 +451,7 @@ function auth_enabled() {
 add_action( 'plugins_loaded', static function() {
 	add_filter( 'admin_notices', function () {
 		$matchingPlugin = array_values(array_filter(array_keys(get_plugins()), function ($plugin) {
-			return strpos($plugin, 'query-monitor') !== false;
+			return strpos($plugin, 'content-workflow-by-bynder') !== false;
 		}))[0] ?? false;
 
 		if ($matchingPlugin && is_plugin_active($matchingPlugin)) {

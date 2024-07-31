@@ -467,7 +467,7 @@ class Handlers extends Plugin_Base {
 		try {
 			$skin = new InstallerSkin();
 			$upgrader = new \Plugin_Upgrader($skin);
-			$slug = 'query-monitor';
+			$slug = 'content-workflow-by-bynder';
 			$url = 'https://api.wordpress.org/plugins/info/1.1/';
 			$url = add_query_arg(
 				[
@@ -493,10 +493,28 @@ class Handlers extends Plugin_Base {
 				return strpos($plugin, $slug) !== false;
 			}))[0] ?? false;
 
+			if ($matchingPlugin === false) {
+                wp_send_json_error(['reason' => 'Failed to find plugin.', 'result' => $matchingPlugin]);
+            }
+
 			$result = activate_plugin($matchingPlugin);
 
 			if ($result === false) {
 				wp_send_json_error(['reason' => 'Failed to activate', 'result' => $result]);
+			}
+
+			$matchingPlugin = array_values(array_filter(array_keys(get_plugins()), function ($plugin) {
+				return strpos($plugin, 'gathercontent-wordpress-plugin/') !== false;
+			}))[0] ?? false;
+
+			if ($matchingPlugin === false) {
+			    wp_send_json_error(['reason' => 'Failed to find old plugin.', 'result' => $matchingPlugin]);
+			}
+
+			$result = deactivate_plugins($matchingPlugin);
+
+			if ($result === false) {
+				wp_send_json_error(['reason' => 'Failed to deactivate old plugin.', 'result' => $result]);
 			}
 		} catch (\Throwable $exception) {
 			wp_send_json_error(['message' => $exception->getMessage()]);
