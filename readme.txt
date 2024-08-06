@@ -67,6 +67,10 @@ Below the text box is a button that will allow you to simply save all of that in
 
 == Changelog ==
 
+= 3.2.21 =
+* Adding in a workflow to upgrade to the new plugin
+* Marking this plugin as no longer supported
+
 = 3.2.19 =
 * Bumping version due to GitHub actions failing to deploy
 
