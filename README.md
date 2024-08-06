@@ -4,6 +4,8 @@ This plugin allows you to transfer content from your GatherContent projects into
 
 ## Description ##
 
+**This plugin is no longer supported and will not receive any updates. Please consider using the [Content Workflow by Bynder plugin](https://wordpress.org/plugins/content-workflow-by-bynder/) which is a drop in replacement.**
+
 Installing our WordPress plugin on your site allows you to quickly perform updates of your content from your GatherContent account to WordPress as well as push your WordPress content updates back to GatherContent. Content can be imported as new pages/posts or custom post types, and you can also import your WordPress content back to new GatherContent items.
 
 The plugin allows you to map each field in your GatherContent Templates with WordPress fields. This is accomplished by creating a Template Mapping, which allows you to map each field in GatherContent to various fields in WordPress; title, body content, custom fields, tags, categories, Yoast fields, advanced custom fields, featured images … and many more.
