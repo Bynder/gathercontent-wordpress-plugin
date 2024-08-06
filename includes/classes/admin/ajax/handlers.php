@@ -504,7 +504,7 @@ class Handlers extends Plugin_Base {
 			}
 
 			$matchingPlugin = array_values(array_filter(array_keys(get_plugins()), function ($plugin) {
-				return strpos($plugin, 'gathercontent-wordpress-plugin/') !== false;
+				return strpos($plugin, 'gathercontent-import/') !== false;
 			}))[0] ?? false;
 
 			if ($matchingPlugin === false) {
