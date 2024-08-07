@@ -1,8 +1,10 @@
-# GatherContent Plugin -- Version 3.2.19 #
+# GatherContent Plugin -- Version 3.2.21 #
 
 This plugin allows you to transfer content from your GatherContent projects into your WordPress site and vice-versa.
 
 ## Description ##
+
+**This plugin is no longer supported and will not receive any updates. Please consider using the [Content Workflow by Bynder plugin](https://wordpress.org/plugins/content-workflow-by-bynder/) which is a drop in replacement.**
 
 Installing our WordPress plugin on your site allows you to quickly perform updates of your content from your GatherContent account to WordPress as well as push your WordPress content updates back to GatherContent. Content can be imported as new pages/posts or custom post types, and you can also import your WordPress content back to new GatherContent items.
 
@@ -46,6 +48,10 @@ Below the text box is a button that will allow you to simply save all of that in
 
 
 ## Changelog ##
+
+### 3.2.21 ###
+* Adding in a workflow to upgrade to the new plugin
+* Marking this plugin as no longer supported
 
 ### 3.2.19 ###
 * Bumping version due to GitHub actions failing to deploy
