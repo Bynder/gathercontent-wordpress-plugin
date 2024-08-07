@@ -104,3 +104,15 @@ function gathercontent_importer_i18n() {
 	load_plugin_textdomain( $text_domain, false, plugin_basename( GATHERCONTENT_PATH ) . '/languages/' );
 }
 add_action( 'init', 'gathercontent_importer_i18n' );
+
+add_action( 'admin_init', 'cwby_check_new_plugin_isnt_activated' );
+
+function cwby_check_new_plugin_isnt_activated() {
+  // make sure to add your own plugin active check to stop looping over the wp_die call.
+  if ( is_plugin_active( 'content-workflow-by-bynder/gathercontent-importer.php' ) && is_plugin_active( 'gathercontent-import/gathercontent-importer.php' ) ) {
+    deactivate_plugins( 'gathercontent-import/gathercontent-importer.php' );
+
+    $button = '<br><a href="' . esc_attr( network_admin_url( 'plugins.php' ) ) . '" rel="nofollow ugc">Return to Plugins</a>';
+    wp_die( 'GatherContent plugin can not be activated while the Content Workflow plugin is active, and has therefore been deactivated! ' . $button );
+  }
+}
