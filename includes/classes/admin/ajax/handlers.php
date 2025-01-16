@@ -7,10 +7,10 @@
 
 namespace GatherContent\Importer\Admin\Ajax;
 
+use GatherContent\Importer\Admin\InstallerSkin;
 use GatherContent\Importer\Base as Plugin_Base;
 use GatherContent\Importer\General;
 use GatherContent\Importer\Utils;
-use GatherContent\Importer\Post_Types\Template_Mappings;
 use GatherContent\Importer\Mapping_Post;
 use GatherContent\Importer\API;
 
@@ -76,6 +76,7 @@ class Handlers extends Plugin_Base {
 		add_action( 'wp_ajax_gc_wp_filter_mappings', array( $this, 'gc_wp_filter_mappings_cb' ) );
 		add_action( 'wp_ajax_gc_save_mapping_id', array( $this, 'gc_save_mapping_id_cb' ) );
 		add_action( 'wp_ajax_gc_dismiss_notice', array( $this, 'gc_dismiss_notice_cb' ) );
+		add_action('wp_ajax_gc_install_content_workflow', [$this, 'gc_install_content_workflow']);
 	}
 
 	/**
@@ -455,4 +456,70 @@ class Handlers extends Plugin_Base {
 		return wp_verify_nonce( $nonce, GATHERCONTENT_SLUG );
 	}
 
+	public function gc_install_content_workflow()
+	{
+		check_ajax_referer('gc-install-ajax-nonce', '_ajax_nonce');
+
+		require_once ABSPATH . 'wp-admin/includes/class-wp-upgrader.php';
+		require_once ABSPATH . 'wp-admin/includes/file.php';
+		require_once ABSPATH . 'wp-admin/includes/plugin.php';
+
+		try {
+			$skin = new InstallerSkin();
+			$upgrader = new \Plugin_Upgrader($skin);
+			$slug = 'content-workflow-by-bynder';
+			$url = 'https://api.wordpress.org/plugins/info/1.1/';
+			$url = add_query_arg(
+				[
+					'action' => 'plugin_information',
+					rawurlencode('request[slug]') => $slug,
+				],
+				$url
+			);
+			$response = wp_remote_get($url);
+
+			if ($response->status > 299) {
+				wp_send_json_error();
+			}
+
+			$response = json_decode(wp_remote_retrieve_body($response));
+			$installationLink = $response->download_link;
+			$result = $upgrader->install($installationLink);
+			if ($result === false) {
+				wp_send_json_error(['reason' => 'Failed to install', 'result' => $result]);
+			}
+
+			$matchingPlugin = array_values(array_filter(array_keys(get_plugins()), function ($plugin) use ($slug) {
+				return strpos($plugin, $slug) !== false;
+			}))[0] ?? false;
+
+			if ($matchingPlugin === false) {
+                wp_send_json_error(['reason' => 'Failed to find plugin.', 'result' => $matchingPlugin]);
+            }
+
+			$result = activate_plugin($matchingPlugin);
+
+			if ($result === false) {
+				wp_send_json_error(['reason' => 'Failed to activate', 'result' => $result]);
+			}
+
+			$matchingPlugin = array_values(array_filter(array_keys(get_plugins()), function ($plugin) {
+				return strpos($plugin, 'gathercontent-import/') !== false;
+			}))[0] ?? false;
+
+			if ($matchingPlugin === false) {
+			    wp_send_json_error(['reason' => 'Failed to find old plugin.', 'result' => $matchingPlugin]);
+			}
+
+			$result = deactivate_plugins($matchingPlugin);
+
+			if ($result === false) {
+				wp_send_json_error(['reason' => 'Failed to deactivate old plugin.', 'result' => $result]);
+			}
+		} catch (\Throwable $exception) {
+			wp_send_json_error(['message' => $exception->getMessage()]);
+		}
+
+		wp_send_json_success();
+	}
 }

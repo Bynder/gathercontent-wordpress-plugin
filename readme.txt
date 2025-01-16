@@ -4,7 +4,7 @@ Donate link: http://www.gathercontent.com
 Tags: structured content, gather content, gathercontent, import, migrate, export, mapping, production, writing, collaboration, platform, connect, link, gather, client, word, production
 Requires at least: 5.6.0
 Tested up to: 6.3
-Stable tag: 3.2.19
+Stable tag: 3.2.22
 License: GPL-2.0+
 Requires PHP: 7.0
 License URI: https://opensource.org/licenses/GPL-2.0
@@ -12,6 +12,8 @@ License URI: https://opensource.org/licenses/GPL-2.0
 Quickly transfer structured content to and from your GatherContent projects and your WordPress site.
 
 == Description ==
+
+**This plugin is no longer supported and will not receive any updates. Please consider using the [Content Workflow by Bynder plugin](https://wordpress.org/plugins/content-workflow-by-bynder/) which is a drop in replacement.**
 
 Installing our WordPress plugin on your site allows you to quickly perform updates of your content from your GatherContent account to WordPress as well as push your WordPress content updates back to GatherContent. Content can be imported as new pages/posts or custom post types, and you can also import your WordPress content back to new GatherContent items.
 
@@ -64,6 +66,13 @@ Below the text box is a button that will allow you to simply save all of that in
 6. Or change the item's GatherContent status in quick-edit mode.
 
 == Changelog ==
+
+= 3.2.22 =
+* Updating the stable release
+
+= 3.2.21 =
+* Adding in a workflow to upgrade to the new plugin
+* Marking this plugin as no longer supported
 
 = 3.2.19 =
 * Bumping version due to GitHub actions failing to deploy
